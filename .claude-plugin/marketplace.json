@@ -6,7 +6,7 @@
     "email": "thewhyman@users.noreply.github.com"
   },
   "metadata": {
-    "description": "xos \u2014 Exponential OS for Exponential Orgs, Humans, and More 2.0 (a play on the Singularity University book by Salim Ismail). The platform marketplace catalog hosted by Exponential-OS. Hosts the xOS family \u2014 AI-native operating systems for humans (xHumanOS), teams (xTeamOS), communities (xCommunityOS), families (xFamilyOS), and beyond \u2014 plus standalone tools (Co-Dialectic) and apps (Career-OS). Plugins install as @xos."
+    "description": "xos — Exponential OS for Exponential Orgs, Humans, and More 2.0 (a play on the Singularity University book by Salim Ismail). The platform marketplace catalog hosted by Exponential-OS. Hosts the xOS family — AI-native operating systems for humans (xHumanOS), teams (xTeamOS), communities (xCommunityOS), families (xFamilyOS), and beyond — plus standalone tools (Co-Dialectic) and apps (Career-OS). Plugins install as @xos."
   },
   "plugins": [
     {
@@ -16,8 +16,8 @@
         "url": "https://github.com/Exponential-OS/prompt-engineering-in-action.git",
         "path": "plugins/co-dialectic"
       },
-      "description": "Co-Dialectic v4.2.1 \u2014 LLM prompt optimizer + auto-verify by stakes (Safe/Private/Shared/Significant/Live) + auto-handoff on closure + honesty selector (brutal/grounded/soft) + agent-swarm default-on + cross-family cascade-then-jury review (judge-panel) + hallucination detector + research-first mode + fish-swarm orchestration + session handoff codification. Socratic coaching, persona detection, context management, prompt improvement, and Defense-in-Depth verification across any AI.",
-      "version": "4.2.1",
+      "description": "Co-Dialectic v4.3.0 — LLM prompt optimizer + auto-verify by stakes (Safe/Private/Shared/Significant/Live) + auto-handoff on closure + honesty selector (brutal/grounded/soft) + agent-swarm default-on + cross-family cascade-then-jury review (judge-panel) + hallucination detector + research-first mode + fish-swarm orchestration (mandatory pre-task gate via codi-fish-precheck) + session handoff codification. Socratic coaching, persona detection, context management, prompt improvement, and Defense-in-Depth verification across any AI.",
+      "version": "4.3.0",
       "category": "productivity",
       "homepage": "https://github.com/Exponential-OS/prompt-engineering-in-action"
     },
@@ -27,7 +27,7 @@
         "source": "url",
         "url": "https://github.com/Exponential-OS/career-os-plugin.git"
       },
-      "description": "Career OS \u2014 AI-powered career management system. The operating system for your career \u2014 persistent memory, session capture, git-versioned data, full privacy. v0.28.0 brain-layer canonicalization (all data in brain/, no .career-os/memory/ data files, no symlinks).",
+      "description": "Career OS — AI-powered career management system. The operating system for your career — persistent memory, session capture, git-versioned data, full privacy. v0.28.0 brain-layer canonicalization (all data in brain/, no .career-os/memory/ data files, no symlinks).",
       "version": "0.28.0",
       "category": "productivity",
       "homepage": "https://github.com/Exponential-OS/career-os-plugin"
