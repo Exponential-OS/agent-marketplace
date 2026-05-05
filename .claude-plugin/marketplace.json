@@ -17,7 +17,7 @@
         "path": "plugins/co-dialectic"
       },
       "description": "Co-Dialectic v4.5.0 \u2014 LLM prompt optimizer + semantic T3 classification (Haiku API) + background agent lifecycle manager + worktree-isolation foreground gate + runtime-agnostic executor types + fish-swarm MUST-spawn dispatch mandate + Protocol 0 post-compaction re-init + plugin product hygiene gate. Cross-family cascade-then-jury review, judge-panel, hallucination detector, fish-swarm orchestration, session handoff. Works with any LLM runtime.",
-      "version": "4.5.0",
+      "version": "4.6.0",
       "category": "productivity",
       "homepage": "https://github.com/Exponential-OS/prompt-engineering-in-action"
     },
