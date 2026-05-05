@@ -6,7 +6,7 @@
     "email": "thewhyman@users.noreply.github.com"
   },
   "metadata": {
-    "description": "xos \u2014 Exponential OS for Exponential Orgs, Humans, and More 2.0 (a play on the Singularity University book by Salim Ismail). The platform marketplace catalog hosted by Exponential-OS. Hosts the xOS family \u2014 AI-native operating systems for humans (xHumanOS), teams (xTeamOS), communities (xCommunityOS), families (xFamilyOS), and beyond \u2014 plus standalone tools (Co-Dialectic) and apps (Career-OS). Plugins install as @xos."
+    "description": "xos — Exponential OS for Exponential Orgs, Humans, and More 2.0 (a play on the Singularity University book by Salim Ismail). The platform marketplace catalog hosted by Exponential-OS. Hosts the xOS family — AI-native operating systems for humans (xHumanOS), teams (xTeamOS), communities (xCommunityOS), families (xFamilyOS), and beyond — plus standalone tools (Co-Dialectic) and apps (Career-OS). Plugins install as @xos."
   },
   "plugins": [
     {
@@ -16,7 +16,7 @@
         "url": "https://github.com/Exponential-OS/prompt-engineering-in-action.git",
         "path": "plugins/co-dialectic"
       },
-      "description": "Co-Dialectic v4.5.0 \u2014 LLM prompt optimizer + semantic T3 classification (Haiku API) + background agent lifecycle manager + worktree-isolation foreground gate + runtime-agnostic executor types + fish-swarm MUST-spawn dispatch mandate + Protocol 0 post-compaction re-init + plugin product hygiene gate. Cross-family cascade-then-jury review, judge-panel, hallucination detector, fish-swarm orchestration, session handoff. Works with any LLM runtime.",
+      "description": "Co-Dialectic v4.5.0 — LLM prompt optimizer + semantic T3 classification (Haiku API) + background agent lifecycle manager + worktree-isolation foreground gate + runtime-agnostic executor types + fish-swarm MUST-spawn dispatch mandate + Protocol 0 post-compaction re-init + plugin product hygiene gate. Cross-family cascade-then-jury review, judge-panel, hallucination detector, fish-swarm orchestration, session handoff. Works with any LLM runtime.",
       "version": "4.6.3",
       "category": "productivity",
       "homepage": "https://github.com/Exponential-OS/prompt-engineering-in-action"
@@ -27,8 +27,8 @@
         "source": "url",
         "url": "https://github.com/Exponential-OS/career-os-plugin.git"
       },
-      "description": "Career OS \u2014 AI-powered career management system. The operating system for your career \u2014 persistent memory, session capture, git-versioned data, full privacy. v0.37.0: hashtag selection protocol + priority banks; v0.36.0: relationship origin detection.",
-      "version": "0.37.0",
+      "description": "Career OS — AI-powered career management system. The operating system for your career — persistent memory, session capture, git-versioned data, full privacy. v0.38.0: JSON pipeline migration complete, pipeline-view.py, migration scripts removed; v0.37.0: hashtag selection protocol.",
+      "version": "0.38.0",
       "category": "productivity",
       "homepage": "https://github.com/Exponential-OS/career-os-plugin"
     }
