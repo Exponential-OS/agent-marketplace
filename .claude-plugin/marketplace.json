@@ -27,8 +27,8 @@
         "source": "url",
         "url": "https://github.com/Exponential-OS/career-os-plugin.git"
       },
-      "description": "Career OS \u2014 AI-powered career management system. The operating system for your career \u2014 persistent memory, session capture, git-versioned data, full privacy. v0.28.0 brain-layer canonicalization (all data in brain/, no .career-os/memory/ data files, no symlinks).",
-      "version": "0.35.2",
+      "description": "Career OS \u2014 AI-powered career management system. The operating system for your career \u2014 persistent memory, session capture, git-versioned data, full privacy. v0.37.0: hashtag selection protocol + priority banks; v0.36.0: relationship origin detection.",
+      "version": "0.37.0",
       "category": "productivity",
       "homepage": "https://github.com/Exponential-OS/career-os-plugin"
     }
