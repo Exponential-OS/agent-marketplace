@@ -6,7 +6,7 @@
     "email": "thewhyman@users.noreply.github.com"
   },
   "metadata": {
-    "description": "xos — Exponential OS for Exponential Orgs, Humans, and More 2.0 (a play on the Singularity University book by Salim Ismail). The platform marketplace catalog hosted by Exponential-OS. Hosts the xOS family — AI-native operating systems for humans (xHumanOS), teams (xTeamOS), communities (xCommunityOS), families (xFamilyOS), and beyond — plus standalone tools (Co-Dialectic) and apps (Career-OS). Plugins install as @xos."
+    "description": "xos \u2014 Exponential OS for Exponential Orgs, Humans, and More 2.0 (a play on the Singularity University book by Salim Ismail). The platform marketplace catalog hosted by Exponential-OS. Hosts the xOS family \u2014 AI-native operating systems for humans (xHumanOS), teams (xTeamOS), communities (xCommunityOS), families (xFamilyOS), and beyond \u2014 plus standalone tools (Co-Dialectic) and apps (Career-OS). Plugins install as @xos."
   },
   "plugins": [
     {
@@ -16,7 +16,7 @@
         "url": "https://github.com/Exponential-OS/prompt-engineering-in-action.git",
         "path": "plugins/co-dialectic"
       },
-      "description": "Co-Dialectic v4.7.0 — LLM prompt optimizer + onboarding skill (new users get value in ≤5 min) + external-ready (no personal content) + compaction immunity + semantic T3 classification + fish-swarm + Protocol 0 post-compaction re-init. Cross-family judge-panel, hallucination detector, session handoff. Works with any LLM runtime.",
+      "description": "Co-Dialectic v4.7.0 \u2014 LLM prompt optimizer + onboarding skill (new users get value in \u22645 min) + external-ready (no personal content) + compaction immunity + semantic T3 classification + fish-swarm + Protocol 0 post-compaction re-init. Cross-family judge-panel, hallucination detector, session handoff. Works with any LLM runtime.",
       "version": "4.7.0",
       "category": "productivity",
       "homepage": "https://github.com/Exponential-OS/prompt-engineering-in-action"
@@ -27,8 +27,8 @@
         "source": "url",
         "url": "https://github.com/Exponential-OS/career-os-plugin.git"
       },
-      "description": "Career OS — AI-powered career management system. The operating system for your career — persistent memory, session capture, git-versioned data, full privacy. v0.40.0: distribution-engine fully bundled in plugin (self-contained, no external dependencies); v0.39.0: gate wiring.",
-      "version": "0.40.0",
+      "description": "Career OS \u2014 AI-powered career management system. The operating system for your career \u2014 persistent memory, session capture, git-versioned data, full privacy. v0.40.0: distribution-engine fully bundled in plugin (self-contained, no external dependencies); v0.39.0: gate wiring.",
+      "version": "0.41.0",
       "category": "productivity",
       "homepage": "https://github.com/Exponential-OS/career-os-plugin"
     }
