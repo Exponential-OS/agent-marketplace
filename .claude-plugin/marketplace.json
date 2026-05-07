@@ -27,8 +27,8 @@
         "source": "url",
         "url": "https://github.com/Exponential-OS/career-os-plugin.git"
       },
-      "description": "Career OS — AI-powered career management system. The operating system for your career — persistent memory, session capture, git-versioned data, full privacy. v0.38.0: JSON pipeline migration complete, pipeline-view.py, migration scripts removed; v0.37.0: hashtag selection protocol.",
-      "version": "0.38.0",
+      "description": "Career OS — AI-powered career management system. The operating system for your career — persistent memory, session capture, git-versioned data, full privacy. v0.40.0: distribution-engine fully bundled in plugin (self-contained, no external dependencies); v0.39.0: gate wiring.",
+      "version": "0.40.0",
       "category": "productivity",
       "homepage": "https://github.com/Exponential-OS/career-os-plugin"
     }
