@@ -27,8 +27,8 @@
         "source": "url",
         "url": "https://github.com/Exponential-OS/career-os-plugin.git"
       },
-      "description": "Career OS \u2014 AI-powered career management system. The operating system for your career \u2014 persistent memory, session capture, git-versioned data, full privacy. v0.40.0: distribution-engine fully bundled in plugin (self-contained, no external dependencies); v0.39.0: gate wiring.",
-      "version": "0.41.0",
+      "description": "Career OS \u2014 AI-powered career management system. The operating system for your career \u2014 persistent memory, session capture, git-versioned data, full privacy. v0.44.0: flywheel-cta-quality-check semantic Gate 8 (CTA strength per platform); v0.43.0: campaign-estate-quality-check Gate 7 (Estate model packaging); v0.42.0: Objective codification harness with 8-gate pre-flight CI.",
+      "version": "0.44.0",
       "category": "productivity",
       "homepage": "https://github.com/Exponential-OS/career-os-plugin"
     }
