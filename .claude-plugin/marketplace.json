@@ -27,8 +27,8 @@
         "source": "url",
         "url": "https://github.com/Exponential-OS/career-os-plugin.git"
       },
-      "description": "Career OS \u2014 AI-powered career management system. The operating system for your career \u2014 persistent memory, session capture, git-versioned data, full privacy. v0.44.1: preflight severity fix (blocks no longer masked by warns); v0.44.0: flywheel-cta-quality-check Gate 8; v0.43.0: campaign-estate-quality-check Gate 7; v0.42.0: 8-gate pre-flight CI.",
-      "version": "0.44.1",
+      "description": "Career OS \u2014 AI-powered career management system. The operating system for your career \u2014 persistent memory, session capture, git-versioned data, full privacy. v0.45.0: Gate 8 invisible platform signal CTAs (X bookmark 10x, Instagram save/DM-share, comment NLP keyword quality); v0.44.1: preflight severity fix; v0.44.0: flywheel-cta-quality-check Gate 8; v0.43.0: campaign-estate-quality-check Gate 7.",
+      "version": "0.45.0",
       "category": "productivity",
       "homepage": "https://github.com/Exponential-OS/career-os-plugin"
     }
