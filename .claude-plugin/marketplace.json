@@ -27,8 +27,8 @@
         "source": "url",
         "url": "https://github.com/Exponential-OS/career-os-plugin.git"
       },
-      "description": "Career OS \u2014 AI-powered career management system. The operating system for your career \u2014 persistent memory, session capture, git-versioned data, full privacy. v0.46.0: Gate 9 golden-hour-scheduling-check (warns on off-window scheduling per platform); v0.45.0: Gate 8 invisible signal CTAs; v0.44.1: preflight severity fix; v0.44.0: Gate 8 CTA quality; v0.43.0: Gate 7 estate quality.",
-      "version": "0.46.0",
+      "description": "Career OS \u2014 AI-powered career management system. The operating system for your career \u2014 persistent memory, session capture, git-versioned data, full privacy. v0.47.0: sde-onboarding skill (Week 1 context files + brand interview); v0.46.0: Gate 9 golden-hour-scheduling-check; v0.45.0: Gate 8 invisible signal CTAs; v0.44.1: preflight severity fix; v0.44.0: Gate 8 CTA quality.",
+      "version": "0.47.0",
       "category": "productivity",
       "homepage": "https://github.com/Exponential-OS/career-os-plugin"
     }
