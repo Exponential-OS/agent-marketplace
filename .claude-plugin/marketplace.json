@@ -6,7 +6,7 @@
     "email": "thewhyman@users.noreply.github.com"
   },
   "metadata": {
-    "description": "xOS Marketplace — Cross-cutting AI engines usable by any xOS instance (xHumanOS, xTeamOS, xCommunityOS, xFamilyOS). Install individual engines as @xos/<engine> or get them bundled in your platform (e.g., xHumanOS includes Career Intelligence which bundles brand-intelligence + social-distribution)."
+    "description": "xOS Marketplace — Cross-cutting AI engines usable by any xOS instance (xHumanOS, xTeamOS, xCommunityOS, xFamilyOS). Each engine is independently versioned and evolves on its own repo. Dependency declarations enforce minimum compatible versions across the engine stack."
   },
   "plugins": [
     {
@@ -19,6 +19,7 @@
       },
       "description": "Co-Dialectic v4.7.0 — LLM prompt optimizer + onboarding skill + compaction immunity + semantic T3 classification + fish-swarm + Protocol 0 post-compaction re-init. Cross-family judge-panel, hallucination detector, session handoff. Works with any LLM runtime.",
       "version": "4.7.0",
+      "dependencies": {},
       "category": "xOS",
       "homepage": "https://github.com/Exponential-OS/prompt-engineering-in-action"
     },
@@ -27,24 +28,13 @@
       "platform": "xOS",
       "source": {
         "source": "url",
-        "url": "https://github.com/Exponential-OS/career-os-plugin.git"
+        "url": "https://github.com/Exponential-OS/brand-intelligence-plugin.git"
       },
-      "description": "Brand Intelligence — Persona schema, extraction, and registry. N-voice support for individuals (xHumanOS, N=1) and orgs (xTeamOS, N≥3). Includes persona-onboarding interview, handles, channel directory. Currently bundled in career-os-plugin; standalone extraction in progress.",
+      "description": "Brand Intelligence — Persona schema, extraction, and registry. N-voice support for individuals (xHumanOS, N=1) and orgs (xTeamOS, N≥3). Includes persona-onboarding interview, handles, channel directory. Foundational primitive — no dependencies.",
       "version": "0.47.0",
+      "dependencies": {},
       "category": "xOS",
-      "homepage": "https://github.com/Exponential-OS/career-os-plugin"
-    },
-    {
-      "name": "social-distribution",
-      "platform": "xOS",
-      "source": {
-        "source": "url",
-        "url": "https://github.com/Exponential-OS/career-os-plugin.git"
-      },
-      "description": "Social Distribution — 9-gate preflight CI for content campaigns. Hub-spoke flywheel, golden-hour scheduling, invisible signal CTAs (bookmark/save/DM-share), platform-native routing. Currently bundled in career-os-plugin; standalone extraction in progress.",
-      "version": "0.47.0",
-      "category": "xOS",
-      "homepage": "https://github.com/Exponential-OS/career-os-plugin"
+      "homepage": "https://github.com/Exponential-OS/brand-intelligence-plugin"
     },
     {
       "name": "knowledge-graph",
@@ -53,10 +43,26 @@
         "source": "url",
         "url": "https://github.com/Exponential-OS/knowledge-graph-plugin.git"
       },
-      "description": "Knowledge Graph — Graph data layer for all xOS engines. Phase 1: JSON files. Phase 2: Neo4j substrate replacing all engine file stores. Individual career graphs (xHumanOS) and institutional knowledge graphs (xTeamOS). In design.",
+      "description": "Knowledge Graph — Graph data layer for all xOS engines. Phase 1: JSON files. Phase 2: Neo4j substrate replacing all engine file stores. Foundational primitive — no dependencies.",
       "version": "0.1.0",
+      "dependencies": {},
       "category": "xOS",
       "homepage": "https://github.com/Exponential-OS/knowledge-graph-plugin"
+    },
+    {
+      "name": "social-distribution",
+      "platform": "xOS",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/Exponential-OS/social-distribution-plugin.git"
+      },
+      "description": "Social Distribution — 9-gate preflight CI for content campaigns. Hub-spoke flywheel, golden-hour scheduling, invisible signal CTAs (bookmark/save/DM-share), platform-native routing. Requires Brand Intelligence for persona-aware distribution.",
+      "version": "0.47.0",
+      "dependencies": {
+        "brand-intelligence": ">=0.47.0"
+      },
+      "category": "xOS",
+      "homepage": "https://github.com/Exponential-OS/social-distribution-plugin"
     },
     {
       "name": "content-adapt",
@@ -65,8 +71,12 @@
         "source": "url",
         "url": "https://github.com/Exponential-OS/content-adapt-plugin.git"
       },
-      "description": "Content Adapt — Transform engine. One idea → platform-native variants (xHumanOS) or audience-specific variants (xTeamOS). Reads Brand Intelligence personas; outputs campaign components for Social Distribution. In design.",
+      "description": "Content Adapt — Transform engine. One idea → platform-native variants (xHumanOS) or audience-specific variants (xTeamOS). Reads Brand Intelligence personas; queries Knowledge Graph for source context.",
       "version": "0.1.0",
+      "dependencies": {
+        "brand-intelligence": ">=0.47.0",
+        "knowledge-graph": ">=0.1.0"
+      },
       "category": "xOS",
       "homepage": "https://github.com/Exponential-OS/content-adapt-plugin"
     }
