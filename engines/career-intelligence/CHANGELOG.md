@@ -3,11 +3,40 @@
 All notable changes to the Career OS plugin are recorded here. This plugin
 follows [Semantic Versioning](https://semver.org/) — MAJOR.MINOR.PATCH.
 
+## [0.49.0] — 2026-05-10 — LinkedIn Groups + Crowdsourced Signal v1.0
+
+### Added
+
+- **skills/linkedin-groups-distribution-module/SKILL.md** — Full LinkedIn Groups discovery + spoke distribution skill. Phase 1: reads content_pillars from professional-brand.md, searches LinkedIn via chrome-devtools MCP (port 9222), scores groups 0–100 (member count, activity, topic relevance, spam risk), presents top 10 for user approval, writes to social-channel-directory.md. Phase 2: channel type `linkedin_group` with 7-day cooldown, 150-word max, discussion-framing rules, max 3 groups/campaign, groups-post-log.jsonl append, Day+1 comment monitoring reminder.
+- **rules/linkedin-groups-dedup/HOW.py** — 7-day cooldown gate. Reads `groups-post-log.jsonl`, BLOCKs with last_posted + next_available date if posted within cooldown. Exit 0=PASS, 1=BLOCK.
+- **rules/linkedin-groups-dedup/AUDIT.py** — Audit report: block rate, passes, total group posts, posts-per-group breakdown over configurable window.
+- **rules/linkedin-groups-dedup/WATCH.py** — Fire-rate observer. Emits keep/strengthen/kill verdict; detects zero-fire with active log (possible bypass), high block rate, normal operation.
+- **rules/linkedin-groups-dedup/manifest.json** — Rule manifest.
+- **skills/social-distribution-engine/signal-collector.py** — Phase v1.0 crowdsourced signal collection (local only). Maps campaign analytics to bucketed signal schema, appends to `brain/social-distribution-engine/signals/local-signals.jsonl`. No network calls. Invoked by distribution-analytics-engine after analytics collection. Collects: platform, post_type, content_category, hour, day_of_week, engagement_rate_bucket, impression_count_bucket, comment_rate_bucket, etc.
+
+### Changed
+
+- **skills/distribution-analytics-engine/SKILL.md** — Added Capability 4: Signal Collection. Documents signal-collector.py invocation with exact bash command, exit codes, privacy guarantees, and invocation rule (only when campaign.analytics is populated).
+- **skills/linkedin-distribution-module/SKILL.md** — Group Management section updated to reference linkedin-groups-distribution-module skill + dedup gate invocation.
+- **skills/social-distribution-engine/onboarding-templates/social-channel-directory.template.md** — Added LinkedIn Groups section with `linkedin_group` channel type example row and discovery instructions.
+- **skills/social-distribution-engine/onboarding-templates/content-flywheel.template.md** — Expanded Signal Sharing section with full `signal_sharing:` YAML config block (enabled, device_id, last_sync), opt-out instructions, and explicit sync command requirement.
+
+---
+
+## [0.48.0] — 2026-05-10 — CAREER_HOME Env Var Migration
+
+### Changed
+
+- **CAREER_HOME migration** — all Python scripts, Markdown docs, and shell scripts updated from `CAREER_OS_HOME` / `CAREER_OS_SPECS` / `CAREER_OS_ENGINE` / `CAREER_OS_GITHUB_REPO` to new shorter names. Backward-compat fallback in all Python files: `os.environ.get("CAREER_HOME", os.environ.get("CAREER_OS_HOME", default))`. Old var names continue to work until v0.50.0. Compat shims remain in `~/.zshrc`.
+  - Files updated: `validate-campaign-preflight.py`, `biographical-claim-precheck/HOW.py`, `warm-contact-outreach-dedup/HOW.py`, `analytics-sync-watch/AUDIT.py`, `analytics-sync-watch/WATCH.py`, `channel-status-check/HOW.py`, `surface-coverage-check/HOW.py`, `scripts/pipeline-query.py`, `tests/test_outreach_dedup.py`
+
+---
+
 ## [0.47.0] — 2026-05-09 — SDE Onboarding Skill + Cross-Session Memory Claim
 
 ### Added
 
-- **skills/sde-onboarding/SKILL.md** — Week 1 onboarding wizard. Interviews new users across 3 phases (brand identity, handles, distribution topology — 9 questions total), generates all 4 required context files (`professional-brand.md`, `handles.md`, `content-flywheel.md`, `social-channel-directory.md`), validates files, and prints a completion summary with Week 2 preview. Triggers: "onboard me to SDE", "sde setup", "week 1 setup", "set up my distribution engine", "i'm new to sde". Failure modes handled: skipped questions, files already exist (asks before overwriting), unknown `$CAREER_OS_HOME`.
+- **skills/sde-onboarding/SKILL.md** — Week 1 onboarding wizard. Interviews new users across 3 phases (brand identity, handles, distribution topology — 9 questions total), generates all 4 required context files (`professional-brand.md`, `handles.md`, `content-flywheel.md`, `social-channel-directory.md`), validates files, and prints a completion summary with Week 2 preview. Triggers: "onboard me to SDE", "sde setup", "week 1 setup", "set up my distribution engine", "i'm new to sde". Failure modes handled: skipped questions, files already exist (asks before overwriting), unknown `$CAREER_HOME`.
 - **skills/social-distribution-engine/onboarding-templates/** — 4 template stubs used by the onboarding skill. Single source of truth for new user file structure:
   - `professional-brand.template.md`
   - `handles.template.md`
@@ -123,7 +152,7 @@ follows [Semantic Versioning](https://semver.org/) — MAJOR.MINOR.PATCH.
 
 - **rules/channel-status-check/** — Reads `brain/social-distribution-engine/social-channel-directory.md`
   and blocks distribution to BANNED subreddits/communities (e.g., r/LocalLLaMA, r/ClaudeAI).
-  WARNs on Low ROI channels. Instance-portable via CAREER_OS_HOME. HOW.py + AUDIT.py + WATCH.py + manifest.json.
+  WARNs on Low ROI channels. Instance-portable via CAREER_HOME. HOW.py + AUDIT.py + WATCH.py + manifest.json.
 
 - **rules/campaign-schema-validator/** — Structural gate: validates required campaign.json fields
   (meta, source, hub, spokes, assets, review) and verifies all content_file/asset file refs exist on disk.
@@ -215,7 +244,7 @@ follows [Semantic Versioning](https://semver.org/) — MAJOR.MINOR.PATCH.
   mission-control, outreach-composer, resume-engine, outreach-fact-check, browser-submit.
 
 - **skills/browser-submit/SKILL.md** — dispatch log path moved from
-  `~/cyborg/infrastructure/scripts/dispatch-log.jsonl` to `$CAREER_OS_HOME/brain/logs/`.
+  `~/cyborg/infrastructure/scripts/dispatch-log.jsonl` to `$CAREER_HOME/brain/logs/`.
 
 ## [0.39.0] — 2026-05-07 — Distribution Engine Gate Wiring
 
@@ -426,7 +455,7 @@ install location — without any env var. Upgrades are automatically picked up
 via the version-sorted glob.
 
 `CAREER_OS_PLUGIN` removed from `ci.yml` and `release.yml` as well. Only
-`CAREER_OS_HOME` needs to be set (user's data repo root — genuinely
+`CAREER_HOME` needs to be set (user's data repo root — genuinely
 user-specific and not derivable).
 
 ## [0.31.0] — 2026-05-05 — Multi-User Portability + CI
@@ -437,13 +466,13 @@ Every skill file and enforcement script previously referenced Anand's personal
 paths (`~/anand-career-os/`, `~/aiprojects/career-os-plugin/`). Any marketplace
 user would get broken path references immediately. All 11 skill files and 2
 scripts now use:
-- `$CAREER_OS_HOME` — user's data repo root (set in shell profile at install)
+- `$CAREER_HOME` — user's data repo root (set in shell profile at install)
 - `$CAREER_OS_PLUGIN` — plugin installation directory
-- `$CAREER_OS_GITHUB_REPO` — derived from `git -C $CAREER_OS_HOME remote get-url origin`
+- `$CAREER_GITHUB_REPO` — derived from `git -C $CAREER_HOME remote get-url origin`
 
-`rules/warm-contact-outreach-dedup/HOW.py` reads `CAREER_OS_HOME` env var with
+`rules/warm-contact-outreach-dedup/HOW.py` reads `CAREER_HOME` env var with
 graceful fallback. `scripts/match-tracker-migrate.py` standardized from the
-non-canonical `CAREER_HOME` to `CAREER_OS_HOME`.
+non-canonical `CAREER_HOME` to `CAREER_HOME`.
 
 ### Added — outreach-composer: mandatory dedup pre-flight (STEP 0)
 
@@ -809,7 +838,7 @@ Gemini verdict: CONDITIONAL SHIP. 8 findings addressed in this release;
   Added `test_no_md_fallback_methods_exist` regression guard.
 - **`test_migration_regression.py` — NEW, 6 cases** covering Codex #2 and
   #4: idempotency, `migration_log.dolt_commit_sha` population, orphan
-  reconcile (runs the script against a tmp CAREER_OS_HOME), rejected-section
+  reconcile (runs the script against a tmp CAREER_HOME), rejected-section
   preservation, new adapter methods functional, competency filter.
 - **Total: 22/22 green against live `cyborg_brain` Dolt.**
 

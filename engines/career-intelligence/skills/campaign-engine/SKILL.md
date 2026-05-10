@@ -22,7 +22,7 @@ The Campaign Engine is the upstream planner. Rather than acting as a monolithic 
 ### 1. Campaign Initialization
 **Triggers:** "create campaign [topic/thesis]"
 - Defines the core thesis, the Honey Pot (source material), and the target audience.
-- Builds the **Surface Coverage Matrix** using `$CAREER_OS_HOME/brain/identity/handles.md` to ensure no platforms are silently skipped.
+- Builds the **Surface Coverage Matrix** using `$CAREER_HOME/brain/identity/handles.md` to ensure no platforms are silently skipped.
 
 ### 2. Delegation (Drafting & Sequencing)
 The Campaign Engine does **NOT** draft the LinkedIn or X posts directly. 

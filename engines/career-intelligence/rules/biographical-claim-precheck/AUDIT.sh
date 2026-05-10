@@ -72,7 +72,7 @@ fi
 # escaped without a HOW record. This is conservative — only flags drafts
 # whose mtime is within the window AND has no log record.
 BYPASSED=0
-INPUT_DIR="${CAREER_OS_HOME:-${HOME}/anand-career-os}/INPUT"
+INPUT_DIR="${CAREER_HOME:-${HOME}/anand-career-os}/INPUT"
 if [[ -d "$INPUT_DIR" ]]; then
   while IFS= read -r draft; do
     [[ -z "$draft" ]] && continue

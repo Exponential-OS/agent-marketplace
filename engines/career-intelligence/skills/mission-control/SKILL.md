@@ -22,14 +22,14 @@ triggers:
 
 ## Task Substrate (v0.25.0+)
 
-> `$CAREER_OS_GITHUB_REPO` is derived from: `git -C $CAREER_OS_HOME remote get-url origin | sed 's/.*github.com[:/]//;s/.git$//'`
+> `$CAREER_GITHUB_REPO` is derived from: `git -C $CAREER_HOME remote get-url origin | sed 's/.*github.com[:/]//;s/.git$//'`
 
-Tasks live in `$CAREER_OS_GITHUB_REPO` GitHub Issues (canonical source of truth — single inbox for all Cyborg work). Repo of work indicated by `repo:*` label, NOT by issue location. Cadence indicated by `cadence:*` label (`operational` for high-frequency churn; `strategic` for sprint-scale; `meta` for trackers). Tier indicated by `tier:*` label (`p1`/`p2`/`p3`/`backlog`).
+Tasks live in `$CAREER_GITHUB_REPO` GitHub Issues (canonical source of truth — single inbox for all Cyborg work). Repo of work indicated by `repo:*` label, NOT by issue location. Cadence indicated by `cadence:*` label (`operational` for high-frequency churn; `strategic` for sprint-scale; `meta` for trackers). Tier indicated by `tier:*` label (`p1`/`p2`/`p3`/`backlog`).
 
-Tasks.md is DEPRECATED as of v0.25.0. See `$CAREER_OS_HOME/workspace.manifest.yaml` `task_routing:` section for the full architecture.
+Tasks.md is DEPRECATED as of v0.25.0. See `$CAREER_HOME/workspace.manifest.yaml` `task_routing:` section for the full architecture.
 
 This skill reads/writes via:
-- `gh` CLI (universal, all agents): `gh issue list --repo $CAREER_OS_GITHUB_REPO --state open --json number,title,labels,body`
+- `gh` CLI (universal, all agents): `gh issue list --repo $CAREER_GITHUB_REPO --state open --json number,title,labels,body`
 - `github-mcp` MCP server (post-restart, when MCP boots — at `npx @modelcontextprotocol/server-github`)
 
 Mission Control is read-only on tasks (priority dashboard rendering only). Skills that own writes (apply-tracker, cruise-control, pipeline-sync) call `gh issue create` / `gh issue edit` directly.
@@ -86,7 +86,7 @@ perform the action yourself by directly editing files.
 ### What Mission Control Does NOT Do
 
 - Never directly edit `job-pipeline.json` or `job-pipeline-match-tracker.json` — route to apply-tracker or pipeline-sync
-- Never create/edit task issues directly — that's apply-tracker, cruise-control, or pipeline-sync (via `gh issue` against `$CAREER_OS_GITHUB_REPO`)
+- Never create/edit task issues directly — that's apply-tracker, cruise-control, or pipeline-sync (via `gh issue` against `$CAREER_GITHUB_REPO`)
 - Never edit `job-pipeline-match-tracker.json` — that's job-match-scorer
 - Never edit story files — that's story-capture or organize
 - Never edit people files — that's network-intelligence
@@ -213,7 +213,7 @@ When `brain/projects/job-search/job-pipeline.json` exists, show the full dashboa
 2. Check `git log --oneline -5` for `(handoff updated externally)` — if found,
    read current handoff for another agent's updates
 3. Check story index health (exists? stale vs newest story?)
-4. Read open task issues (`gh issue list --repo $CAREER_OS_GITHUB_REPO --state open --json number,title,labels`) and `job-pipeline.json` + `job-pipeline-match-tracker.json` for dashboard data
+4. Read open task issues (`gh issue list --repo $CAREER_GITHUB_REPO --state open --json number,title,labels`) and `job-pipeline.json` + `job-pipeline-match-tracker.json` for dashboard data
 5. **For every named contact in the Warm Contacts section:** apply the Contact Action Pre-Flight protocol (see below) before rendering any action suggestion for that contact.
 
 ### Stale Pipeline Detection
@@ -296,7 +296,7 @@ QUICK ACTIONS
 
 | Section | Source | Read Pattern |
 |---------|--------|-------------|
-| Priorities | GitHub Issues `$CAREER_OS_GITHUB_REPO` | `gh issue list --state open` filtered by `tier:p1`/`tier:p2`, sort by tier ascending |
+| Priorities | GitHub Issues `$CAREER_GITHUB_REPO` | `gh issue list --state open` filtered by `tier:p1`/`tier:p2`, sort by tier ascending |
 | Pipeline | `brain/projects/job-search/job-pipeline.json` → `stage_data[]` | Active/advancing entries |
 | Metrics | `brain/projects/job-search/job-pipeline-match-tracker.json` | Count by `status` field (APPLIED, REJECTED, INTERVIEWING, OFFERED) |
 | Warm Contacts | `people/*.json` + `people-followup-query.py` | Run: `python3 ~/.career-os-state/scripts/people-followup-query.py --people-dir $CAREER_HOME/brain/network/people --days 7 --format json` — returns contacts with follow_up ≤ today+7d. Falls back to `.md` frontmatter for unmigrated files. NEVER hand-scan people files. |
@@ -310,7 +310,7 @@ QUICK ACTIONS
 find -H brain/stories -type f -name "*.md" \
   -not -name "STORY_INDEX.md" -not -name "README.md" 2>/dev/null | wc -l
 ```
-Note: `-H` is required because `brain/stories/` may be a symlink to `$CAREER_OS_HOME/brain/stories/` after the Brain-layer migration. Without `-H`, macOS `find` returns 0 results on a symlinked start directory.
+Note: `-H` is required because `brain/stories/` may be a symlink to `$CAREER_HOME/brain/stories/` after the Brain-layer migration. Without `-H`, macOS `find` returns 0 results on a symlinked start directory.
 Do NOT use `ls brain/stories/*.md` — it misses subdirectory contents
 and will undercount when stories are organized into categories (P9 coherence
 issue fixed by WO-049).

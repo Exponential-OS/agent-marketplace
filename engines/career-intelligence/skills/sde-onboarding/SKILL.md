@@ -85,7 +85,7 @@ After all 9 answers are collected:
 
 2. Fill in all `{{PLACEHOLDER}}` tokens with the user's answers.
 
-3. Write the 4 files to the user's `$CAREER_OS_HOME/brain/` directory:
+3. Write the 4 files to the user's `$CAREER_HOME/brain/` directory:
    ```
    brain/identity/professional-brand.md
    brain/identity/handles.md
@@ -129,14 +129,14 @@ Week 2 — Your First Campaign:
   3. Your context files are already loaded — no setup needed
 
 One optional step now: git commit your 4 new files so they're versioned:
-  cd $CAREER_OS_HOME && git add brain/identity/professional-brand.md brain/identity/handles.md brain/social-distribution-engine/content-flywheel.md brain/social-distribution-engine/social-channel-directory.md && git commit -m "feat(sde): Week 1 onboarding — context files initialized"
+  cd $CAREER_HOME && git add brain/identity/professional-brand.md brain/identity/handles.md brain/social-distribution-engine/content-flywheel.md brain/social-distribution-engine/social-channel-directory.md && git commit -m "feat(sde): Week 1 onboarding — context files initialized"
 ```
 
 ---
 
 ## Privacy Note
 
-The 4 files are local to the user's machine and `$CAREER_OS_HOME` directory. They are never transmitted anywhere unless the user explicitly opts in to signal sharing (`share_outcomes: true` in content-flywheel.md). Signal sharing, when opted in, shares only bucketed performance outcomes — never content, handles, or personal details.
+The 4 files are local to the user's machine and `$CAREER_HOME` directory. They are never transmitted anywhere unless the user explicitly opts in to signal sharing (`share_outcomes: true` in content-flywheel.md). Signal sharing, when opted in, shares only bucketed performance outcomes — never content, handles, or personal details.
 
 ---
 
@@ -145,4 +145,4 @@ The 4 files are local to the user's machine and `$CAREER_OS_HOME` directory. The
 - **User skips a question:** Ask again with context ("This becomes your primary brand statement — it's what every future draft is anchored to. Even a rough version is better than leaving it blank.")
 - **User doesn't know their subreddits yet:** Leave `social-channel-directory.md` with placeholder rows and note: "Update this before your first Reddit spoke post — Gate 2 will block unknown channels."
 - **Files already exist:** Show a diff of what would change. Ask: "Overwrite, merge, or skip?" Never silently overwrite.
-- **$CAREER_OS_HOME not set:** Default to `~/anand-career-os`. If that doesn't exist, ask the user for their Career OS home directory path.
+- **$CAREER_HOME not set:** Default to `~/anand-career-os`. If that doesn't exist, ask the user for their Career OS home directory path.

@@ -8,7 +8,7 @@ Usage:
     python3 pipeline-query.py [options]
 
 Options:
-    --tracker-path PATH     Path to match-tracker.json  [required or $CAREER_OS_HOME/brain/...]
+    --tracker-path PATH     Path to match-tracker.json  [required or $CAREER_HOME/brain/...]
     --min-score N           Minimum score (default: 80)
     --decision TIER         Filter by decision: FULL_INVEST, APPLY, CHECK_DELTA, SKIP
     --company NAME          Fuzzy company name filter
@@ -51,7 +51,7 @@ TERMINAL_STATUSES = {"DEAD", "SKIPPED", "REJECTED"}
 
 
 def _default_tracker() -> Path:
-    home = os.environ.get("CAREER_OS_HOME", str(Path.home() / "anand-career-os"))
+    home = os.environ.get("CAREER_HOME", os.environ.get("CAREER_OS_HOME", str(Path.home() / "anand-career-os")))
     return Path(home) / "brain" / "projects" / "job-search" / "job-pipeline-match-tracker.json"
 
 

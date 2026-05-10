@@ -1,0 +1,10 @@
+{
+  "slug": "linkedin-groups-dedup",
+  "version": "1.0.0",
+  "status": "active",
+  "created": "2026-05-10",
+  "product_home": "career-os-plugin",
+  "description": "Before posting to any LinkedIn Group, check groups-post-log.jsonl for posts in the last 7 days to that specific group. BLOCK if posted within cooldown window. Prevents spam patterns that lead to LinkedIn bans.",
+  "litmus": "Run HOW.py with group_url — exit 0 = no recent post (safe), exit 1 = within cooldown (BLOCK with next available date)",
+  "dispatch_slug": "linkedin-groups-dedup"
+}

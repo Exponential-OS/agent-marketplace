@@ -14,7 +14,7 @@ import sys
 from datetime import date
 
 LIVE_STATUSES = {"published", "live", "sent"}
-CAREER_OS_HOME_DEFAULT = str(pathlib.Path.home() / "anand-career-os")
+CAREER_HOME_DEFAULT = str(pathlib.Path.home() / "anand-career-os")
 
 
 def is_published(campaign):
@@ -42,10 +42,10 @@ def main() -> int:
     except Exception:
         ctx = {}
 
-    career_os_home = ctx.get("career_os_home", os.environ.get("CAREER_OS_HOME", CAREER_OS_HOME_DEFAULT))
+    career_home = ctx.get("career_home", os.environ.get("CAREER_HOME", os.environ.get("CAREER_OS_HOME", CAREER_HOME_DEFAULT)))
     default_dirs = [
-        str(pathlib.Path(career_os_home) / "brain/social-distribution-engine/campaigns"),
-        str(pathlib.Path(career_os_home) / "WIP/branding-product/articles"),
+        str(pathlib.Path(career_home) / "brain/social-distribution-engine/campaigns"),
+        str(pathlib.Path(career_home) / "WIP/branding-product/articles"),
     ]
     scan_dirs = ctx.get("campaigns_dirs", default_dirs)
 

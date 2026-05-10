@@ -23,7 +23,7 @@ Input JSON:
       "handles_file": "/abs/path/to/brain/identity/handles.md"
     }
 
-    handles_file defaults to $CAREER_OS_HOME/brain/identity/handles.md
+    handles_file defaults to $CAREER_HOME/brain/identity/handles.md
 
 Exit:
     0 = PASS  (all surfaces accounted for — either present or skip-reasoned)
@@ -101,9 +101,9 @@ def main():
 
     handles_file = ctx.get("handles_file", "")
     if not handles_file:
-        career_os_home = os.environ.get("CAREER_OS_HOME",
-                                         str(pathlib.Path.home() / "anand-career-os"))
-        handles_file = str(pathlib.Path(career_os_home) / "brain/identity/handles.md")
+        career_home = os.environ.get("CAREER_HOME", os.environ.get("CAREER_OS_HOME",
+                                         str(pathlib.Path.home() / "anand-career-os")))
+        handles_file = str(pathlib.Path(career_home) / "brain/identity/handles.md")
 
     handles_path = pathlib.Path(handles_file)
     if not handles_path.exists():

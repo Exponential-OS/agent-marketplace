@@ -8,11 +8,11 @@ A Cowork plugin for Career OS. Hooks in `hooks/`, skills in `skills/`, tests in 
 
 Specs, handoffs, and career data live in the private workspace — not this repo:
 
-- **Product specs & PRDs:** `$CAREER_OS_SPECS/`
-- **Handoff:** `$CAREER_OS_SPECS/NEXT_SESSION_HANDOFF.md`
-- **Cross-agent relay:** `$CAREER_OS_HOME/NEXT_SESSION_HANDOFF.md`
-- **Pipeline & memory:** `$CAREER_OS_HOME/brain/`
-- **Routing manifest:** `$CAREER_OS_HOME/workspace.manifest.yaml`
+- **Product specs & PRDs:** `$CAREER_SPECS/`
+- **Handoff:** `$CAREER_SPECS/NEXT_SESSION_HANDOFF.md`
+- **Cross-agent relay:** `$CAREER_HOME/NEXT_SESSION_HANDOFF.md`
+- **Pipeline & memory:** `$CAREER_HOME/brain/`
+- **Routing manifest:** `$CAREER_HOME/workspace.manifest.yaml`
 
 ## Version
 
@@ -219,7 +219,7 @@ Skills reference these shared files. Always use these exact paths:
 Scripts depend on these (provided by Cowork runtime):
 - `CLAUDE_PLUGIN_ROOT` — path to this plugin repo
 - `CLAUDE_PLUGIN_DATA` — writable state directory for this plugin
-- `CAREER_OS_HOME`, `CAREER_OS_SPECS`, `CAREER_OS_PLUGIN` — see `~/.claude/CLAUDE.md`
+- `CAREER_HOME`, `CAREER_SPECS`, `CAREER_OS_PLUGIN` — see `~/.claude/CLAUDE.md`
 
 ## Key Conventions
 

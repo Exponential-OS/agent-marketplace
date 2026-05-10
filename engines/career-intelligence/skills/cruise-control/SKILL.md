@@ -2,7 +2,7 @@
 name: cruise-control
 description: >
   Autonomous execution engine for Career OS. Takes a plan (from open GitHub
-  Issues at $CAREER_OS_GITHUB_REPO, or a conversation-agreed task list) and
+  Issues at $CAREER_GITHUB_REPO, or a conversation-agreed task list) and
   executes it end-to-end — applying to roles,
   generating resumes, sending outreach, updating pipeline. Gate-controlled: only
   activates on explicit user instruction. Presents a visibility table after every
@@ -22,11 +22,11 @@ triggers:
 
 ## Task Substrate (v0.25.0+)
 
-> `$CAREER_OS_GITHUB_REPO` is derived from: `git -C $CAREER_OS_HOME remote get-url origin | sed 's/.*github.com[:/]//;s/.git$//'`
+> `$CAREER_GITHUB_REPO` is derived from: `git -C $CAREER_HOME remote get-url origin | sed 's/.*github.com[:/]//;s/.git$//'`
 
-Tasks live in `$CAREER_OS_GITHUB_REPO` GitHub Issues (canonical source of truth — single inbox for all Cyborg work). Repo of work indicated by `repo:*` label, NOT by issue location. Cadence indicated by `cadence:*` label (`operational` for high-frequency churn; `strategic` for sprint-scale; `meta` for trackers). Tier indicated by `tier:*` label (`p1`/`p2`/`p3`/`backlog`).
+Tasks live in `$CAREER_GITHUB_REPO` GitHub Issues (canonical source of truth — single inbox for all Cyborg work). Repo of work indicated by `repo:*` label, NOT by issue location. Cadence indicated by `cadence:*` label (`operational` for high-frequency churn; `strategic` for sprint-scale; `meta` for trackers). Tier indicated by `tier:*` label (`p1`/`p2`/`p3`/`backlog`).
 
-Tasks.md is DEPRECATED as of v0.25.0. See `$CAREER_OS_HOME/workspace.manifest.yaml` `task_routing:` section for the full architecture.
+Tasks.md is DEPRECATED as of v0.25.0. See `$CAREER_HOME/workspace.manifest.yaml` `task_routing:` section for the full architecture.
 
 This skill reads/writes via:
 - `gh` CLI (universal, all agents)
@@ -34,9 +34,9 @@ This skill reads/writes via:
 
 **Execution order:** Cruise Control reads from `tier:p1` first (highest priority), then `tier:p2`, with operational items (`cadence:operational`) preferred over strategic for short-cycle batch runs:
 ```bash
-gh issue list --repo $CAREER_OS_GITHUB_REPO --state open \
+gh issue list --repo $CAREER_GITHUB_REPO --state open \
   --label "tier:p1" --json number,title,body,labels --limit 50
-gh issue list --repo $CAREER_OS_GITHUB_REPO --state open \
+gh issue list --repo $CAREER_GITHUB_REPO --state open \
   --label "tier:p2" --json number,title,body,labels --limit 50
 ```
 
@@ -95,7 +95,7 @@ career-critical tasks (applications, outreach) requires explicit human consent.
 
 Cruise Control requires a plan before execution. The plan can come from:
 
-1. **GitHub Issues at `$CAREER_OS_GITHUB_REPO`** — the standing task list, organized by `tier:*` labels (replaces Tasks.md as of v0.25.0)
+1. **GitHub Issues at `$CAREER_GITHUB_REPO`** — the standing task list, organized by `tier:*` labels (replaces Tasks.md as of v0.25.0)
 2. **Conversation agreement** — a plan discussed and approved in this session
 3. **Handoff doc** — tasks inherited from a previous session
 
@@ -127,7 +127,7 @@ and asking for direction — it doesn't silently skip.
 
 ### Typed Work Item Routing
 
-GitHub Issues at `$CAREER_OS_GITHUB_REPO` use labels for typed metadata
+GitHub Issues at `$CAREER_GITHUB_REPO` use labels for typed metadata
 that Cruise Control reads to determine routing and execution order.
 
 **Routing by `blocked_on:*` label (parsed from issue body or label suffix):**
@@ -252,7 +252,7 @@ Completed: 3/5 | Blocked: 1 | Needs Review: 1
 
 | Source | Path | What It Provides |
 |--------|------|------------------|
-| Tasks | GitHub Issues `$CAREER_OS_GITHUB_REPO` | The execution queue (open issues, sorted by `tier:*` label) |
+| Tasks | GitHub Issues `$CAREER_GITHUB_REPO` | The execution queue (open issues, sorted by `tier:*` label) |
 | Pipeline | `brain/projects/job-search/job-pipeline.json` | Role details for execution |
 | Match Tracker | `brain/projects/job-search/job-pipeline-match-tracker.json` | Scores and recommendations |
 | Scan reports | `brain/scans/{YYYY-MM-DD}/` | Roles to process |
@@ -324,7 +324,7 @@ surface the verification as a `blocked: human` task so the user can confirm
 later without blocking the rest of the queue:
 
 ```bash
-gh issue create --repo $CAREER_OS_GITHUB_REPO \
+gh issue create --repo $CAREER_GITHUB_REPO \
   --title "Verify {Company} application on Greenhouse" \
   --label "tier:p3,cadence:operational,repo:career-os-data,kind:verify,blocked_on:human" \
   --body "$(cat <<EOF

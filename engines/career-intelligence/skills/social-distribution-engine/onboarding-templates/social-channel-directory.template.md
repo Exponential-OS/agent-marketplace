@@ -22,6 +22,15 @@ updated: {{DATE}}
 | LinkedIn Article | ✅ ACTIVE | High | SEO hub. Publish before Post Hub. |
 | LinkedIn Newsletter | ⬜ INACTIVE | — | Not yet activated. |
 
+## LinkedIn Groups
+
+Use `"discover linkedin groups"` to find and score groups for your content pillars.
+7-day cooldown per group. Max 3 groups per campaign. Posts must be discussion-framing (≤150 words, open with question).
+
+| Channel Type | Group Name | URL | Members | Activity | Status | Added |
+|---|---|---|---|---|---|---|
+| linkedin_group | *(example)* | https://linkedin.com/groups/... | 0 | — | ⬜ PENDING | — |
+
 ## Substack
 
 | Surface | Status | ROI | Notes |

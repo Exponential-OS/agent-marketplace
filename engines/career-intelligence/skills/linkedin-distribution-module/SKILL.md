@@ -75,8 +75,22 @@ When distributing to LinkedIn:
 - **Asset Attachment:** Use correct visual assets based on the campaign specs (e.g., 1200x627 for short posts, no images for comment cascades).
 
 ### 2. Group Management & Posting
-- Check `brain/social-distribution-engine/social-channel-directory.md` for safe LinkedIn Groups.
-- Only post to groups categorized appropriately for the campaign.
+
+For full LinkedIn Groups discovery + distribution, use the `linkedin-groups-distribution-module` skill.
+
+Summary of groups rules enforced by that skill:
+- Check `brain/social-distribution-engine/social-channel-directory.md` for approved LinkedIn Groups.
+- 7-day cooldown per group (enforced by `linkedin-groups-dedup` gate).
+- Max 3 groups per campaign. Max 150 words per group post. Open with question — not declaration.
+- Dedup gate fires before every group post:
+
+```bash
+python3 "$(ls -v ~/.claude/plugins/cache/xos/career-os/*/rules/linkedin-groups-dedup/HOW.py 2>/dev/null | tail -1)" \
+  '{"group_url": "<URL>"}'
+```
+
+Exit 0 = PASS. Exit 1 = BLOCK (with next available date).
+
 - **Rule:** If a group historically yields 0 engagement, do NOT post. Escalate to the Analytics Engine for pruning.
 
 ### 3. Record Execution

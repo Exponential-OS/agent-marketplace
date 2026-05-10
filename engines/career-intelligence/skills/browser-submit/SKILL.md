@@ -95,7 +95,7 @@ Repeat for each ATS that requires auth. Most direct company ATS pages (boards.gr
 
 ## Observability
 
-Every invocation logs to `$CAREER_OS_HOME/brain/logs/browser-submit-dispatch-log.jsonl` with:
+Every invocation logs to `$CAREER_HOME/brain/logs/browser-submit-dispatch-log.jsonl` with:
 ```
 { ts, kind: "browser-submit", company, role, ats_type, mode, success, duration_ms }
 ```

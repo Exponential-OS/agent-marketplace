@@ -144,7 +144,7 @@ ALL must pass before output. If any fail, report failures and suggest fixes — 
 
 | Gate | Check | Threshold |
 |------|-------|-----------|
-| **Canonical claim verification** | Every biographical claim (tenure, role title, report count, scale-figure, date range) anchors in `$CAREER_OS_HOME/brain/identity/experience-history.md`. Run `python3 "$(ls -v ~/.claude/plugins/cache/xos/career-os/*/rules/biographical-claim-precheck/HOW.py 2>/dev/null | tail -1)"` against the in-progress draft; verdict must be PASS before any other gate fires. | Hard fail (BLOCK) |
+| **Canonical claim verification** | Every biographical claim (tenure, role title, report count, scale-figure, date range) anchors in `$CAREER_HOME/brain/identity/experience-history.md`. Run `python3 "$(ls -v ~/.claude/plugins/cache/xos/career-os/*/rules/biographical-claim-precheck/HOW.py 2>/dev/null | tail -1)"` against the in-progress draft; verdict must be PASS before any other gate fires. | Hard fail (BLOCK) |
 | **Page count** | IC roles: 1 page. Leadership: 2 pages max. | Hard fail |
 | **Banned phrases** | No "responsible for", "helped with", "worked on", "assisted in", "was involved in" | Hard fail |
 | **Quantification** | Every bullet has a metric, scope indicator, or measurable outcome | Warn if >2 bullets lack metrics |

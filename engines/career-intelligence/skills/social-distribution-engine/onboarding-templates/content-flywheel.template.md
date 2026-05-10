@@ -55,6 +55,16 @@ See `brain/identity/handles.md` for current handle list across all platforms.
 
 ## Signal Sharing
 
-- **Opt-in to anonymous signal aggregation:** {{SHARE_OUTCOMES}}
-  - If `true`: campaign performance deltas (reach tier, golden hour hit, engagement mix) are anonymized and contributed to the shared signal map to improve gate thresholds for all users.
-  - Content is NEVER shared — only bucketed outcome metrics.
+```yaml
+signal_sharing:
+  enabled: false          # change to true to opt in to anonymous signal aggregation
+  device_id: ""           # auto-populated on first sync (random UUID, rotates quarterly)
+  last_sync: ""           # ISO timestamp of last successful sync to signal.xos.name
+```
+
+- If `enabled: true`: bucketed campaign performance outcomes are anonymized and contributed to the shared signal map (signal.xos.name) to improve gate thresholds for all users.
+- Content is NEVER shared — only bucketed outcome metrics (engagement tier, impression tier, hour, day-of-week, post type, etc.).
+- No handles, names, post text, or identifiable info ever leaves the device.
+- Sync requires explicit user command: `"sde sync signals"` — never auto-syncs.
+- To inspect what would be sent: `"sde show my signal data"`
+- To opt out: set `enabled: false` and delete `brain/social-distribution-engine/signals/local-signals.jsonl`

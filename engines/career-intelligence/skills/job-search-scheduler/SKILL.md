@@ -38,11 +38,11 @@ triggers:
 
 ## Task Substrate (v0.25.0+)
 
-> `$CAREER_OS_GITHUB_REPO` is derived from: `git -C $CAREER_OS_HOME remote get-url origin | sed 's/.*github.com[:/]//;s/.git$//'`
+> `$CAREER_GITHUB_REPO` is derived from: `git -C $CAREER_HOME remote get-url origin | sed 's/.*github.com[:/]//;s/.git$//'`
 
-Tasks live in `$CAREER_OS_GITHUB_REPO` GitHub Issues (canonical source of truth — single inbox for all Cyborg work). Repo of work indicated by `repo:*` label, NOT by issue location. Cadence indicated by `cadence:*` label (`operational` for high-frequency churn; `strategic` for sprint-scale; `meta` for trackers). Tier indicated by `tier:*` label (`p1`/`p2`/`p3`/`backlog`).
+Tasks live in `$CAREER_GITHUB_REPO` GitHub Issues (canonical source of truth — single inbox for all Cyborg work). Repo of work indicated by `repo:*` label, NOT by issue location. Cadence indicated by `cadence:*` label (`operational` for high-frequency churn; `strategic` for sprint-scale; `meta` for trackers). Tier indicated by `tier:*` label (`p1`/`p2`/`p3`/`backlog`).
 
-Tasks.md is DEPRECATED as of v0.25.0. See `$CAREER_OS_HOME/workspace.manifest.yaml` `task_routing:` section for the full architecture.
+Tasks.md is DEPRECATED as of v0.25.0. See `$CAREER_HOME/workspace.manifest.yaml` `task_routing:` section for the full architecture.
 
 This skill reads/writes via:
 - `gh` CLI (universal, all agents)
@@ -50,7 +50,7 @@ This skill reads/writes via:
 
 **New role discoveries open as `kind:scan-result` issues** (one per high-priority finding) so cruise-control / mission-control can pick them up:
 ```bash
-gh issue create --repo $CAREER_OS_GITHUB_REPO \
+gh issue create --repo $CAREER_GITHUB_REPO \
   --title "Score+apply: {Company} {Role}" \
   --label "tier:p2,cadence:operational,repo:career-os-data,kind:scan-result" \
   --body "<scan-source URL + JD path + warm-path tag + suggested resume track>"
@@ -143,7 +143,7 @@ If you change scan logic → update this SKILL.md AND the scheduled task prompt.
 | Scan report | `brain/projects/job-search/scans/{YYYY-MM-DD}/scan-{HH}-{MM}.md` | Roles found, warm tags, JD quality, verify queue |
 | Enrichment report | `brain/projects/job-search/scans/{YYYY-MM-DD}/enrich-{HH}-{MM}.md` | Deep warm-path results for roles from latest scan |
 | JD snapshots | `brain/reference/jd-samples/{company}-{role-slug}.md` | Fetched JD text (permanent — URLs die, snapshots don't) |
-| Task updates | GitHub Issues `$CAREER_OS_GITHUB_REPO` | New `kind:scan-result` issues opened per high-priority role |
+| Task updates | GitHub Issues `$CAREER_GITHUB_REPO` | New `kind:scan-result` issues opened per high-priority role |
 | Pipeline updates | `brain/projects/job-search/job-pipeline.json` | New "Ready to Apply" entries |
 
 ---
@@ -399,7 +399,7 @@ People files: {N} contacts loaded
 - Do NOT add scores, do NOT modify existing entries, do NOT touch Already Applied
 
 **Task updates:**
-- Open `kind:scan-result` issues on `$CAREER_OS_GITHUB_REPO` for high-priority new roles (one issue per role; see Task Substrate section above for command)
+- Open `kind:scan-result` issues on `$CAREER_GITHUB_REPO` for high-priority new roles (one issue per role; see Task Substrate section above for command)
 
 ---
 

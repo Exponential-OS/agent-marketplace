@@ -33,8 +33,8 @@ import sys
 SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
 SLUG = SCRIPT_DIR.name
 LOG_PATH = pathlib.Path.home() / ".career-os-enforcement-log.jsonl"
-_career_os_home = pathlib.Path(os.environ.get("CAREER_OS_HOME", str(pathlib.Path.home() / "anand-career-os")))
-DEFAULT_CANONICAL = _career_os_home / "brain" / "identity" / "experience-history.md"
+_career_home = pathlib.Path(os.environ.get("CAREER_HOME", os.environ.get("CAREER_OS_HOME", str(pathlib.Path.home() / "anand-career-os"))))
+DEFAULT_CANONICAL = _career_home / "brain" / "identity" / "experience-history.md"
 
 # --- Claim patterns (heuristic, high-recall — agent confirms unanchored hits) ---
 

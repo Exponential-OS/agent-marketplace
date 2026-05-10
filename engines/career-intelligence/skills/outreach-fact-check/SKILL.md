@@ -136,7 +136,7 @@ OBJECTIVE-CODIFICATION + variance-is-evil — no second instance to disagree.
   "claim": "<verbatim claim — copied from input>",
   "claim_class": "tenure|title|scope|compensation|recognition|education|speaking|identity|metric|comparative",
   "verdict": "match|mismatch|unknown|insufficient_evidence",
-  "canonical_source": "<tilde-prefixed canonical path — e.g. $CAREER_OS_HOME/brain/identity/experience-history.md. The field returns the tilde form (portable across machines, matches how brain files reference each other). Consumers expand ~ at read time.>",
+  "canonical_source": "<tilde-prefixed canonical path — e.g. $CAREER_HOME/brain/identity/experience-history.md. The field returns the tilde form (portable across machines, matches how brain files reference each other). Consumers expand ~ at read time.>",
   "canonical_excerpt": "<the specific line(s) from canonical that govern this claim>",
   "diff": "<for mismatch: short rationale — what the claim says vs what canonical says>",
   "confidence": "HIGH|MEDIUM|LOW",
@@ -163,7 +163,7 @@ OBJECTIVE-CODIFICATION + variance-is-evil — no second instance to disagree.
 
 ## Canonical Source Paths
 
-All sources live in `$CAREER_OS_HOME/brain/identity/` (migrated from `brain/`
+All sources live in `$CAREER_HOME/brain/identity/` (migrated from `brain/`
 per migration v4, 2026-04-27). Career-os plugin skills access these directly — no symlinks.
 
 | File | Canonical For |
@@ -174,7 +174,7 @@ per migration v4, 2026-04-27). Career-os plugin skills access these directly —
 | `handles.md` | Social/professional handles — LinkedIn URL, GitHub, Substack, X/Twitter, thewhyman.com |
 
 **Why `brain/identity/`, NOT `~/cyborg/`:** Instance-specific biographical content migrated
-from `~/cyborg/` to `$CAREER_OS_HOME/brain/identity/` per migration v3 (2026-04-26) and
+from `~/cyborg/` to `$CAREER_HOME/brain/identity/` per migration v3 (2026-04-26) and
 confirmed by migration v4 (2026-04-27). Future xTeamOS / xFamilyOS verifiers will read
 from THEIR instance's `brain/identity/` — same pattern, different path.
 
@@ -430,10 +430,10 @@ co-dialectic v4.1 Protocol 8
 │
 └── [for each claim] → outreach-fact-check
        │
-       ├── Read canonical: $CAREER_OS_HOME/brain/identity/experience-history.md
-       ├── Read canonical: $CAREER_OS_HOME/brain/identity/awards-education-speaking.md
-       ├── Read canonical: $CAREER_OS_HOME/brain/identity/identity.md
-       ├── Read canonical: $CAREER_OS_HOME/brain/identity/handles.md
+       ├── Read canonical: $CAREER_HOME/brain/identity/experience-history.md
+       ├── Read canonical: $CAREER_HOME/brain/identity/awards-education-speaking.md
+       ├── Read canonical: $CAREER_HOME/brain/identity/identity.md
+       ├── Read canonical: $CAREER_HOME/brain/identity/handles.md
        │
        └── Return: { verdict, canonical_excerpt, diff, remediation }
               │
@@ -450,7 +450,7 @@ Future incarnations follow the same architecture, different canonical paths:
 
 | Product | Skill name | Canonical sources |
 |---------|-----------|-------------------|
-| xHumanOS (Anand) | `career-os:outreach-fact-check` (this skill) | `$CAREER_OS_HOME/brain/identity/` |
+| xHumanOS (Anand) | `career-os:outreach-fact-check` (this skill) | `$CAREER_HOME/brain/identity/` |
 | xTeamOS | `team-claim-verifier` | `~/[team-instance]/brain/identity/` |
 | xFamilyOS | `family-claim-verifier` | `~/[family-instance]/brain/identity/` |
 | xCommunityOS | `community-claim-verifier` | `~/[community-instance]/brain/identity/` |
@@ -504,7 +504,7 @@ Recommendation: [PASS — proceed to T4 confirm] or [BLOCK — fix claims before
 
 ## Dependencies
 
-- `experience-history.md` at `$CAREER_OS_HOME/brain/identity/` (required — primary canonical)
+- `experience-history.md` at `$CAREER_HOME/brain/identity/` (required — primary canonical)
 - `awards-education-speaking.md` at same path (required for classes 5, 6, 7)
 - `identity.md` at same path (required for class 8)
 - `handles.md` at same path (required for class 8)

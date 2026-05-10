@@ -9,8 +9,8 @@ sent within the lookback window (default 14 days).
 Input JSON via $1 or stdin (when $1 == '-'):
   contact_name   - full or partial name of the contact (e.g. "Iuliia Melnychuk")
   people_dir     - absolute path to brain/network/people/
-                   (default: $CAREER_OS_HOME/brain/network/people, with
-                    $CAREER_OS_HOME falling back to ~/anand-career-os)
+                   (default: $CAREER_HOME/brain/network/people, with
+                    $CAREER_HOME falling back to ~/anand-career-os)
   lookback_days  - how many days to treat as "recent" (default: 14)
 
 Output: JSON {"verdict": "PASS"} or {"verdict": "BLOCK", "reason": "...", "last_contact": "...", ...}
@@ -25,10 +25,10 @@ import sys
 
 RULE_SLUG = "warm-contact-outreach-dedup"
 LOG_FILE = pathlib.Path.home() / ".cyborg-enforcement-log.jsonl"
-_CAREER_OS_HOME = pathlib.Path(
-    os.environ.get("CAREER_OS_HOME", str(pathlib.Path.home() / "anand-career-os"))
+_CAREER_HOME = pathlib.Path(
+    os.environ.get("CAREER_HOME", os.environ.get("CAREER_OS_HOME", str(pathlib.Path.home() / "anand-career-os")))
 )
-DEFAULT_PEOPLE_DIR = _CAREER_OS_HOME / "brain/network/people"
+DEFAULT_PEOPLE_DIR = _CAREER_HOME / "brain/network/people"
 DEFAULT_LOOKBACK_DAYS = 14
 
 

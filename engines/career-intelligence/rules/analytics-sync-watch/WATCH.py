@@ -30,7 +30,7 @@ from datetime import date, timedelta
 
 LIVE_STATUSES = {"published", "live", "sent"}
 DEFAULT_STALE_DAYS = 7
-CAREER_OS_HOME_DEFAULT = str(pathlib.Path.home() / "anand-career-os")
+CAREER_HOME_DEFAULT = str(pathlib.Path.home() / "anand-career-os")
 
 
 def is_published(campaign):
@@ -89,14 +89,14 @@ def main() -> int:
     except Exception:
         ctx = {}
 
-    career_os_home = ctx.get("career_os_home", os.environ.get("CAREER_OS_HOME", CAREER_OS_HOME_DEFAULT))
+    career_home = ctx.get("career_home", os.environ.get("CAREER_HOME", os.environ.get("CAREER_OS_HOME", CAREER_HOME_DEFAULT)))
     stale_days = int(ctx.get("stale_days", DEFAULT_STALE_DAYS))
     today = date.today()
 
     # Default scan dirs: brain/sde/campaigns + WIP/branding-product/articles
     default_dirs = [
-        str(pathlib.Path(career_os_home) / "brain/social-distribution-engine/campaigns"),
-        str(pathlib.Path(career_os_home) / "WIP/branding-product/articles"),
+        str(pathlib.Path(career_home) / "brain/social-distribution-engine/campaigns"),
+        str(pathlib.Path(career_home) / "WIP/branding-product/articles"),
     ]
     scan_dirs = ctx.get("campaigns_dirs", default_dirs)
 

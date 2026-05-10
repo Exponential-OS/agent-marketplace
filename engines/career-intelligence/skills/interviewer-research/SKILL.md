@@ -86,7 +86,7 @@ today's date in `YYYY-MM-DD`.
   a LinkedIn URL is known or fuzzy-resolvable, fetch structured profile
   data (current role, prior roles, education).
 - **gh CLI** — opens the `kind:prep` GitHub Issue at
-  `$CAREER_OS_GITHUB_REPO` linking the dossier.
+  `$CAREER_GITHUB_REPO` linking the dossier.
 
 ---
 
@@ -171,7 +171,7 @@ INPUT/{company-slug}-{date}-prep-dossier.md
 ### Step 5: Open `kind:prep` GitHub Issue
 
 ```bash
-gh issue create --repo $CAREER_OS_GITHUB_REPO \
+gh issue create --repo $CAREER_GITHUB_REPO \
   --title "Prep dossier — [Company] [Role] panel on [Date]" \
   --label "tier:p1,cadence:operational,repo:career-os-data,kind:prep" \
   --body "$(cat <<EOF

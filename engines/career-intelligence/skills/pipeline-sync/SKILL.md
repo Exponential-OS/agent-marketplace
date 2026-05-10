@@ -2,7 +2,7 @@
 name: pipeline-sync
 description: >
   Reconciles data across Career OS's three core surfaces: job-pipeline.json (stage detail + referrals),
-  job-pipeline-match-tracker.json (status + scoring), and GitHub Issues at $CAREER_OS_GITHUB_REPO
+  job-pipeline-match-tracker.json (status + scoring), and GitHub Issues at $CAREER_GITHUB_REPO
   (action items — replaces Tasks.md as of v0.25.0). Detects
   drift between surfaces, propagates updates, and ensures row counts and statuses
   are consistent. Use whenever data feels out of sync, after bulk operations,
@@ -22,17 +22,17 @@ triggers:
 
 ## Task Substrate (v0.25.0+)
 
-> `$CAREER_OS_GITHUB_REPO` is derived from: `git -C $CAREER_OS_HOME remote get-url origin | sed 's/.*github.com[:/]//;s/.git$//'`
+> `$CAREER_GITHUB_REPO` is derived from: `git -C $CAREER_HOME remote get-url origin | sed 's/.*github.com[:/]//;s/.git$//'`
 
-Tasks live in `$CAREER_OS_GITHUB_REPO` GitHub Issues (canonical source of truth — single inbox for all Cyborg work). Repo of work indicated by `repo:*` label, NOT by issue location. Cadence indicated by `cadence:*` label (`operational` for high-frequency churn; `strategic` for sprint-scale; `meta` for trackers). Tier indicated by `tier:*` label (`p1`/`p2`/`p3`/`backlog`).
+Tasks live in `$CAREER_GITHUB_REPO` GitHub Issues (canonical source of truth — single inbox for all Cyborg work). Repo of work indicated by `repo:*` label, NOT by issue location. Cadence indicated by `cadence:*` label (`operational` for high-frequency churn; `strategic` for sprint-scale; `meta` for trackers). Tier indicated by `tier:*` label (`p1`/`p2`/`p3`/`backlog`).
 
-Tasks.md is DEPRECATED as of v0.25.0. See `$CAREER_OS_HOME/workspace.manifest.yaml` `task_routing:` section for the full architecture.
+Tasks.md is DEPRECATED as of v0.25.0. See `$CAREER_HOME/workspace.manifest.yaml` `task_routing:` section for the full architecture.
 
 This skill reads/writes via:
-- `gh` CLI (universal, all agents): `gh issue list --repo $CAREER_OS_GITHUB_REPO --state open --json number,title,body,labels,createdAt`
+- `gh` CLI (universal, all agents): `gh issue list --repo $CAREER_GITHUB_REPO --state open --json number,title,body,labels,createdAt`
 - `github-mcp` MCP server (post-restart, when MCP boots — at `npx @modelcontextprotocol/server-github`)
 
-Pipeline-sync reconciles **Pipeline (markdown)** ↔ **Match Tracker (markdown)** ↔ **Open task issues (GitHub)**. Issue creates/closes are made via `gh issue create` / `gh issue close` against `$CAREER_OS_GITHUB_REPO`.
+Pipeline-sync reconciles **Pipeline (markdown)** ↔ **Match Tracker (markdown)** ↔ **Open task issues (GitHub)**. Issue creates/closes are made via `gh issue create` / `gh issue close` against `$CAREER_GITHUB_REPO`.
 
 ## Purpose
 
@@ -47,7 +47,7 @@ The three core files and their roles:
 |------|------|------|
 | Pipeline | `brain/projects/job-search/job-pipeline.json` | Source of truth for **status** (stage, comp, next action) |
 | Match Tracker | `brain/projects/job-search/job-pipeline-match-tracker.json` | Source of truth for **scoring** (match %, category breakdowns) |
-| Tasks | GitHub Issues `$CAREER_OS_GITHUB_REPO` | Source of truth for **action items** (what to do next, priority via `tier:*` label) |
+| Tasks | GitHub Issues `$CAREER_GITHUB_REPO` | Source of truth for **action items** (what to do next, priority via `tier:*` label) |
 
 ## Output Format
 
@@ -74,7 +74,7 @@ Cowork's `schedule` skill infrastructure.
 |--------|------|------------------|
 | Pipeline | `brain/projects/job-search/job-pipeline.json` | Current status of all roles |
 | Match Tracker | `brain/projects/job-search/job-pipeline-match-tracker.json` | Scoring history for all evaluated roles |
-| Tasks | GitHub Issues `$CAREER_OS_GITHUB_REPO` (open, `kind:waiting-on`/`kind:prep`/etc.) | Current action items and "Waiting On" entries |
+| Tasks | GitHub Issues `$CAREER_GITHUB_REPO` (open, `kind:waiting-on`/`kind:prep`/etc.) | Current action items and "Waiting On" entries |
 | Scan reports | `brain/scans/{YYYY-MM-DD}/` | Recent scan outputs (for new roles not yet in pipeline) |
 | Handoff | `NEXT_SESSION_HANDOFF.md` | Recent state changes that may not be reflected in files |
 
@@ -83,7 +83,7 @@ Cowork's `schedule` skill infrastructure.
 | Output | Path | What It Contains |
 |--------|------|------------------|
 | Pipeline (updated) | `brain/projects/job-search/job-pipeline.json` | Reconciled statuses, corrected row counts |
-| Tasks (updated) | GitHub Issues `$CAREER_OS_GITHUB_REPO` | New issues (`kind:waiting-on`, action items), closed stale issues |
+| Tasks (updated) | GitHub Issues `$CAREER_GITHUB_REPO` | New issues (`kind:waiting-on`, action items), closed stale issues |
 | Sync report | Console output | Summary of what was found and fixed |
 
 The match tracker is **read-only** for this skill — scoring is the job-match-scorer
@@ -109,7 +109,7 @@ Run these checks:
 
 **B. Status drift (Pipeline ↔ Task issues)**
 - For each role in Pipeline's Active section: verify a corresponding open issue exists
-  on `$CAREER_OS_GITHUB_REPO` (either `tier:p1`/`tier:p2` action item or `kind:waiting-on`)
+  on `$CAREER_GITHUB_REPO` (either `tier:p1`/`tier:p2` action item or `kind:waiting-on`)
 - For each open `kind:waiting-on` issue: verify the role still exists in Pipeline
   and hasn't been rejected/closed
 - Flag orphans in either direction
@@ -160,7 +160,7 @@ Show a health report:
 
 ✅ Row count: 104 actual = 104 in header
 ⚠️ Status drift: 2 issues found
-   - Harvey AI EM Product: in Pipeline (Applied 3/31) but no open `kind:waiting-on` issue on $CAREER_OS_GITHUB_REPO
+   - Harvey AI EM Product: in Pipeline (Applied 3/31) but no open `kind:waiting-on` issue on $CAREER_GITHUB_REPO
    - Goodfire: open `kind:waiting-on` issue #128 (3/17) but no update in 14 days — stale?
 ✅ Score coverage: all Ready to Apply roles have scores
 ⚠️ Scan propagation: 1 role from 3/31 scan not in Pipeline
@@ -182,7 +182,7 @@ On user approval (or all if running in Cruise Control mode):
 - Update row counts if they changed
 - Open new GitHub issues in typed work-item format:
   ```bash
-  gh issue create --repo $CAREER_OS_GITHUB_REPO \
+  gh issue create --repo $CAREER_GITHUB_REPO \
     --title "{description}" \
     --label "tier:p3,cadence:operational,repo:career-os-data,kind:waiting-on" \
     --body "$(cat <<EOF
@@ -263,4 +263,4 @@ In addition to reconciling the 3 core files, pipeline-sync should now validate:
 ### Phase 2: Auto-Heal
 - Safe fixes applied automatically (row counts, missing `kind:waiting-on` issues)
 - Risky fixes (stale closures, score mismatches) still require approval
-- Webhook integration: triggers automatically when job-pipeline.json changes (file watcher) or when issues open/close on `$CAREER_OS_GITHUB_REPO` (GitHub webhook)
+- Webhook integration: triggers automatically when job-pipeline.json changes (file watcher) or when issues open/close on `$CAREER_GITHUB_REPO` (GitHub webhook)

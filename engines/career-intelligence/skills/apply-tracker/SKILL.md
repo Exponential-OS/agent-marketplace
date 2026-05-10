@@ -24,23 +24,23 @@ triggers:
 
 ## Task Substrate (v0.25.0+)
 
-> `$CAREER_OS_GITHUB_REPO` is derived from: `git -C $CAREER_OS_HOME remote get-url origin | sed 's/.*github.com[:/]//;s/.git$//'`
+> `$CAREER_GITHUB_REPO` is derived from: `git -C $CAREER_HOME remote get-url origin | sed 's/.*github.com[:/]//;s/.git$//'`
 
-Tasks live in `$CAREER_OS_GITHUB_REPO` GitHub Issues (canonical source of truth — single inbox for all Cyborg work). Repo of work indicated by `repo:*` label, NOT by issue location. Cadence indicated by `cadence:*` label (`operational` for high-frequency churn; `strategic` for sprint-scale; `meta` for trackers). Tier indicated by `tier:*` label (`p1`/`p2`/`p3`/`backlog`).
+Tasks live in `$CAREER_GITHUB_REPO` GitHub Issues (canonical source of truth — single inbox for all Cyborg work). Repo of work indicated by `repo:*` label, NOT by issue location. Cadence indicated by `cadence:*` label (`operational` for high-frequency churn; `strategic` for sprint-scale; `meta` for trackers). Tier indicated by `tier:*` label (`p1`/`p2`/`p3`/`backlog`).
 
-Tasks.md is DEPRECATED as of v0.25.0. See `$CAREER_OS_HOME/workspace.manifest.yaml` `task_routing:` section for the full architecture.
+Tasks.md is DEPRECATED as of v0.25.0. See `$CAREER_HOME/workspace.manifest.yaml` `task_routing:` section for the full architecture.
 
 This skill reads/writes via:
 - `gh` CLI (universal, all agents)
 - `github-mcp` MCP server (post-restart, when MCP boots — at `npx @modelcontextprotocol/server-github`)
 
 **Write paths (canonical commands):**
-- New "Waiting On" entry (post-Apply): `gh issue create --repo $CAREER_OS_GITHUB_REPO --title "Waiting — {Company} {Role}" --body "<typed work item body>" --label "tier:p3,cadence:operational,repo:career-os-data,kind:waiting-on"`
+- New "Waiting On" entry (post-Apply): `gh issue create --repo $CAREER_GITHUB_REPO --title "Waiting — {Company} {Role}" --body "<typed work item body>" --label "tier:p3,cadence:operational,repo:career-os-data,kind:waiting-on"`
 - Interview prep item: `--label "tier:p1,cadence:operational,repo:career-os-data,kind:prep"`
 - Offer evaluation: `--label "tier:p1,cadence:operational,repo:career-os-data,kind:offer-eval"`
 - Close on rejection / advance: `gh issue close <num> --reason "completed"` (or `--reason "not planned"` for skipped)
 
-**Read paths:** `gh issue list --repo $CAREER_OS_GITHUB_REPO --state open --label "kind:waiting-on" --json number,title,body,labels,createdAt`
+**Read paths:** `gh issue list --repo $CAREER_GITHUB_REPO --state open --label "kind:waiting-on" --json number,title,body,labels,createdAt`
 
 ## Purpose
 
@@ -82,7 +82,7 @@ Always start your response with:
 |------|------|-------------------|
 | Pipeline JSON | `brain/projects/job-search/job-pipeline.json` | Update/add `stage_data[]` entries (recruiter, HM, comp, stage, next_action); add to `pending_referrals[]` when referral initiated |
 | Match Tracker | `brain/projects/job-search/job-pipeline-match-tracker.json` | Update `status` field on the role object (e.g., `APPLIED`, `REJECTED`, `INTERVIEWING`) + set `updated_at` |
-| Tasks | GitHub Issues `$CAREER_OS_GITHUB_REPO` | Open issues for new apps (`kind:waiting-on`), interview prep (`kind:prep`), offer eval (`kind:offer-eval`); close on rejection / advance. Labels: `tier:*`, `cadence:operational`, `repo:career-os-data`. |
+| Tasks | GitHub Issues `$CAREER_GITHUB_REPO` | Open issues for new apps (`kind:waiting-on`), interview prep (`kind:prep`), offer eval (`kind:offer-eval`); close on rejection / advance. Labels: `tier:*`, `cadence:operational`, `repo:career-os-data`. |
 | Handoff | `NEXT_SESSION_HANDOFF.md` | Log significant state changes (advances, rejections) for other agents |
 
 ### Files This Skill Reads
@@ -113,7 +113,7 @@ Each transition triggers specific file updates:
 - Match Tracker: set `status` = `"APPLIED"`, `updated_at` = today on the role object (find by `id` or company+role match)
 - Tasks: open a new GitHub issue:
   ```bash
-  gh issue create --repo $CAREER_OS_GITHUB_REPO \
+  gh issue create --repo $CAREER_GITHUB_REPO \
     --title "Waiting — {Company} {Role}" \
     --label "tier:p3,cadence:operational,repo:career-os-data,kind:waiting-on" \
     --body "$(cat <<EOF
@@ -142,7 +142,7 @@ Each transition triggers specific file updates:
 - Pipeline JSON: update `stage_data[]` entry with interview details (rounds, dates, interviewers), set `stage: "panel_interview"`
 - Tasks: open one `tier:p1, kind:prep` issue per round:
   ```bash
-  gh issue create --repo $CAREER_OS_GITHUB_REPO \
+  gh issue create --repo $CAREER_GITHUB_REPO \
     --title "Prep for {Company} {Round} on {Date}" \
     --label "tier:p1,cadence:operational,repo:career-os-data,kind:prep" \
     --body "$(cat <<EOF

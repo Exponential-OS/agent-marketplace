@@ -43,14 +43,14 @@ import subprocess
 import sys
 
 RULES_DIR = pathlib.Path(__file__).parent.parent.parent / "rules"
-CAREER_OS_HOME = os.environ.get("CAREER_OS_HOME", str(pathlib.Path.home() / "anand-career-os"))
+CAREER_HOME = os.environ.get("CAREER_HOME", os.environ.get("CAREER_OS_HOME", str(pathlib.Path.home() / "anand-career-os")))
 
 
 GATES = [
     # (phase, gate_slug, extra_args_fn, timeout_seconds)
     ("Planning",  "campaign-schema-validator",     lambda cf, _: {"campaign_file": cf},                                                                                                                                                        30),
-    ("Planning",  "channel-status-check",          lambda cf, _: {"campaign_file": cf, "channel_dir_file": str(pathlib.Path(CAREER_OS_HOME) / "brain/social-distribution-engine/social-channel-directory.md")},                              30),
-    ("Planning",  "surface-coverage-check",        lambda cf, _: {"campaign_file": cf, "handles_file": str(pathlib.Path(CAREER_OS_HOME) / "brain/identity/handles.md")},                                                                     30),
+    ("Planning",  "channel-status-check",          lambda cf, _: {"campaign_file": cf, "channel_dir_file": str(pathlib.Path(CAREER_HOME) / "brain/social-distribution-engine/social-channel-directory.md")},                              30),
+    ("Planning",  "surface-coverage-check",        lambda cf, _: {"campaign_file": cf, "handles_file": str(pathlib.Path(CAREER_HOME) / "brain/identity/handles.md")},                                                                     30),
     ("Content",   "content-url-resolution-check",  lambda cf, _: {"campaign_file": cf},                                                                                                                                                        30),
     ("Pre-Dist",  "flywheel-sequence-guard",        lambda cf, t: {"campaign_file": cf, "target": t or ""},                                                                                                                                    30),
     ("Pre-Dist",  "visual-asset-review-check",     lambda cf, _: {"campaign_file": cf},                                                                                                                                                        30),

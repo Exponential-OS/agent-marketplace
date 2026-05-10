@@ -21,11 +21,11 @@ triggers:
 
 ## Task Substrate (v0.25.0+)
 
-> `$CAREER_OS_GITHUB_REPO` is derived from: `git -C $CAREER_OS_HOME remote get-url origin | sed 's/.*github.com[:/]//;s/.git$//'`
+> `$CAREER_GITHUB_REPO` is derived from: `git -C $CAREER_HOME remote get-url origin | sed 's/.*github.com[:/]//;s/.git$//'`
 
-Tasks live in `$CAREER_OS_GITHUB_REPO` GitHub Issues (canonical source of truth — single inbox for all Cyborg work). Repo of work indicated by `repo:*` label, NOT by issue location. Cadence indicated by `cadence:*` label (`operational` for high-frequency churn; `strategic` for sprint-scale; `meta` for trackers). Tier indicated by `tier:*` label (`p1`/`p2`/`p3`/`backlog`).
+Tasks live in `$CAREER_GITHUB_REPO` GitHub Issues (canonical source of truth — single inbox for all Cyborg work). Repo of work indicated by `repo:*` label, NOT by issue location. Cadence indicated by `cadence:*` label (`operational` for high-frequency churn; `strategic` for sprint-scale; `meta` for trackers). Tier indicated by `tier:*` label (`p1`/`p2`/`p3`/`backlog`).
 
-Tasks.md is DEPRECATED as of v0.25.0. See `$CAREER_OS_HOME/workspace.manifest.yaml` `task_routing:` section for the full architecture.
+Tasks.md is DEPRECATED as of v0.25.0. See `$CAREER_HOME/workspace.manifest.yaml` `task_routing:` section for the full architecture.
 
 This skill reads/writes via:
 - `gh` CLI (universal, all agents)
@@ -33,7 +33,7 @@ This skill reads/writes via:
 
 **Outreach follow-up nudges open as `kind:follow-up` issues:**
 ```bash
-gh issue create --repo $CAREER_OS_GITHUB_REPO \
+gh issue create --repo $CAREER_GITHUB_REPO \
   --title "Follow up with {Contact} re: {Company} — by {due_date}" \
   --label "tier:p3,cadence:operational,repo:career-os-data,kind:follow-up" \
   --body "<context summary + suggested approach + last_contact date>"
@@ -153,7 +153,7 @@ Before WRITING the draft to disk (the final step), run the biographical-claim pr
 ```bash
 bash "$(ls -v ~/.claude/plugins/cache/xos/career-os/*/rules/biographical-claim-precheck/HOW.py 2>/dev/null | tail -1)" "$(jq -nc \
   --arg draft "/path/to/in-progress-draft.md" \
-  --arg canonical "$CAREER_OS_HOME/brain/identity/experience-history.md" \
+  --arg canonical "$CAREER_HOME/brain/identity/experience-history.md" \
   '{draft_path:$draft, canonical_sources:[$canonical], stakes:"T4"}')"
 ```
 

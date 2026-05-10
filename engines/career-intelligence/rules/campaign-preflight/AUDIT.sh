@@ -9,8 +9,8 @@ set -euo pipefail
 
 DAYS="${1:-7}"
 LOG="$HOME/.career-os-enforcement-log.jsonl"
-CAREER_OS_HOME="${CAREER_OS_HOME:-$HOME/anand-career-os}"
-CAMPAIGNS_DIR="$CAREER_OS_HOME/brain/social-distribution-engine/campaigns"
+CAREER_HOME="${CAREER_HOME:-$HOME/anand-career-os}"
+CAMPAIGNS_DIR="$CAREER_HOME/brain/social-distribution-engine/campaigns"
 
 if [[ ! -f "$LOG" ]]; then
   echo "WARN — no enforcement log found at $LOG (no runs recorded)"
