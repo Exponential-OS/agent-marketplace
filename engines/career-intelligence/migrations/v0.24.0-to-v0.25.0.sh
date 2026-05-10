@@ -84,5 +84,5 @@ echo "  • Issue inbox:        https://github.com/thewhyman/anand-career-os/iss
 echo "  • CLI quick scan:     gh issue list --repo thewhyman/anand-career-os --state open"
 echo ""
 echo "Marketplace:"
-echo "  • Canonical install: /plugin marketplace add thewhyman/agent-marketplace"
+echo "  • Canonical install: /plugin marketplace add Exponential-OS/agent-marketplace"
 echo "                        /plugin install career-os@thewhyman"

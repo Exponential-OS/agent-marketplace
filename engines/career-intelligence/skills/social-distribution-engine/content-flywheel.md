@@ -731,7 +731,7 @@ Campaign-specific URLs (hub post, article, thread, Substack post) belong in the 
 
 **Persistent handles (not campaign-specific):**
 - Substack: https://thewhyman.blog
-- GitHub: https://github.com/thewhyman/prompt-engineering-in-action
+- GitHub: https://github.com/Exponential-OS/prompt-engineering-in-action
 - LinkedIn profile: https://www.linkedin.com/in/anandvallam
 
 **To find campaign-specific URLs:** `grep -rl "type: campaign-status-ledger" ~/anand-career-os/WIP/` — the campaign-master doc has the live status ledger with every spoke's URL, updated at publish time.

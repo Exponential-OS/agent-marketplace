@@ -55,5 +55,5 @@ echo "  • Bash:   grep -lE '^tier: FULL_INVEST' ~/anand-career-os/brain/projec
 echo "  • Python: pyyaml + pathlib (see docs/MEMORY-ACCESS.md for examples)"
 echo ""
 echo "Marketplace:"
-echo "  • Canonical install: /plugin marketplace add thewhyman/agent-marketplace"
+echo "  • Canonical install: /plugin marketplace add Exponential-OS/agent-marketplace"
 echo "                        /plugin install career-os@thewhyman"
