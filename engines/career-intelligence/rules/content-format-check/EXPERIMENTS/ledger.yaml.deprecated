@@ -1,0 +1,26 @@
+experiments:
+  - id: E001
+    hypothesis: Double-space check catches the most frequent formatting error before publish
+    status: pending
+    started: 2026-05-04
+    metric: block rate for double-space category vs total checks
+    verdict: null
+    notes: >
+      First fired on ClawCamp Substack essay (2026-05-04). Run WATCH.sh after
+      10+ checks to evaluate.
+
+  - id: E002
+    hypothesis: LinkedIn URL detection prevents algorithm suppression on all campaign posts
+    status: pending
+    started: 2026-05-04
+    metric: LinkedIn post reach on posts where rule was run vs not run
+    verdict: null
+    notes: Baseline: measure impressions on next 5 LinkedIn posts after rule enforcement.
+
+cadence:
+  current: weekly
+  auto_adjust: true
+  halve_after: 3 consecutive no-change verdicts
+  double_after: kill-candidate detected
+  floor: weekly
+  ceiling: daily

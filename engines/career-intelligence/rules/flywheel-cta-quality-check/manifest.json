@@ -1,0 +1,42 @@
+{
+  "slug": "flywheel-cta-quality-check",
+  "version": "1.0.0",
+  "status": "active",
+  "created": "2026-05-07",
+  "updated": "2026-05-07",
+  "product_home": "career-os-plugin",
+  "gate_type": "semantic",
+  "description": "Semantic LLM judge evaluating CTA strength and specificity across every flywheel component. Evaluates: Substack share CTA specificity (who to forward to, why), LinkedIn Article Substack CTA placement (header+footer), LinkedIn Post Hub hook discipline (tension not resolution), X thread link placement (reply not body), Reddit link-in-comment vs body, Instagram bio-link reference, Facebook share ask, Comment Cascade backward-link specificity. Uses OAuth CLI (claude → gemini → codex fallback) — no API key required.",
+  "litmus": "Run HOW.py with campaign_file — exit 0=strong CTAs across all components, exit 1=BLOCK (CTA kills click-through), exit 2=WARN (advisory or CI mode).",
+  "skip_env": "SKIP_LLM_JUDGES=1",
+  "cli_order": ["claude", "gemini", "codex"],
+  "files": {
+    "PROMPT.md": "Judge prompt with CTA rules per platform — fed to claude -p along with campaign package",
+    "HOW.py": "Collects campaign.json + all content files, pipes to CLI judge, returns structured verdict",
+    "AUDIT.py": "Compliance scan — surfaces past BLOCK events from enforcement log",
+    "WATCH.py": "Evolution scanner — signals strengthen if block_rate > 40% (CTA discipline not internalized)"
+  },
+  "cta_conversion_chain": {
+    "substack": "reader shares OR subscribes",
+    "linkedin_article": "reader clicks Subscribe + follows through to Substack",
+    "post_hub": "reader clicks first-comment link to Article (NOT Substack directly)",
+    "external_spokes": "reader engages on Post Hub",
+    "comment_cascade": "reader clicks backward or forward link"
+  },
+  "platform_rules": {
+    "substack": "specific share CTA with who/why/what — not generic",
+    "linkedin_article": "Substack CTA at header AND footer — not end-only",
+    "post_hub": "hook only, unresolved tension — BLOCK if summarizes",
+    "x_thread": "link in reply not body — BLOCK if URL in main tweet",
+    "reddit": "link in comment not body — BLOCK if self-promotion link in post",
+    "instagram": "bio link reference required — BLOCK if missing",
+    "facebook": "specific share ask",
+    "comment_cascade": "specific backward-link copy referencing old content's topic"
+  },
+  "origin_incident": "2026-05-07: user flagged CTAs across flywheel items are not strong; campaigns were distributing with generic share asks and missing tension in Post Hub hooks.",
+  "callers": [
+    "skills/social-distribution-engine/validate-campaign-preflight.py"
+  ],
+  "phase_in_preflight": "Semantic (Gate 8)",
+  "dispatch_slug": "flywheel-cta-quality-check"
+}

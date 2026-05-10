@@ -1,0 +1,22 @@
+{
+  "slug": "company-flags-filter",
+  "version": "1.1.0",
+  "status": "active",
+  "created": "2026-05-04",
+  "updated": "2026-05-07",
+  "product_home": "career-os-plugin",
+  "description": "Gate that prevents deprioritized or flagged companies from appearing in dashboard action items. Called before surfacing any action item naming a company. A 92% match score on a deprioritized company must never surface as 'apply now' — the flag wins over the score.",
+  "litmus": "Run HOW.py with company + action + flags_file — exit 0=PASS (action allowed), exit 1=BLOCK (company flagged), exit 2=WARN (referral in flight).",
+  "files": {
+    "HOW.py": "Enforcement gate — call before surfacing any job action for a named company",
+    "AUDIT.py": "Compliance audit — scans enforcement log for bypass detections",
+    "WATCH.py": "Evolution scanner — emits keep/strengthen/kill verdict based on block rate"
+  },
+  "callers": [
+    "skills/job-search/mission-control",
+    "skills/job-search/apply-dashboard",
+    "skills/job-search/job-search-scheduler"
+  ],
+  "origin_incident": "2026-05-04: flagged companies (OpenAI, Google) were appearing in action items despite active flags in company-flags.json.",
+  "dispatch_slug": "company-flags-filter"
+}

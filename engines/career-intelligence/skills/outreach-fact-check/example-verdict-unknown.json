@@ -1,0 +1,21 @@
+{
+  "_comment": "Example: a metric claim that names a specific system and percentage but has no matching entry in canonical identity files. Verdict is 'unknown' (not 'mismatch') because the claim cannot be confirmed OR denied from available canonical sources \u2014 the specific uptime figure for that system is simply not present. Flags for human review rather than blocking.",
+  "input": {
+    "claim": "99.99% uptime on the visitor management system at Google",
+    "claim_class": "metric",
+    "artifact_type": "email",
+    "recipient": "[Recipient]",
+    "context_excerpt": "The visitor management platform I led achieved 99.99% uptime across 400+ Google sites globally."
+  },
+  "output": {
+    "claim": "99.99% uptime on the visitor management system at Google",
+    "claim_class": "metric",
+    "verdict": "unknown",
+    "canonical_source": "~/anand-career-os/brain/identity/experience-history.md",
+    "canonical_excerpt": "Led 14-vendor global evaluation for Data Center Visitor Management.\n[No uptime figure for visitor management system found in canonical]",
+    "diff": "The visitor management system is referenced in canonical (\u00a7 4.3 Platform Engineering section) but no uptime metric is recorded for it. Canonical does contain uptime-adjacent metrics for other systems (P6/Spring Tide: 400% performance improvement; iSCaaS+: 51,840,000% efficiency gain) but none matching '99.99% uptime' for visitor management. Cannot confirm or deny from available canonical files.",
+    "confidence": "LOW",
+    "remediation": "One of three options: (1) Remove the specific uptime figure until Anand can confirm it from memory and add it to experience-history.md. (2) Replace with the verifiable canonical metric: 'Led the 14-vendor global evaluation for Google's Data Center Visitor Management system.' (3) Provide source documentation to Anand and request canonical update before ship. Do NOT ship the 99.99% figure without canonical anchor.",
+    "blast_radius_note": null
+  }
+}

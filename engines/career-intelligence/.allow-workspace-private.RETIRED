@@ -1,0 +1,53 @@
+# .allow-workspace-private — RETIRED (2026-04-27)
+
+The `.allow-workspace-private` marker file was removed from this repo.
+
+## Why removed
+
+The marker tells `~/cyborg/scripts/check-no-leak.sh` to skip path-pattern +
+IP-pattern checks because workspace-private dot-dirs are legitimate tracked
+content in private workspace repos.
+
+**This repo is NOT a private workspace.** Even though `github.com/thewhyman/
+career-os-plugin` is a private GitHub repo, the contents ship PUBLICLY:
+
+- Career-OS users install the plugin via `claude plugin add career-os`
+- Plugin contents (skills, hooks, migrations) land on every user's machine
+- Anything in this repo is effectively public-facing surface area
+
+The leak gate exists to catch private content (workspace-private dot-dirs,
+internal IP terms, PII) that should NEVER ship to a public-facing surface.
+This repo IS that surface for thousands of plugin users — the leak gate
+must run with full strictness, not workspace-private leniency.
+
+## What still applies
+
+The leak gate's other invariants (credential / PII pattern checks, secrets
+detection) ALWAYS fire regardless of any marker. Those were never gated by
+this file; they fire on every repo.
+
+## What changed in practice
+
+After this commit, every leak-gate run on this repo enforces:
+
+1. No workspace-private dot-dirs (`.career-os/`, `.gemini/`, `.codex/`,
+   workspace-local `.claude/` folders, etc.) — these are USER data, not
+   plugin data.
+2. No internal IP terms (`thewhyman`, `xHumanOS`, `xTeamOS` brand-only
+   references that aren't public marketing surface) outside of intentional
+   marketing files.
+3. No PII patterns (real names of real people without explicit consent).
+
+If the leak gate flags a legitimate plugin file with these checks, the fix
+is to sanitize the file or refactor — NOT to add a marker that disables
+the check.
+
+## Origin
+
+2026-04-27 — caught during cyborg session that audited the marker's purpose
+against the repo's actual distribution model. The marker was added during
+the `.career-os/` leak hardening pass on the assumption this was a private
+workspace; the audit revealed plugin distribution is public-facing.
+
+This file (`.RETIRED` suffix) is kept as documentation so future agents
+understand why the marker is gone and don't restore it on instinct.

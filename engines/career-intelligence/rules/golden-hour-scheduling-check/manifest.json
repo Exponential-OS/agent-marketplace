@@ -1,0 +1,64 @@
+{
+  "slug": "golden-hour-scheduling-check",
+  "version": "1.0.0",
+  "status": "active",
+  "gate_type": "structural",
+  "created": "2026-05-07",
+  "updated": "2026-05-07",
+  "product_home": "career-os-plugin",
+  "phase_in_preflight": "Pre-Dist (Gate 9)",
+  "description": "Validates that campaign components are scheduled during platform-specific golden-hour windows — the peak-velocity windows where early engagement carries maximum algorithmic weight. Golden hour = first 60 min after publish (LinkedIn/Substack) or 30 min (X/Instagram). Gate is advisory: all findings are WARNs (wrong timing degrades performance, does not invalidate the campaign).",
+  "platforms": {
+    "linkedin_article": {
+      "golden_windows": ["07:30-09:00", "11:30-13:00", "17:00-18:30"],
+      "bad_days": ["Friday", "Saturday", "Sunday"],
+      "golden_hour_minutes": 60
+    },
+    "linkedin_post": {
+      "golden_windows": ["07:30-09:00", "11:30-13:00", "17:00-18:30"],
+      "bad_days": ["Friday", "Saturday", "Sunday"],
+      "golden_hour_minutes": 60
+    },
+    "x_thread": {
+      "golden_windows": ["08:00-10:00", "12:00-13:00", "17:00-18:00"],
+      "bad_days": ["Saturday", "Sunday"],
+      "golden_hour_minutes": 30
+    },
+    "instagram": {
+      "golden_windows": ["06:00-09:00", "11:00-13:00", "19:00-21:00"],
+      "bad_days": [],
+      "golden_hour_minutes": 30
+    },
+    "substack": {
+      "golden_windows": ["06:00-10:00"],
+      "bad_days": ["Friday", "Saturday", "Sunday"],
+      "golden_hour_minutes": 60
+    },
+    "reddit": {
+      "golden_windows": ["06:00-08:00", "12:00-14:00"],
+      "bad_days": ["Saturday", "Sunday"],
+      "golden_hour_minutes": 30
+    },
+    "facebook": {
+      "golden_windows": ["09:00-13:00"],
+      "bad_days": ["Saturday", "Sunday"],
+      "golden_hour_minutes": 60
+    }
+  },
+  "schema": {
+    "scheduled_at_field": "ISO 8601 datetime on each component (source, hub, spokes[*]). Optional — gate WARNs if absent.",
+    "timezone_field": "campaign.meta.timezone (default: America/Los_Angeles)",
+    "example": "\"scheduled_at\": \"2026-05-08T08:00:00-07:00\""
+  },
+  "litmus": "Run HOW.py with campaign_file — exit 0=all scheduled components in golden windows, exit 2=WARN (outside windows, bad days, tight spacing, or no scheduled_at found).",
+  "how_to_pass": "Add scheduled_at (ISO 8601 with timezone) to each campaign component. Schedule within platform golden windows. Space same-platform posts ≥2 hours apart. Prefer Mon–Thu for LinkedIn, Substack, and Reddit.",
+  "files": {
+    "HOW.py": "Golden hour timing gate — check scheduled_at against platform windows",
+    "AUDIT.py": "Compliance audit — report warn rate over configurable lookback window",
+    "WATCH.py": "Evolution scanner — emit strengthen verdict if >50% warn rate over 5+ fires"
+  },
+  "callers": [
+    "skills/social-distribution-engine/validate-campaign-preflight.py"
+  ],
+  "dispatch_slug": "golden-hour-scheduling-check"
+}

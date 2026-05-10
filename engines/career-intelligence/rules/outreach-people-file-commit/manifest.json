@@ -1,0 +1,21 @@
+{
+  "slug": "outreach-people-file-commit",
+  "version": "1.1.0",
+  "status": "active",
+  "created": "2026-05-04",
+  "updated": "2026-05-07",
+  "product_home": "career-os-plugin",
+  "description": "Immediately after any outreach message is confirmed sent, update the contact's people file (last_contact, follow_up, conversation_history, commitments_made) and commit it to git. If session dies after HOW.py succeeds, state is preserved. If session dies before HOW.py runs, git status surfaces uncommitted changes on resume.",
+  "litmus": "Run HOW.py with people_file + career_home + updates + commit_message — exit 0=committed, exit 1=BLOCK (validation failed), exit 2=WARN (file written but commit failed).",
+  "files": {
+    "HOW.py": "Enforcement gate — update people file fields and commit atomically after outreach send",
+    "AUDIT.py": "Compliance audit — detects uncommitted writes and validation failures in enforcement log",
+    "WATCH.py": "Evolution scanner — signals session_death_risk if commit-after-write failures are high"
+  },
+  "callers": [
+    "skills/network-intelligence/outreach-composer",
+    "skills/network-intelligence/network-intelligence"
+  ],
+  "origin_incident": "2026-05-04: outreach was sent to contacts without updating their people files, creating stale state that caused duplicate outreach suggestions in the same session.",
+  "dispatch_slug": "outreach-people-file-commit"
+}

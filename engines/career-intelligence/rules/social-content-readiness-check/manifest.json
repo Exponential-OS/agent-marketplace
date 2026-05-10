@@ -1,0 +1,41 @@
+{
+  "slug": "social-content-readiness-check",
+  "version": "1.0.0",
+  "status": "active",
+  "created": "2026-05-04",
+  "origin": "Social media posts are high-stakes irreversible actions. LinkedIn cannot un-send a post; Substack newsletters reach all subscribers. Before content moves from draft -> ready -> published, three independent gates must agree.",
+  "description": "GATE rule for social-media content. Composes content-format-check + LLM judge panel (tone, IP safety, narrative clarity) + metadata completeness. Panel rule: ALL judges PASS or WARN, AND no more than 1 WARN, otherwise BLOCK.",
+  "enforcement": {
+    "how": "HOW.py",
+    "audit": "AUDIT.sh",
+    "watch": "WATCH.sh",
+    "log": "~/.career-os-enforcement-log.jsonl"
+  },
+  "frameworks": [
+    "feedback-loop",
+    "complementary-composition",
+    "objective-codification"
+  ],
+  "related_invariants": [
+    "campaign-completeness",
+    "visual-asset-review",
+    "independent-verification-gate"
+  ],
+  "depends_on_rules": [
+    "content-format-check"
+  ],
+  "judge_model": "claude-haiku-4-5-20251001",
+  "judges": [
+    {"id": "tone", "lens": "authentic voice vs corporate-speak"},
+    {"id": "ip_safety", "lens": "patent / IP firewall disclosure risk"},
+    {"id": "narrative", "lens": "hook + CTA legibility for context-free reader"}
+  ],
+  "panel_rule": "All judges return PASS or WARN, AND <=1 WARN total; otherwise BLOCK.",
+  "applies_to": [
+    "any draft destined for substack | linkedin | twitter | reddit | instagram",
+    "any campaign-master moving to status=ready",
+    "any subscriber-facing newsletter pre-publish"
+  ],
+  "litmus": "Run HOW.py before status=ready. PASS = ship. WARN = human review. BLOCK = revise and re-run.",
+  "dispatch_slug": "social-content-readiness-check"
+}

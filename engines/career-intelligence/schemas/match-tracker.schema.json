@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Career OS Match Tracker",
+  "description": "Schema for job-pipeline-match-tracker.json — the single source of truth for all scored roles.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["id", "batch_date", "company", "role", "score", "decision", "status", "updated_at"],
+    "additionalProperties": false,
+    "properties": {
+      "id":            { "type": "integer", "minimum": 1 },
+      "batch_date":    { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+      "batch_context": { "type": ["string", "null"] },
+      "scan_id":       { "type": ["string", "null"] },
+      "company":       { "type": "string", "minLength": 1 },
+      "role":          { "type": "string", "minLength": 1 },
+      "score":         { "type": ["integer", "null"], "minimum": 0, "maximum": 100 },
+      "score_quality": {
+        "type": ["string", "null"],
+        "enum": ["JD", "partial", "title-only", null]
+      },
+      "decision": {
+        "type": "string",
+        "enum": ["FULL_INVEST", "APPLY", "CHECK_DELTA", "SKIP"]
+      },
+      "resume_track":  { "type": ["string", "null"] },
+      "warm_path":     { "type": ["string", "null"] },
+      "jd_url":        { "type": ["string", "null"], "format": "uri" },
+      "status": {
+        "type": "string",
+        "enum": ["QUEUED", "CHECK_DELTA", "SKIPPED", "APPLIED", "INTERVIEWING", "REJECTED", "DEAD", "OFFERED"]
+      },
+      "updated_at":    { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" }
+    }
+  }
+}

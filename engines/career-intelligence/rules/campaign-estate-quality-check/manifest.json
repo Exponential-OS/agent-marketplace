@@ -1,0 +1,40 @@
+{
+  "slug": "campaign-estate-quality-check",
+  "version": "1.0.0",
+  "status": "active",
+  "created": "2026-05-07",
+  "updated": "2026-05-07",
+  "product_home": "career-os-plugin",
+  "gate_type": "semantic",
+  "description": "Semantic LLM judge that evaluates the entire campaign package against the SDE Estate Model thesis. Catches packaging violations that structural gates cannot: wrong hub-spoke routing, Post Hub summarizing instead of hooking, Article missing Substack CTA, platform-non-native copy, weak Estate narrative flow. Uses OAuth CLI (claude → gemini → codex fallback) — no API key required.",
+  "litmus": "Run HOW.py with campaign_file — exit 0=Estate model correctly implemented, exit 1=BLOCK (hard violation), exit 2=WARN (advisory or CI mode).",
+  "skip_env": "SKIP_LLM_JUDGES=1",
+  "cli_order": ["claude", "gemini", "codex"],
+  "files": {
+    "PROMPT.md": "Judge prompt encoding Estate model rules — fed to claude -p along with campaign package",
+    "HOW.py": "Collects campaign.json + all content files, pipes to CLI judge, returns structured verdict",
+    "AUDIT.py": "Compliance scan — surfaces past BLOCK events from enforcement log",
+    "WATCH.py": "Evolution scanner — signals strengthen if block_rate > 40% (Estate model not internalized)"
+  },
+  "estate_model": {
+    "publish_order": ["substack", "linkedin_article", "linkedin_post_hub", "external_spokes"],
+    "routing_rule": "all_spokes_to_post_hub",
+    "post_hub_discipline": "hook_only_no_summary",
+    "article_requirement": "substack_cta_required",
+    "chain": "Spoke → Post Hub → Article SEO Hub → Substack"
+  },
+  "judge_dimensions": [
+    "hook_quality_per_spoke",
+    "estate_narrative_flow",
+    "hub_spoke_routing",
+    "comment_cascade_strategy",
+    "seo_signal",
+    "platform_native_copy"
+  ],
+  "origin_incident": "2026-05-07: other agent acknowledged Ground Zero miss — April 22-23 reviews were per-content quality checks; no judge ever evaluated the whole campaign package against the Estate thesis before human review.",
+  "callers": [
+    "skills/social-distribution-engine/validate-campaign-preflight.py"
+  ],
+  "phase_in_preflight": "Semantic (Gate 7)",
+  "dispatch_slug": "campaign-estate-quality-check"
+}

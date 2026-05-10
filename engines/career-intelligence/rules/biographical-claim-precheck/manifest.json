@@ -1,0 +1,55 @@
+{
+  "name": "Biographical Claim Pre-Check",
+  "slug": "biographical-claim-precheck",
+  "version": "1.0.0",
+  "status": "ground-zero-invariant",
+  "created": "2026-04-26",
+  "description": "Pre-write hook on biographical claims in T4 outreach drafts. Greps draft for tenure/role/report-count/scale/date-range/role-org patterns; verifies each against canonical_sources via numeric+capitalized-token co-occurrence; BLOCK on any unanchored claim.",
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-04-26",
+      "summary": "first ship — pre-write hook on biographical claims in T4 outreach drafts",
+      "changes": [
+        "HOW.py greps draft for tenure/role/report-count/scale/date-range/role-org patterns; verifies each against canonical_sources via numeric+capitalized-token co-occurrence; BLOCK on any unanchored claim",
+        "AUDIT.sh consumes enforcement log; tallies shipped/blocked/bypassed; flags T4 INPUT/ drafts with no matching HOW record",
+        "WATCH.sh 3 micro-experiments (false-positive rate, pattern coverage, pattern effectiveness); cadence ladder weekly->per-T4-artifact",
+        "Default canonical: $CAREER_OS_HOME/brain/identity/experience-history.md (set CAREER_OS_HOME env var to your career OS home dir)"
+      ]
+    }
+  ],
+  "frameworks": [
+    "signal-amplification",
+    "feedback-loop",
+    "objective-codification"
+  ],
+  "related_invariants": [
+    "emergent-system-immunity",
+    "independent-verification-gate",
+    "shared-state-hydration",
+    "human-intent-adaptation"
+  ],
+  "deps": [
+    {"kind": "tool", "id": "python3", "purpose": "JSON parsing + regex extraction", "fallback": "fail-closed if absent"},
+    {"kind": "file", "id": "~/anand-career-os/brain/identity/experience-history.md", "purpose": "default canonical source for user's biographical claims", "fallback": "caller must pass canonical_sources explicitly"}
+  ],
+  "enforcement_log": "~/.career-os-enforcement-log.jsonl",
+  "current_cadence": "per-T4-artifact",
+  "floor_cadence": "weekly",
+  "ceiling_cadence": "per-T4-artifact",
+  "last_update": "2026-04-26",
+  "last_watch_run": null,
+  "last_audit_run": null,
+  "fires_on_tiers": ["T4"],
+  "maintainer": "TWC (foundation-rewrite-2026-04-26)",
+  "origin": "Two T4 hallucination near-misses on 2026-04-26: Matt Kleinman email (4 unanchored claims) + Amanesh Goyal Roblox Safety AI fwd-packet (3 unanchored claims). Both shipped past the EMERGENT SYSTEM IMMUNITY invariant prose. The fix is the pre-write hook in code.",
+  "worked_example_count": 2,
+  "anti_pattern_count": 5,
+  "variance_reduction": {
+    "surface": "cross-LLM-biographical-claim-interpretation",
+    "mechanism": "executable claim-pattern regex + canonical-source anchor verification",
+    "prior_state": "prose rule 'verify before ship'; interpreted as optional self-review by every LLM family"
+  },
+  "litmus": "Run HOW.py before shipping any T4 outreach draft with biographical claims. PASS = every claim anchors in canonical. BLOCK = at least one unanchored claim — recheck source before sending.",
+  "dispatch_slug": "biographical-claim-precheck"
+}

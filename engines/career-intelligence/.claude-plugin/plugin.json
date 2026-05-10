@@ -1,0 +1,17 @@
+{
+  "name": "career-intelligence",
+  "platform": "xHumanOS",
+  "version": "0.47.0",
+  "description": "Career Intelligence (xHumanOS) — individual career engine: job search, network, pipeline, sessions. Composes Brand Intelligence + Social Distribution. v0.47.0: persona-onboarding Week 1 wizard; cross-session memory claim; onboarding-templates/.",
+  "author": {
+    "name": "Anand Vallamsetla"
+  },
+  "repository": "https://github.com/Exponential-OS/career-intelligence-engine",
+  "homepage": "https://github.com/Exponential-OS/career-intelligence-engine",
+  "license": "Proprietary",
+  "keywords": ["career", "job-search", "network", "pipeline", "xHumanOS"],
+  "dependencies": {
+    "brand-intelligence": ">=0.47.0",
+    "social-distribution": ">=0.47.0"
+  }
+}

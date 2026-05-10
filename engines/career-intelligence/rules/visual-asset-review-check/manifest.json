@@ -1,0 +1,21 @@
+{
+  "slug": "visual-asset-review-check",
+  "version": "1.0.0",
+  "status": "active",
+  "created": "2026-05-07",
+  "updated": "2026-05-07",
+  "product_home": "career-os-plugin",
+  "description": "Pre-distribution gate implementing the VISUAL-ASSET REVIEW Ground Zero invariant. Finds all image-bearing components in campaign.json and BLOCKs distribution if campaign.review.assets_reviewed is not true. A vision-capable reviewer must inspect each asset at full resolution before this field may be set.",
+  "litmus": "Run HOW.py with campaign_file — exit 0=assets reviewed or no images, exit 1=BLOCK (image-bearing components without review), exit 2=WARN (unreadable).",
+  "files": {
+    "HOW.py": "Visual review gate — check assets_reviewed=true before allowing image-bearing campaign to distribute",
+    "AUDIT.py": "Compliance audit — detect past distributions with unreviewed assets",
+    "WATCH.py": "Evolution scanner — signal review_skipped if block rate exceeds 15%"
+  },
+  "callers": [
+    "skills/social-distribution-engine/validate-campaign.py"
+  ],
+  "how_to_pass": "Set campaign.review.assets_reviewed=true after a vision-capable reviewer (human or GPT-4V/Gemini Vision) inspects each asset file at full resolution and confirms: text not clipped, safe-zone observed, correct campaign, correct dimensions.",
+  "origin_incident": "2026-04-23 jury-beats-judge Part-2: three rounds of image text-clipping caught only after broken files were attached to live LinkedIn posts. Gate built to enforce VISUAL-ASSET REVIEW invariant.",
+  "dispatch_slug": "visual-asset-review-check"
+}

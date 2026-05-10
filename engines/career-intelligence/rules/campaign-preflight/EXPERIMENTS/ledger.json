@@ -1,0 +1,14 @@
+{
+  "rule": "campaign-preflight",
+  "entries": [
+    {
+      "ts": "2026-05-07T18:31:01Z",
+      "verdict": "keep",
+      "signal": "passing",
+      "reason": "1 run(s) in 14d, 0 blocks. Gate is firing and passing \u2014 healthy.",
+      "runs_in_window": 1,
+      "blocks_in_window": 0,
+      "window_days": 14
+    }
+  ]
+}

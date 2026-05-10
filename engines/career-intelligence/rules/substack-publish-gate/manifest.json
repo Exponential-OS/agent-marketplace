@@ -1,0 +1,32 @@
+{
+  "slug": "substack-publish-gate",
+  "version": "1.0.0",
+  "status": "active",
+  "created": "2026-05-07",
+  "origin": "Substack email is a one-way door — cannot un-send to subscribers. Origin incident: 2026-04-23, agent republished Substack post to fix a wrong cover image → second email blast sent to all subscribers. User: 'you are costing me my career.' Re-send authorization is single-use, per-action, typed by user in the current turn — standing approvals do not cover resends.",
+  "description": "Quality gate for Substack publish actions. Hard-blocks email resends (one-way door invariant) and gates quality via LLM judge before any email send reaches subscribers.",
+  "one_way_door_surfaces": [
+    "substack email — cannot un-send to subscribers once sent"
+  ],
+  "gates": [
+    "resend_block: is_resend=true is always BLOCK, no exceptions — previously-sent posts cannot trigger a second email blast",
+    "email_send_gate: is_email_send=true requires explicit email_send_confirmed=true in payload from human — absent or false = BLOCK",
+    "completeness: word_count>=300 + has_hook + has_cta (structural)",
+    "quality: LLM judge via PROMPT.md + claude -p on post_excerpt (semantic)"
+  ],
+  "enforcement": {
+    "how": "HOW.py",
+    "check": "check.py",
+    "prompt": "PROMPT.md",
+    "audit": "AUDIT.sh",
+    "watch": "WATCH.sh",
+    "log": "~/.career-os-enforcement-log.jsonl"
+  },
+  "applies_to": [
+    "Any Substack publish action that triggers an email send to subscribers",
+    "Substack republish/resend actions on already-published posts",
+    "Any newsletter platform email blast (Beehiiv, ConvertKit, etc.) — substack is canonical"
+  ],
+  "litmus": "Run HOW.py with full context JSON — exit 0 = safe to publish, exit 1 = blocked with remediation",
+  "dispatch_slug": "substack-publish-gate"
+}

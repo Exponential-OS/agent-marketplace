@@ -1,0 +1,33 @@
+{
+  "slug": "comment-hijack-gate",
+  "version": "1.0.0",
+  "status": "active",
+  "created": "2026-05-07",
+  "origin": "Distribution engine quality mandate — comment hijacks are high-stakes distribution actions; a low-quality comment wastes the slot and can damage brand. Substack email is a one-way door; Twitter/X posts are one-way door at scale.",
+  "description": "Quality gate for comment hijack posts on LinkedIn and X/Twitter. Enforces four gates: hub_url present, freshness window, dedup, and standalone_value via LLM semantic judge (PROMPT.md + claude -p).",
+  "one_way_door_surfaces": [
+    "twitter/x — cannot delete at scale once engaged",
+    "substack email — cannot un-send to subscribers (handled by substack-publish-gate)"
+  ],
+  "gates": [
+    "hub_url_present: hub URL must appear in comment_text (structural)",
+    "freshness: LinkedIn ≤72h, Twitter/X ≤8h (structural)",
+    "dedup: target_post_url not in previously_commented_urls (structural)",
+    "standalone_value: LLM judge via PROMPT.md + claude -p (semantic)"
+  ],
+  "enforcement": {
+    "how": "HOW.py",
+    "check": "check.py",
+    "prompt": "PROMPT.md",
+    "audit": "AUDIT.sh",
+    "watch": "WATCH.sh",
+    "log": "~/.career-os-enforcement-log.jsonl"
+  },
+  "applies_to": [
+    "LinkedIn comment hijacks on influencer posts",
+    "X/Twitter reply hijacks on high-engagement threads",
+    "Any distribution comment where the goal is driving traffic to a hub"
+  ],
+  "litmus": "Run HOW.py with full context JSON — exit 0 = safe to post, exit 1 = blocked with remediation",
+  "dispatch_slug": "comment-hijack-gate"
+}

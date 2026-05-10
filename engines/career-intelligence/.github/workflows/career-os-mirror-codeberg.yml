@@ -1,0 +1,32 @@
+# career-os-mirror-codeberg.yml — Template for mirroring to Codeberg
+#
+# This file is included in the plugin as a template — users copy it
+# to their own career-os DATA repo's .github/workflows/ directory.
+#
+# Setup:
+#   1. Create a Codeberg account and empty repo
+#   2. Generate a Codeberg access token
+#   3. Add CODEBERG_TOKEN as a GitHub repo secret
+
+name: career-os-mirror-codeberg
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push mirror to Codeberg
+        run: |
+          git remote add codeberg "https://${{ secrets.CODEBERG_TOKEN }}@codeberg.org/${{ github.repository_owner }}/career-os.git" 2>/dev/null || true
+          git push codeberg main --force
+        env:
+          CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}

@@ -1,0 +1,238 @@
+{
+  "_comment": "Platform posting constraints. Update here — post_validator.py reads this at runtime.",
+  "_version": "1.1.0",
+  "_hashtag_selection_protocol": {
+    "_note": "How agents pick hashtags for any post. Follow slot-fill order exactly.",
+    "slot_fill_order": [
+      "1. Brand tags — always first, in priority order. These build your owned highway over time. Never skip.",
+      "2. Campaign-specific tags — event or series tags relevant to THIS post (e.g. #ClawCamp, #AIInfraSummit). Include when the post is directly tied to that event/series.",
+      "3. Niche tags — most specific to the post topic, in priority order. Drives targeted discovery.",
+      "4. Highway tags — broadest reach, fill remaining slots, in priority order."
+    ],
+    "detector_protocol": {
+      "_note": "Before campaign ship, run a live hashtag audit. Update priority scores in _hashtag_banks if materially stale.",
+      "steps": [
+        "1. For each candidate tag: search the platform, note posts-in-last-7-days.",
+        "2. Classify: >5000 recent posts = live highway; 200-5000 = active niche; <200 = dead road (skip unless brand-owned).",
+        "3. Rank within each category by engagement velocity (recent posts × estimated engagement rate).",
+        "4. Pick top N within platform max using slot-fill order above.",
+        "5. Log the audit result in the campaign-master surface coverage matrix with date."
+      ],
+      "freshness": "Re-run detector quarterly OR when a tag hasn't fired in 60+ days. Static lists decay."
+    },
+    "never_do": [
+      "Never pick randomly from the bank — always follow priority order.",
+      "Never exceed platform hashtag_max — spam classifier fires above limit.",
+      "Never put hashtags in body on LinkedIn — append at end of post only.",
+      "Never use a dead road tag (<200 recent posts) unless it's a brand tag you own.",
+      "Never put all slots in one category — always brand + at least one niche."
+    ]
+  },
+  "_hashtag_banks": {
+    "_note": "Priority 1 = pick first. Within each category, pick descending by priority until platform max is filled. Update priority scores after detector runs.",
+    "linkedin_post": {
+      "max": 5,
+      "brand": [
+        { "tag": "#TheWhyCyborg", "priority": 1, "note": "Primary personal brand — thesis tag. Always slot 1 for personal branding posts." },
+        { "tag": "#TheWhyMan",    "priority": 2, "note": "Personal brand handle tag. Add when post is profile-building (not just topic-specific)." },
+        { "tag": "#CyborgWay",   "priority": 3, "note": "Series brand for the 8-essay arc. Add when post is part of that series." },
+        { "tag": "#xHumanOS",    "priority": 4, "note": "Product brand. Add only when post explicitly references xOS product vision." }
+      ],
+      "niche": [
+        { "tag": "#PersonalAgents", "priority": 1, "note": "Highest-fit niche for AI sovereignty / whose-assistant-is-it angle." },
+        { "tag": "#AgenticAI",      "priority": 2, "note": "Current hot niche — agentic systems, multi-agent loops." },
+        { "tag": "#AIInfra",        "priority": 3, "note": "Infrastructure angle — use for ClawCamp / technical posts." },
+        { "tag": "#FutureOfWork",   "priority": 4, "note": "Broader niche — employer AI / digital twin posts." },
+        { "tag": "#ClawCamp",       "priority": 5, "campaign": "clawcamp-2026-05-01", "note": "Campaign-specific — ClawCamp event posts only." },
+        { "tag": "#AIInfraSummit",  "priority": 6, "campaign": "clawcamp-2026-05-01", "note": "Campaign-specific — ClawCamp event posts only." }
+      ],
+      "highway": [
+        { "tag": "#AILeadership",       "priority": 1, "note": "Best-fit highway — leaders + AI audience overlap with Anand's ICP." },
+        { "tag": "#GenAI",              "priority": 2, "note": "Current high-velocity highway. Use as primary fill when 1 highway slot open." },
+        { "tag": "#ArtificialIntelligence", "priority": 3, "note": "Classic broad highway. Large but competitive — use when 2 highway slots open." },
+        { "tag": "#TechLeadership",     "priority": 4, "note": "Engineering leadership audience. Use for career/leadership-angle posts." }
+      ]
+    },
+    "x_post": {
+      "max": 2,
+      "brand": [
+        { "tag": "#TheWhyCyborg", "priority": 1, "note": "Always slot 1. Builds brand highway on X." }
+      ],
+      "niche": [
+        { "tag": "#AgenticAI",   "priority": 1, "note": "Best niche fit for X AI audience." },
+        { "tag": "#PersonalAgents", "priority": 2, "note": "Emerging niche, high engagement rate." }
+      ],
+      "highway": [
+        { "tag": "#AI", "priority": 1, "note": "Slot 2 highway on X when no niche tag fits. X highway works better with fewer, bigger tags." }
+      ]
+    },
+    "instagram_caption": {
+      "max": 25,
+      "recommended": 15,
+      "brand": [
+        { "tag": "#TheWhyCyborg", "priority": 1 },
+        { "tag": "#TheWhyMan",    "priority": 2 },
+        { "tag": "#CyborgWay",   "priority": 3 },
+        { "tag": "#xHumanOS",    "priority": 4 }
+      ],
+      "niche": [
+        { "tag": "#PersonalAgents",  "priority": 1 },
+        { "tag": "#AgenticAI",       "priority": 2 },
+        { "tag": "#AIAgents",        "priority": 3 },
+        { "tag": "#AIInfra",         "priority": 4 },
+        { "tag": "#CyborgLife",      "priority": 5 },
+        { "tag": "#BuildWithAI",     "priority": 6 },
+        { "tag": "#AIFounder",       "priority": 7 },
+        { "tag": "#AgentEconomy",    "priority": 8 },
+        { "tag": "#DigitalTwin",     "priority": 9 },
+        { "tag": "#FutureOfWork",    "priority": 10 }
+      ],
+      "highway": [
+        { "tag": "#AILeadership",        "priority": 1 },
+        { "tag": "#ArtificialIntelligence", "priority": 2 },
+        { "tag": "#GenAI",               "priority": 3 },
+        { "tag": "#TechLeadership",      "priority": 4 },
+        { "tag": "#Innovation",          "priority": 5 },
+        { "tag": "#EnterpriseAI",        "priority": 6 }
+      ]
+    }
+  },
+  "linkedin_post": {
+    "display_name": "LinkedIn Post",
+    "char_limit": 3000,
+    "hashtag_max": 5,
+    "hashtag_recommended": 3,
+    "links_in_body": false,
+    "links_note": "External links in post body are penalized by algorithm. Put in first comment.",
+    "line_break_hook": true,
+    "line_break_hook_note": "First 3 lines visible before 'see more'. Hook must land there.",
+    "plain_text_only": true,
+    "markdown_rendered": false,
+    "emoji_ok": true,
+    "image_alt_required": false,
+    "max_blank_lines": 2,
+    "max_blank_lines_note": "More than 2 consecutive blank lines create jarring visual gaps in the feed.",
+    "trailing_space_warn": true
+  },
+  "linkedin_article": {
+    "display_name": "LinkedIn Article",
+    "char_limit": 100000,
+    "hashtag_max": 5,
+    "links_in_body": true,
+    "plain_text_only": false,
+    "markdown_rendered": false,
+    "emoji_ok": true,
+    "max_blank_lines": 4
+  },
+  "linkedin_dm": {
+    "display_name": "LinkedIn DM / InMail",
+    "char_limit": 500,
+    "hashtag_max": 0,
+    "links_in_body": true,
+    "plain_text_only": true,
+    "markdown_rendered": false,
+    "emoji_ok": false,
+    "max_blank_lines": 1,
+    "max_blank_lines_note": "Short message surface — multiple blank lines waste the 500-char limit."
+  },
+  "linkedin_connection": {
+    "display_name": "LinkedIn Connection Request",
+    "char_limit": 300,
+    "hashtag_max": 0,
+    "links_in_body": false,
+    "plain_text_only": true,
+    "markdown_rendered": false,
+    "emoji_ok": false,
+    "max_blank_lines": 1,
+    "max_blank_lines_note": "Very short surface — blank lines waste the 300-char limit."
+  },
+  "x_post": {
+    "display_name": "X / Twitter Post",
+    "char_limit": 280,
+    "hashtag_max": 2,
+    "links_in_body": true,
+    "links_count_chars": true,
+    "links_count_chars_note": "URLs count as 23 chars regardless of actual length (t.co shortening).",
+    "plain_text_only": true,
+    "markdown_rendered": false,
+    "emoji_ok": true,
+    "max_blank_lines": 1,
+    "max_blank_lines_note": "Each blank line wastes 1 of your 280 chars.",
+    "trailing_space_warn": true
+  },
+  "x_thread_post": {
+    "display_name": "X / Twitter Thread Post",
+    "char_limit": 280,
+    "hashtag_max": 1,
+    "links_in_body": true,
+    "links_count_chars": true,
+    "plain_text_only": true,
+    "markdown_rendered": false,
+    "emoji_ok": true,
+    "max_blank_lines": 1,
+    "trailing_space_warn": true
+  },
+  "instagram_caption": {
+    "display_name": "Instagram Caption",
+    "char_limit": 2200,
+    "char_visible": 125,
+    "char_visible_note": "Only first 125 chars visible before 'more'. Hook must land there.",
+    "hashtag_max": 30,
+    "hashtag_recommended": 15,
+    "links_in_body": false,
+    "links_note": "No clickable links in caption. Use 'link in bio'.",
+    "plain_text_only": true,
+    "markdown_rendered": false,
+    "emoji_ok": true,
+    "max_blank_lines": 2,
+    "trailing_space_warn": true
+  },
+  "substack_post": {
+    "display_name": "Substack Post",
+    "char_limit": null,
+    "hashtag_max": 0,
+    "links_in_body": true,
+    "plain_text_only": false,
+    "markdown_rendered": true,
+    "emoji_ok": true,
+    "send_to_subscribers": true,
+    "send_to_subscribers_note": "IRREVERSIBLE — once sent, a second publish triggers a second subscriber email.",
+    "max_blank_lines": 3,
+    "max_blank_lines_note": "Excessive blank lines create ugly gaps in the rendered Substack layout."
+  },
+  "reddit_post": {
+    "display_name": "Reddit Self Post",
+    "char_limit": 40000,
+    "title_char_limit": 300,
+    "hashtag_max": 0,
+    "links_in_body": true,
+    "promo_tone_penalized": true,
+    "promo_tone_note": "Promotional tone triggers downvotes and mod removal. Lead with value, not pitch.",
+    "plain_text_only": false,
+    "markdown_rendered": true,
+    "emoji_ok": false,
+    "max_blank_lines": 3
+  },
+  "email_body": {
+    "display_name": "Email Body",
+    "char_limit": null,
+    "hashtag_max": 0,
+    "links_in_body": true,
+    "plain_text_only": true,
+    "plain_text_note": "Pipe characters, bold markers, and tables render as literal chars in most email clients.",
+    "markdown_rendered": false,
+    "emoji_ok": false,
+    "max_blank_lines": 2
+  },
+  "whatsapp_message": {
+    "display_name": "WhatsApp Message",
+    "char_limit": 65536,
+    "hashtag_max": 0,
+    "links_in_body": true,
+    "plain_text_only": true,
+    "plain_text_note": "Markdown tables and pipe chars paste as literal bad characters.",
+    "markdown_rendered": false,
+    "emoji_ok": true,
+    "max_blank_lines": 2
+  }
+}

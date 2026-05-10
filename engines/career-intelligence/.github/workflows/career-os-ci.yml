@@ -1,0 +1,46 @@
+# career-os-ci.yml — Run plugin test suite on every push and PR
+#
+# Gate: tests/test_outreach_dedup.py (pytest) MUST pass (CI fails on red).
+# Best-effort: hooks and mission-control tests run but do not gate CI yet
+# (they have environment dependencies that need fixture work first).
+
+name: career-os-ci
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Plugin tests (portability + outreach-dedup)
+    runs-on: ubuntu-latest
+    env:
+      # CAREER_OS_HOME is the only required env var — it points to the user's
+      # data repo. Plugin install path is self-resolving from the marketplace
+      # cache; no CAREER_OS_PLUGIN needed.
+      CAREER_OS_HOME: ${{ github.workspace }}/tests/fixtures/career-os-home
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install pytest
+        run: pip install pytest
+
+      - name: Create CAREER_OS_HOME fixture
+        run: mkdir -p "$CAREER_OS_HOME/brain/network/people"
+
+      - name: Hooks test (best-effort — has env deps)
+        run: bash tests/test-hooks.sh || true
+
+      - name: Outreach dedup test (MUST pass — gates CI)
+        run: pytest tests/test_outreach_dedup.py -v
+
+      - name: Mission control test (best-effort — has fixture deps)
+        run: bash tests/test-mission-control.sh || true

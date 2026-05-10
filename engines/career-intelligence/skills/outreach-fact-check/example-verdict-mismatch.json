@@ -1,0 +1,21 @@
+{
+  "_comment": "[Recipient] near-miss class — agent inherited draft saying 'last 4 as Google L6' but canonical says 6 years 5 months total. Also demonstrates wrong title class ('SDM' vs 'AE Manager II') and inflated report count ('50+ reports' vs canonical max 16). Three mismatches in one draft — the multi-dim sweep this skill enforces.",
+  "input": {
+    "claim": "I spent my last 4 years at Google as an L6 SDM leading 50+ reports",
+    "claim_class": null,
+    "artifact_type": "email",
+    "recipient": "[Recipient]",
+    "context_excerpt": "I spent my last 4 years at Google as an L6 SDM leading 50+ reports on the data center platform team."
+  },
+  "output": {
+    "claim": "I spent my last 4 years at Google as an L6 SDM leading 50+ reports",
+    "claim_class": "tenure|title|scope",
+    "verdict": "mismatch",
+    "canonical_source": "~/anand-career-os/brain/identity/experience-history.md",
+    "canonical_excerpt": "### 4.3 Google -- Senior Software Engineering Manager\n\n**Period:** January 2019 -- May 2025 (6 years 5 months)\n**Level:** L6 AE Manager II\n**LinkedIn title:** Senior Software Engineering Manager\n...\nManaged up to 16 engineers and contractors",
+    "diff": "THREE mismatches detected (multi-dim sweep required — check all in-flight drafts for the same claim class):\n1. TENURE: claim says '4 years'; canonical says '6 years 5 months' (Jan 2019 – May 2025)\n2. TITLE: claim says 'L6 SDM'; canonical level is 'L6 AE Manager II', LinkedIn title 'Senior Software Engineering Manager'. SDM is an Amazon title class, not Google.\n3. SCOPE: claim says '50+ reports'; canonical says 'managed up to 16 engineers and contractors'",
+    "confidence": "HIGH",
+    "remediation": "Replace with canonical language: '6 years 5 months as Senior Software Engineering Manager (L6 AE Manager II) at Google, managing up to 16 engineers and contractors on the $40B annual data center construction platform.' Blast-radius: audit every other in-flight outreach draft referencing Google tenure, title, or report count before resuming.",
+    "blast_radius_note": "This mismatch class (Google tenure/title/scope) was found in multiple simultaneous drafts during the 2026-04-26 near-miss incident. Before fixing only this draft, grep all brain/tasks/outreach-*.md and any draft in INPUT/ for the same claim class (tenure / title / scope) before shipping any other artifact in the same draft batch."
+  }
+}

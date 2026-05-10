@@ -1,0 +1,31 @@
+{
+  "slug": "content-format-check",
+  "version": "1.0.0",
+  "status": "active",
+  "created": "2026-05-04",
+  "origin": "User observed extra spaces in ClawCamp Substack essay draft and requested objective codification for multi-platform format enforcement before publishing.",
+  "description": "Platform-aware content formatting validator. Catches double spaces, trailing whitespace, excess blank lines, and platform-specific violations (LinkedIn URL suppression, Twitter character limits, Instagram link limitations, etc.). Python-based for unicode safety and special-char portability.",
+  "enforcement": {
+    "how": "HOW.py",
+    "audit": "AUDIT.sh",
+    "watch": "WATCH.sh",
+    "check_engine": "check.py",
+    "log": "~/.cyborg-enforcement-log.jsonl"
+  },
+  "platforms": [
+    "substack",
+    "linkedin",
+    "twitter",
+    "reddit",
+    "instagram",
+    "universal (no platform specified)"
+  ],
+  "applies_to": [
+    "any content before publishing to a distribution surface",
+    "essays, posts, threads, captions, comments",
+    "campaign masters before spoke deployment"
+  ],
+  "litmus": "Run HOW.py with text + platform before attaching content to any publishing surface. Exit 0 = ship. Exit 1 = BLOCK (must fix). Exit 2 = WARN (review before ship).",
+  "dispatch_slug": "content-format-check",
+  "product_home": "social-distribution-engine"
+}

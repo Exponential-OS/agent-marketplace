@@ -1,0 +1,21 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "career-os-marketplace",
+  "description": "Career OS plugin marketplace — AI-powered career management system",
+  "owner": {
+    "name": "Anand Vallamsetla"
+  },
+  "plugins": [
+    {
+      "name": "career-os",
+      "description": "AI-powered career management system. The operating system for your career — persistent memory, session capture, git-versioned data, full privacy.",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/thewhyman/career-os-plugin.git",
+        "sha": "5d479a9de3dee337f562da149d92258d612e5f46"
+      },
+      "category": "productivity",
+      "homepage": "https://github.com/thewhyman/career-os-plugin"
+    }
+  ]
+}

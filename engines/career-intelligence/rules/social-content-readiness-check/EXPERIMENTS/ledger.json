@@ -1,0 +1,39 @@
+{
+  "experiments": [
+    {
+      "id": "E001",
+      "hypothesis": "Three-judge panel (tone + IP + narrative) catches >90% of bad-ship moments before publication.",
+      "status": "pending",
+      "started": "2026-05-04",
+      "metric": "post-incident survey: count cases where a published post was retracted or required correction within 24h, divided by total ships",
+      "verdict": null,
+      "notes": "Baseline: pre-rule, manual self-review missed at least three IP near-misses + multiple tone misfires."
+    },
+    {
+      "id": "E002",
+      "hypothesis": "Cheap Haiku judge calls cost less than the value of one prevented retraction.",
+      "status": "pending",
+      "started": "2026-05-04",
+      "metric": "monthly token spend on judge calls vs incidents prevented",
+      "verdict": null,
+      "notes": "If <$5/month and prevents one issue, 3D-Execution Axiom says ship it indefinitely."
+    },
+    {
+      "id": "E003",
+      "hypothesis": "Soft-fail mode (WARN when API key missing) keeps the gate usable in offline / cost-sensitive sessions without compromising shipped artifacts.",
+      "status": "pending",
+      "started": "2026-05-04",
+      "metric": "ratio of (WARN due to missing API key) to (PASS) over 30d; should stay <10%",
+      "verdict": null,
+      "notes": "If ratio climbs, switch judges to local Ollama Haiku-class model."
+    }
+  ],
+  "cadence": {
+    "current": "per-content-pre-ship",
+    "auto_adjust": true,
+    "halve_after": "3 consecutive no-change verdicts",
+    "double_after": "kill-candidate detected",
+    "floor": "weekly",
+    "ceiling": "per-content-pre-ship"
+  }
+}

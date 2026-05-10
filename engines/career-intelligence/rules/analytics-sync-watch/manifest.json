@@ -1,0 +1,21 @@
+{
+  "slug": "analytics-sync-watch",
+  "version": "1.0.0",
+  "status": "active",
+  "created": "2026-05-07",
+  "updated": "2026-05-07",
+  "product_home": "career-os-plugin",
+  "description": "Post-distribution Phase 5 gate. WATCH.py scans all published campaigns for missing analytics data (no impressions/reactions/comments/shares recorded after ship). HOW.py warns if a specific campaign is 7+ days post-ship with no analytics. Closes the learning loop: Idea → Ship → Measure → Learn → Next Idea. Also surfaces the campaign.json schema gap (analytics section missing).",
+  "litmus": "Run WATCH.py — signals 'strengthen' if published campaigns have no analytics data after 7+ days. Run HOW.py per-campaign for pre-distribution analytics reminders.",
+  "files": {
+    "HOW.py": "Per-campaign analytics staleness gate — WARN if 7+ days since ship with no analytics",
+    "AUDIT.py": "Cross-campaign audit — surfaces all published campaigns missing analytics data",
+    "WATCH.py": "Evolution scanner — detects analytics gap and schema gap, signals strengthen"
+  },
+  "callers": [
+    "skills/social-distribution-engine/validate-campaign-preflight.py (optional Phase 5 check)"
+  ],
+  "schema_gap_note": "campaign.json schema does not yet have an 'analytics' section. Add: analytics: {impressions: null, reactions: null, comments: null, shares: null, profile_views_delta: null, updated: null}. This is flagged in AUDIT.py and WATCH.py outputs.",
+  "origin": "2026-05-07: Phase 5 (analytics/learn) of the campaign lifecycle has no mechanical gate. WATCH.py built to surface stale campaigns and schema gap.",
+  "dispatch_slug": "analytics-sync-watch"
+}

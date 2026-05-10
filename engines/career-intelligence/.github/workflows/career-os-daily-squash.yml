@@ -1,0 +1,74 @@
+# career-os-daily-squash.yml — Compress daily micro-commits into one clean commit
+#
+# Runs in the USER'S career-os DATA repo (not this plugin repo).
+# This file is included in the plugin as a template — users copy it
+# to their own career-os repo's .github/workflows/ directory.
+#
+# Runs daily at midnight UTC. Squashes all commits from yesterday
+# into a single "session: YYYY-MM-DD (N exchanges)" commit on main.
+# Keeps today's commits untouched (session may still be active).
+
+name: career-os-daily-squash
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  squash-daily:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Squash yesterday's commits
+        run: |
+          git config user.name "Career OS Bot"
+          git config user.email "career-os[bot]@users.noreply.github.com"
+
+          YESTERDAY=$(date -d "yesterday" +%Y-%m-%d 2>/dev/null || date -v-1d +%Y-%m-%d)
+          MAIN_BRANCH="main"
+
+          # Find commits from yesterday (session-log: prompt/response YYYY-MM-DD)
+          COMMITS=$(git log --oneline --after="${YESTERDAY}T00:00:00" --before="${YESTERDAY}T23:59:59" --format="%H" "$MAIN_BRANCH" 2>/dev/null || echo "")
+
+          if [ -z "$COMMITS" ]; then
+              echo "No commits from $YESTERDAY to squash."
+              exit 0
+          fi
+
+          COMMIT_COUNT=$(echo "$COMMITS" | wc -l | tr -d '[:space:]')
+
+          if [ "$COMMIT_COUNT" -le 1 ]; then
+              echo "Only $COMMIT_COUNT commit from $YESTERDAY — nothing to squash."
+              exit 0
+          fi
+
+          # Count exchanges (user prompts) from yesterday's ledger
+          EXCHANGE_COUNT=0
+          LEDGER_FILE=".career-os/ledger/${YESTERDAY}.md"
+          if [ -f "$LEDGER_FILE" ]; then
+              EXCHANGE_COUNT=$(grep -c "^## .* — User" "$LEDGER_FILE" 2>/dev/null || echo "0")
+          fi
+
+          # Find the commit just before yesterday's first commit
+          OLDEST_COMMIT=$(echo "$COMMITS" | tail -1)
+          BASE_COMMIT=$(git rev-parse "${OLDEST_COMMIT}^" 2>/dev/null || echo "")
+
+          if [ -z "$BASE_COMMIT" ]; then
+              echo "Cannot find base commit — skipping squash."
+              exit 0
+          fi
+
+          # Soft reset to base, then recommit everything as one
+          git reset --soft "$BASE_COMMIT"
+          git commit -m "session: $YESTERDAY ($EXCHANGE_COUNT exchanges, $COMMIT_COUNT commits)"
+
+          git push --force-with-lease origin "$MAIN_BRANCH"
+          echo "Squashed $COMMIT_COUNT commits from $YESTERDAY into one ($EXCHANGE_COUNT exchanges)."

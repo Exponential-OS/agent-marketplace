@@ -1,0 +1,21 @@
+{
+  "slug": "content-url-resolution-check",
+  "version": "1.0.0",
+  "status": "active",
+  "created": "2026-05-07",
+  "updated": "2026-05-07",
+  "product_home": "career-os-plugin",
+  "description": "Pre-distribution gate. Scans all content files referenced in campaign.json for unresolved URL placeholder tokens (e.g., [PART-3-URL], [HUB-URL], [PASTE-LINK-HERE]). BLOCKs distribution if any token is found. A campaign with unresolved tokens will publish broken content.",
+  "litmus": "Run HOW.py with campaign_file — exit 0=no tokens (safe to distribute), exit 1=BLOCK (tokens found), exit 2=WARN (files missing).",
+  "files": {
+    "HOW.py": "Enforcement gate — scan campaign content files for unresolved URL tokens",
+    "AUDIT.py": "Compliance audit — detect past distribution attempts with unresolved tokens",
+    "WATCH.py": "Evolution scanner — signal workflow gap if block rate exceeds 30%"
+  },
+  "callers": [
+    "skills/social-distribution-engine/validate-campaign.py",
+    "skills/social-distribution-engine/HOW.sh"
+  ],
+  "origin_incident": "2026-05-07: Article 03 campaign.json had [PART-3-URL] tokens in hub first-comment and LinkedIn article body. Gate built to prevent distributing campaigns with any such token.",
+  "dispatch_slug": "content-url-resolution-check"
+}

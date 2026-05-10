@@ -1,0 +1,21 @@
+{
+  "_comment": "Comparative-claim class — neither component of the comparison has a quantified canonical anchor, so the claim cannot be diffed (verdict 'insufficient_evidence', not 'mismatch'). Distinct from 'unknown' (which means the underlying fact has no canonical entry). Here the underlying fact is partially knowable (Anand's AI experience IS in canonical) but the comparison target ('typical Google EM AI experience') has no canonical mapping. Flags for reframing rather than ship-block.",
+  "input": {
+    "claim": "I have more AI experience than most EMs at Google",
+    "claim_class": "comparative",
+    "artifact_type": "email",
+    "recipient": "[Recipient]",
+    "context_excerpt": "Coming from a 6+ year Google tenure, I have more AI experience than most EMs at Google — having shipped applied AI in 4 production systems before leaving."
+  },
+  "output": {
+    "claim": "I have more AI experience than most EMs at Google",
+    "claim_class": "comparative",
+    "verdict": "insufficient_evidence",
+    "canonical_source": "~/anand-career-os/brain/identity/experience-history.md",
+    "canonical_excerpt": "[Comparative claim — both sides of the comparison need quantification; only one side ('Anand's AI experience') is partially in canonical. The other side ('typical Google EM AI experience') has no canonical anchor.]",
+    "diff": "Comparative claims require BOTH components to be quantified against the same yardstick. Canonical does record Anand's AI experience (§ 4.3 mentions applied-AI work on multiple systems) but does NOT contain a population-level statistic on 'typical Google EM AI experience' — that figure isn't in any brain file because it can't be (Anand never had access to that distribution). Cannot diff a known value against an unknowable one.",
+    "confidence": "LOW",
+    "remediation": "Reframe to a specific quantifiable claim that diffs against canonical: 'I shipped applied AI in 4 production systems during my Google tenure (visitor management, P6/Spring Tide, iSCaaS+, [name 4th from canonical]).' Or remove the comparative framing: 'My Google tenure included extensive applied-AI work across [N] production systems.' Do NOT ship the comparative claim — it cannot be defended if [Recipient] asks 'how do you know that?'",
+    "blast_radius_note": null
+  }
+}

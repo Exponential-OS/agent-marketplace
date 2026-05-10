@@ -1,0 +1,164 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "campaign.schema.json",
+  "title": "Campaign Package Schema",
+  "description": "Defines a complete, ship-ready flywheel campaign. A campaign is NOT ready to publish until review.ready_to_publish is true.",
+  "version": "1.0.0",
+  "type": "object",
+  "required": ["meta", "source", "hub", "spokes", "assets", "comment_cascade", "review"],
+
+  "properties": {
+
+    "meta": {
+      "type": "object",
+      "required": ["id", "title", "ship_date", "folder", "status"],
+      "properties": {
+        "id":          { "type": "string", "description": "Slug: NN-topic-YYYY-MM-DD" },
+        "title":       { "type": "string" },
+        "subtitle":    { "type": "string" },
+        "series":      { "type": "string" },
+        "series_part": { "type": "integer" },
+        "ship_date":   { "type": "string", "format": "date" },
+        "folder":      { "type": "string", "description": "Absolute or repo-relative path to campaign folder" },
+        "status":      { "type": "string", "enum": ["draft", "ready_for_review", "reviewed", "live", "complete"] }
+      }
+    },
+
+    "source": {
+      "description": "The Substack long-form article — source of truth for all adaptations",
+      "type": "object",
+      "required": ["platform", "content_file", "asset", "status"],
+      "properties": {
+        "platform":     { "type": "string", "const": "substack" },
+        "content_file": { "type": "string", "description": "Path relative to campaign folder" },
+        "asset": {
+          "type": "object",
+          "required": ["file", "dims"],
+          "properties": {
+            "file":  { "type": "string" },
+            "dims":  { "type": "array", "items": { "type": "integer" }, "minItems": 2, "maxItems": 2 }
+          }
+        },
+        "url":    { "type": "string", "description": "Fill in after publish" },
+        "status": { "type": "string", "enum": ["pending", "live"] }
+      }
+    },
+
+    "hub": {
+      "description": "LinkedIn hub post — all spokes drive here",
+      "type": "object",
+      "required": ["platform", "content_file", "asset", "hashtags", "first_comment", "status"],
+      "properties": {
+        "platform":      { "type": "string", "const": "linkedin" },
+        "content_file":  { "type": "string" },
+        "asset": {
+          "type": "object",
+          "required": ["file", "dims"],
+          "properties": {
+            "file": { "type": "string" },
+            "dims": { "type": "array", "items": { "type": "integer" }, "minItems": 2, "maxItems": 2 }
+          }
+        },
+        "hashtags":       { "type": "array", "items": { "type": "string" }, "maxItems": 5 },
+        "first_comment":  { "type": "string", "description": "Text for first comment posted within 5min of hub — includes source URL" },
+        "self_reply_2h":  { "type": "string", "description": "Self-reply posted 2h after hub to drive engagement" },
+        "url":            { "type": "string" },
+        "status":         { "type": "string", "enum": ["pending", "live"] }
+      }
+    },
+
+    "spokes": {
+      "type": "array",
+      "description": "All distribution spokes. Each spoke is an adaptation — NOT a copy — of the source.",
+      "items": {
+        "type": "object",
+        "required": ["id", "platform", "type", "content_file", "hashtags", "status"],
+        "properties": {
+          "id":           { "type": "string" },
+          "platform":     { "type": "string", "enum": ["linkedin", "x", "instagram", "facebook", "reddit"] },
+          "type":         { "type": "string", "enum": ["post", "article", "thread", "story", "carousel"] },
+          "content_file": { "type": "string" },
+          "asset": {
+            "type": ["object", "null"],
+            "properties": {
+              "file":      { "type": "string" },
+              "dims":      { "type": "array", "items": { "type": "integer" }, "minItems": 2, "maxItems": 2 },
+              "placement": { "type": "string" }
+            }
+          },
+          "hashtags":     { "type": "array", "items": { "type": "string" } },
+          "subreddits":   { "type": "array", "items": { "type": "string" } },
+          "ship_day":     { "type": "integer", "default": 1 },
+          "url":          { "type": "string" },
+          "status":       { "type": "string", "enum": ["pending", "live", "skipped"] }
+        }
+      }
+    },
+
+    "assets": {
+      "description": "All asset files for this campaign, keyed by placement.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["file", "dims", "status"],
+        "properties": {
+          "file":   { "type": "string" },
+          "dims":   { "type": "array", "items": { "type": "integer" }, "minItems": 2, "maxItems": 2 },
+          "status": { "type": "string", "enum": ["generated", "missing", "reviewed"] }
+        }
+      }
+    },
+
+    "comment_cascade": {
+      "type": "object",
+      "required": ["content_file", "day_1_targets"],
+      "properties": {
+        "content_file":   { "type": "string" },
+        "day_1_targets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["platform", "target_description", "text"],
+            "properties": {
+              "platform":           { "type": "string" },
+              "target_description": { "type": "string" },
+              "target_url":         { "type": "string" },
+              "text":               { "type": "string" },
+              "name_tags":          {
+                "type": "array",
+                "description": "People to @mention. Populate from engagement analytics on prior posts.",
+                "items": {
+                  "type": "object",
+                  "required": ["handle", "reason"],
+                  "properties": {
+                    "handle": { "type": "string" },
+                    "reason": { "type": "string", "description": "Why they're being tagged (engaged on Part N)" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "day_2_hub_reply": { "type": "string" },
+        "day_2_x_reply":   { "type": "string" }
+      }
+    },
+
+    "review": {
+      "description": "Human review gate. ready_to_publish must be true before execution.",
+      "type": "object",
+      "required": ["content_reviewed", "assets_reviewed", "hashtags_reviewed", "formatting_reviewed", "name_tags_verified", "ready_to_publish"],
+      "properties": {
+        "content_reviewed":    { "type": "boolean" },
+        "assets_reviewed":     { "type": "boolean" },
+        "hashtags_reviewed":   { "type": "boolean" },
+        "formatting_reviewed": { "type": "boolean" },
+        "name_tags_verified":  { "type": "boolean" },
+        "reviewer":            { "type": ["string", "null"] },
+        "reviewed_at":         { "type": ["string", "null"] },
+        "notes":               { "type": "string" },
+        "ready_to_publish":    { "type": "boolean", "description": "ONLY set to true after human has reviewed all content" }
+      }
+    }
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "_comment": "Canonical platform asset dimensions. Source of truth for all campaign asset generators.",
+  "_version": "1.0.0",
+  "_updated": "2026-05-07",
+
+  "platforms": {
+    "substack": {
+      "cover":         { "w": 1456, "h": 816,  "ratio": "16:9",  "placement": "cover_image",    "required": true  },
+      "og_image":      { "w": 1200, "h": 630,  "ratio": "1.91:1","placement": "og_meta",        "required": false }
+    },
+    "linkedin": {
+      "post_image":    { "w": 1200, "h": 627,  "ratio": "1.91:1","placement": "shared_post",    "required": true  },
+      "article_header":{ "w": 1200, "h": 627,  "ratio": "1.91:1","placement": "article_header", "required": true  },
+      "article_thumb": { "w": 1200, "h": 627,  "ratio": "1.91:1","placement": "article_thumb",  "required": false }
+    },
+    "x": {
+      "tweet_image":   { "w": 1200, "h": 675,  "ratio": "16:9",  "placement": "tweet_image",    "required": true  },
+      "square":        { "w": 1080, "h": 1080, "ratio": "1:1",   "placement": "tweet_image_sq", "required": false }
+    },
+    "instagram": {
+      "feed_square":   { "w": 1080, "h": 1080, "ratio": "1:1",   "placement": "feed_post",      "required": true  },
+      "feed_portrait": { "w": 1080, "h": 1350, "ratio": "4:5",   "placement": "feed_post_tall", "required": false },
+      "story":         { "w": 1080, "h": 1920, "ratio": "9:16",  "placement": "story",          "required": false }
+    },
+    "facebook": {
+      "post_image":    { "w": 1200, "h": 630,  "ratio": "1.91:1","placement": "shared_post",    "required": false },
+      "story":         { "w": 1080, "h": 1920, "ratio": "9:16",  "placement": "story",          "required": false }
+    },
+    "reddit": {
+      "post_image":    { "w": 1080, "h": 1080, "ratio": "1:1",   "placement": "post_image",     "required": false }
+    }
+  },
+
+  "hashtag_limits": {
+    "linkedin":   { "max": 5,  "sweet_spot": "3-5",  "note": "More than 5 suppressed by algorithm" },
+    "x":          { "max": 3,  "sweet_spot": "1-3",  "note": "Hashtags hurt reach above 3 on X" },
+    "instagram":  { "max": 30, "sweet_spot": "15-25","note": "First comment or caption; Reels benefit from more" },
+    "facebook":   { "max": 3,  "sweet_spot": "1-3",  "note": "Hashtags have minimal reach effect on FB" },
+    "substack":   { "max": 30, "sweet_spot": "10-20","note": "Appended at end; discoverability and SEO" },
+    "reddit":     { "max": 0,  "sweet_spot": "0",    "note": "No hashtags. Subreddits serve same function." }
+  },
+
+  "platform_notes": {
+    "linkedin":  "External links in FIRST COMMENT only — never in post body. Algorithm penalizes body links.",
+    "x":         "External link in reply after final tweet, not in tweet body, to maximize reach.",
+    "instagram": "NO clickable links in captions. Bio link is only funnel. Update bio before posting.",
+    "facebook":  "Links in post body are OK on Facebook — no algorithm penalty like LinkedIn.",
+    "reddit":    "Link in comment (post body gets auto-suppressed in many subreddits). Engineering-log tone."
+  }
+}

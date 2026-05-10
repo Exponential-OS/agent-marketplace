@@ -1,0 +1,27 @@
+{
+  "slug": "flywheel-sequence-guard",
+  "version": "1.0.0",
+  "status": "active",
+  "created": "2026-05-07",
+  "updated": "2026-05-07",
+  "product_home": "career-os-plugin",
+  "description": "Enforces the Estate Model publish order: Substack → LinkedIn Article → LinkedIn Post Hub → External Spokes. Each stage has URL dependencies on the previous stage. BLOCKs any distribution attempt where upstream dependencies are not yet live.",
+  "litmus": "Run HOW.py with campaign_file and target — exit 0=dependencies satisfied (safe to publish), exit 1=BLOCK (dep not live), exit 2=WARN (cannot determine).",
+  "files": {
+    "HOW.py": "Enforcement gate — check publish dependencies for a target spoke/hub/source",
+    "AUDIT.py": "Compliance audit — detect past out-of-order distribution attempts",
+    "WATCH.py": "Evolution scanner — signal workflow gap if sequence violations exceed 25%"
+  },
+  "estate_order": [
+    "1. source (Substack) — no dependencies",
+    "2. hub (LinkedIn Article) — requires source live",
+    "3. spoke-linkedin-post (Post Hub) — requires hub live",
+    "4. all external spokes (X, Reddit, Instagram, Facebook) — require post_hub live"
+  ],
+  "callers": [
+    "skills/social-distribution-engine/validate-campaign.py",
+    "skills/social-distribution-engine/HOW.sh"
+  ],
+  "origin_incident": "2026-05-07: Estate model dependency chain formalized. Spokes drive to Post Hub which references Article URL. Publishing out of order produces broken cross-links.",
+  "dispatch_slug": "flywheel-sequence-guard"
+}

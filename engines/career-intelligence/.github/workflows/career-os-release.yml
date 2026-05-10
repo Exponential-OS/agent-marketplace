@@ -1,0 +1,81 @@
+# career-os-release.yml — Package and publish .plugin on tagged release
+#
+# Trigger: push a semver tag (v0.3.0, v1.0.0, etc.)
+# Produces: career-os.plugin attached to a GitHub Release
+#
+# This is the distribution pipeline. Beta testers and users download
+# the .plugin file from the GitHub Releases page.
+
+name: career-os-release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    name: Gate release on CI tests
+    runs-on: ubuntu-latest
+    env:
+      CAREER_OS_HOME: ${{ github.workspace }}/tests/fixtures/career-os-home
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install pytest
+        run: pip install pytest
+
+      - name: Create CAREER_OS_HOME fixture
+        run: mkdir -p "$CAREER_OS_HOME/brain/network/people"
+
+      - name: Outreach dedup test (MUST pass — gates release)
+        run: pytest tests/test_outreach_dedup.py -v
+
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Package .plugin file
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "Packaging career-os v$VERSION"
+
+          # Create .plugin (zip of plugin directory contents)
+          zip -r career-os.plugin . \
+            -x ".git/*" \
+            -x ".github/*" \
+            -x "*.DS_Store" \
+            -x "README.md" \
+            -x "LICENSE" \
+            -x ".gitignore"
+
+          echo "Plugin packaged: career-os.plugin"
+          ls -la career-os.plugin
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: career-os.plugin
+          generate_release_notes: true
+          body: |
+            ## Career OS v${{ github.ref_name }}
+
+            ### Install
+            Download `career-os.plugin` and open it — Claude will prompt you to install.
+
+            Or install from git:
+            ```
+            claude plugin install github:Exponential-OS/career-os-plugin
+            ```

@@ -1,0 +1,20 @@
+{
+  "slug": "campaign-schema-validator",
+  "version": "1.0.0",
+  "status": "active",
+  "created": "2026-05-07",
+  "updated": "2026-05-07",
+  "product_home": "career-os-plugin",
+  "description": "Structural gate. Validates campaign.json against required schema fields (meta, source, hub, spokes, assets, comment_cascade, review) and verifies all content_file and asset file references exist on disk. Machine-actionable (JSON + exit codes) for use by validate-campaign.py meta-harness.",
+  "litmus": "Run HOW.py with campaign_file — exit 0=valid, exit 1=BLOCK (missing fields or files), exit 2=WARN (unreadable).",
+  "files": {
+    "HOW.py": "Structural validation gate — check schema fields and file existence",
+    "AUDIT.py": "Compliance audit — detect past schema violations at distribution time",
+    "WATCH.py": "Evolution scanner — signal schema_drift if block rate exceeds 20%"
+  },
+  "callers": [
+    "skills/social-distribution-engine/validate-campaign.py"
+  ],
+  "complementary": "skills/social-distribution-engine/campaign-schema/validate-campaign.py — comprehensive human-readable report; this rule provides machine-actionable exit codes for CI.",
+  "dispatch_slug": "campaign-schema-validator"
+}

@@ -1,0 +1,17 @@
+slug: campaign-preflight
+version: 1.0.0
+status: staging
+description: Pre-flight gate for any new campaign package generation. Enforces that agents read canonical strategy docs (content-flywheel.md, platform-asset-specs.json, campaign.schema.json) before drafting any content. Blocks if LinkedIn Post is set as hub instead of LinkedIn Article.
+gate_type: structural
+fires_on:
+  - new campaign package creation
+  - campaign.json hub type validation
+reads:
+  - "{plugin_base}/skills/social-distribution-engine/content-flywheel.md"
+  - "{plugin_base}/skills/social-distribution-engine/campaign-schema/platform-asset-specs.json"
+  - "{plugin_base}/skills/social-distribution-engine/campaign-schema/campaign.schema.json"
+scripts:
+  HOW: HOW.sh
+  AUDIT: AUDIT.sh
+  WATCH: WATCH.sh
+product_home: social-distribution-engine
