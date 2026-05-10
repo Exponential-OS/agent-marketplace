@@ -6,8 +6,8 @@
     "email": "thewhyman@users.noreply.github.com"
   },
   "metadata": {
-    "description": "xOS Marketplace — Platform for xOS engines. First-party primitives ship here; third-party contributors (60% revenue share) publish engines in any category. Engines are independently versioned repos. Dependency declarations enforce minimum compatible versions. Installed via Claude Code plugin system.",
-    "branding_note": "xOS brand term is 'engine' not 'plugin'. The plugin[] field and .claude-plugin/ convention are Claude Code technical infrastructure — not user-facing terminology."
+    "description": "xOS Marketplace \u2014 Platform for xOS engines. First-party primitives ship here; third-party contributors (60% revenue share) publish engines in any category. Engines are independently versioned repos. Dependency declarations enforce minimum compatible versions. Installed via Claude Code plugin system.",
+    "branding_note": "xOS brand term is 'engine' not 'plugin'. The plugin[] field and .claude-plugin/ convention are Claude Code technical infrastructure \u2014 not user-facing terminology."
   },
   "plugins": [
     {
@@ -15,7 +15,7 @@
       "platform": "xHumanOS",
       "license": "Proprietary",
       "source": "./engines/career-intelligence",
-      "description": "Career Intelligence — xHumanOS engine for job search, network, pipeline, and sessions. Composes Brand Intelligence + Social Distribution. Install on any xHumanOS instance.",
+      "description": "Career Intelligence \u2014 xHumanOS engine for job search, network, pipeline, and sessions. Composes Brand Intelligence + Social Distribution. Install on any xHumanOS instance.",
       "version": "0.47.0",
       "category": "career",
       "homepage": "https://github.com/Exponential-OS/career-intelligence-engine"
@@ -25,8 +25,8 @@
       "platform": "xOS",
       "license": "Proprietary",
       "source": "./engines/co-dialectic",
-      "description": "Co-Dialectic v4.7.0 — LLM prompt optimizer + onboarding skill + compaction immunity + semantic T3 classification + fish-swarm + Protocol 0 post-compaction re-init. Cross-family judge-panel, hallucination detector, session handoff. Works with any LLM runtime.",
-      "version": "4.7.0",
+      "description": "Co-Dialectic v4.8.0 \u2014 LLM prompt optimizer + auto-verify by stakes + semantic T3 classification + background agent lifecycle manager (dedup/timeout/capacity/registration/session-sweep) + worktree-isolation foreground gate + runtime-agnostic executor types + fish-swarm MUST-spawn dispatch mandate + Protocol 0 post-compaction re-init + plugin user-content gate. Cross-family cascade-then-jury review, judge-panel, hallucination detector, fish-swarm orchestration, session handoff. Works with any LLM runtime.",
+      "version": "4.8.0",
       "category": "ai-runtime",
       "homepage": "https://github.com/Exponential-OS/prompt-engineering-in-action"
     },
@@ -35,7 +35,7 @@
       "platform": "xOS",
       "license": "Proprietary",
       "source": "./engines/brand-intelligence",
-      "description": "Brand Intelligence — Persona schema, extraction, and registry. N-voice support for individuals (xHumanOS, N=1) and orgs (xTeamOS, N≥3). Includes persona-onboarding interview, handles, channel directory. Foundational primitive — no dependencies.",
+      "description": "Brand Intelligence \u2014 Persona schema, extraction, and registry. N-voice support for individuals (xHumanOS, N=1) and orgs (xTeamOS, N\u22653). Includes persona-onboarding interview, handles, channel directory. Foundational primitive \u2014 no dependencies.",
       "version": "0.47.0",
       "category": "brand",
       "homepage": "https://github.com/Exponential-OS/brand-intelligence-engine"
@@ -45,7 +45,7 @@
       "platform": "xOS",
       "license": "Proprietary",
       "source": "./engines/knowledge-graph",
-      "description": "Knowledge Graph — Graph data layer for all xOS engines. Phase 1: JSON files. Phase 2: Neo4j substrate replacing all engine file stores. Foundational primitive — no dependencies.",
+      "description": "Knowledge Graph \u2014 Graph data layer for all xOS engines. Phase 1: JSON files. Phase 2: Neo4j substrate replacing all engine file stores. Foundational primitive \u2014 no dependencies.",
       "version": "0.1.0",
       "category": "knowledge",
       "homepage": "https://github.com/Exponential-OS/knowledge-graph-engine"
@@ -55,7 +55,7 @@
       "platform": "xOS",
       "license": "Proprietary",
       "source": "./engines/social-distribution",
-      "description": "Social Distribution — 9-gate preflight CI for content campaigns. Hub-spoke flywheel, golden-hour scheduling, invisible signal CTAs (bookmark/save/DM-share), platform-native routing. Requires Brand Intelligence for persona-aware distribution.",
+      "description": "Social Distribution \u2014 9-gate preflight CI for content campaigns. Hub-spoke flywheel, golden-hour scheduling, invisible signal CTAs (bookmark/save/DM-share), platform-native routing. Requires Brand Intelligence for persona-aware distribution.",
       "version": "0.47.0",
       "category": "distribution",
       "homepage": "https://github.com/Exponential-OS/social-distribution-engine"
@@ -65,7 +65,7 @@
       "platform": "xOS",
       "license": "Proprietary",
       "source": "./engines/content-adapt",
-      "description": "Content Adapt — Transform engine. One idea → platform-native variants (xHumanOS) or audience-specific variants (xTeamOS). Reads Brand Intelligence personas; queries Knowledge Graph for source context.",
+      "description": "Content Adapt \u2014 Transform engine. One idea \u2192 platform-native variants (xHumanOS) or audience-specific variants (xTeamOS). Reads Brand Intelligence personas; queries Knowledge Graph for source context.",
       "version": "0.1.0",
       "category": "content",
       "homepage": "https://github.com/Exponential-OS/content-adapt-engine"
