@@ -11,6 +11,23 @@
   },
   "plugins": [
     {
+      "name": "career-intelligence",
+      "platform": "xHumanOS",
+      "license": "Proprietary",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/Exponential-OS/career-intelligence-engine.git"
+      },
+      "description": "Career Intelligence — xHumanOS engine for job search, network, pipeline, and sessions. Composes Brand Intelligence + Social Distribution. Install on any xHumanOS instance.",
+      "version": "0.47.0",
+      "dependencies": {
+        "brand-intelligence": ">=0.47.0",
+        "social-distribution": ">=0.47.0"
+      },
+      "category": "career",
+      "homepage": "https://github.com/Exponential-OS/career-intelligence-engine"
+    },
+    {
       "name": "co-dialectic",
       "platform": "xOS",
       "license": "Proprietary",
