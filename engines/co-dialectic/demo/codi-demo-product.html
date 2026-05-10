@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Co-Dialectic v4.6.1 - Complete Product Demo</title>
+<style>
+  :root {
+    --bg: #03060a;
+    --window-bg: #0d1117;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --amber: #d29922;
+    --red: #f85149;
+    --text-dim: #8b949e;
+    --border: #30363d;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: #e6edf3;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  /* --- MOTION PRIMITIVES --- */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes pulseBorder {
+    0% { box-shadow: 0 0 0 0 rgba(248, 81, 73, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(248, 81, 73, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(248, 81, 73, 0); }
+  }
+  @keyframes barGrow {
+    from { width: 0%; }
+    to { width: var(--final-w); }
+  }
+
+  .scene {
+    display: none;
+    width: 1080px;
+    height: 720px;
+    background: var(--bg);
+    padding: 60px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+  }
+  .scene.active { display: flex; animation: scaleIn 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+
+  /* --- HOOK STYLES --- */
+  .hook-text {
+    font-size: 64px;
+    font-weight: 900;
+    line-height: 1.1;
+    text-align: left;
+    width: 100%;
+    max-width: 800px;
+  }
+  .strike {
+    text-decoration: line-through;
+    color: var(--text-dim);
+    opacity: 0.5;
+  }
+  .highlight { color: var(--accent); }
+
+  /* --- TERMINAL WINDOW --- */
+  .window {
+    width: 900px;
+    background: var(--window-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .window-bar {
+    background: #161b22;
+    padding: 12px 16px;
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot.red { background: #ff5f57; }
+  .dot.yellow { background: #febc2e; }
+  .dot.green { background: #28c840; }
+
+  .content { padding: 40px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 15px; min-height: 400px; }
+
+  /* --- PRODUCT ELEMENTS --- */
+  .status-pill {
+    display: inline-flex;
+    padding: 6px 16px;
+    background: #161b22;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 13px;
+    margin-bottom: 30px;
+    color: var(--text-dim);
+  }
+  .status-pill strong { color: #fff; margin-right: 8px; }
+
+  .improved-box {
+    background: #1c2128;
+    border-left: 4px solid var(--accent);
+    padding: 24px;
+    border-radius: 0 8px 8px 0;
+    margin: 20px 0;
+  }
+
+  .verify-pass { color: var(--green); display: flex; align-items: center; gap: 8px; margin-top: 20px; }
+  .routed-badge { color: var(--accent); display: flex; align-items: center; gap: 8px; margin-top: 20px; }
+
+  .preflight-hold {
+    border: 2px solid var(--red);
+    background: #1a0a0a;
+    padding: 30px;
+    border-radius: 10px;
+    animation: pulseBorder 2s infinite;
+  }
+
+  .trend-row { display: flex; align-items: center; gap: 15px; margin-bottom: 12px; }
+  .trend-label { width: 60px; color: var(--text-dim); font-size: 12px; }
+  .trend-bar-bg { background: #21262d; border-radius: 4px; flex-grow: 1; height: 20px; overflow: hidden; }
+  .trend-bar-fill { height: 100%; transition: width 1s ease-out; }
+
+  .caption {
+    position: absolute;
+    bottom: 40px;
+    font-size: 20px;
+    color: var(--text-dim);
+    text-align: center;
+    width: 100%;
+    font-weight: 500;
+  }
+  .caption b { color: var(--accent); }
+
+  .pills-grid { display: flex; gap: 15px; justify-content: center; margin-top: 40px; }
+  .pill { padding: 10px 20px; border-radius: 30px; font-size: 14px; font-weight: 700; border: 1px solid transparent; }
+  .pill-green { background: #0f2a14; color: #3fb950; border-color: #236128; }
+  .pill-amber { background: #2a1f00; color: #d29922; border-color: #5a4000; }
+  .pill-blue { background: #0a1929; color: #58a6ff; border-color: #1f4068; }
+  .pill-red { background: #2a0a0a; color: #f85149; border-color: #6e2020; }
+
+  .tool-call { color: var(--amber); margin-bottom: 5px; }
+  .tool-result { color: var(--text-dim); margin-bottom: 15px; font-size: 13px; }
+
+  .dna-block {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    padding: 20px;
+    font-size: 12px;
+    color: var(--accent);
+    white-space: pre-wrap;
+    border-radius: 8px;
+  }
+
+</style>
+</head>
+<body>
+
+<!-- SCENE 1: HOOK -->
+<div id="scene-0" class="scene active">
+  <div class="hook-text">
+    Stop using AI as an <span class="strike">assistant</span>. <br>
+    Or a <span class="strike">search engine</span>.
+  </div>
+</div>
+
+<!-- SCENE 2: REVEAL -->
+<div id="scene-1" class="scene">
+  <div class="hook-text">
+    Use it as a <br>
+    <span class="highlight">co-thinking partner</span>.
+  </div>
+  <div class="caption">Co-Dialectic: The OS for Human-AI Calibration.</div>
+</div>
+
+<!-- SCENE 3: SYSTEM INTRO -->
+<div id="scene-2" class="scene">
+  <div style="text-align:center; max-width:800px;">
+    <h1 style="font-size:42px; margin-bottom:20px; color:var(--accent)">A Semantic Operating System</h1>
+    <p style="font-size:20px; color:var(--text-dim); line-height:1.5;">Every response is qualified by an observer pattern. No guessing what's "hallucinated" vs "vetted".</p>
+    <div class="pills-grid">
+      <div class="pill pill-green">🟢 Verified</div>
+      <div class="pill pill-amber">🟡 Flags</div>
+      <div class="pill pill-blue">🔵 Routed</div>
+      <div class="pill pill-red">🔴 Hold</div>
+    </div>
+  </div>
+  <div class="caption">The system uses <b>color-coded invariants</b> to protect your intent.</div>
+</div>
+
+<!-- SCENE 4: PROMPT SHARPENING -->
+<div id="scene-3" class="scene">
+  <div class="window">
+    <div class="window-bar"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+    <div class="content">
+      <div class="status-pill"><strong>🔗 Career (Hoffman)</strong> 45% · Cal: 94%</div>
+      <div style="margin-bottom: 20px;">You: make my linkedin better</div>
+      <div class="improved-box">
+        <div style="font-size: 11px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px;">Sharper Prompt</div>
+        "Review my LinkedIn headline for a <span style="color: var(--accent);">[Senior PM]</span> role. <br>
+        Identify 2 high-impact changes for 10-second skims."
+      </div>
+      <div style="color: var(--green); font-weight: 700;">Score lift: 45% → 82% 🟢</div>
+    </div>
+  </div>
+  <div class="caption">Vague prompts are <b>automatically sharpened</b> before the expert AI responds.</div>
+</div>
+
+<!-- SCENE 5: RESEARCH-FIRST MODE (NEW) -->
+<div id="scene-4" class="scene">
+  <div class="window">
+    <div class="window-bar"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+    <div class="content">
+      <div class="status-pill"><strong>🔬 Research (Ng)</strong> Active</div>
+      <div class="tool-call">→ google_search("latest Claude 4.5 pricing")</div>
+      <div class="tool-result">Result: $0.003/1K input, $0.015/1K output...</div>
+      <div class="tool-call">→ read_file("docs/pricing-models.md")</div>
+      <div class="tool-result">Result: Internal policy matches external public data.</div>
+      <div style="color: var(--accent); margin-top: 20px;">"Based on search results and internal docs, the ROI for your tier..."</div>
+    </div>
+  </div>
+  <div class="caption"><b>Research-First Mode</b> exhausts all sources before asking you a single question.</div>
+</div>
+
+<!-- SCENE 6: HALLUCINATION DETECTION -->
+<div id="scene-5" class="scene">
+  <div class="window">
+    <div class="window-bar"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+    <div class="content">
+      <div class="status-pill"><strong>✍️ Writing (Orwell)</strong> 78% · Cal: 96%</div>
+      <div style="line-height: 1.7; color: #fff; margin-bottom: 30px; opacity: 0.8;">
+        A strong headline answers "who do I help and how" in under 10 words. Avoid generic keywords that every candidate shares...
+      </div>
+      <div class="verify-pass">🟢 Grounded — no hallucinations detected</div>
+    </div>
+  </div>
+  <div class="caption">Every answer is <b>silently checked</b> for false claims in real-time.</div>
+</div>
+
+<!-- SCENE 7: CROSS-FAMILY VERIFICATION -->
+<div id="scene-6" class="scene">
+  <div class="window">
+    <div class="window-bar"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+    <div class="content">
+      <div class="status-pill"><strong>🏗️ Architecture (Dean)</strong> 82% · Cal: 97%</div>
+      <div style="line-height: 1.7; color: #fff; margin-bottom: 30px; font-size: 14px;">
+        Shared-schema wins on operational cost; schema-per-tenant wins on blast radius containment. At 10K req/sec, shared-schema is the right call...
+      </div>
+      <div class="verify-pass">🟢 2 independent model families (Claude/Gemini) agreed — clean</div>
+    </div>
+  </div>
+  <div class="caption">Significant decisions trigger <b>cross-family verification</b> to eliminate model bias.</div>
+</div>
+
+<!-- SCENE 8: SYCOPHANCY AUDITOR (NEW) -->
+<div id="scene-7" class="scene">
+  <div class="window">
+    <div class="window-bar"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+    <div class="content">
+      <div class="status-pill"><strong>🔥 Mindset (Storey)</strong> Grounded</div>
+      <div style="color:var(--text-dim); margin-bottom: 20px;">AI: "That is a brilliant idea, you are definitely the smartest founder I've met..."</div>
+      <div style="border: 2px solid var(--red); background: #2a0a0a; padding: 20px; border-radius: 8px;">
+        <div style="color: var(--red); font-weight: 700; margin-bottom: 10px;">🍯 HIGH SYCOPHANCY DETECTED</div>
+        <p style="font-size: 13px; color: #fff;">This response is telling you what you want to hear, not what you need. <br>
+        <span style="color:var(--amber);">Tip: Re-prompt with "codi tone critical" for honest pushback.</span></p>
+      </div>
+    </div>
+  </div>
+  <div class="caption">The <b>Calibration Auditor</b> stops the "cheerleader" loop. You get truth, not flattery.</div>
+</div>
+
+<!-- SCENE 9: PERSONA FUSION (NEW) -->
+<div id="scene-8" class="scene">
+  <div class="window">
+    <div class="window-bar"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+    <div class="content">
+      <div class="status-pill"><strong>🎨 Ive + 🏗️ Dean</strong> Multi-Fusion</div>
+      <p style="margin-bottom: 20px; line-height: 1.5;">"Designing a scalable design system for 10M users."</p>
+      <div class="improved-box" style="border-left-color: var(--amber);">
+        <div style="font-size: 11px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px;">Expert Perspectives</div>
+        <span style="color: var(--accent);">[Jony Ive]:</span> Aesthetic coherence and interaction weight. <br>
+        <span style="color: var(--green);">[Jeff Dean]:</span> Latency boundaries and shard distribution.
+      </div>
+      <div style="color: var(--accent); font-weight: 700;">Collaboration Active 🟢</div>
+    </div>
+  </div>
+  <div class="caption"><b>Multi-Persona Fusion</b> combines top experts for tasks that span domains.</div>
+</div>
+
+<!-- SCENE 10: PREFLIGHT HOLD -->
+<div id="scene-9" class="scene">
+  <div class="window">
+    <div class="window-bar"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+    <div class="content">
+      <div class="preflight-hold">
+        <div style="color: var(--red); font-weight: 900; margin-bottom: 15px;">🔴 PREFLIGHT — Live Artifact</div>
+        <div style="line-height: 1.6;">
+          Claim mismatch: <span style="color: var(--amber);">⚠ 1 mismatch</span><br>
+          &nbsp;&nbsp;"led a team of 12" — actual: <span style="color: var(--green);">8 direct reports</span><br>
+          Grounded: <span style="color: var(--green);">✓ verified</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="caption">Nothing reaches a human with a <b>factual error</b>. codi catches what you miss.</div>
+</div>
+
+<!-- SCENE 11: CONTEXT HANDOFF / SESSION DNA (NEW) -->
+<div id="scene-10" class="scene">
+  <div class="window">
+    <div class="window-bar"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+    <div class="content">
+      <h3 style="margin-bottom:15px; font-size:16px;">Context Threshold Reached 🔴</h3>
+      <div class="dna-block">{
+  "session_dna": {
+    "preferences": ["Python 3.14", "Docker-first", "Vanilla CSS"],
+    "decisions": ["Agreed on shared-schema", "Rejected LocalLLM for V1"],
+    "next_steps": ["Generate Dockerfile", "Setup CI/CD"]
+  }
+}</div>
+      <p style="margin-top: 15px; color: var(--green); font-size: 13px;">✓ Session DNA captured. Paste into fresh chat to resume with zero amnesia.</p>
+    </div>
+  </div>
+  <div class="caption"><b>State Persistence</b> prevents AI amnesia. Teleport your session DNA across any model.</div>
+</div>
+
+<!-- SCENE 12: LEARNING CURVE -->
+<div id="scene-11" class="scene">
+  <div class="window">
+    <div class="window-bar"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+    <div class="content">
+      <h3 style="margin-bottom:30px; font-size:18px;">Your Learning Curve (Last 10 Days)</h3>
+      <div class="trend-row">
+        <div class="trend-label">Day 1</div>
+        <div class="trend-bar-bg"><div class="trend-bar-fill" style="width:45%; background:var(--text-dim)"></div></div>
+        <div style="width:40px">45%</div>
+      </div>
+      <div class="trend-row">
+        <div class="trend-label">Day 3</div>
+        <div class="trend-bar-bg"><div class="trend-bar-fill" style="width:72%; background:var(--amber)"></div></div>
+        <div style="width:40px">72%</div>
+      </div>
+      <div class="trend-row">
+        <div class="trend-label">Day 7</div>
+        <div class="trend-bar-bg"><div class="trend-bar-fill" style="width:85%; background:var(--accent)"></div></div>
+        <div style="width:40px">85%</div>
+      </div>
+      <div class="trend-row">
+        <div class="trend-label">Day 10</div>
+        <div class="trend-bar-bg"><div class="trend-bar-fill" style="width:93%; background:var(--green)"></div></div>
+        <div style="width:40px">93%</div>
+      </div>
+      <p style="margin-top:30px; color:var(--text-dim); font-size:13px; border-top:1px solid var(--border); padding-top:20px;">
+        The AI improves your prompts → you learn the patterns → your prompts improve the AI.
+      </p>
+    </div>
+  </div>
+  <div class="caption">The score isn't decoration — it's a <b>learning curve made visible</b>.</div>
+</div>
+
+<script>
+  const scenes = document.querySelectorAll('.scene');
+  let current = 0;
+
+  window.gotoScene = (index) => {
+    scenes.forEach(s => s.classList.remove('active'));
+    scenes[index].classList.add('active');
+  };
+</script>
+</body>
+</html>

@@ -17,10 +17,6 @@
       "source": "./engines/career-intelligence",
       "description": "Career Intelligence — xHumanOS engine for job search, network, pipeline, and sessions. Composes Brand Intelligence + Social Distribution. Install on any xHumanOS instance.",
       "version": "0.47.0",
-      "dependencies": {
-        "brand-intelligence": ">=0.47.0",
-        "social-distribution": ">=0.47.0"
-      },
       "category": "career",
       "homepage": "https://github.com/Exponential-OS/career-intelligence-engine"
     },
@@ -28,14 +24,9 @@
       "name": "co-dialectic",
       "platform": "xOS",
       "license": "Proprietary",
-      "source": {
-        "source": "url",
-        "url": "https://github.com/Exponential-OS/prompt-engineering-in-action.git",
-        "path": "plugins/co-dialectic"
-      },
+      "source": "./engines/co-dialectic",
       "description": "Co-Dialectic v4.7.0 — LLM prompt optimizer + onboarding skill + compaction immunity + semantic T3 classification + fish-swarm + Protocol 0 post-compaction re-init. Cross-family judge-panel, hallucination detector, session handoff. Works with any LLM runtime.",
       "version": "4.7.0",
-      "dependencies": {},
       "category": "ai-runtime",
       "homepage": "https://github.com/Exponential-OS/prompt-engineering-in-action"
     },
@@ -43,62 +34,41 @@
       "name": "brand-intelligence",
       "platform": "xOS",
       "license": "Proprietary",
-      "source": {
-        "source": "url",
-        "url": "https://github.com/Exponential-OS/brand-intelligence-plugin.git"
-      },
+      "source": "./engines/brand-intelligence",
       "description": "Brand Intelligence — Persona schema, extraction, and registry. N-voice support for individuals (xHumanOS, N=1) and orgs (xTeamOS, N≥3). Includes persona-onboarding interview, handles, channel directory. Foundational primitive — no dependencies.",
       "version": "0.47.0",
-      "dependencies": {},
       "category": "brand",
-      "homepage": "https://github.com/Exponential-OS/brand-intelligence-plugin"
+      "homepage": "https://github.com/Exponential-OS/brand-intelligence-engine"
     },
     {
       "name": "knowledge-graph",
       "platform": "xOS",
       "license": "Proprietary",
-      "source": {
-        "source": "url",
-        "url": "https://github.com/Exponential-OS/knowledge-graph-plugin.git"
-      },
+      "source": "./engines/knowledge-graph",
       "description": "Knowledge Graph — Graph data layer for all xOS engines. Phase 1: JSON files. Phase 2: Neo4j substrate replacing all engine file stores. Foundational primitive — no dependencies.",
       "version": "0.1.0",
-      "dependencies": {},
       "category": "knowledge",
-      "homepage": "https://github.com/Exponential-OS/knowledge-graph-plugin"
+      "homepage": "https://github.com/Exponential-OS/knowledge-graph-engine"
     },
     {
       "name": "social-distribution",
       "platform": "xOS",
       "license": "Proprietary",
-      "source": {
-        "source": "url",
-        "url": "https://github.com/Exponential-OS/social-distribution-plugin.git"
-      },
+      "source": "./engines/social-distribution",
       "description": "Social Distribution — 9-gate preflight CI for content campaigns. Hub-spoke flywheel, golden-hour scheduling, invisible signal CTAs (bookmark/save/DM-share), platform-native routing. Requires Brand Intelligence for persona-aware distribution.",
       "version": "0.47.0",
-      "dependencies": {
-        "brand-intelligence": ">=0.47.0"
-      },
       "category": "distribution",
-      "homepage": "https://github.com/Exponential-OS/social-distribution-plugin"
+      "homepage": "https://github.com/Exponential-OS/social-distribution-engine"
     },
     {
       "name": "content-adapt",
       "platform": "xOS",
       "license": "Proprietary",
-      "source": {
-        "source": "url",
-        "url": "https://github.com/Exponential-OS/content-adapt-plugin.git"
-      },
+      "source": "./engines/content-adapt",
       "description": "Content Adapt — Transform engine. One idea → platform-native variants (xHumanOS) or audience-specific variants (xTeamOS). Reads Brand Intelligence personas; queries Knowledge Graph for source context.",
       "version": "0.1.0",
-      "dependencies": {
-        "brand-intelligence": ">=0.47.0",
-        "knowledge-graph": ">=0.1.0"
-      },
       "category": "content",
-      "homepage": "https://github.com/Exponential-OS/content-adapt-plugin"
+      "homepage": "https://github.com/Exponential-OS/content-adapt-engine"
     }
   ]
 }

@@ -9,9 +9,5 @@
   "repository": "https://github.com/Exponential-OS/career-intelligence-engine",
   "homepage": "https://github.com/Exponential-OS/career-intelligence-engine",
   "license": "Proprietary",
-  "keywords": ["career", "job-search", "network", "pipeline", "xHumanOS"],
-  "dependencies": {
-    "brand-intelligence": ">=0.47.0",
-    "social-distribution": ">=0.47.0"
-  }
+  "keywords": ["career", "job-search", "network", "pipeline", "xHumanOS"]
 }
