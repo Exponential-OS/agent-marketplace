@@ -6,31 +6,69 @@
     "email": "thewhyman@users.noreply.github.com"
   },
   "metadata": {
-    "description": "xos \u2014 Exponential OS for Exponential Orgs, Humans, and More 2.0 (a play on the Singularity University book by Salim Ismail). The platform marketplace catalog hosted by Exponential-OS. Hosts the xOS family \u2014 AI-native operating systems for humans (xHumanOS), teams (xTeamOS), communities (xCommunityOS), families (xFamilyOS), and beyond \u2014 plus standalone tools (Co-Dialectic) and apps (Career-OS). Plugins install as @xos."
+    "description": "xOS Marketplace — Cross-cutting AI engines usable by any xOS instance (xHumanOS, xTeamOS, xCommunityOS, xFamilyOS). Install individual engines as @xos/<engine> or get them bundled in your platform (e.g., xHumanOS includes Career Intelligence which bundles brand-intelligence + social-distribution)."
   },
   "plugins": [
     {
       "name": "co-dialectic",
+      "platform": "xOS",
       "source": {
         "source": "url",
         "url": "https://github.com/Exponential-OS/prompt-engineering-in-action.git",
         "path": "plugins/co-dialectic"
       },
-      "description": "Co-Dialectic v4.7.0 \u2014 LLM prompt optimizer + onboarding skill (new users get value in \u22645 min) + external-ready (no personal content) + compaction immunity + semantic T3 classification + fish-swarm + Protocol 0 post-compaction re-init. Cross-family judge-panel, hallucination detector, session handoff. Works with any LLM runtime.",
+      "description": "Co-Dialectic v4.7.0 — LLM prompt optimizer + onboarding skill + compaction immunity + semantic T3 classification + fish-swarm + Protocol 0 post-compaction re-init. Cross-family judge-panel, hallucination detector, session handoff. Works with any LLM runtime.",
       "version": "4.7.0",
-      "category": "productivity",
+      "category": "xOS",
       "homepage": "https://github.com/Exponential-OS/prompt-engineering-in-action"
     },
     {
-      "name": "career-os",
+      "name": "brand-intelligence",
+      "platform": "xOS",
       "source": {
         "source": "url",
         "url": "https://github.com/Exponential-OS/career-os-plugin.git"
       },
-      "description": "Career OS \u2014 AI-powered career management system. The operating system for your career \u2014 persistent memory, session capture, git-versioned data, full privacy. v0.47.0: sde-onboarding skill (Week 1 context files + brand interview); v0.46.0: Gate 9 golden-hour-scheduling-check; v0.45.0: Gate 8 invisible signal CTAs; v0.44.1: preflight severity fix; v0.44.0: Gate 8 CTA quality.",
+      "description": "Brand Intelligence — Persona schema, extraction, and registry. N-voice support for individuals (xHumanOS, N=1) and orgs (xTeamOS, N≥3). Includes persona-onboarding interview, handles, channel directory. Currently bundled in career-os-plugin; standalone extraction in progress.",
       "version": "0.47.0",
-      "category": "productivity",
+      "category": "xOS",
       "homepage": "https://github.com/Exponential-OS/career-os-plugin"
+    },
+    {
+      "name": "social-distribution",
+      "platform": "xOS",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/Exponential-OS/career-os-plugin.git"
+      },
+      "description": "Social Distribution — 9-gate preflight CI for content campaigns. Hub-spoke flywheel, golden-hour scheduling, invisible signal CTAs (bookmark/save/DM-share), platform-native routing. Currently bundled in career-os-plugin; standalone extraction in progress.",
+      "version": "0.47.0",
+      "category": "xOS",
+      "homepage": "https://github.com/Exponential-OS/career-os-plugin"
+    },
+    {
+      "name": "knowledge-graph",
+      "platform": "xOS",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/Exponential-OS/knowledge-graph-plugin.git"
+      },
+      "description": "Knowledge Graph — Graph data layer for all xOS engines. Phase 1: JSON files. Phase 2: Neo4j substrate replacing all engine file stores. Individual career graphs (xHumanOS) and institutional knowledge graphs (xTeamOS). In design.",
+      "version": "0.1.0",
+      "category": "xOS",
+      "homepage": "https://github.com/Exponential-OS/knowledge-graph-plugin"
+    },
+    {
+      "name": "content-adapt",
+      "platform": "xOS",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/Exponential-OS/content-adapt-plugin.git"
+      },
+      "description": "Content Adapt — Transform engine. One idea → platform-native variants (xHumanOS) or audience-specific variants (xTeamOS). Reads Brand Intelligence personas; outputs campaign components for Social Distribution. In design.",
+      "version": "0.1.0",
+      "category": "xOS",
+      "homepage": "https://github.com/Exponential-OS/content-adapt-plugin"
     }
   ]
 }
