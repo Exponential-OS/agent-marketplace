@@ -1,8 +1,8 @@
 {
   "name": "career-intelligence",
   "platform": "xHumanOS",
-  "version": "0.49.0",
-  "description": "Career Intelligence (xHumanOS) — individual career engine: job search, network, pipeline, sessions. Composes Brand Intelligence + Social Distribution. v0.49.0: LinkedIn Groups discovery + spoke support; signal-collector.py for crowdsourced signal v1.0.",
+  "version": "0.50.0",
+  "description": "Career Intelligence (xHumanOS) — individual career engine: job search, network, pipeline, sessions. Composes Brand Intelligence + Social Distribution. v0.50.0: CAREER_HOME env var migration complete across all SKILL.md files.",
   "author": {
     "name": "Anand Vallamsetla"
   },
