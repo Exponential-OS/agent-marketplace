@@ -1,8 +1,8 @@
 {
   "name": "career-intelligence",
   "platform": "xHumanOS",
-  "version": "0.54.0",
-  "description": "Career Intelligence (xHumanOS) \u2014 individual career engine: job search, network, pipeline, sessions. v0.54.0: complete README rewrite; resume-engine trigger fix; smart first-run routing; pre-flight checks in outreach/resume.",
+  "version": "0.55.0",
+  "description": "Career Intelligence (xHumanOS) \u2014 individual career engine: job search, network, pipeline, sessions. v0.55.0: knowledge layer integration \u2014 outreach-composer calls brain/assembler.py for WHY-relative context before every draft.",
   "author": {
     "name": "Anand Vallamsetla"
   },

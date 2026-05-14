@@ -3,6 +3,14 @@
 All notable changes to the Career OS plugin are recorded here. This plugin
 follows [Semantic Versioning](https://semver.org/) — MAJOR.MINOR.PATCH.
 
+## [0.55.0] — 2026-05-14 — Knowledge layer integration: WHY-relative context in outreach
+
+### Added
+
+- **Step 0.5 in outreach-composer**: calls `python3 $CAREER_HOME/brain/assembler.py "<contact>"` after dedup PASS, before channel selection. Loads WHY-relative context bundle — active goal alignment, typed edges, ranked related nodes — so message angle is calibrated to *why this contact matters right now*.
+- **Assembler input** added to DATA ARCHITECTURE table in outreach-composer/SKILL.md.
+- Graceful degradation: if `brain/assembler.py` not found, step skips silently. Assembler is enrichment, not a hard dependency.
+
 ## [0.54.0] — 2026-05-14 — Complete README rewrite + smart first-run + pre-flight checks
 
 ### Added

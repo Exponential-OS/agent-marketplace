@@ -68,6 +68,7 @@ Always start with:
 | Source | Path | What It Provides |
 |--------|------|------------------|
 | Target contact | User request (name or company) | Who to write to |
+| Knowledge context | `python3 $CAREER_HOME/brain/assembler.py "<contact>"` | WHY-relative context: goal alignment, typed edges, ranked related nodes |
 | Contact profiles | `brain/network/people/*.md` | Relationship warmth, shared history, channel preference |
 | Pipeline | `brain/projects/job-search/job-pipeline.json` | Company context, role, hiring manager, stage |
 | Stories | `brain/stories/*.md` | Shared history with contact |
@@ -106,6 +107,28 @@ Check for a reply instead of re-contacting.
 **Skip-rule: NONE.** Every trigger (`write outreach for`, `follow up with`, `linkedin message to`, `thank you note for`, `reach out to`, `message for`, `draft email to`) must invoke this check. The question "has outreach already gone out?" must be answered by data, not memory.
 
 **Origin (2026-05-04):** Two back-to-back failures — drafted WhatsApp for a contact (Amanesh) who had already been reached via LinkedIn + phone + email; drafted follow-up for a contact (Ravi) whose people file showed same-day outreach. Neither would have happened if this gate had run. User: *"i thought you codified this in the plugin and shipped."*
+
+---
+
+## STEP 0.5: Knowledge Layer Context (runs after dedup PASS)
+
+Load WHY-relative context before drafting. This surfaces the contact's typed graph edges, active goal alignment, and related context — so the message angle is calibrated to *why this contact matters right now*, not just who they are.
+
+```bash
+python3 "$CAREER_HOME/brain/assembler.py" "<CONTACT_NAME>"
+```
+
+Read the output bundle. Key signals to extract:
+- Which active goals this contact maps to (from WHY.md)
+- Their typed edges — `works_at`, `involved_in`, `championing` → tells you the right proof-of-work angle
+- Related projects and companies surfaced by edge traversal
+
+**Calibration rules:**
+- Contact with `championing → projects/sde-onboarding` → lead with SDE progress, not general product pitch
+- Contact with `works_at → companies/ai-fund` → frame against xOS mission, not job search
+- Contact with `involved_in` on a blocked project → acknowledge the blocker, offer to help
+
+**If `brain/assembler.py` not found:** skip this step and proceed. The assembler is context enrichment, not a blocker — outreach-composer works without it.
 
 ---
 
