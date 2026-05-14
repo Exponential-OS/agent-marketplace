@@ -1,13 +1,19 @@
 {
   "name": "career-intelligence",
   "platform": "xHumanOS",
-  "version": "0.51.0",
-  "description": "Career Intelligence (xHumanOS) — individual career engine: job search, network, pipeline, sessions. Composes Brand Intelligence + Social Distribution. v0.51.0: Fix gate script paths — career-os → career-intelligence in all 12 skill/rule files. Gate scripts (substack-publish-gate, campaign-preflight, outreach dedup, etc.) were resolving to empty strings and silently failing.",
+  "version": "0.51.1",
+  "description": "Career Intelligence (xHumanOS) \u2014 individual career engine: job search, network, pipeline, sessions. Composes Brand Intelligence + Social Distribution. v0.51.1: Fix gate script paths \u2014 career-os \u2192 career-intelligence in all 12 skill/rule files. Gate scripts (substack-publish-gate, campaign-preflight, outreach dedup, etc.) were resolving to empty strings and silently failing.",
   "author": {
     "name": "Anand Vallamsetla"
   },
   "repository": "https://github.com/Exponential-OS/career-intelligence-engine",
   "homepage": "https://github.com/Exponential-OS/career-intelligence-engine",
   "license": "Proprietary",
-  "keywords": ["career", "job-search", "network", "pipeline", "xHumanOS"]
+  "keywords": [
+    "career",
+    "job-search",
+    "network",
+    "pipeline",
+    "xHumanOS"
+  ]
 }

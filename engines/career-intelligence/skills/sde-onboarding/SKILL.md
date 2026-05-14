@@ -41,6 +41,43 @@ Always start with:
 
 ## Execution Flow
 
+### Phase 0 — Workspace Setup (runs FIRST, before any questions)
+
+Before asking anything else, establish `$CAREER_HOME`:
+
+```bash
+# Check if CAREER_HOME is already set
+echo "${CAREER_HOME:-not set}"
+```
+
+**If already set:** confirm the path exists and is writable. Print: "Using `$CAREER_HOME` as your workspace." Then proceed to Phase 1.
+
+**If not set:** ask ONE question before starting the interview:
+
+> "Where should your SDE workspace live? This is the folder that stores your brand context, campaigns, and session memory.
+>
+> Default: `~/career-os` (press Enter to accept, or type a different path)
+>
+> Recommended: a private folder you git-commit regularly — your brand context and campaigns are valuable artifacts."
+
+After they answer (or press Enter for default):
+1. Create the directory structure:
+   ```bash
+   mkdir -p "$CAREER_HOME/brain/identity"
+   mkdir -p "$CAREER_HOME/brain/social-distribution-engine"
+   ```
+2. Print: "Workspace created at `$CAREER_HOME`. Starting setup..."
+3. **Persist the path** — add to shell profile so it survives sessions:
+   ```bash
+   echo 'export CAREER_HOME="<path>"' >> ~/.zshrc  # or ~/.bashrc if zsh not found
+   export CAREER_HOME="<path>"
+   ```
+4. Proceed to Phase 1.
+
+**Default path for new users:** `~/career-os` (NOT `~/anand-career-os` — that is Anand Vallamsetla's personal workspace).
+
+---
+
 ### Phase 1 — Brand Interview (5 questions)
 
 Ask the following questions ONE AT A TIME. Wait for each answer before asking the next. Do not batch.
@@ -129,7 +166,9 @@ Week 2 — Your First Campaign:
   3. Your context files are already loaded — no setup needed
 
 One optional step now: git commit your 4 new files so they're versioned:
-  cd $CAREER_HOME && git add brain/identity/professional-brand.md brain/identity/handles.md brain/social-distribution-engine/content-flywheel.md brain/social-distribution-engine/social-channel-directory.md && git commit -m "feat(sde): Week 1 onboarding — context files initialized"
+  git -C $CAREER_HOME init  # only if not already a git repo
+  git -C $CAREER_HOME add brain/identity/professional-brand.md brain/identity/handles.md brain/social-distribution-engine/content-flywheel.md brain/social-distribution-engine/social-channel-directory.md
+  git -C $CAREER_HOME commit -m "feat(sde): Week 1 onboarding — context files initialized"
 ```
 
 ---
@@ -145,4 +184,4 @@ The 4 files are local to the user's machine and `$CAREER_HOME` directory. They a
 - **User skips a question:** Ask again with context ("This becomes your primary brand statement — it's what every future draft is anchored to. Even a rough version is better than leaving it blank.")
 - **User doesn't know their subreddits yet:** Leave `social-channel-directory.md` with placeholder rows and note: "Update this before your first Reddit spoke post — Gate 2 will block unknown channels."
 - **Files already exist:** Show a diff of what would change. Ask: "Overwrite, merge, or skip?" Never silently overwrite.
-- **$CAREER_HOME not set:** Default to `~/anand-career-os`. If that doesn't exist, ask the user for their Career OS home directory path.
+- **$CAREER_HOME not set:** Phase 0 handles this — ask for path and create directory before the interview starts. Default is `~/career-os` for new users. Never default to `~/anand-career-os` (that is Anand Vallamsetla's personal workspace, not a template path).

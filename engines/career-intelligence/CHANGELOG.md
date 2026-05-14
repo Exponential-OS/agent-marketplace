@@ -3,6 +3,15 @@
 All notable changes to the Career OS plugin are recorded here. This plugin
 follows [Semantic Versioning](https://semver.org/) — MAJOR.MINOR.PATCH.
 
+## [0.51.1] — 2026-05-14 — sde-onboarding Phase 0 for external beta users
+
+### Fixed
+
+- **sde-onboarding CAREER_HOME for external users** — skill previously defaulted to `~/anand-career-os` (Anand's personal workspace) when `$CAREER_HOME` was not set, which would fail on any other machine. Added Phase 0 that asks for workspace path before the interview, defaults to `~/career-os`, creates the directory structure, and persists `$CAREER_HOME` to shell profile. External beta users (Rahul, Jonas) can now complete onboarding end-to-end on a fresh machine.
+- **sde-onboarding completion git command** — fixed `cd && git add` antipattern to `git -C $CAREER_HOME ...` pattern.
+
+---
+
 ## [0.51.0] — 2026-05-14 — Fix gate script paths (career-os → career-intelligence)
 
 ### Fixed
