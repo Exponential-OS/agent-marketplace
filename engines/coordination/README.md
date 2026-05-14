@@ -16,10 +16,10 @@ Works across **local Claude, cloud Claude, Cursor, Codex** — any runtime that 
 
 ```bash
 claude plugin install coordination@xos
-bash ~/.claude/plugins/cache/xos/coordination/0.1.0/setup.sh
+python3 ~/.claude/plugins/cache/xos/coordination/0.1.0/setup.py
 ```
 
-Run `setup.sh` again after each upgrade to refresh the hook script at its stable path.
+Run `setup.py` again after each upgrade to refresh the hook script at its stable path.
 
 ## Configure
 
