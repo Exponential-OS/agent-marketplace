@@ -16,7 +16,7 @@
       "license": "Proprietary",
       "source": "./engines/career-intelligence",
       "description": "Career Intelligence \u2014 xHumanOS engine for job search, network, pipeline, and sessions. Composes Brand Intelligence + Social Distribution. v0.49.0: LinkedIn Groups discovery + spoke support; signal-collector v1.0 (crowdsourced signal local phase); CAREER_HOME env migration.",
-      "version": "0.54.0",
+      "version": "0.55.0",
       "category": "career",
       "homepage": "https://github.com/Exponential-OS/career-intelligence-engine"
     },
@@ -65,7 +65,7 @@
       "platform": "xOS",
       "license": "Proprietary",
       "source": "./engines/coordination",
-      "description": "xOS Coordination engine — brain-multi-session-sync skill. Git-backed session state sync across local Claude, cloud Claude, Cursor, Codex. Session-start hook pulls workspace state and surfaces it as Tier 1.5 context in co-dialectic waky-waky. Install once via setup.sh; workspace declares status format via AGENT_STATUS.yaml convention.",
+      "description": "xOS Coordination engine \u2014 brain-multi-session-sync skill. Git-backed session state sync across local Claude, cloud Claude, Cursor, Codex. Session-start hook pulls workspace state and surfaces it as Tier 1.5 context in co-dialectic waky-waky. Install once via setup.sh; workspace declares status format via AGENT_STATUS.yaml convention.",
       "version": "0.1.0",
       "category": "coordination",
       "homepage": "https://github.com/Exponential-OS/coordination-engine"
