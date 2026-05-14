@@ -1,0 +1,10 @@
+{
+  "name": "coordination",
+  "platform": "xOS",
+  "version": "0.1.0",
+  "description": "xOS Coordination engine — multi-session brain sync via git. Provides brain-multi-session-sync skill: session-start hook that pulls workspace state and surfaces it as Tier 1.5 context in any codi-compatible runtime. Works across local Claude, cloud Claude, Cursor, Codex — any session that shares a git-backed workspace. Install once via setup.sh; workspace declares status format via AGENT_STATUS.yaml convention.",
+  "license": "Proprietary",
+  "author": {
+    "name": "Anand Vallamsetla"
+  }
+}
