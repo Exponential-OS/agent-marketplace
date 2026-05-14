@@ -58,6 +58,32 @@ gh issue create --repo $CAREER_GITHUB_REPO \
 
 Scan reports themselves remain markdown files at `brain/projects/job-search/scans/{date}/scan-{HH}-{MM}.md` — those are READ artifacts, not tasks.
 
+## FIRST-TIME SETUP (new users — run this before your first scan)
+
+**Prerequisite: career-intelligence-onboarding must be complete.**
+Say "onboard me to career intelligence" to run it. It creates `brain/identity/experience-history.md` and `brain/projects/job-search/job-search-config.md` from an 8-question interview. Without these files, the scanner has no targeting config and will produce irrelevant results.
+
+**Step 1 — Expand job search config**
+After onboarding, say: "set up my job search config" or "expand job search targeting". This reads your preferences from `job-search-config.md` and creates the full operational config at `brain/config/job-search.md` — adding ATS direct URLs, LinkedIn search keywords, company tiers, and warm-path settings. This is what the scanner reads on every run.
+
+**Step 2 — Add your resume tracks**
+Create a folder `Resumes & Cover Letters/` in your workspace. Paste or upload your current resume as one or more files. The file names become your track names (e.g., `resume-engineering-leader.md`, `resume-executive.md`). The resume engine auto-detects tracks from filenames. If you have only one resume, name it `resume-base.md` — the engine will derive tracks from your experience history.
+
+**Step 3 — Set up the 6 AM automated scan (optional)**
+Use Claude Code's scheduled task system to run the scanner automatically:
+1. Open Claude Code settings → Scheduled Tasks → New Task
+2. Set schedule: `0 6 * * 1-5` (6 AM Monday–Friday)
+3. Paste the prompt from `skills/job-search-scheduler/scan-prompt-v11.md` (everything below the `## PROMPT BODY` line)
+4. Set workspace to your `$CAREER_HOME` directory
+The automated scan runs in surface-level mode (no deep People tab navigation). You review the output and run "enrich warm paths" manually for high-priority roles.
+
+**What to customize per your situation:**
+- `brain/config/job-search.md` → edit `Target Roles`, `Filters`, `ATS Direct URLs`, `LinkedIn Search Keywords`
+- Target level and comp floor come from your onboarding answers — edit them in the config file if your search evolves
+- The scanner reads the config on every run; edits take effect immediately
+
+---
+
 ## Purpose
 
 Two jobs:
@@ -341,7 +367,7 @@ After scan completes, suggest: `"score the latest scan"` to invoke job-match-sco
 
 ## Search Mode: {from config}
 
-**Candidate:** Anand Vallamsetla
+**Candidate:** {read from brain/identity/experience-history.md → `who:` frontmatter field}
 **Scan type:** Manual scan with deep warm-path detection
 **Reference:** Previous scan {date} {time}
 

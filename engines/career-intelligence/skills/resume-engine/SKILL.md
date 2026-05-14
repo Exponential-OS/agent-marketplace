@@ -18,6 +18,26 @@ triggers:
 
 # Resume Engine — Career OS Skill
 
+## FIRST-TIME SETUP (new users)
+
+**Step 1 — Complete career-intelligence-onboarding first.**
+Say "onboard me to career intelligence". This creates `brain/identity/experience-history.md` which the QA gate reads to verify biographical claims. Without it, the canonical-claim gate will BLOCK every resume generated.
+
+**Step 2 — Add your existing resume.**
+Create `Resumes & Cover Letters/` in your `$CAREER_HOME`. Paste your current resume as a markdown or text file. Name it to reflect the role type: `resume-engineering-leader.md`, `resume-exec.md`, `resume-ic.md`. The engine detects track names from filenames.
+
+If you have no existing resume file: say "generate my base resume from experience history". The engine will draft a starting resume from `brain/identity/experience-history.md` — you review and edit it before using it for applications.
+
+**Step 3 — Optionally define your tracks.**
+Your tracks are inferred from `Resumes & Cover Letters/` filenames by default. To explicitly define tracks with their target signals, add a `Resume Tracks` section to `brain/config/job-search.md` after running "set up my job search config". This is optional but improves track auto-selection for ambiguous JDs.
+
+**What customizes per your situation:**
+- Tracks come from YOUR files in `Resumes & Cover Letters/` — not from any other user's files
+- Stories come from `brain/stories/*.md` — populated from your onboarding + over time as you capture wins
+- Skills matrix comes from `brain/identity/skills-matrix.md` — created during onboarding from your skills answers
+
+---
+
 ## Purpose
 
 Generates and customizes resumes targeted at specific roles. Supports multiple resume tracks, optimizes for ATS keyword matching against stored JDs, generates cover letters, and enforces QA gates before output.

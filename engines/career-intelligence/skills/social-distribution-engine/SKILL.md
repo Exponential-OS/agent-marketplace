@@ -125,7 +125,12 @@ Exit 0 = PASS. Exit 1 = FAIL (hard block — revise before Gate 2). Exit 2 = WAR
 Runs three parallel LLM judges (tone/authenticity, IP/patent firewall, narrative clarity) plus metadata completeness. Uses OAuth CLIs — no API key required (claude → gemini → codex fallback chain).
 
 ```bash
-python3 "$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/social-content-readiness-check/HOW.py 2>/dev/null | tail -1)" \
+GATE=$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/social-content-readiness-check/HOW.py 2>/dev/null | tail -1)
+if [ -z "$GATE" ]; then
+  echo '{"verdict":"BLOCK","reason":"social-content-readiness-check script not found — plugin may need reinstall","remediation":"Run: claude plugin update career-intelligence@xos --scope user"}'
+  exit 1
+fi
+python3 "$GATE" \
   '{"text":"<post body>","platform":"linkedin","title":"<campaign title>","metadata":{"audience":"<target audience>","surface_coverage_matrix":"<path or description>"}}'
 ```
 
