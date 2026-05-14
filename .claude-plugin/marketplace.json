@@ -25,8 +25,8 @@
       "platform": "xOS",
       "license": "Proprietary",
       "source": "./engines/co-dialectic",
-      "description": "Co-Dialectic v4.9.1 \u2014 LLM prompt optimizer + auto-verify by stakes + semantic T3 classification + background agent lifecycle manager + fish-swarm MUST-spawn dispatch mandate + Protocol 0 post-compaction re-init + plugin user-content gate + waky-waky Tier 1.5 AGENT_STATUS.yaml anti-amnesia primitive (cross-agent sync after compaction). Cross-family cascade-then-jury review, judge-panel, hallucination detector, fish-swarm orchestration, session handoff. Works with any LLM runtime.",
-      "version": "4.9.1",
+      "description": "Co-Dialectic v4.9.2 \u2014 LLM prompt optimizer + auto-verify by stakes + semantic T3 classification + background agent lifecycle manager + fish-swarm MUST-spawn dispatch mandate + Protocol 0 post-compaction re-init + plugin user-content gate + waky-waky Tier 1.5 AGENT_STATUS.yaml anti-amnesia primitive (cross-agent sync after compaction). Cross-family cascade-then-jury review, judge-panel, hallucination detector, fish-swarm orchestration, session handoff. Works with any LLM runtime.",
+      "version": "4.9.2",
       "category": "ai-runtime",
       "homepage": "https://github.com/Exponential-OS/prompt-engineering-in-action"
     },
