@@ -44,7 +44,7 @@ After analytics collection completes, invoke `signal-collector.py` to map bucket
 outcomes to the local signal store:
 
 ```bash
-python3 "$(ls -v ~/.claude/plugins/cache/xos/career-os/*/skills/social-distribution-engine/signal-collector.py 2>/dev/null | tail -1)" \
+python3 "$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/skills/social-distribution-engine/signal-collector.py 2>/dev/null | tail -1)" \
   '{"campaign_file": "<abs-path-to-campaign.json>"}'
 ```
 

@@ -509,6 +509,6 @@ Recommendation: [PASS — proceed to T4 confirm] or [BLOCK — fix claims before
 - `identity.md` at same path (required for class 8)
 - `handles.md` at same path (required for class 8)
 - co-dialectic Protocol 8 (dispatcher — optional; skill also usable standalone)
-- `$(ls -v ~/.claude/plugins/cache/xos/career-os/*/rules/biographical-claim-precheck/HOW.py 2>/dev/null | tail -1)` (enforcement primitive per
+- `$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/biographical-claim-precheck/HOW.py 2>/dev/null | tail -1)` (enforcement primitive per
   CONSTITUTION-AS-LIVING-CODE invariant — rule directory ships with HOW.py +
   AUDIT.sh + WATCH.sh)

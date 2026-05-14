@@ -3,6 +3,30 @@
 All notable changes to the Career OS plugin are recorded here. This plugin
 follows [Semantic Versioning](https://semver.org/) — MAJOR.MINOR.PATCH.
 
+## [0.51.0] — 2026-05-14 — Fix gate script paths (career-os → career-intelligence)
+
+### Fixed
+
+- **Publishing gate scripts silently failing** — 12 SKILL.md and rule files referenced `plugins/cache/xos/career-os/` which no longer exists (plugin was renamed to `career-intelligence` in v0.38.0). Every gate script that used `ls -v .../career-os/*/rules/.../HOW.py` resolved to empty string, causing `python3 ""` to fail. This blocked Substack publish gate, LinkedIn dedup, outreach dedup, campaign preflight, and all SDE distribution gates.
+  - Files fixed: `substack-distribution-module`, `linkedin-distribution-module`, `linkedin-groups-distribution-module`, `social-distribution-engine`, `browser-submit`, `distribution-analytics-engine`, `outreach-composer`, `resume-engine`, `mission-control`, `sde-onboarding`, `outreach-fact-check`, `rules/campaign-preflight`
+
+---
+
+## [0.50.0] — 2026-05-12 — CAREER_HOME Migration Complete (SKILL.md layer)
+
+### Changed
+
+- **All SKILL.md files migrated** — `$CAREER_OS_HOME` → `$CAREER_HOME`, `$CAREER_OS_GITHUB_REPO` → `$CAREER_GITHUB_REPO` across 19 skill/dev/rule files. v0.48.0 migrated the Python scripts; v0.50.0 completes the migration in the Markdown layer that agents load at runtime.
+  - Files updated: `skills/apply-tracker`, `skills/browser-submit`, `skills/campaign-engine`, `skills/cruise-control`, `skills/interviewer-research`, `skills/job-search-scheduler`, `skills/mission-control`, `skills/network-intelligence`, `skills/outreach-composer`, `skills/outreach-fact-check`, `skills/pipeline-sync`, `skills/resume-engine`, `skills/sde-onboarding`, `dev/build-feature`, `dev/ci`, `dev/spec-feature`, `dev/guard.sh`, `rules/biographical-claim-precheck/AUDIT.sh`, `rules/campaign-preflight/AUDIT.sh`
+- Python backward-compat fallbacks (`CAREER_HOME` → `CAREER_OS_HOME` → default) remain in place. Old env var names still work. Remove in v1.0.0.
+
+### CI
+- Suite 1 (hooks): 197 pass, 12 fail — within baseline of 13 ✓
+- Suite 2 (outreach-dedup): 16/16 ✓
+- Suite 3 (mission-control): 57/57 ✓
+
+---
+
 ## [0.49.0] — 2026-05-10 — LinkedIn Groups + Crowdsourced Signal v1.0
 
 ### Added

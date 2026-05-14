@@ -73,7 +73,7 @@ Before distributing to *any* channel, check the Global Channel Value Directory (
 |---|---|---|
 | `brain/identity/professional-brand.md` | Brand voice, tone, positioning, narrative pillars | Emit `⚠️ brand context missing — draft may be off-voice` and proceed |
 | `brain/identity/handles.md` | Active platform handles, CTA destinations | Proceed, but omit handle-specific CTAs |
-| `$(ls -v ~/.claude/plugins/cache/xos/career-os/*/skills/social-distribution-engine/content-flywheel.md 2>/dev/null \| tail -1)` IP Firewall section | Terms that must NEVER appear in published content | **BLOCK** — cannot draft without IP firewall loaded |
+| `$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/skills/social-distribution-engine/content-flywheel.md 2>/dev/null \| tail -1)` IP Firewall section | Terms that must NEVER appear in published content | **BLOCK** — cannot draft without IP firewall loaded |
 | Campaign master file (if distributing existing campaign) | Assets, platform copy, surface coverage matrix | Required for distribution mode; not required for fresh-draft mode |
 
 **Context load is silent** — do not narrate "loading brand context…" to the user. Just load, then draft.
@@ -88,7 +88,7 @@ Before distributing to *any* channel, check the Global Channel Value Directory (
 Exit 0 = ALL PASS. Exit 1 = BLOCK (fix and re-run). Exit 2 = WARN (review before distributing).
 
 ```bash
-python3 "$(ls -v ~/.claude/plugins/cache/xos/career-os/*/skills/social-distribution-engine/validate-campaign-preflight.py 2>/dev/null | tail -1)" \
+python3 "$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/skills/social-distribution-engine/validate-campaign-preflight.py 2>/dev/null | tail -1)" \
   /path/to/campaign.json
 ```
 
@@ -125,7 +125,7 @@ Exit 0 = PASS. Exit 1 = FAIL (hard block — revise before Gate 2). Exit 2 = WAR
 Runs three parallel LLM judges (tone/authenticity, IP/patent firewall, narrative clarity) plus metadata completeness. Uses OAuth CLIs — no API key required (claude → gemini → codex fallback chain).
 
 ```bash
-python3 "$(ls -v ~/.claude/plugins/cache/xos/career-os/*/rules/social-content-readiness-check/HOW.py 2>/dev/null | tail -1)" \
+python3 "$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/social-content-readiness-check/HOW.py 2>/dev/null | tail -1)" \
   '{"text":"<post body>","platform":"linkedin","title":"<campaign title>","metadata":{"audience":"<target audience>","surface_coverage_matrix":"<path or description>"}}'
 ```
 

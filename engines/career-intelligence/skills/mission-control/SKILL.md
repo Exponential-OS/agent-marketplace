@@ -124,7 +124,7 @@ to use the resume-engine skill?" — just use it.
 **Before dispatching to social-distribution-engine, Mission Control MUST confirm context is loaded:**
 
 1. If this session already loaded `brain/identity/professional-brand.md` → proceed.
-2. If NOT loaded → Mission Control reads it NOW (silently, before routing). Also reads: `brain/identity/handles.md` + IP Firewall list from `$(ls -v ~/.claude/plugins/cache/xos/career-os/*/distribution-engine/content-flywheel.md 2>/dev/null | tail -1)`.
+2. If NOT loaded → Mission Control reads it NOW (silently, before routing). Also reads: `brain/identity/handles.md` + IP Firewall list from `$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/distribution-engine/content-flywheel.md 2>/dev/null | tail -1)`.
 3. Then dispatch. social-distribution-engine's own Step 0 will validate what was loaded.
 
 **Rule:** Never route a content request to social-distribution-engine with an empty context. The draft will be generic at best, IP-violating at worst.
@@ -300,7 +300,7 @@ QUICK ACTIONS
 | Pipeline | `brain/projects/job-search/job-pipeline.json` → `stage_data[]` | Active/advancing entries |
 | Metrics | `brain/projects/job-search/job-pipeline-match-tracker.json` | Count by `status` field (APPLIED, REJECTED, INTERVIEWING, OFFERED) |
 | Warm Contacts | `people/*.json` + `people-followup-query.py` | Run: `python3 ~/.career-os-state/scripts/people-followup-query.py --people-dir $CAREER_HOME/brain/network/people --days 7 --format json` — returns contacts with follow_up ≤ today+7d. Falls back to `.md` frontmatter for unmigrated files. NEVER hand-scan people files. |
-| Company Action Gate | `company-flags.json` + `company-flags-filter/HOW.py` | Before surfacing ANY action for a named company, run: `python3 $(ls -v ~/.claude/plugins/cache/xos/career-os/*/rules/company-flags-filter/HOW.py 2>/dev/null \| tail -1) '{"company":"<name>","action":"<apply\|follow_up\|referral>","flags_file":"$CAREER_HOME/brain/projects/job-search/company-flags.json"}'` — exit 1=BLOCK (suppress), exit 2=WARN (surface referral status instead). A 92% score on a deprioritized company must never surface as an action. |
+| Company Action Gate | `company-flags.json` + `company-flags-filter/HOW.py` | Before surfacing ANY action for a named company, run: `python3 $(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/company-flags-filter/HOW.py 2>/dev/null \| tail -1) '{"company":"<name>","action":"<apply\|follow_up\|referral>","flags_file":"$CAREER_HOME/brain/projects/job-search/company-flags.json"}'` — exit 1=BLOCK (suppress), exit 2=WARN (surface referral status instead). A 92% score on a deprioritized company must never surface as an action. |
 | Coming Up | GitHub Issues + `job-pipeline.json` → `pending_referrals[].follow_up_date` | Extract due dates from issue body / `due:*` labels + referral follow-up dates |
 | Career Brain | `stories/**/*.md` (recursive), `people/*.json` | Count `.md` files recursively under `stories/` (stories are organized into category subdirs like `stories/google/`, `stories/independent/`). Exclude `STORY_INDEX.md` and `README.md`. For `people/`, count `*.json` files (migrated as of v0.37.0); fall back to `*.md` count if no JSON found. |
 | Stale Alerts | `job-pipeline.json` → `stage_data[]` | Compute days-in-stage from `stage_detail` date or tracker `updated_at` |

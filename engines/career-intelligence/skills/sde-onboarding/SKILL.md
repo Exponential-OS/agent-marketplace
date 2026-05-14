@@ -81,7 +81,7 @@ Ask the following questions ONE AT A TIME. Wait for each answer before asking th
 After all 9 answers are collected:
 
 1. Read the 4 template files from the plugin bundle:
-   - `$(ls -v ~/.claude/plugins/cache/xos/career-os/*/skills/social-distribution-engine/onboarding-templates/*.template.md 2>/dev/null)`
+   - `$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/skills/social-distribution-engine/onboarding-templates/*.template.md 2>/dev/null)`
 
 2. Fill in all `{{PLACEHOLDER}}` tokens with the user's answers.
 

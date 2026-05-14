@@ -119,7 +119,7 @@ Commit: `feat(sde): add N LinkedIn groups to distribution channels`
 #### Dedup gate (fires before every group post)
 
 ```bash
-python3 "$(ls -v ~/.claude/plugins/cache/xos/career-os/*/rules/linkedin-groups-dedup/HOW.py 2>/dev/null | tail -1)" \
+python3 "$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/linkedin-groups-dedup/HOW.py 2>/dev/null | tail -1)" \
   '{"group_url": "<URL>", "lookback_days": 7}'
 ```
 

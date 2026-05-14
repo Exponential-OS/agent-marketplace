@@ -12,7 +12,7 @@ CONTEXT="${1:-{}}"
 CAMPAIGN_DIR=$(echo "$CONTEXT" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('campaign_dir',''))" 2>/dev/null || echo "")
 ACTION=$(echo "$CONTEXT" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('action','new'))" 2>/dev/null || echo "new")
 
-_PLUGIN_BASE=$(ls -d "${HOME}/.claude/plugins/cache/xos/career-os/"*/ 2>/dev/null | sort -V | tail -1)
+_PLUGIN_BASE=$(ls -d "${HOME}/.claude/plugins/cache/xos/career-intelligence/"*/ 2>/dev/null | sort -V | tail -1)
 FLYWHEEL="${_PLUGIN_BASE}skills/social-distribution-engine/content-flywheel.md"
 SCHEMA_DIR="${_PLUGIN_BASE}skills/social-distribution-engine/campaign-schema"
 PLATFORM_SPECS="$SCHEMA_DIR/platform-asset-specs.json"

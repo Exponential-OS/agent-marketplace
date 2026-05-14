@@ -21,7 +21,7 @@ Call `substack-publish-gate` before ANY action that publishes or sends email to 
 Exit 0 = PASS (proceed). Exit 1 = BLOCK (do not publish — surface the gate's remediation to the user).
 
 ```bash
-python3 "$(ls -v ~/.claude/plugins/cache/xos/career-os/*/rules/substack-publish-gate/HOW.py 2>/dev/null | tail -1)" '{
+python3 "$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/substack-publish-gate/HOW.py 2>/dev/null | tail -1)" '{
   "platform": "substack",
   "action": "publish",
   "is_email_send": <true if sending to subscribers>,

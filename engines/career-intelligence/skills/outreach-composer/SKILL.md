@@ -89,7 +89,7 @@ Always start with:
 Before doing anything else — before channel selection, before drafting, before asking for missing info — run the warm-contact-outreach-dedup check:
 
 ```bash
-python3 "$(ls -v ~/.claude/plugins/cache/xos/career-os/*/rules/warm-contact-outreach-dedup/HOW.py 2>/dev/null | tail -1)" \
+python3 "$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/warm-contact-outreach-dedup/HOW.py 2>/dev/null | tail -1)" \
   '{"contact_name": "<CONTACT_NAME>"}'
 ```
 
@@ -151,7 +151,7 @@ Fill these in and I'll draft the email.
 Before WRITING the draft to disk (the final step), run the biographical-claim pre-check rule against your draft:
 
 ```bash
-bash "$(ls -v ~/.claude/plugins/cache/xos/career-os/*/rules/biographical-claim-precheck/HOW.py 2>/dev/null | tail -1)" "$(jq -nc \
+bash "$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/biographical-claim-precheck/HOW.py 2>/dev/null | tail -1)" "$(jq -nc \
   --arg draft "/path/to/in-progress-draft.md" \
   --arg canonical "$CAREER_HOME/brain/identity/experience-history.md" \
   '{draft_path:$draft, canonical_sources:[$canonical], stakes:"T4"}')"
@@ -330,7 +330,7 @@ After user describes the contact:
 When the user confirms a message was sent (or you send it via browser automation), immediately call:
 
 ```bash
-python3 $(ls -v ~/.claude/plugins/cache/xos/career-os/*/rules/outreach-people-file-commit/HOW.py 2>/dev/null | tail -1) "$(jq -nc \
+python3 $(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/outreach-people-file-commit/HOW.py 2>/dev/null | tail -1) "$(jq -nc \
   --arg people_file "$CAREER_HOME/brain/network/people/{slug}.json" \
   --arg career_home "$CAREER_HOME" \
   --arg last_contact "$(date +%Y-%m-%d)" \

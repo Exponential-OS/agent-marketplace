@@ -30,7 +30,7 @@ Two gates fire before any hijack comment is posted.
 ### Gate A — Target scoring (run first, before writing the comment)
 
 ```bash
-python3 "$(ls -v ~/.claude/plugins/cache/xos/career-os/*/skills/social-distribution-engine/detect.py 2>/dev/null | tail -1)" '{
+python3 "$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/skills/social-distribution-engine/detect.py 2>/dev/null | tail -1)" '{
   "platform": "linkedin",
   "author_followers": <int or omit if unknown>,
   "post_age_hours": <float>,
@@ -49,7 +49,7 @@ Exit 1 = SKIP (don't write — surface the score and reason to the user).
 ### Gate B — Comment quality + dedup (run before posting)
 
 ```bash
-python3 "$(ls -v ~/.claude/plugins/cache/xos/career-os/*/rules/comment-hijack-gate/HOW.py 2>/dev/null | tail -1)" '{
+python3 "$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/comment-hijack-gate/HOW.py 2>/dev/null | tail -1)" '{
   "platform": "linkedin",
   "target_post_url": "<URL>",
   "target_post_age_hours": <float>,
@@ -63,7 +63,7 @@ Exit 0 = PASS (post the comment). Exit 1 = BLOCK (do not post — surface remedi
 
 Gate B checks: hub_url present in comment, freshness (≤72h for LinkedIn), dedup, and LLM standalone_value judge.
 
-**Playbook:** `$(ls -v ~/.claude/plugins/cache/xos/career-os/*/distribution-engine/hijack-playbook.md 2>/dev/null | tail -1)`
+**Playbook:** `$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/distribution-engine/hijack-playbook.md 2>/dev/null | tail -1)`
 
 ## Capabilities
 
@@ -85,7 +85,7 @@ Summary of groups rules enforced by that skill:
 - Dedup gate fires before every group post:
 
 ```bash
-python3 "$(ls -v ~/.claude/plugins/cache/xos/career-os/*/rules/linkedin-groups-dedup/HOW.py 2>/dev/null | tail -1)" \
+python3 "$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/linkedin-groups-dedup/HOW.py 2>/dev/null | tail -1)" \
   '{"group_url": "<URL>"}'
 ```
 

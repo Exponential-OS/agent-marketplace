@@ -75,7 +75,7 @@ type BrowserSubmitResult = {
 ## Persistent profile bootstrap
 
 First-time setup (human, one-time per ATS):
-1. Run: `node "$(ls -v ~/.claude/plugins/cache/xos/career-os/*/skills/browser-submit/browser-submit-probe.js 2>/dev/null | tail -1)" https://app.greenhouse.io test-gh.png`
+1. Run: `node "$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/skills/browser-submit/browser-submit-probe.js 2>/dev/null | tail -1)" https://app.greenhouse.io test-gh.png`
 2. Playwright opens Chromium with empty persistent profile
 3. Human logs into Greenhouse (or signs in via Google SSO)
 4. Close browser
