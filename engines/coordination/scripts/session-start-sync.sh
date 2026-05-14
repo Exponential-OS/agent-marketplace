@@ -35,17 +35,17 @@ if [ -z "$WORKSPACE" ]; then
   exit 0
 fi
 
-read -r STATUS_REL TELOS_REL <<EOF
+read -r STATUS_REL WHY_REL <<EOF
 $(python3 -c "
 import json
 d = json.load(open('$CONTEXT_FILE'))
 print(d.get('coordination_status_rel_path', 'AGENT_STATUS.yaml'))
-print(d.get('telos_rel_path', 'brain/identity/TELOS.md'))
+print(d.get('why_rel_path', 'brain/identity/WHY.md'))
 " 2>/dev/null)
 EOF
 
 STATUS_REL="${STATUS_REL:-AGENT_STATUS.yaml}"
-TELOS_REL="${TELOS_REL:-brain/identity/TELOS.md}"
+WHY_REL="${WHY_REL:-brain/identity/WHY.md}"
 
 # Pull quietly; surface pull errors as warnings but don't block
 git -C "$WORKSPACE" pull --ff-only origin main --quiet 2>&1 | \
@@ -61,10 +61,10 @@ else
   echo "⚠ brain-multi-session-sync: $STATUS_FILE not found" >&2
 fi
 
-# Block 2: TELOS — mission anchor (what we're optimizing for)
-TELOS_FILE="$WORKSPACE/$TELOS_REL"
-if [ -f "$TELOS_FILE" ]; then
+# Block 2: WHY — mission anchor (what we're optimizing for)
+WHY_FILE="$WORKSPACE/$WHY_REL"
+if [ -f "$WHY_FILE" ]; then
   echo ""
-  echo "# === TELOS (mission anchor) ==="
-  cat "$TELOS_FILE"
+  echo "# === WHY (mission anchor) ==="
+  cat "$WHY_FILE"
 fi
