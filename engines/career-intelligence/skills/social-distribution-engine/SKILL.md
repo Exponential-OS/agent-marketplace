@@ -103,6 +103,34 @@ This meta-harness runs 9 gates in sequence:
 
 ---
 
+## Draft Handoff Gate (MANDATORY — runs BEFORE presenting any LinkedIn copy to the user)
+
+**Origin:** 2026-05-14 — posts were drafted directly in conversation, bypassing SDE gates entirely. Gate 1 (structural) and hashtag selection only fired at "pre-publication" — by then the user had already seen and sometimes posted malformatted, hashtag-free copy. Root cause: two failures — (1) SDE workflow bypassed at draft time, (2) even when Gate 1 ran, `hashtag_count == 0` was WARN not BLOCK.
+
+**Rule:** Before handing ANY LinkedIn post copy to the user, this agent MUST:
+
+### Step A — Auto-select hashtags (MANDATORY, no exceptions)
+
+Read the hashtag bank from `platforms.json` `_hashtag_banks.linkedin_post`. Apply hashtags in priority order **as declared in `slot_fill_order`** within that JSON key. Priority criteria (in descending precedence): brand alignment first → campaign relevance second → topic specificity third → reach/highway last. Fill up to `hashtag_max: 5`. Any tier defined in the hashtag bank is valid if it satisfies the relevance criterion for its declared priority level — including tiers not yet named here (e.g., event tags, partner tags, trending tags).
+
+Append selected hashtags at the **end** of the post body (never in the body). Platform rule: hashtags in body on LinkedIn are penalized — append only.
+
+**No hashtag count can be zero.** A LinkedIn post with 0 hashtags is a Gate 1 WARN that must be fixed before handoff. Minimum 3 (brand + 1 niche + 1 highway).
+
+### Step B — Run Gate 1 inline before handoff
+
+Run `post_validator.py` against the draft. If result is `fail`: fix all violations, re-run, then present fixed copy. If result is `warn`: surface the warnings as a footnote under the copy so the user can make an informed decision — but present the copy anyway. Never silently skip this step.
+
+```bash
+python3 "$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/skills/social-distribution-engine/post_validator.py 2>/dev/null | tail -1)" \
+  --platform linkedin_post \
+  --text "<post body including appended hashtags>"
+```
+
+**Litmus test:** "Before I handed this LinkedIn copy to the user — did I auto-select hashtags AND run Gate 1? If no to either — I handed over untested copy."
+
+---
+
 ## Pre-Publication Gate (MANDATORY)
 
 **Every piece of content must pass both gates before `status: ready` or any publish action.**

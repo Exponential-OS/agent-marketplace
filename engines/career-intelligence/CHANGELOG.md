@@ -3,6 +3,55 @@
 All notable changes to the Career OS plugin are recorded here. This plugin
 follows [Semantic Versioning](https://semver.org/) — MAJOR.MINOR.PATCH.
 
+## [0.54.0] — 2026-05-14 — Complete README rewrite + smart first-run + pre-flight checks
+
+### Added
+
+- **Complete README rewrite**: Step-by-step CAREER_HOME setup, first-time install path, all skills with trigger phrases and what they do, common workflows (job search, resume, outreach, stories), directory structure, config reference, troubleshooting FAQ. Designed for new users who have never used the plugin.
+- **`mission-control` smart first-run routing**: Fresh installs now get a welcome screen that detects missing `experience-history.md` + `professional-brand.md`, asks job-seeker vs founder/operator, and routes directly to the correct onboarding wizard. Partial-onboarding detection: if one engine is set up but not the other, shows a banner with the missing setup step.
+- **`outreach-composer` context pre-flight**: Checks `experience-history.md` exists before any outreach draft. Missing file → BLOCK with "run onboarding first" message instead of hallucinating biographical content.
+- **`resume-engine` context pre-flight**: Checks `experience-history.md` exists. Missing → BLOCK.
+- **`social-distribution-engine` Draft Handoff Gate**: Auto-selects hashtags before handing LinkedIn copy to user; runs Gate 1 (post_validator.py) inline; minimum 3 hashtags enforced.
+- **`resume-engine` trigger**: Added `generate my base resume from experience history` to frontmatter triggers list.
+
+### Fixed
+
+- **`outreach-composer` bash→python3 bug**: `bash "$(ls -v...HOW.py)"` invoked a Python script with bash. Fixed to `python3 "$GATE"` with FAIL-HARD empty-path check.
+- **brain/ session data excluded from plugin repo**: Session-logger hook was writing session data to `skills/social-distribution-engine/brain/sessions/` inside the plugin repo. Added `skills/*/brain/` and `brain/sessions/` to `.gitignore` and removed tracked files.
+
+---
+
+## [0.53.0] — 2026-05-14 — Gate FAIL-HARD + first-time setup guides + depersonalization
+
+### Fixed
+
+- **FAIL-HARD gate-not-found**: `substack-publish-gate` and `social-content-readiness-check` invocations now BLOCK with an explicit error + reinstall instruction if the gate script path resolves to empty. Previously `python3 ""` exited non-zero but with a confusing "no such file ''" message. Now: `{"verdict":"BLOCK","reason":"...","remediation":"claude plugin update career-intelligence@xos --scope user"}`.
+- **Hardcoded "Anand Vallamsetla"** in job-search-scheduler scan report template replaced with dynamic lookup from `brain/identity/experience-history.md → who:` frontmatter.
+- **scan-prompt-v11.md depersonalized**: All "Anand's targeting / Anand's capability profile" → "the candidate's targeting / the candidate's capability profile". Resume tracks no longer hardcoded to Engineering Leader/Exec/Innovator — derived from config file, then `Resumes & Cover Letters/` filenames, then experience-history.md fallback.
+- **scan-prompt-v11.md ABORT gate**: If `brain/config/job-search.md` doesn't exist, prompt now ABORTs with actionable error instead of attempting a blank-config scan.
+
+### Added
+
+- **`job-search-scheduler` FIRST-TIME SETUP section**: Step-by-step guide covering career-intelligence-onboarding prerequisite, config expansion, resume track setup, and 6 AM cron setup via Claude Code scheduled tasks.
+- **`resume-engine` FIRST-TIME SETUP section**: Explains how tracks derive from `Resumes & Cover Letters/` filenames, how to generate an initial base resume from experience-history.md, and how skills-matrix + stories are populated.
+- **`mission-control` smart first-run routing**: Fresh installs now get a welcome screen that asks job-seeker vs founder/operator and routes directly to the correct onboarding wizard (`career-intelligence-onboarding` or `sde-onboarding`) instead of an ad-hoc question sequence. Partial-onboarding detection: if one engine is set up but not the other, shows a banner with the missing setup step.
+- **Updated README.md**: Complete rewrite with step-by-step setup, skill catalog, stories explanation, resume building guide, LinkedIn profile section, and "what if I skip setup?" FAQ.
+
+---
+
+## [0.52.0] — 2026-05-14 — Career Intelligence onboarding skill
+
+### Added
+
+- **`career-intelligence-onboarding` skill** — Week 1 setup wizard for Career Intelligence. 8-question interview across work history (last 3 roles + key achievements, skills, education) and job search preferences (target roles/levels/company types, location, compensation, hard non-negotiables). Generates 2 context files: `brain/identity/experience-history.md` (loaded by outreach-fact-check for biographical claim verification) and `brain/projects/job-search/job-search-config.md` (loaded by job-match-scorer and mission-control). Includes Phase 0 CAREER_HOME setup, file-exists guard, and smoke test.
+- **`experience-history.template.md`** — Generic template with `{{PLACEHOLDER}}` tokens for all user-specific content.
+- **`job-search-config.template.md`** — Generic template with scoring weights, tier definitions, and pipeline settings.
+- **Integration note in skill:** Career Intelligence Onboarding and SDE Onboarding are independent. For founder/operator beta users (not job-searching), SDE Onboarding alone is sufficient for Week 1.
+
+Trigger: `"onboard me to career intelligence"` / `"career setup"` / `"set up job search"`
+
+---
+
 ## [0.51.1] — 2026-05-14 — sde-onboarding Phase 0 for external beta users
 
 ### Fixed

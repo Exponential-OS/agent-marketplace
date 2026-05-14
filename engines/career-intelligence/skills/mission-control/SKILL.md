@@ -143,47 +143,64 @@ These two skills overlap on warm-path detection. The routing rule:
 
 ---
 
-## BEHAVIOR: First Run (No Pipeline)
+## BEHAVIOR: First Run (No Onboarding Complete)
 
-**Detection:** `brain/projects/job-search/job-pipeline.json` does NOT exist.
+**Detection:** Check for both onboarding markers:
+- Career intelligence: `brain/identity/experience-history.md` does NOT exist
+- SDE: `brain/identity/professional-brand.md` does NOT exist
 
-### Onboarding Flow
-
-Show welcome with capabilities, then build the career brain conversationally.
-One question at a time (P11).
+If NEITHER file exists (completely fresh install), show the welcome and route to the correct onboarding wizard based on user's answer:
 
 ```
 ━━━ Career OS: Mission Control ━━━
 
-Welcome to Career OS — your career co-pilot with perfect memory.
+Welcome to Career Intelligence. I'm your career co-pilot with persistent memory.
 
-Here's what I can do:
+Before I can help, I need to learn a bit about you. This takes ~5 minutes
+and only happens once. Everything you share stays private on your machine.
 
-  "scan for jobs"            Find roles matching your profile
-  "customize resume"         Tailor resume for a specific role
-  "prep me for [Company]"    Interview prep from your stories
-  "who knows [Company]"      Find warm intros in your network
-  "save this story"          Capture a project or achievement
+Which describes you better?
 
-Everything is saved privately and remembered across sessions.
+  A) I'm actively job searching (or will be soon)
+     → Run: "onboard me to career intelligence"
 
-What's your current role and what kind of work are you looking for?
+  B) I'm a founder or operator who wants to build an audience and distribute content
+     → Run: "onboard me to SDE"
+
+  C) Both
+     → Start with either — they're independent and complement each other
+
+Type A, B, or C, or just say what you're trying to do.
 ```
 
-**Question sequence** (one per exchange, save after each answer):
-1. Current role + what you're looking for → save to identity.md
-2. A project you're most proud of → route to story-capture
-3. Someone in your network who could help → route to network-intelligence
-4. Any active interviews → route to apply-tracker
+**If user types A or describes job search:**
+Invoke `career-intelligence-onboarding` immediately. Do not ask questions yourself — the onboarding wizard owns the interview.
 
-After last question (or user says "skip"/"done"): show dashboard.
+**If user types B or describes content/distribution:**
+Invoke `sde-onboarding` immediately.
 
-**Git setup:** After brain is built, prompt for git backup:
+**If user types C:**
+Invoke `career-intelligence-onboarding` first (career context grounds the SDE voice), then `sde-onboarding`.
+
+**Partial onboarding detected** (one file exists, the other doesn't):
+- `experience-history.md` exists but `professional-brand.md` doesn't → offer `sde-onboarding` as "here's what's missing"
+- `professional-brand.md` exists but `experience-history.md` doesn't → offer `career-intelligence-onboarding`
+- Show the dashboard with a banner:
+
 ```
-Your career data is ready. Let's back it up.
-Do you have a GitHub account? I'll help you set up automatic backup.
+━━━ Setup Incomplete ━━━
+
+You're set up for [Career Intelligence / SDE] but not [SDE / Career Intelligence].
+Say "onboard me to SDE" or "onboard me to career intelligence" to complete setup.
+
+Showing dashboard with what's available now...
 ```
-Guide through git init → GitHub repo → set remote → push → optional Codeberg mirror.
+
+**Git setup:** After any onboarding completes, prompt:
+```
+Your context is saved. Want to back it up to GitHub?
+Say "backup" to set up git + GitHub remote — takes 2 minutes and protects everything.
+```
 
 ---
 
@@ -205,7 +222,9 @@ Before rendering the dashboard, check for pending skill flags:
 
 ## BEHAVIOR: Returning User (Dashboard)
 
-When `brain/projects/job-search/job-pipeline.json` exists, show the full dashboard.
+When at least one of `brain/identity/experience-history.md` or `brain/identity/professional-brand.md` exists, show the dashboard. Show only sections relevant to what's been set up:
+- Job search sections (pipeline, scan, score queue) → only if `experience-history.md` exists
+- SDE sections (campaigns, channel status) → only if `professional-brand.md` exists
 
 ### Pre-Dashboard Checks (silent)
 

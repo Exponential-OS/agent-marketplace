@@ -128,6 +128,20 @@ Check for a reply instead of re-contacting.
 
 This is the highest-value outreach pattern. The goal: your champion can forward your message to their contact at the target company in 10 seconds flat.
 
+### Context Pre-Flight (MANDATORY FIRST CHECK)
+
+Before doing anything else, verify required context files exist:
+
+```bash
+EXPERIENCE_HISTORY="$CAREER_HOME/brain/identity/experience-history.md"
+if [ ! -f "$EXPERIENCE_HISTORY" ]; then
+  echo "⛔ experience-history.md not found. Run 'onboard me to career intelligence' first — this file is required to verify biographical claims before any outreach is sent."
+  exit 1
+fi
+```
+
+If `experience-history.md` is missing: **STOP and print the error above. Do not draft.** Outreach without canonical biography grounding is the failure mode that created fabricated credentials in past drafts.
+
 ### Pre-Flight Check (Outreach Friction Rule)
 
 Before composing, verify you have:
@@ -151,7 +165,12 @@ Fill these in and I'll draft the email.
 Before WRITING the draft to disk (the final step), run the biographical-claim pre-check rule against your draft:
 
 ```bash
-bash "$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/biographical-claim-precheck/HOW.py 2>/dev/null | tail -1)" "$(jq -nc \
+GATE=$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/biographical-claim-precheck/HOW.py 2>/dev/null | tail -1)
+if [ -z "$GATE" ]; then
+  echo '{"verdict":"BLOCK","reason":"biographical-claim-precheck script not found","remediation":"Run: claude plugin update career-intelligence@xos --scope user"}'
+  exit 1
+fi
+python3 "$GATE" "$(jq -nc \
   --arg draft "/path/to/in-progress-draft.md" \
   --arg canonical "$CAREER_HOME/brain/identity/experience-history.md" \
   '{draft_path:$draft, canonical_sources:[$canonical], stakes:"T4"}')"

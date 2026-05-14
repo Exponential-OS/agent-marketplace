@@ -1,149 +1,267 @@
-# Career OS
+# Career Intelligence Engine
 
-The operating system for your career. Persistent memory, session capture, git-versioned data, full privacy.
+Your career co-pilot with persistent memory. Job search, resume customization, network outreach, LinkedIn content, and interview prep — all in one place, all remembering your background automatically.
 
-## What It Does
+Built as a Claude Code plugin. Your data stays in your own workspace, versioned by git.
 
-Career OS turns Claude into a career co-pilot with perfect memory. It owns your career workspace — every conversation captured, every contact remembered, every story preserved. Context is never lost.
-
-- **Session logging** — Every exchange (your prompts + Claude's responses) captured verbatim in daily ledger files
-- **Unified atomic commits** — All changes (ledger, memory, tasks, output) committed together per exchange
-- **Dashboard** — Career mission control: today's priorities, pipeline status, metrics, actionable prompts
-- **Full privacy** — Your data stays in YOUR GitHub account. Career OS never phones home.
-- **Dual-remote backup** — GitHub primary + Codeberg mirror. No single point of failure.
+---
 
 ## Install
 
 ```
-/plugin marketplace add Exponential-OS/agent-marketplace
-/plugin install career-os@xos
+claude plugin install career-intelligence@xos
 ```
 
-That's it. Career-os ships under the `thewhyman` marketplace alongside Co-Dialectic and the xOS plugin family. See [Exponential-OS/agent-marketplace](https://github.com/Exponential-OS/agent-marketplace) for the full plugin list.
+---
 
-**Legacy install paths** (still work, but deprecated): `/plugin marketplace add Exponential-OS/career-os-plugin` then `/plugin install career-os@career-os-marketplace`. The `career-os-marketplace` standalone marketplace was retired 2026-04-27 — see [.claude-plugin/README.md](.claude-plugin/README.md) for migration notes.
+## First-Time Setup (10 minutes)
 
-## What's new in v0.27.0 (2026-04-27)
+### Step 1 — Set your workspace
 
-Two new skills for outreach + interview workflows:
-
-- **`outreach-fact-check`** (T4 outreach immunity): read-only pre-flight verifier for biographical claims. Diffs claim against canonical brain sources (`experience-history.md`, `identity.md`, `awards-education-speaking.md`) and emits structured `match` / `mismatch` / `unknown` / `insufficient_evidence` verdicts. 10 claim classes covered (tenure, title, scope, compensation, recognition, education, speaking, identity, metric, comparative). Two modes: Mode 1 on-demand verification (default; ships in v0.26.0); Mode 2 PreToolUse hook on Gmail draft / outgoing tools (forward-spec for v0.27.x). Origin: 2026-04-26 outreach near-miss class.
-- **`interviewer-research`** (panel prep automation): auto-fires on `apply-tracker`'s Screen → Interview / Panel Scheduled transitions. Spawns one parallel research sub-agent per interviewer (Perplexity MCP + LinkedIn MCP + canonical brain reads); outputs aggregated dossier at `INPUT/[company-slug]-[date]-prep-dossier.md` + a `kind:prep` GitHub Issue.
-
-`apply-tracker` integration: NEW v0.27 trigger block on Screen → Interview transition auto-invokes `interviewer-research`.
-
-See [CHANGELOG.md](CHANGELOG.md) for the v0.27.0 + v0.26.0 entries.
-
-## First Run
-
-1. Open a new Cowork or Claude Code session with a fresh folder as your career workspace
-2. Career OS automatically scaffolds the workspace structure
-3. Set up git: `git init && git add -A && git commit -m "Initial Career OS setup"`
-4. Connect a GitHub repo as remote
-5. Say "mission control" to see your career home screen
-
-## Requirements
-
-- **GitHub account** — Career OS uses git for persistence. No offline-only mode.
-- **Claude Code or Cowork** — Plugin runs in Claude's plugin system.
-- **No infrastructure** *(v0.24.0+)* — file-only memory substrate. No Docker, no Dolt, no database. Markdown + frontmatter + git. (Substrate rolled back 2026-04-26.)
-
-## Memory Substrate — File-Only (v0.24.0+)
-
-**Substrate decision rolled back 2026-04-26.** Career-OS no longer requires Dolt, Neo4j, Redis, or any database/container. The brain layer is FILE-ONLY: markdown + frontmatter + git for version control. No infrastructure to provision, no containers to start, no daily migrate step.
-
-### Quick setup
+Run this in your terminal before opening Claude Code:
 
 ```bash
-# 1. /plugin marketplace add Exponential-OS/agent-marketplace
-# 2. /plugin install career-os@xos
-# 3. Run onboarding: career-os onboarding
+export CAREER_HOME="$HOME/career-os"
+mkdir -p "$CAREER_HOME"
+echo 'export CAREER_HOME="$HOME/career-os"' >> ~/.zshrc
 ```
 
-That's it. Memory lives at `~/anand-career-os/brain/` (or your equivalent xHumanOS instance). Skills read markdown directly with grep, jq, and frontmatter parsing — no SQL.
+This tells the plugin where to store your data. Every session reads and writes here.
 
-### Skill-side memory access
+> **Why CAREER_HOME?** The plugin is multi-user — it reads `$CAREER_HOME` at runtime so your files never mix with anyone else's. Default is `~/career-os` but you can use any path you own.
 
-Skills query memory via direct file reads (markdown + frontmatter). Examples:
+### Step 2 — Run the onboarding wizard
 
-```bash
-# Find people with warmth >= 4
-grep -lE "^warmth: [4-5]" ~/anand-career-os/brain/network/people/*.md
-
-# Active job pipeline (FULL_INVEST tier)
-grep -lE "^tier: FULL_INVEST" ~/anand-career-os/brain/projects/job-search/roles/*.md
-
-# Stories tagged leadership
-grep -lE "^tags:.*leadership" ~/anand-career-os/brain/stories/*.md
-```
-
-For complex queries, write a Python helper using `pyyaml` + `pathlib` — no DB adapter needed. See [`docs/MEMORY-ACCESS.md`](docs/MEMORY-ACCESS.md).
-
-### What about the migration scripts in `migrations/v0.21.0+`?
-
-Those are HISTORICAL. The Dolt substrate ran from v0.21.0 (2026-04-15) to v0.23.0 (2026-04-25); rolled back 2026-04-26. The migration scripts remain in-tree as reference for future queryable-runtime substrate (semantic retrieval / vector store / graph DB) when OpenClaw memory standard stabilizes. Don't run them.
-
-## Roadmap (xOS Integration)
-
-Career-OS plugin is on the path to becoming **TheWhyMan-xHumanOS** (Anand's xHumanOS incarnation). Today's plugin owns its own engines (scoring, distribution, campaign orchestration); when xOS kernel ships those primitives, plugin code splits cleanly:
-
-- **Generic engine work → xOS kernel** (Ingestion / Extraction / Persona / Distribution / Campaign)
-- **Career-domain logic → xHumanOS Career Module** (the 6-category scoring rubric, ATS rules library, job-pipeline state machine, resume tracks)
-- **Per-human config → Anand-xHumanOS incarnation** (`INCARNATION.md` + `PERSONAS.md` + `DOMAIN-DATA.md`)
-
-Specs in the anand-career-os workspace:
-- `WIP/xOS-product/career-os-contributions-to-kernel.md` — what gets pushed up
-- `WIP/xHumanOS-product/specs/career-module-spec.md` — career module spec
-- `WIP/career-os-product/specs/Anand-xHumanOS-incarnation.md` — Anand's incarnation files
-
-No flag-day rewrite — strangler-fig migration as kernel APIs stabilize.
-
-## Workspace Structure
-
-Career OS is the landlord — it owns and manages the entire folder:
+In Claude Code, say:
 
 ```
-~/my-career/                        Your Cowork context folder
-├── brain/                     Hidden — the career brain
-│   ├── ledger/                       Conversation logs (auto-captured)
-│   ├── memory/                       Stories, contacts, pipeline
-│   ├── tasks/                        Priorities and backlog
-│   └── config/                       Settings and prompt templates
-├── CLAUDE.md                       Rules engine (visible, editable)
-└── Resumes & Cover Letters/        Output folder (deliverables)
+onboard me to career intelligence
 ```
 
-## How It Works
+The wizard asks 8 short questions about your work history and job search preferences. It takes about 10 minutes. When it finishes, you'll have two files that every other skill loads automatically:
 
-### Hooks (automatic)
+- `brain/identity/experience-history.md` — your canonical background
+- `brain/projects/job-search/job-search-config.md` — your targeting criteria
 
-| Hook | Event | What It Does |
-|------|-------|--------------|
-| `init-repo.sh` | SessionStart | Checks version, runs migrations, scaffolds workspace |
-| `capture-prompt.sh` | UserPromptSubmit | Captures prompt + unified commit of all changes |
-| `capture-response.sh` | Stop | Captures response + unified commit of all changes |
+You explain your background once. Every future session — resumes, outreach, interview prep — reads these files automatically.
 
-### Git Strategy
+**If you're a founder or operator** (using the Social Distribution Engine, not job searching):
 
-Direct-to-main. Every exchange produces one atomic commit on `main` — no feature branches, no session branches. Each commit bundles all `brain/` changes (ledger, memory, tasks) from that exchange into a single rollback unit.
+```
+onboard me to SDE
+```
 
-### Skills
+This creates your brand voice, platform handles, and distribution topology instead.
 
-| Skill | Purpose |
-|-------|---------|
-| `mission-control` | Career home screen — priorities, pipeline, metrics, action prompts |
-| `job-search-scheduler` | Daily job scanning, JD matching, pipeline updates |
-| `session-logger` | Documents the hook-based capture system |
-| `version-control` | Git setup, dual-remote backup, secrets handling |
+### Step 3 — Open Mission Control
 
-## Architecture
+```
+mission control
+```
 
-1. **Local-first** — Files + git, no external database
-2. **Plugin is the landlord** — Owns the entire context folder
-3. **GitHub is required** — No offline fallback
-4. **Privacy by design** — Your data, your repo, your control
-5. **Unified commits** — One atomic rollback unit per conversation turn
+Your home screen. Shows today's priorities, pipeline status, and what to do next. If onboarding isn't complete, it tells you exactly what's missing and routes you to the right wizard.
 
-## License
+---
 
-MIT
+## What If I Skip a Setup Step?
+
+Every skill has a pre-flight check. If you try to use `resume-engine` without onboarding:
+
+```
+⛔ experience-history.md not found.
+Run 'onboard me to career intelligence' first.
+```
+
+Skills fail loudly and tell you the fix. You won't silently get bad output.
+
+---
+
+## Skills
+
+### Job Search
+
+| Say | What happens |
+|---|---|
+| `scan for jobs` | Full LinkedIn + ATS scan. Finds roles matching your config, scores them, detects warm paths. |
+| `enrich warm paths` | Re-scans existing results to find 1st/2nd-degree contacts. |
+| `score these roles` | Scores a scan result against your targeting config. |
+| `apply dashboard` | Shows your apply-ready queue: scored, not yet applied. |
+| `pipeline` | Active pipeline: interviews, referrals, stage detail. |
+| `I applied to [Company]` | Records an application. |
+| `got rejected from [Company]` | Updates pipeline stage. |
+
+**Config lives at** `brain/config/job-search.md`. Edit to tune target roles, companies, salary range, and non-negotiables. The scheduler reads this before every scan.
+
+**Daily auto-scan** (no manual trigger needed):
+
+Say: `set up a daily job scan at 6am` — Claude Code creates a scheduled task.
+
+---
+
+### Resume & Cover Letter
+
+| Say | What happens |
+|---|---|
+| `customize resume for [Company]` | Tailors your resume to the JD. Injects keywords, reorders bullets by relevance. |
+| `cover letter for [Company]` | Targeted cover letter. Never auto-generated — must be explicitly requested. |
+| `list resume tracks` | Shows available tracks with target role types. |
+| `generate my base resume from experience history` | Drafts an initial resume from your onboarding data if you have no existing file. |
+
+**Resume tracks** come from filenames in `Resumes & Cover Letters/`. Name them to reflect the role type:
+- `resume-engineering-leader.md` → Engineering Leader track
+- `resume-exec.md` → Executive track  
+- `resume-ic.md` → IC track
+
+The engine auto-detects tracks and selects the best one for each JD.
+
+**QA gates** run before every output:
+- Page count (1 page IC / 2 pages leadership)
+- No banned phrases ("responsible for", "helped with")
+- ≥70% JD keyword coverage
+- Biographical claim verification against your experience history
+
+---
+
+### Outreach
+
+| Say | What happens |
+|---|---|
+| `write outreach for [Contact] to [Company]` | Forwardable referral email in your champion's voice. |
+| `linkedin message to [Contact]` | LinkedIn DM with proof-of-work hook. Character-limited. |
+| `follow up with [Contact]` | Time-calibrated follow-up based on last contact date. |
+| `thank you note for [Contact]` | Post-interaction note with specific conversation callback. |
+
+**Contact profiles** live at `brain/network/people/`. If a contact has no profile yet, the composer asks 3 questions and creates one before drafting.
+
+**Dedup gate** runs before every draft: if you've reached out to this contact recently, it blocks the draft and shows the prior outreach date.
+
+---
+
+### Stories (your evidence library)
+
+Stories are what makes your resumes and outreach specific and credible. The resume engine and outreach composer both search your story library for the strongest evidence to inject.
+
+| Say | What happens |
+|---|---|
+| `save this story` | Captures a win, project, or experience. |
+| `capture this achievement` | Same. |
+
+**Stories live at** `brain/stories/`. Each story has competency tags and metrics. When the resume engine customizes a bullet or the outreach composer picks proof points, it matches stories to the JD's requirements.
+
+**To get value fast**: after onboarding, spend 20 minutes capturing your top 5–10 career wins. The more stories you have, the more specific and compelling every resume and outreach draft becomes.
+
+---
+
+### LinkedIn Content
+
+| Say | What happens |
+|---|---|
+| `write a LinkedIn post about [topic]` | Drafts in your brand voice. Structural + semantic QA runs automatically. |
+| `distribute campaign [name]` | Distributes a campaign across platforms per your hub-and-spoke config. |
+
+**Requires SDE onboarding** (`onboard me to SDE`) — creates your brand voice file and platform handles.
+
+---
+
+### Interview Prep
+
+| Say | What happens |
+|---|---|
+| `prep me for [Company]` | Company research, role analysis, likely question set. |
+| `mock interview for [Company]` | Interactive mock with feedback. |
+| `research [Interviewer Name]` | Builds a dossier from LinkedIn + public sources. |
+
+---
+
+### Network Intelligence
+
+| Say | What happens |
+|---|---|
+| `who do I know at [Company]` | Scans your contacts for warm paths. |
+| `warm intros for [Company]` | Shows relationship strength and suggested ask. |
+
+---
+
+## Common Workflows
+
+### Week 1 (new user)
+1. `onboard me to career intelligence`
+2. `mission control`
+3. `scan for jobs`
+4. `score these roles`
+5. `apply dashboard`
+
+### Resume customization
+1. Add your current resume to `Resumes & Cover Letters/` (name it by track type)
+2. `customize resume for [Company]`
+3. Review QA results
+4. `cover letter for [Company]` — only when needed
+
+### Outreach
+1. `who do I know at [Company]`
+2. `write outreach for [Contact] to [Company]`
+3. Review the draft (dedup + claim checks ran automatically)
+4. Send manually, then: `I sent the message to [Contact]`
+
+---
+
+## Directory Structure
+
+After onboarding, `$CAREER_HOME` looks like this:
+
+```
+$CAREER_HOME/
+├── brain/
+│   ├── identity/
+│   │   ├── experience-history.md     ← canonical background (onboarding creates)
+│   │   ├── professional-brand.md     ← brand voice (SDE onboarding creates)
+│   │   └── handles.md                ← platform handles
+│   ├── network/
+│   │   └── people/                   ← one file per contact
+│   ├── projects/
+│   │   └── job-search/
+│   │       ├── job-pipeline.json
+│   │       ├── job-search-config.md  ← targeting criteria
+│   │       └── scans/                ← scan results by date
+│   ├── stories/                      ← career story library
+│   ├── sessions/
+│   │   └── ledger/                   ← daily session logs
+│   └── config/
+│       └── job-search.md             ← job search settings
+├── Resumes & Cover Letters/          ← resume tracks + generated outputs
+└── INPUT/                            ← drop JDs and prep materials here
+```
+
+---
+
+## Troubleshooting
+
+**"⛔ experience-history.md not found"**
+→ Run `onboard me to career intelligence`
+
+**"⛔ professional-brand.md not found"**
+→ Run `onboard me to SDE`
+
+**"⛔ [gate script] not found"**
+→ Run `claude plugin update career-intelligence@xos --scope user`
+
+**Scan returns no results**
+→ Check `brain/config/job-search.md` exists. If not: `set up my job search config`. Then re-scan.
+
+**Resume engine asks "which track?" every time**
+→ Name your resume files with the track type: `resume-engineering-leader.md` not `my-resume.md`
+
+**Outreach blocked by dedup gate**
+→ A message was already sent recently. Check `brain/network/people/[name].json` for `last_contact` date.
+
+---
+
+## Privacy
+
+Your data never leaves your machine (except to your own GitHub repo if you connect one). No backend, no telemetry, no phone-home. Session logs, pipeline data, and contact files all live in `$CAREER_HOME`.
+
+---
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md).

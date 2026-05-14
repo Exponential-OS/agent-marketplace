@@ -14,6 +14,7 @@ triggers:
   - cover letter for
   - write cover letter
   - list resume tracks
+  - generate my base resume from experience history
 ---
 
 # Resume Engine — Career OS Skill
@@ -49,13 +50,35 @@ Always start with:
 ━━━ Career OS: Resume Engine ━━━
 ```
 
+## Context Pre-Flight (MANDATORY FIRST CHECK)
+
+Before any resume operation, verify:
+
+```bash
+if [ ! -f "$CAREER_HOME/brain/identity/experience-history.md" ]; then
+  echo "⛔ experience-history.md not found."
+  echo "Run 'onboard me to career intelligence' first — this creates your canonical biography."
+  echo "The resume engine needs it to verify every biographical claim before output."
+  exit 1
+fi
+TRACKS=$(ls "$CAREER_HOME/Resumes & Cover Letters/"*.md 2>/dev/null | wc -l)
+if [ "$TRACKS" -eq 0 ]; then
+  echo "⚠️  No resume files found in 'Resumes & Cover Letters/'."
+  echo "Add your existing resume there, or say 'generate my base resume from experience history'."
+fi
+```
+
+If `experience-history.md` missing → STOP, print error, do not generate. No experience file = no canonical claim verification = ungrounded resume.
+
+If `Resumes & Cover Letters/` is empty → WARN (proceed to generate base resume from experience-history.md if user confirms).
+
 ## How to Invoke
 
 - `customize resume for [Company]` — tailor a resume for a specific role
 - `resume for #68` — by match tracker number (auto-resolves track + JD)
 - `resume for Harvey Director` — fuzzy name resolution
+- `generate my base resume from experience history` — draft initial resume from onboarding data
 - `cover letter for [Company]` — generate a targeted cover letter
-- `cover letter for #68` — by match tracker number
 - `list resume tracks` — show available tracks and their targets
 
 ---
