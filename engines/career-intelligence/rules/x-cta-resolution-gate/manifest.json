@@ -1,0 +1,28 @@
+{
+  "slug": "x-cta-resolution-gate",
+  "version": "1.0.0",
+  "status": "active",
+  "created": "2026-05-15",
+  "origin": "X algorithm penalizes tweets with external links — reducing organic reach. SDE flywheel requires CTAs (Substack links, GitHub install links) to live in a reply tweet, not the thread body. cyborg-series-2026-05-15 X thread had REPLACE_WITH_SUBSTACK_URL placeholder that would have shipped broken without a gate.",
+  "description": "Gate for X thread publishing. Blocks external links in main thread body, requires CTA link in reply tweet, blocks placeholder tokens, warns on weak hook.",
+  "gates": [
+    "external_link_in_thread_body: any URL in main thread tweets = BLOCK (move to reply_tweet)",
+    "cta_in_reply: reply_tweet must exist and contain at least one URL = BLOCK if absent",
+    "placeholder_check: REPLACE_ tokens in thread or reply = BLOCK",
+    "hook_strength: first tweet < 50 chars or generic opener = WARN"
+  ],
+  "enforcement": {
+    "how": "HOW.py",
+    "check": "check.py",
+    "audit": "AUDIT.sh",
+    "watch": "WATCH.sh",
+    "log": "~/.career-os-enforcement-log.jsonl"
+  },
+  "applies_to": [
+    "Any X thread in an SDE campaign",
+    "Single tweets with CTA links — check reply_tweet field",
+    "X threads where CTA link is meant to be in self-reply"
+  ],
+  "litmus": "Run HOW.py with thread_tweets array and reply_tweet — exit 0=safe, exit 1=blocked with remediation",
+  "dispatch_slug": "x-cta-resolution-gate"
+}

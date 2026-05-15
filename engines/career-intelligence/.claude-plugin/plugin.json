@@ -1,8 +1,8 @@
 {
   "name": "career-intelligence",
   "platform": "xHumanOS",
-  "version": "0.55.0",
-  "description": "Career Intelligence (xHumanOS) \u2014 individual career engine: job search, network, pipeline, sessions. v0.55.0: knowledge layer integration \u2014 outreach-composer calls brain/assembler.py for WHY-relative context before every draft.",
+  "version": "0.56.0",
+  "description": "Career Intelligence (xHumanOS) \u2014 individual career engine: job search, network, pipeline, sessions. v0.56.0: SDE harness complete \u2014 per-content publish gates documented in SKILL.md (substack-publish-gate, linkedin-article-publish-gate, linkedin-post-on-article-gate, x-cta-resolution-gate); substack gate adds section+tags metadata check; Pre-Dist gate list corrected to include image-brand-completeness-gate.",
   "author": {
     "name": "Anand Vallamsetla"
   },

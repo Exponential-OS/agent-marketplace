@@ -24,7 +24,7 @@ Most users capture ~10% of Claude's capability by treating it as a chatbot. SDE 
 | Capability | Claude Cowork | SDE |
 |---|---|---|
 | **Cross-session memory** | ❌ No memory between sessions | ✅ Git-versioned brain — brand voice, audience, handles, campaign history persist forever across every session |
-| **Distribution enforcement** | ❌ Guidelines the user must remember | ✅ 9-gate preflight CI blocks distribution until all best practices are met |
+| **Distribution enforcement** | ❌ Guidelines the user must remember | ✅ 10-gate preflight CI blocks distribution until all best practices are met |
 | **Invisible signal CTAs** | ❌ Not checked | ✅ Gate 8 BLOCKs if missing bookmark ask, Instagram save prompt, DM-share prompt, mid-content Substack forward |
 | **Timing optimization** | ❌ Not checked | ✅ Gate 9 warns when scheduled outside platform golden windows |
 | **Platform-native routing** | ❌ User must remember rules | ✅ Estate model enforces hub-spoke routing, Post Hub tension, link-in-comment discipline |
@@ -92,10 +92,10 @@ python3 "$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/skills/social
   /path/to/campaign.json
 ```
 
-This meta-harness runs 9 gates in sequence:
+This meta-harness runs 10 gates in sequence:
 - **Planning:** campaign-schema-validator, channel-status-check, surface-coverage-check
 - **Content:** content-url-resolution-check (blocks on unresolved `[TOKEN]` placeholders)
-- **Pre-Dist:** flywheel-sequence-guard (Estate publish order), visual-asset-review-check, golden-hour-scheduling-check (advisory — warns if scheduled_at timestamps fall outside platform golden windows: LinkedIn 07:30–09:00/11:30–13:00/17:00–18:30, X 08:00–10:00/12:00–13:00/17:00–18:00, Instagram 06:00–09:00/11:00–13:00/19:00–21:00, Substack 06:00–10:00; default timezone America/Los_Angeles)
+- **Pre-Dist:** flywheel-sequence-guard (Estate publish order), visual-asset-review-check, image-brand-completeness-gate (every image has brand signature + substantive SVG visual), golden-hour-scheduling-check (advisory — warns if scheduled_at timestamps fall outside platform golden windows: LinkedIn 07:30–09:00/11:30–13:00/17:00–18:30, X 08:00–10:00/12:00–13:00/17:00–18:00, Instagram 06:00–09:00/11:00–13:00/19:00–21:00, Substack 06:00–10:00; default timezone America/Los_Angeles)
 - **Semantic:** campaign-estate-quality-check (LLM judge — Estate model packaging: hub-spoke routing, Post Hub hook discipline, Article Substack CTA, platform-native copy, comment cascade strategy)
 - **Semantic:** flywheel-cta-quality-check (LLM judge — CTA strength + platform-appropriateness: Substack share specificity + mid-content forward, Article CTA placement, Post Hub tension, X link-in-reply/bookmark ask/profile-click hook, Reddit link-in-comment, Instagram bio-link/save prompt/DM-share prompt, Facebook share ask, comment cascade 2+ topic-specific keywords)
 
@@ -170,9 +170,111 @@ Exit 0 = PASS → ship. Exit 1 = BLOCK → revise and re-run both gates. Exit 2 
 
 **Gemini auth:** `~/.gemini/settings.json` must have a valid auth type. If gemini times out, it is skipped and the ip_safety judge falls back to `claude`. To fix: set `GEMINI_API_KEY` in `~/.claude/settings.json` env section or run `gemini auth login` to switch to OAuth.
 
+---
+
+## Per-Content Publish Gates (MANDATORY — run immediately before each publish action)
+
+**These gates fire per-content-piece, after the Campaign Pre-Flight passes.** Each is a one-way-door guard: publishing is irreversible, so the gate must pass before the agent touches any publish UI or API.
+
+Run order: Pre-Flight → (for each component) Per-Content Gate → Pre-Publication Gate → PUBLISH.
+
+---
+
+### Substack Publish Gate
+
+**When:** Any Substack post that triggers an email send to subscribers. Also fires on republish/resend actions.
+
+```bash
+GATE=$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/substack-publish-gate/HOW.py 2>/dev/null | tail -1)
+python3 "$GATE" '{
+  "platform": "substack",
+  "action": "publish",
+  "is_email_send": true,
+  "is_resend": false,
+  "email_send_confirmed": false,
+  "post_title": "<title>",
+  "post_excerpt": "<first ~500 chars of body>",
+  "word_count": <N>,
+  "has_hook": true,
+  "has_cta": true,
+  "section": "<Substack section name — omit for single-section publications>",
+  "tags": ["tag1", "tag2", "tag3"]
+}'
+```
+
+**`email_send_confirmed` must be explicitly set to `true` by the human in the current turn.** Standing approvals do not cover email sends. `is_resend: true` is always BLOCK — no exceptions.
+
+Gates: `resend_block` (inviolable) → `email_send_gate` (human confirmation) → `completeness` (≥300 words + hook + CTA) → `metadata` (section + tags — WARN if absent on email sends) → `quality` (LLM judge on excerpt).
+
+Exit 0 = PASS (safe to publish). Exit 1 = BLOCK.
+
+---
+
+### LinkedIn Article Publish Gate
+
+**When:** Before publishing or updating a LinkedIn Article (Pulse article).
+
+```bash
+GATE=$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/linkedin-article-publish-gate/HOW.py 2>/dev/null | tail -1)
+python3 "$GATE" '{
+  "platform": "linkedin_article",
+  "article_title": "<title>",
+  "article_content": "<full article body>",
+  "article_excerpt": "<first ~500 chars>",
+  "char_count": <N>
+}'
+```
+
+Gates: `placeholder_block` (REPLACE_ tokens) → `backlink_check` (missing Substack/honey-pot CTA) → `cta_check` (weak or missing CTA) → `quality` (LLM judge on excerpt).
+
+Exit 0 = PASS. Exit 1 = BLOCK.
+
+---
+
+### LinkedIn Post-on-Article Gate
+
+**When:** Before publishing the LinkedIn hub post that shares a LinkedIn Article URL. This is the spoke post in the hub-spoke flywheel (the "Post Hub").
+
+```bash
+GATE=$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/linkedin-post-on-article-gate/HOW.py 2>/dev/null | tail -1)
+python3 "$GATE" '{
+  "platform": "linkedin_post",
+  "post_body": "<full post body>",
+  "article_url": "https://www.linkedin.com/pulse/..."
+}'
+```
+
+Gates: `external_link_in_body` (non-linkedin.com URLs = BLOCK) → `article_url_format` (must be linkedin.com/pulse/) → `placeholder_in_post` (REPLACE_ tokens = BLOCK) → `hook_visibility` (first line < 10 chars = WARN).
+
+Exit 0 = PASS. Exit 1 = BLOCK. Exit 2 = WARN.
+
+---
+
+### X CTA Resolution Gate
+
+**When:** Before publishing an X (Twitter) thread as part of a campaign. Validates that CTAs are in the reply tweet, not the thread body.
+
+```bash
+GATE=$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/x-cta-resolution-gate/HOW.py 2>/dev/null | tail -1)
+python3 "$GATE" '{
+  "platform": "x_thread",
+  "thread_tweets": ["Tweet 1 text", "Tweet 2 text", "..."],
+  "reply_tweet": "Full piece: https://substack.com/...",
+  "hashtags": ["#tag1", "#tag2"]
+}'
+```
+
+Gates: `external_link_in_thread_body` (URLs in main tweets = BLOCK, move to reply) → `cta_in_reply` (reply must exist + contain URL) → `placeholder_check` (REPLACE_ tokens = BLOCK) → `hook_strength` (first tweet < 50 chars = WARN).
+
+Exit 0 = PASS. Exit 1 = BLOCK. Exit 2 = WARN.
+
+---
+
 ## Execution Flow
-1. **Pre-flight:** Run Gate 1 (structural) → Gate 2 (semantic) on each content piece. Block on failures.
-2. **Act:** Trigger Platform Modules.
-3. **Observe:** Modules execute using current algorithmic rules.
-4. **Measure:** Hand off to the Distribution Analytics Engine after a window to collect data.
-5. **Learn:** Use updated insights for the next campaign.
+1. **Pre-flight:** Run `validate-campaign-preflight.py` once for the entire campaign. BLOCK = fix before proceeding.
+2. **Per-component:** For each content piece, run the appropriate Per-Content Publish Gate above before touching any publish UI.
+3. **Pre-publication:** Run Gate 1 (structural post_validator.py) → Gate 2 (semantic social-content-readiness-check) on the final copy.
+4. **Act:** Trigger Platform Modules. Human approves each send — no standing approval covers irreversible sends.
+5. **Observe:** Modules execute using current algorithmic rules.
+6. **Measure:** Hand off to the Distribution Analytics Engine after a window to collect data.
+7. **Learn:** Use updated insights for the next campaign.

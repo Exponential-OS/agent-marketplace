@@ -4,22 +4,23 @@ validate-campaign-preflight.py — Meta-harness that runs all campaign gate chec
 in sequence and produces a consolidated CI report.
 
 This is the machine-actionable pre-flight check for the SDE distribute-campaign flow.
-It runs the 7 structural gates + 2 semantic gates and exits with the worst result.
+It runs the 8 structural gates + 2 semantic gates and exits with the worst result.
 
 Gate sequence (fail-fast within each, report all):
   Phase 1 — Planning:
-    1. campaign-schema-validator   — required fields + file refs
-    2. channel-status-check        — no banned/low-ROI channels
-    3. surface-coverage-check      — all handles.md surfaces accounted for
+    1. campaign-schema-validator      — required fields + file refs
+    2. channel-status-check           — no banned/low-ROI channels
+    3. surface-coverage-check         — all handles.md surfaces accounted for
   Phase 2 — Content:
-    4. content-url-resolution-check — no unresolved [TOKEN] placeholders
+    4. content-url-resolution-check   — no unresolved [TOKEN] placeholders
   Phase 3 — Pre-distribution:
-    5. flywheel-sequence-guard      — Estate publish order dependencies met
-    6. visual-asset-review-check    — assets_reviewed=true
-    7. golden-hour-scheduling-check — scheduled_at timestamps within platform golden windows
+    5. flywheel-sequence-guard        — Estate publish order dependencies met
+    6. visual-asset-review-check      — assets_reviewed=true
+    7. image-brand-completeness-gate  — every image has brand signature + substantive SVG
+    8. golden-hour-scheduling-check   — scheduled_at timestamps within platform golden windows
   Phase 4 — Semantic:
-    8. campaign-estate-quality-check — Estate model packaging (hub-spoke routing, Post Hub hook)
-    9. flywheel-cta-quality-check    — CTA strength + platform-appropriateness per component
+    9. campaign-estate-quality-check  — Estate model packaging (hub-spoke routing, Post Hub hook)
+   10. flywheel-cta-quality-check     — CTA strength + platform-appropriateness per component
 
 Complements (does not replace):
   - campaign-schema/validate-campaign.py — comprehensive human-readable report (run for human review)
@@ -53,8 +54,9 @@ GATES = [
     ("Planning",  "surface-coverage-check",        lambda cf, _: {"campaign_file": cf, "handles_file": str(pathlib.Path(CAREER_HOME) / "brain/identity/handles.md")},                                                                     30),
     ("Content",   "content-url-resolution-check",  lambda cf, _: {"campaign_file": cf},                                                                                                                                                        30),
     ("Pre-Dist",  "flywheel-sequence-guard",        lambda cf, t: {"campaign_file": cf, "target": t or ""},                                                                                                                                    30),
-    ("Pre-Dist",  "visual-asset-review-check",     lambda cf, _: {"campaign_file": cf},                                                                                                                                                        30),
-    ("Pre-Dist",  "golden-hour-scheduling-check",  lambda cf, _: {"campaign_file": cf},                                                                                                                                                        30),
+    ("Pre-Dist",  "visual-asset-review-check",        lambda cf, _: {"campaign_file": cf},                                                                                                                                                        30),
+    ("Pre-Dist",  "image-brand-completeness-gate",  lambda cf, _: {"campaign_file": cf},                                                                                                                                                        30),
+    ("Pre-Dist",  "golden-hour-scheduling-check",   lambda cf, _: {"campaign_file": cf},                                                                                                                                                        30),
     ("Semantic",  "campaign-estate-quality-check", lambda cf, _: {"campaign_file": cf},                                                                                                                                                       180),
     ("Semantic",  "flywheel-cta-quality-check",    lambda cf, _: {"campaign_file": cf},                                                                                                                                                       180),
 ]

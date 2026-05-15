@@ -14,6 +14,10 @@ Icon*
 .current-session
 .career-os-state
 
+# Session-logger writes (hook runs in plugin repo context, data belongs in $CAREER_HOME)
+skills/*/brain/
+brain/sessions/
+
 # Secrets (NEVER committed anywhere)
 .env
 

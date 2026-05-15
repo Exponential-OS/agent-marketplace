@@ -1,0 +1,28 @@
+{
+  "slug": "campaign-asset-matrix-gate",
+  "version": "1.0.0",
+  "status": "active",
+  "created": "2026-05-15",
+  "origin": "cyborg-series-2026-05-15 campaign launched with zero images — no assets/ folder, no asset.file entries in campaign.json. Instagram requires images; LinkedIn and X perform significantly better with them. No gate existed to enforce asset completeness before distribution.",
+  "description": "Validates that all required image slots in campaign.json are filled and that the referenced files exist on disk. BLOCKs if Instagram spokes or Substack source lack images. WARNs if LinkedIn hub or X thread lack images.",
+  "gates": [
+    "instagram_asset_required: any instagram spoke without asset.file = BLOCK",
+    "substack_asset_required: source without asset.file = BLOCK (substack cover required)",
+    "linkedin_hub_asset: hub without asset.file = WARN",
+    "asset_file_exists: any asset.file that is specified but not on disk = BLOCK"
+  ],
+  "enforcement": {
+    "how": "HOW.py",
+    "check": "check.py",
+    "audit": "AUDIT.sh",
+    "watch": "WATCH.sh",
+    "log": "~/.career-os-enforcement-log.jsonl"
+  },
+  "applies_to": [
+    "Any campaign.json before distribution begins",
+    "Pre-flight check in campaign-preflight gate pipeline",
+    "Any spoke addition that involves an image-bearing platform"
+  ],
+  "litmus": "Run HOW.py with campaign_file — exit 0=all assets present, exit 1=blocked (missing required images), exit 2=warn (recommended images missing)",
+  "dispatch_slug": "campaign-asset-matrix-gate"
+}

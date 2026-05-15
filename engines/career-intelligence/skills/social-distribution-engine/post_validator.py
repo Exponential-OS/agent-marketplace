@@ -184,6 +184,19 @@ def validate(platform_key: str, text: str, hashtags: list[str] | None = None) ->
             f"(max {max_blank_lines} for {spec['display_name']}). {note}"
         )
 
+    # Catch "blank line after every line" spacing — passes max_blank_lines=1 but reads like a
+    # markdown document in the feed. Triggered when blank lines exceed ratio of content lines.
+    max_blank_ratio = spec.get("max_blank_line_ratio")
+    if max_blank_ratio is not None and len(lines) > 4:
+        blank_count = sum(1 for ln in lines if ln.strip() == "")
+        ratio = blank_count / len(lines)
+        if ratio > max_blank_ratio:
+            note = spec.get("max_blank_line_ratio_note", "Tighten line grouping — blank line between every line creates a jarring wall of gaps.")
+            warnings.append(
+                f"Over-spaced formatting: {blank_count}/{len(lines)} lines are blank "
+                f"({ratio:.0%} blank ratio, max {max_blank_ratio:.0%}). {note}"
+            )
+
     if spec.get("trailing_space_warn") and trailing_space_lines:
         n = len(trailing_space_lines)
         sample = trailing_space_lines[:5]

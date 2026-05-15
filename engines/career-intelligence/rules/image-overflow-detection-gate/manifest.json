@@ -1,0 +1,29 @@
+{
+  "slug": "image-overflow-detection-gate",
+  "version": "1.0.0",
+  "status": "active",
+  "created": "2026-05-15",
+  "origin": "LinkedIn and Instagram image templates used overflow:hidden on fixed-height containers with hardcoded font sizes. Text clipping was silent — the PNG showed cut-off headlines with no error. Origin: repeated overflow bugs in clawcamp and cyborg-series campaigns (LinkedIn OG cards and Instagram carousel slides). Root cause: no mechanical check before PNG generation.",
+  "description": "Detects text overflow in social media image HTML templates before PNG generation. Primary: Chrome headless JS DOM check. Fallback: static character-limit analysis against image-spec.json.",
+  "gates": [
+    "chrome_overflow_check (primary): injects JS into temp HTML, runs Chrome --dump-dom, parses overflow report = BLOCK if elements overflow",
+    "static_char_check (fallback when Chrome unavailable): checks h1/subtitle text length against image-spec.json platform limits = WARN"
+  ],
+  "enforcement": {
+    "how": "HOW.py",
+    "check": "check.py",
+    "audit": "AUDIT.sh",
+    "watch": "WATCH.sh",
+    "log": "~/.career-os-enforcement-log.jsonl"
+  },
+  "depends_on": [
+    "skills/social-distribution-engine/image-spec.json — platform char limits for static fallback"
+  ],
+  "applies_to": [
+    "Any HTML template about to be rendered to PNG via Chrome headless",
+    "SDE campaign asset generation — run before each platform PNG is finalized",
+    "Instagram carousel slides (overflow_risk: HIGH per image-spec.json)"
+  ],
+  "litmus": "Run HOW.py with html_file + dims — exit 0=clean, exit 1=overflow confirmed, exit 2=warn (static analysis or Chrome unavailable)",
+  "dispatch_slug": "image-overflow-detection-gate"
+}

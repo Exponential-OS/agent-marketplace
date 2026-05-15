@@ -1,0 +1,35 @@
+{
+  "slug": "image-brand-completeness-gate",
+  "version": "1.0.0",
+  "description": "Blocks image templates missing required brand handles OR substantive SVG visual content.",
+  "why": "Every image is a contact card in the wild — screenshots, slides, reposts. Missing @thewhyman or thewhyman.com means lost discoverability. Text-only images fail the 'pictures > 1000 words' principle — human attention favors visual pattern recognition over text parsing.",
+  "checks": [
+    {
+      "id": "brand_signature",
+      "verdict_on_fail": "BLOCK",
+      "tokens_required": ["@thewhyman", "thewhyman.com"],
+      "tokens_warned": ["thewhyman.blog", "ExponentialOS.io"],
+      "reads_from": "brand-spec.json"
+    },
+    {
+      "id": "visual_content",
+      "verdict_on_fail": "BLOCK",
+      "min_svg_children": 5,
+      "rationale": "An SVG with fewer than 5 elements is decoration, not a visual. A co-intelligence network, chart, or diagram requires circles + lines + labels = substantive content."
+    }
+  ],
+  "exit_codes": {
+    "0": "PASS — all required tokens present + substantive SVG found",
+    "1": "BLOCK — missing required brand token OR no/empty SVG",
+    "2": "WARN — missing recommended token (thewhyman.blog / ExponentialOS.io)"
+  },
+  "input_schema": {
+    "html_file": "string (required) — absolute path to HTML template",
+    "brand_spec": "string (optional) — absolute path to brand-spec.json override"
+  },
+  "brand_spec_default": "skills/social-distribution-engine/brand-spec.json",
+  "integration_points": [
+    "campaign-asset-matrix-gate (pre-campaign preflight)",
+    "campaign-preflight (ship-readiness check)"
+  ]
+}

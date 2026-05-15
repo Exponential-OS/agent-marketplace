@@ -15,8 +15,8 @@
       "platform": "xHumanOS",
       "license": "Proprietary",
       "source": "./engines/career-intelligence",
-      "description": "Career Intelligence \u2014 xHumanOS engine for job search, network, pipeline, and sessions. Composes Brand Intelligence + Social Distribution. v0.49.0: LinkedIn Groups discovery + spoke support; signal-collector v1.0 (crowdsourced signal local phase); CAREER_HOME env migration.",
-      "version": "0.55.0",
+      "description": "Career Intelligence \u2014 xHumanOS engine for job search, network, pipeline, and sessions. Composes Brand Intelligence + Social Distribution. v0.56.0: SDE harness complete \u2014 per-content publish gates documented (substack, linkedin-article, linkedin-post-on-article, x-cta); substack gate adds section+tags metadata check.",
+      "version": "0.56.0",
       "category": "career",
       "homepage": "https://github.com/Exponential-OS/career-intelligence-engine"
     },

@@ -3,6 +3,19 @@
 All notable changes to the Career OS plugin are recorded here. This plugin
 follows [Semantic Versioning](https://semver.org/) — MAJOR.MINOR.PATCH.
 
+## [0.56.0] — 2026-05-15 — SDE harness complete: per-content publish gates documented + substack metadata gate
+
+### Added
+- `SKILL.md`: Per-Content Publish Gates section — all 4 publish gates (substack-publish-gate, linkedin-article-publish-gate, linkedin-post-on-article-gate, x-cta-resolution-gate) documented with invoke commands, input contracts, and gate summaries
+- `substack-publish-gate/check.py`: Gate 4 metadata check — WARNs on missing `section` and missing/insufficient `tags` during email sends; quality LLM judge promoted to Gate 5
+- `substack-publish-gate/manifest.json`: Updated gate list to include metadata gate
+
+### Fixed
+- `SKILL.md` Pre-Dist gate list corrected to include `image-brand-completeness-gate` (was in harness but missing from description)
+- Execution Flow updated to 7 steps (was 5 — missing Per-Content Gate step and per-component approval requirement)
+
+---
+
 ## [0.55.0] — 2026-05-14 — Knowledge layer integration: WHY-relative context in outreach
 
 ### Added

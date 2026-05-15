@@ -1,0 +1,32 @@
+{
+  "slug": "linkedin-article-publish-gate",
+  "version": "1.0.0",
+  "status": "active",
+  "created": "2026-05-15",
+  "origin": "cyborg-series-2026-05-15 campaign had REPLACE_WITH_SUBSTACK_URL tokens that required manual audit before publish, and no gate enforced CTA or backlink presence. Built as product feature, not campaign patch.",
+  "description": "Quality gate for LinkedIn Article publish actions. Blocks unresolved placeholder tokens, warns on missing series backlinks, blocks missing CTAs, and runs LLM quality judge on the opening excerpt.",
+  "gates": [
+    "placeholder_block: any REPLACE_ token or unresolved (coming soon)/(#) link = BLOCK",
+    "backlink_check: no linkedin.com/pulse/ or linkedin.com/posts/ in body = WARN",
+    "cta_check: no Substack URL or Co-Dialectic GitHub link = BLOCK",
+    "quality: LLM judge via PROMPT.md + claude -p on article_excerpt (semantic)"
+  ],
+  "enforcement": {
+    "how": "HOW.py",
+    "check": "check.py",
+    "prompt": "PROMPT.md",
+    "audit": "AUDIT.sh",
+    "watch": "WATCH.sh",
+    "log": "~/.career-os-enforcement-log.jsonl"
+  },
+  "applies_to": [
+    "Any LinkedIn Article about to be published",
+    "LinkedIn Article drafts being handed to a human for manual publish",
+    "SDE campaigns that include a linkedin_article spoke"
+  ],
+  "env_flags": {
+    "SKIP_LLM_JUDGES": "Set to '1' to bypass LLM quality judge — for CI environments without claude CLI"
+  },
+  "litmus": "Run HOW.py with article_content — exit 0=safe, exit 1=blocked with remediation, exit 2=warn (proceed with awareness)",
+  "dispatch_slug": "linkedin-article-publish-gate"
+}

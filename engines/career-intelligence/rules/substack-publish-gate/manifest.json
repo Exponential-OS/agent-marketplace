@@ -12,6 +12,7 @@
     "resend_block: is_resend=true is always BLOCK, no exceptions — previously-sent posts cannot trigger a second email blast",
     "email_send_gate: is_email_send=true requires explicit email_send_confirmed=true in payload from human — absent or false = BLOCK",
     "completeness: word_count>=300 + has_hook + has_cta (structural)",
+    "metadata: section missing = WARN, tags empty/fewer than 2 = WARN (email sends only; reduces discoverability)",
     "quality: LLM judge via PROMPT.md + claude -p on post_excerpt (semantic)"
   ],
   "enforcement": {

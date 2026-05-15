@@ -112,6 +112,8 @@
     "image_alt_required": false,
     "max_blank_lines": 2,
     "max_blank_lines_note": "More than 2 consecutive blank lines create jarring visual gaps in the feed.",
+    "max_blank_line_ratio": 0.35,
+    "max_blank_line_ratio_note": "Blank line after every single line (markdown-style spacing) makes the post unreadable in the feed. Group related lines together with one blank line between sections.",
     "trailing_space_warn": true
   },
   "linkedin_article": {
