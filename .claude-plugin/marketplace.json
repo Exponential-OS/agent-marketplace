@@ -25,8 +25,8 @@
       "platform": "xOS",
       "license": "Proprietary",
       "source": "./engines/co-dialectic",
-      "description": "Co-Dialectic v4.9.4 \u2014 LLM prompt optimizer + auto-verify by stakes + semantic T3 classification + background agent lifecycle manager + fish-swarm MUST-spawn dispatch mandate + Protocol 0 post-compaction re-init + plugin user-content gate + waky-waky Tier 1.5 (hook output = workspace fast-path context; codi owns no workspace file paths) + session-start hooks (~/.codialectic/hooks/session_start.json) + Protocol 1 mid-session drift check. Cross-family cascade-then-jury review, judge-panel, hallucination detector, fish-swarm orchestration, session handoff. Works with any LLM runtime.",
-      "version": "4.9.4",
+      "description": "Co-Dialectic v4.10.0 \u2014 TypeScript+Bun fish swarm (handler.ts + claude-code.ts + agent-lifecycle.ts). Fixes stuck background agents: Python polled wrong output path; TS relies on agent-injected complete command + timeout. P4 three-layer architecture compliant. LLM prompt optimizer + auto-verify by stakes + semantic T3 classification + background agent lifecycle manager. Cross-family judge panel, hallucination detector, fish-swarm orchestration. Works with any LLM runtime.",
+      "version": "4.10.0",
       "category": "ai-runtime",
       "homepage": "https://github.com/Exponential-OS/prompt-engineering-in-action"
     },
