@@ -3,6 +3,7 @@
 check.py — linkedin-post-on-article-gate enforcement logic.
 
 LinkedIn hub posts sharing an Article must:
+  - Be a reshare of the LinkedIn Article (not a standalone UGC post)
   - Have NO external links in the post body (algorithm penalty)
   - Reference the Article via a within-platform URL (linkedin.com/pulse/)
   - Have no placeholder tokens
@@ -12,13 +13,15 @@ Input JSON (via sys.argv[1]):
 {
   "platform": "linkedin_post",
   "post_body": "...",
-  "article_url": "https://www.linkedin.com/pulse/...",   // optional
+  "is_reshare": true,                                     // REQUIRED — BLOCK if false or absent
+  "article_url": "https://www.linkedin.com/pulse/...",   // required when is_reshare=true
   "first_comment": "..."                                  // optional, for context
 }
 
 Exits: 0=PASS, 1=BLOCK, 2=WARN
 
 Gates (in order):
+  0. is_reshare             — must be true = BLOCK if false/absent (hub post must reshare the article)
   1. external_link_in_body  — any non-linkedin.com URL in body = BLOCK
   2. article_url_format     — article_url must be linkedin.com/pulse/ if provided = BLOCK
   3. placeholder_in_post    — REPLACE_ tokens in body = BLOCK
@@ -45,6 +48,27 @@ def main() -> int:
 
     post_body = ctx.get("post_body", "")
     article_url = ctx.get("article_url", "")
+    is_reshare = ctx.get("is_reshare", None)
+
+    # ── Gate 0: is_reshare — BLOCK if false or absent ─────────────────────────
+    if is_reshare is not True:
+        msg = (
+            "Hub posts must be reshares of the LinkedIn Article, not standalone UGC posts. "
+            "A standalone post gets no Article engagement credit and breaks the hub-spoke model."
+        )
+        if is_reshare is None:
+            msg = "Missing required field 'is_reshare'. " + msg
+        print(json.dumps({
+            "verdict": "BLOCK",
+            "gate": "is_reshare",
+            "reason": msg,
+            "remediation": (
+                "On LinkedIn, open the published Article → click 'Repost' → add commentary in the repost box. "
+                "Do NOT create a new post — it must be a reshare of the Article so engagement rolls up. "
+                "Pass \"is_reshare\": true in the gate payload once you have used the Repost flow."
+            ),
+        }))
+        return 1
 
     # ── Gate 1: external_link_in_body ─────────────────────────────────────────
     urls_in_body = URL_RE.findall(post_body)

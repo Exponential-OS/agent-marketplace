@@ -1,8 +1,8 @@
 {
   "name": "career-intelligence",
   "platform": "xHumanOS",
-  "version": "0.56.0",
-  "description": "Career Intelligence (xHumanOS) \u2014 individual career engine: job search, network, pipeline, sessions. v0.56.0: SDE harness complete \u2014 per-content publish gates documented in SKILL.md (substack-publish-gate, linkedin-article-publish-gate, linkedin-post-on-article-gate, x-cta-resolution-gate); substack gate adds section+tags metadata check; Pre-Dist gate list corrected to include image-brand-completeness-gate.",
+  "version": "0.58.0",
+  "description": "Career Intelligence (xHumanOS) \u2014 v0.58.0: gate harness fixes \u2014 substack-publish-gate adds cover_image BLOCK + upgrades tags from WARN to BLOCK; linkedin-article-publish-gate adds cover_image, source_attribution, hashtags BLOCKs + fixes Gate 2 early-exit; linkedin-post-on-article-gate adds is_reshare BLOCK (Gate 0).",
   "author": {
     "name": "Anand Vallamsetla"
   },

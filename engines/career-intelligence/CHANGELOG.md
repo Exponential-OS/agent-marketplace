@@ -3,6 +3,27 @@
 All notable changes to the Career OS plugin are recorded here. This plugin
 follows [Semantic Versioning](https://semver.org/) — MAJOR.MINOR.PATCH.
 
+## [0.58.0] — 2026-05-15 — gate harness fixes: cover_image, attribution, hashtags, is_reshare
+
+### Fixed
+- `substack-publish-gate`: `cover_image` absent on email send now BLOCKs (was unchecked); `tags` missing/fewer than 2 now BLOCKs (was WARN-only exit 2, silently passed). Root cause: WARN exit code treated as proceed by skill invocation spec.
+- `linkedin-article-publish-gate`: added `cover_image` BLOCK (Gate 1); added `source_attribution` BLOCK (Gate 3) — checks first 800 chars for "adaptation of" / "originally published" / source URL; added `hashtags` BLOCK (Gate 4) — minimum 3 required, detected from content or explicit field; fixed Gate 2 (backlink_check) early-exit bug — previously exited 2 (WARN) before reaching cta_check and quality gates; accumulated WARNs now returned only after all BLOCKs clear.
+- `linkedin-post-on-article-gate`: added `is_reshare` BLOCK as Gate 0 — hub posts must be reshares of the LinkedIn Article (Repost flow), not standalone UGC posts. Previously gate checked body formatting but never verified post type.
+
+## [0.57.0] — 2026-05-15 — P4 three-layer architecture: all 26 Invariant rules migrated to TypeScript+Bun
+
+### Added
+- `rules/*/handler.ts` (5 new): biographical-claim-precheck, flywheel-cta-quality-check, campaign-estate-quality-check, golden-hour-scheduling-check, social-content-readiness-check — completing the full 26-rule TypeScript+Bun migration
+- All 26 Invariant layer rules now have handler.ts alongside HOW.py; no new HOW.py files created
+- social-content-readiness-check handler: 3 parallel LLM judges (tone/ip_safety/narrative via claude/gemini/codex) + Gate 1 format check + Gate 3 metadata; panel rule enforced (0 BLOCK + ≤1 WARN)
+- golden-hour-scheduling-check handler: platform golden windows + bad-day checks via Intl.DateTimeFormat (no zoneinfo dependency); WARN-only gate
+- biographical-claim-precheck handler: regex claim extraction (tenure/role/scale/date_range/report_count) + canonical source anchor verification
+
+### CI
+- 57/0 passing, 1 at baseline (pre-existing)
+
+---
+
 ## [0.56.0] — 2026-05-15 — SDE harness complete: per-content publish gates documented + substack metadata gate
 
 ### Added

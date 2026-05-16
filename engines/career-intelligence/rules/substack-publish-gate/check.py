@@ -17,8 +17,9 @@ Input JSON (via sys.argv[1]):
   "word_count": 1500,
   "has_hook": true,
   "has_cta": true,
+  "cover_image": "https://...",   // REQUIRED for email send — BLOCK if absent/empty
   "section": "...",               // optional: Substack section/newsletter name; WARN if absent on email send
-  "tags": ["tag1", "tag2"]        // optional: Substack post tags; WARN if absent on email send (min 2 recommended)
+  "tags": ["tag1", "tag2"]        // REQUIRED for email send — BLOCK if absent (min 2)
 }
 
 Exits: 0=PASS, 1=BLOCK, 2=WARN
@@ -27,8 +28,10 @@ Gates (in order):
   1. resend_block      — is_resend=true always BLOCK, no exceptions
   2. email_send_gate   — is_email_send=true requires email_send_confirmed=true
   3. completeness      — word_count>=300 + has_hook + has_cta
-  4. metadata          — section missing = WARN, tags empty/missing = WARN (WARN only, not BLOCK)
-  5. quality           — LLM judge via PROMPT.md + claude -p on post_excerpt
+  4. cover_image       — cover_image absent/empty on email send = BLOCK
+  5. tags              — tags absent or fewer than 2 on email send = BLOCK
+  6. section           — section absent on email send = WARN only
+  7. quality           — LLM judge via PROMPT.md + claude -p on post_excerpt
 """
 import json
 import pathlib
@@ -110,6 +113,7 @@ def main() -> int:
     word_count = ctx.get("word_count", 0)
     has_hook = ctx.get("has_hook", False)
     has_cta = ctx.get("has_cta", False)
+    cover_image = ctx.get("cover_image", "")
     section = ctx.get("section", "")
     tags = ctx.get("tags", [])
 
@@ -172,27 +176,48 @@ def main() -> int:
         }))
         return 1
 
-    # ── Gate 4: metadata — section + tags (WARN only, not BLOCK) ─────────────
-    metadata_warnings = []
-    if is_email_send:
-        if not section:
-            metadata_warnings.append(
-                "No 'section' field provided. For multi-section Substack publications, assign the post to the correct section before sending. "
-                "Add \"section\": \"<section name>\" to the payload. Single-section publications can ignore this warning."
-            )
-        if not tags or (isinstance(tags, list) and len(tags) == 0):
-            metadata_warnings.append(
-                "No tags provided. Substack tags improve SEO and discoverability. "
-                "Add \"tags\": [\"tag1\", \"tag2\"] (2-3 recommended). "
-                "Without tags, the post will not surface in Substack search or topic feeds."
-            )
-        elif isinstance(tags, list) and len(tags) < 2:
-            metadata_warnings.append(
-                f"Only {len(tags)} tag provided. Minimum 2 tags recommended for Substack discoverability. "
-                "Add at least one more tag covering the post topic."
-            )
+    # ── Gate 4: cover_image — BLOCK if absent on email send ──────────────────
+    if is_email_send and not cover_image:
+        print(json.dumps({
+            "verdict": "BLOCK",
+            "gate": "cover_image",
+            "reason": "No cover image set. Email sends without a cover image look unprofessional in subscriber inboxes and lose click-through.",
+            "remediation": (
+                "Add a cover image in the Substack editor (Settings → Cover image) before publishing. "
+                "Then pass the image URL as \"cover_image\": \"https://...\" in the gate payload."
+            ),
+        }))
+        return 1
 
-    # ── Gate 5: quality — LLM semantic judge ──────────────────────────────────
+    # ── Gate 5: tags — BLOCK if absent/insufficient on email send ────────────
+    if is_email_send:
+        tags_list = tags if isinstance(tags, list) else []
+        if len(tags_list) == 0:
+            print(json.dumps({
+                "verdict": "BLOCK",
+                "gate": "tags",
+                "reason": "No tags set. Substack tags are required before an email send — they determine which topic feeds the post surfaces in.",
+                "remediation": "Add at least 2 tags in the Substack editor (Settings → Tags). Pass them as \"tags\": [\"tag1\", \"tag2\"] in the gate payload.",
+            }))
+            return 1
+        if len(tags_list) < 2:
+            print(json.dumps({
+                "verdict": "BLOCK",
+                "gate": "tags",
+                "reason": f"Only {len(tags_list)} tag set. Minimum 2 tags required for discoverability.",
+                "remediation": "Add at least one more tag in the Substack editor. Aim for 2-3 topic-specific tags.",
+            }))
+            return 1
+
+    # ── Gate 6: section — WARN only (some pubs are single-section) ───────────
+    section_warnings = []
+    if is_email_send and not section:
+        section_warnings.append(
+            "No 'section' field provided. For multi-section Substack publications, assign the post to the correct section before sending. "
+            "Add \"section\": \"<section name>\" to the payload. Single-section publications can ignore this warning."
+        )
+
+    # ── Gate 7: quality — LLM semantic judge ──────────────────────────────────
     if not post_excerpt:
         print(json.dumps({
             "verdict": "BLOCK",
@@ -214,16 +239,16 @@ def main() -> int:
         }))
         return 1
 
-    if metadata_warnings:
+    if section_warnings:
         print(json.dumps({
             "verdict": "WARN",
-            "gate": "metadata",
+            "gate": "section",
             "platform": ctx.get("platform", "substack"),
             "post_title": post_title,
             "word_count": word_count,
             "quality": "PASS (LLM judge)",
-            "reason": " | ".join(metadata_warnings),
-            "remediation": "Add section and/or tags fields to the payload. Post can ship but discoverability will be reduced.",
+            "reason": " | ".join(section_warnings),
+            "remediation": "Assign the post to its section before sending, or ignore for single-section publications.",
         }))
         return 2
 
