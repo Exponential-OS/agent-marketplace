@@ -25,8 +25,8 @@
       "platform": "xOS",
       "license": "Proprietary",
       "source": "./engines/co-dialectic",
-      "description": "Co-Dialectic v4.10.0 \u2014 TypeScript+Bun fish swarm (handler.ts + claude-code.ts + agent-lifecycle.ts). Fixes stuck background agents: Python polled wrong output path; TS relies on agent-injected complete command + timeout. P4 three-layer architecture compliant. LLM prompt optimizer + auto-verify by stakes + semantic T3 classification + background agent lifecycle manager. Cross-family judge panel, hallucination detector, fish-swarm orchestration. Works with any LLM runtime.",
-      "version": "4.12.0",
+      "description": "Co-Dialectic v4.12.1 - HOTFIX: PreToolUse hook updatedInput field drop crashed Agent tool.",
+      "version": "4.12.1",
       "category": "ai-runtime",
       "homepage": "https://github.com/Exponential-OS/prompt-engineering-in-action"
     },
