@@ -3,6 +3,21 @@
 All notable changes to the Career OS plugin are recorded here. This plugin
 follows [Semantic Versioning](https://semver.org/) — MAJOR.MINOR.PATCH.
 
+## [0.59.0] — 2026-05-16 — absorb cyborg product-generic hooks into the plugin
+
+### Added
+- `hooks/scripts/audit-people-schema.py` — SessionStart hook, validates required schema fields on recently-active contacts.
+- `hooks.json` — registers `audit-people-schema.py`, `preflight-linkedin-mcp-prefer.py` (PreToolUse on chrome-devtools-mcp), and `postpublish-campaign-tracker.py` (PostToolUse on LinkedIn/Reddit publishers) via `${CLAUDE_PLUGIN_ROOT}`.
+
+### Changed
+- These three hooks previously lived in `~/cyborg/scripts/` and were wired via `~/.claude/settings.json` absolute paths. They are product-generic (LinkedIn URL routing, campaign-tracker schema, people-file schema audit) — they belong with the product plugin that ships to customers, not in Anand's personal cyborg infrastructure.
+
+### Cyborg cleanup (separate commit in cyborg repo)
+- `~/cyborg/scripts/audit-people-schema.py` — removed
+- `~/cyborg/scripts/preflight-linkedin-mcp-prefer.py` — removed (was a duplicate)
+- `~/cyborg/scripts/postpublish-campaign-tracker.py` — removed (was a duplicate)
+- `~/.claude/settings.json` — 3 hook entries removed (plugin owns them now)
+
 ## [0.58.0] — 2026-05-15 — gate harness fixes: cover_image, attribution, hashtags, is_reshare
 
 ### Fixed

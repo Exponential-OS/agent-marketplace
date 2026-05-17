@@ -7,6 +7,11 @@
             "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/init-repo.sh\"",
             "timeout": 30000
+          },
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/audit-people-schema.py\" --fix 2>/dev/null | tail -5",
+            "statusMessage": "Auditing people schema..."
           }
         ]
       }
@@ -29,6 +34,28 @@
             "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/capture-response.sh\"",
             "timeout": 30000
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "mcp__chrome-devtools-mcp__navigate_page|mcp__chrome-devtools-mcp__new_page",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/preflight-linkedin-mcp-prefer.py\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "mcp__composio__LINKEDIN_CREATE_LINKED_IN_POST|mcp__composio__LINKEDIN_CREATE_ARTICLE_OR_URL_SHARE|mcp__composio__REDDIT_CREATE_REDDIT_POST",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/postpublish-campaign-tracker.py\""
           }
         ]
       }
