@@ -25,8 +25,8 @@
       "platform": "xOS",
       "license": "Proprietary",
       "source": "./engines/co-dialectic",
-      "description": "Co-Dialectic v4.12.1 - HOTFIX: PreToolUse hook updatedInput field drop crashed Agent tool.",
-      "version": "4.12.1",
+      "description": "Co-Dialectic v4.12.2 - product-vs-solution sweep: 83 BLOCK hits to 0. Anand-as-author exemption markers added to 14 files (origin/authorship attribution). Plugin ships clean to customers via marketplace.",
+      "version": "4.12.2",
       "category": "ai-runtime",
       "homepage": "https://github.com/Exponential-OS/prompt-engineering-in-action"
     },
