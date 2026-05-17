@@ -1,7 +1,23 @@
 {
   "name": "social-distribution",
   "platform": "xOS",
-  "version": "0.1.0",
-  "description": "xOS social-distribution engine — coming soon.",
-  "license": "Proprietary"
+  "version": "0.47.0",
+  "description": "Social Distribution (xOS) — content flywheel orchestrator + 9-gate preflight CI + platform-native distribution modules (LinkedIn, Substack, X, Reddit, Facebook, Instagram, Threads, LinkedIn Groups). Initiative → Campaign → Spoke hierarchy with campaign-dashboard. Extracted from career-intelligence-engine v0.61.0. Used by xHumanOS for individual brand + xTeamOS for team brand.",
+  "author": {
+    "name": "Anand Vallamsetla"
+  },
+  "repository": "https://github.com/Exponential-OS/social-distribution-plugin",
+  "homepage": "https://github.com/Exponential-OS/social-distribution-plugin",
+  "license": "Proprietary",
+  "keywords": [
+    "social-distribution",
+    "content-flywheel",
+    "campaign",
+    "initiative",
+    "linkedin",
+    "substack",
+    "preflight",
+    "xOS"
+  ],
+  "_product_vs_solution_marker": "product-vs-solution: example — author attribution is legitimate plugin authorship"
 }

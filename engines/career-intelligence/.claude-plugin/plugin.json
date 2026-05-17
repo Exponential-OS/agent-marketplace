@@ -1,8 +1,8 @@
 {
   "name": "career-intelligence",
   "platform": "xHumanOS",
-  "version": "0.61.0",
-  "description": "Career Intelligence (xHumanOS) - v0.61.0: customer-personal data removal complete. brand-spec parameterized via $CAREER_HOME, all runtime hardcoded paths removed, strategy docs genericized. campaign-dashboard skill added with INITIATIVE -> CAMPAIGN -> SPOKE hierarchy. Plugin ships clean to customers.",
+  "version": "0.62.0",
+  "description": "Career Intelligence (xHumanOS) - v0.62.0: SPLIT. 14 social skills + 20 social rules + 2 social hooks moved to new social-distribution@xos plugin. career-intelligence now scoped strictly to xHumanOS-individual career work (job search, pipeline, outreach, resume, network, story, interview). Social-distribution lives at xOS scope (shared with future xTeamOS/xFamilyOS). Mission-control routes campaign triggers via skill-name reference; social-distribution@xos must be installed alongside for those routes to resolve.",
   "author": {
     "name": "Anand Vallamsetla"
   },

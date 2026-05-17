@@ -2,6 +2,31 @@
 <!-- this file is the historical changelog. Entries reference the original author/user as provenance, not runtime data. -->
 # Changelog
 
+## [0.62.0] — 2026-05-17 — SPLIT: social-distribution extracted to its own xOS plugin
+
+### The architectural split
+career-intelligence was bundling social-distribution as a sub-skill since v0.30+. That violated the xOS-vs-xHumanOS platform boundary documented in WIP/xOS-platform/social-distribution-product/. Social-distribution is xOS-shared (used by xHumanOS for individual brand + xTeamOS for team brand + xFamilyOS for family brand). Career-intelligence is xHumanOS-only.
+
+This release executes the split. The two plugins now ship independently and share $CAREER_HOME env.
+
+### Removed (moved to social-distribution@xos)
+- 14 skills: social-distribution-engine, campaign-engine, campaign-dashboard, distribution-analytics-engine, flywheel-amplification-module, 7 platform modules (linkedin, linkedin-groups, substack, x, reddit, facebook, instagram, threads), sde-onboarding (temp — will move to brand-intelligence@xos later)
+- 20 rules: 9 preflight gates (campaign-schema-validator, channel-status-check, surface-coverage-check, content-url-resolution-check, flywheel-sequence-guard, visual-asset-review-check, golden-hour-scheduling-check, campaign-estate-quality-check, flywheel-cta-quality-check) + 5 publish gates (substack, linkedin-article, linkedin-post-on-article, x-cta-resolution, comment-hijack) + 6 supporting (campaign-preflight, campaign-asset-matrix-gate, image-brand-completeness-gate, image-overflow-detection-gate, linkedin-groups-dedup, analytics-sync-watch)
+- 2 hook scripts: postpublish-campaign-tracker.py, preflight-linkedin-mcp-prefer.py
+- 2 hook registry entries (PreToolUse + PostToolUse) — social-distribution plugin re-registers them via its own hooks.json
+
+### Retained in career-intelligence@xos
+- 23 skills (job search, pipeline, outreach, resume, network, story, interview, mission-control, etc.)
+- 8 rules (biographical-claim-precheck, company-flags-filter, content-format-check, linkedin-mention-gate, outreach-people-file-commit, social-content-readiness-check, warm-contact-outreach-dedup, campaign-asset-matrix-gate)
+- SessionStart hook (init-repo + audit-people-schema)
+
+### Customer install impact
+Existing customers must install BOTH plugins to keep their current behavior:
+  claude plugin install career-intelligence@xos
+  claude plugin install social-distribution@xos
+
+mission-control routing references the social-distribution skill names (campaigns, new-initiative, new-campaign, measure, campaign-engine). If only career-intelligence is installed, those routes will WARN but not fail.
+
 ## [0.61.0] — 2026-05-17 — product-vs-solution sweep — Anand-personal data removed
 
 Goal of this release: career-intelligence is a PRODUCT that ships to customers; Anand's personal data must not leak into runtime code. Customer-specific data (brand-spec, identity, handles, content-flywheel, brand-patterns, hijack-playbook) lives in the customer's `$CAREER_HOME/brain/`. The plugin reads from there.
