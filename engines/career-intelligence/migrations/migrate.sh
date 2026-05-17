@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# product-vs-solution: example — historical migration script (one-time use), Anand-personal references are provenance.
 # Career OS — Sequential Version Migration Runner (P12)
 #
 # Usage: migrate.sh <context-dir> <current-data-version> <target-version>

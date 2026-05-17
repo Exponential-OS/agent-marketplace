@@ -11,8 +11,8 @@ import { fileURLToPath } from "url";
 const SLUG = "linkedin-groups-dedup";
 const LOG_PATH = join(homedir(), ".career-os-enforcement-log.jsonl");
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
-const CAREER_HOME = process.env.CAREER_HOME ?? process.env.CAREER_OS_HOME ?? join(homedir(), "anand-career-os");
-const DEFAULT_LOG = join(CAREER_HOME, "brain/social-distribution-engine/groups-post-log.jsonl");
+const CAREER_HOME = process.env.CAREER_HOME ?? process.env.CAREER_OS_HOME ?? null;
+const DEFAULT_LOG = CAREER_HOME ? join(CAREER_HOME, "brain/social-distribution-engine/groups-post-log.jsonl") : null;
 const DEFAULT_LOOKBACK_DAYS = 7;
 
 interface InputCtx {

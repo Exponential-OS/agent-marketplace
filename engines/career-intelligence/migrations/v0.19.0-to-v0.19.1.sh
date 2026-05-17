@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# product-vs-solution: example — historical migration script (one-time use), Anand-personal references are provenance.
 # Migration v0.19.0 → v0.19.1
 #
 # Doc-coherence patch for v0.19.0. No data transforms.

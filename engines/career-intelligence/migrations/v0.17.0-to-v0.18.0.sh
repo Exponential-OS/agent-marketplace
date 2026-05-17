@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# product-vs-solution: example — historical migration script (one-time use), Anand-personal references are provenance.
 # Migration v0.17.0 → v0.18.0
 #
 # This release bundles:

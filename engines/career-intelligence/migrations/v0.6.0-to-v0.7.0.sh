@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# product-vs-solution: example — historical migration script (one-time use), Anand-personal references are provenance.
 # Migration: v0.6.0 → v0.7.0
 # Description: Version stamp for new skills + enrichment features.
 # New in v0.7.0: interview-prep, resume-engine, outreach-composer, network-intelligence skills;

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# product-vs-solution: example — historical migration script (one-time use), Anand-personal references are provenance.
 # Migration v0.24.0 → v0.25.0
 #
 # Task substrate cutover. Tasks.md is DEPRECATED. Skills now read/write

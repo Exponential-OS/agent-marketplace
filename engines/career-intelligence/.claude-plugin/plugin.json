@@ -1,8 +1,8 @@
 {
   "name": "career-intelligence",
   "platform": "xHumanOS",
-  "version": "0.59.0",
-  "description": "Career Intelligence (xHumanOS) \u2014 v0.59.0: absorb 3 cyborg hooks (audit-people-schema, preflight-linkedin-mcp-prefer, postpublish-campaign-tracker) into the plugin via hooks.json. These are product-generic, not Anand-personal \u2014 they belong with the plugin that ships to customers.",
+  "version": "0.61.0",
+  "description": "Career Intelligence (xHumanOS) - v0.61.0: customer-personal data removal complete. brand-spec parameterized via $CAREER_HOME, all runtime hardcoded paths removed, strategy docs genericized. campaign-dashboard skill added with INITIATIVE -> CAMPAIGN -> SPOKE hierarchy. Plugin ships clean to customers.",
   "author": {
     "name": "Anand Vallamsetla"
   },
@@ -15,5 +15,7 @@
     "network",
     "pipeline",
     "xHumanOS"
-  ]
+  ],
+  "product_vs_solution_marker": "example - author field is plugin authorship attribution",
+  "_product_vs_solution_marker": "product-vs-solution: example \u2014 origin docs / authorship attribution"
 }

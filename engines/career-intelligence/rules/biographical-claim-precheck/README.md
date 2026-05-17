@@ -1,3 +1,5 @@
+<!-- product-vs-solution: example — file's purpose intrinsically references Anand as the user/subject (worked example); generic equivalent infeasible without renaming. -->
+
 # Biographical Claim Pre-Check
 
 **Status:** ground-zero-invariant · v1.0.0 · 2026-04-26

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# product-vs-solution: example — historical migration script (one-time use), Anand-personal references are provenance.
 # Migration v0.20.0 → v0.21.0
 #
 # Dolt-canonical cutover (Phase 3 of ADR-003). No data transforms in the

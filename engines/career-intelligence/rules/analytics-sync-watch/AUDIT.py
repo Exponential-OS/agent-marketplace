@@ -14,7 +14,7 @@ import sys
 from datetime import date
 
 LIVE_STATUSES = {"published", "live", "sent"}
-CAREER_HOME_DEFAULT = str(pathlib.Path.home() / "anand-career-os")
+CAREER_HOME_DEFAULT = os.environ.get("CAREER_HOME") or os.environ.get("CAREER_OS_HOME") or ""
 
 
 def is_published(campaign):

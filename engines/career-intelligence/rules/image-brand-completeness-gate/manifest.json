@@ -2,14 +2,14 @@
   "slug": "image-brand-completeness-gate",
   "version": "1.0.0",
   "description": "Blocks image templates missing required brand handles OR substantive SVG visual content.",
-  "why": "Every image is a contact card in the wild — screenshots, slides, reposts. Missing @thewhyman or thewhyman.com means lost discoverability. Text-only images fail the 'pictures > 1000 words' principle — human attention favors visual pattern recognition over text parsing.",
+  "why": "Every image is a contact card in the wild — screenshots, slides, reposts. Missing brand handle or personal site means lost discoverability. Text-only images fail the 'pictures > 1000 words' principle — human attention favors visual pattern recognition over text parsing.",
   "checks": [
     {
       "id": "brand_signature",
       "verdict_on_fail": "BLOCK",
-      "tokens_required": ["@thewhyman", "thewhyman.com"],
-      "tokens_warned": ["thewhyman.blog", "ExponentialOS.io"],
-      "reads_from": "brand-spec.json"
+      "tokens_required": "loaded from $CAREER_HOME/brain/social-distribution-engine/brand-spec.json (image_requirements.required_in_all)",
+      "tokens_warned": "loaded from $CAREER_HOME/brain/social-distribution-engine/brand-spec.json (image_requirements.required_in_cta + required_in_company_context)",
+      "reads_from": "$CAREER_HOME/brain/social-distribution-engine/brand-spec.json"
     },
     {
       "id": "visual_content",
@@ -21,13 +21,13 @@
   "exit_codes": {
     "0": "PASS — all required tokens present + substantive SVG found",
     "1": "BLOCK — missing required brand token OR no/empty SVG",
-    "2": "WARN — missing recommended token (thewhyman.blog / ExponentialOS.io)"
+    "2": "WARN — missing recommended token (from brand-spec.json: required_in_cta / required_in_company_context)"
   },
   "input_schema": {
     "html_file": "string (required) — absolute path to HTML template",
     "brand_spec": "string (optional) — absolute path to brand-spec.json override"
   },
-  "brand_spec_default": "skills/social-distribution-engine/brand-spec.json",
+  "brand_spec_default": "$CAREER_HOME/brain/social-distribution-engine/brand-spec.json",
   "integration_points": [
     "campaign-asset-matrix-gate (pre-campaign preflight)",
     "campaign-preflight (ship-readiness check)"

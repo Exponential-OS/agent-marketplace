@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# product-vs-solution: example — historical migration script (one-time use), Anand-personal references are provenance.
 # Migration v0.28.0 → v0.29.0
 #
 # Two coupled changes from v0.28.0:

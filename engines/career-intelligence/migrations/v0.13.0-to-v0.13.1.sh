@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# product-vs-solution: example — historical migration script (one-time use), Anand-personal references are provenance.
 set -euo pipefail
 CONTEXT_DIR="${1:-.}"
 mkdir -p "$CONTEXT_DIR/.career-os/config"

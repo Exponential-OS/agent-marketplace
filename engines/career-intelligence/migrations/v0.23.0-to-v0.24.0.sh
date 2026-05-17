@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# product-vs-solution: example — historical migration script (one-time use), Anand-personal references are provenance.
 # Migration v0.23.0 → v0.24.0
 #
 # Substrate rollback. The Dolt + Neo4j + Redis substrate decision (v0.20.0

@@ -1,47 +1,43 @@
 ---
 name: branding-signaling-framework
 type: branding-protocol
-scope: all articles, LinkedIn posts, X threads, Substack, outreach — any externally-published
-       artifact under thewhyman brand
+scope: all articles, posts, threads, newsletter issues, outreach — any externally-published artifact under the customer's brand
 created: 2026-04-24
-updated: 2026-04-24
-who: Anand Vallamsetla + TWC (Claude Opus 4.7)
+updated: 2026-05-17
 why: >
-  Articles are branding and signaling, not tutorials. Anand's primary tracks
-  — AI Fund / A16Z (Track 3, golden) and sponsored AI companies (Track 1) —
-  select for category-defining operators, not content-mill output. A tutorial
-  voice ("here are 5 plugins to install") actively anti-signals for Track 3
-  because it positions the author as a student, not a peer. Every article
-  produced under this brand must be calibrated to its target track before
-  the first paragraph is written. This document codifies the calibration.
-supersedes: none
+  Articles are branding and signaling artifacts, not tutorials. High-value target tracks
+  select for category-defining operators, not content-mill output. A tutorial voice
+  ("here are 5 plugins to install") actively anti-signals for investor/operator tracks
+  because it positions the author as a student, not a peer. Every article must be
+  calibrated to its target track before the first paragraph is written.
+customer-config: "$CAREER_HOME/brain/social-distribution-engine/brand-patterns.md"
 related:
-  - brand-identity.md (loads this framework)
-  - identity.md (personal identity)
-  - CONSTITUTION.md slugs: `learning-velocity`, `signal-curation`, `zero-flattery`, `learning-flywheel`, `signal-amplification`, `feedback-loop`, `complementary-composition`, `ship-fast-ship-small-learn-faster-cadence`, `context-understanding-and-separation-of-concerns`
-  - ~/cyborg/references/content-distribution-flywheel.md
+  - content-flywheel.md
+  - CONSTITUTION.md slugs: learning-velocity, signal-curation, zero-flattery, learning-flywheel, signal-amplification, feedback-loop, complementary-composition
 ---
+
 
 # Article Signaling Framework — Track-Calibrated
 
-## Architectural context (added 2026-04-24)
+## Architectural context
 
-This framework operates inside the **EMERGENT CYBORG INVARIANT** umbrella (Constitution Ground Zero). All six co-equal frameworks apply when drafting external artifacts: `learning-flywheel` (codify lessons across sessions); `signal-amplification` (separate signal from noise — see anti-move list below); `feedback-loop` (cross-family judges before ship); `complementary-composition` (multi-LLM review); `ship-fast-ship-small-learn-faster-cadence` (small drafts, fast cycles, decaying value); `context-understanding-and-separation-of-concerns` (read `~/cyborg/Context-Sharing.md` before each session, before each significant cross-thread action). Slug-mandate is in flight per Constitution thread — new writes use slugs; historical article text stays on P# for provenance.
+This framework operates inside the **EMERGENT CYBORG INVARIANT** umbrella (Constitution Ground Zero). All six co-equal frameworks apply when drafting external artifacts: `learning-flywheel` (codify lessons across sessions); `signal-amplification` (separate signal from noise — see anti-move list below); `feedback-loop` (cross-family judges before ship); `complementary-composition` (multi-LLM review); `ship-fast-ship-small-learn-faster-cadence` (small drafts, fast cycles, decaying value); `context-understanding` (read shared state before any cross-thread action).
+
+The customer's specific track targets (Track 1 / Track 2 / Track 3 audiences), biographical shape, and worked examples are declared in `$CAREER_HOME/brain/social-distribution-engine/brand-patterns.md`. This file contains the generic framework only.
 
 ## Why this exists
 
-Articles under thewhyman are branding and signaling artifacts. Every one is
-calibrated for one of three tracks, which select for different things:
+Articles under a personal brand are branding and signaling artifacts. Every one is calibrated for one of three tracks, which select for different things:
 
 | Track | Target audience | What they select for |
 |---|---|---|
-| **Track 3 (golden)** | AI Fund (Andrew Ng), A16Z, other AI-native VCs, operator-fellowships | **Category-defining voice.** Seeing the shape of the market before it's legible. Principled contrarian. Operator-architect, not developer-user. Receipts from real shipped systems. First-mover or convergent timing. |
-| **Track 1** | Sponsored AI companies — Anthropic, Scale, Cohere, Character, Mistral, open-source-native labs | **Staff/Principal IC depth.** Substrate-native fluency (MCP, subagents, plugin architecture, eval frameworks). Architectural judgment. Independent verification discipline. Real systems in production. |
-| **Track 2** | General tech employers (Google, Meta, Amazon L6/L7, non-AI-native) | **Senior engineering leadership.** Systems thinking, delivery velocity, team scaling, pragmatic tradeoffs. Less substrate-specific. |
+| **Track 3 (golden)** | Investors, VCs, operator-fellowships, category-defining roles | **Category-defining voice.** Seeing the shape of the market before it's legible. Principled contrarian. Operator-architect, not developer-user. Receipts from real shipped systems. First-mover or convergent timing. |
+| **Track 1** | Domain-specific companies (AI-native, technical-depth roles) | **Staff/Principal IC depth.** Substrate-native fluency. Architectural judgment. Independent verification discipline. Real systems in production. |
+| **Track 2** | General employers (large tech, non-domain-specific) | **Senior engineering leadership.** Systems thinking, delivery velocity, team scaling, pragmatic tradeoffs. Less substrate-specific. |
 
-Same topic, three different articles. Track 3 ≠ Track 1 ≠ Track 2. Never
-write a Track 2 article and hope it pulls Track 3 readers — the calibration
-is legible to the reader within the first paragraph.
+Same topic, three different articles. Track 3 ≠ Track 1 ≠ Track 2. Never write a Track 2 article and hope it pulls Track 3 readers — the calibration is legible to the reader within the first paragraph.
+
+The customer's specific Track 3 target companies, Track 1 target companies, and biographical shape are declared in `$CAREER_HOME/brain/social-distribution-engine/brand-patterns.md`.
 
 ---
 
@@ -56,77 +52,38 @@ Do not write "I tried X and it's great." Write "I shipped X six months
 ago; the market's leading implementation just shipped the same X — here's
 what the convergence tells us about where the category is going."
 
-*Worked example (this session, 2026-04-24):* oh-my-claudecode (31.1k stars,
-shipping v4.13.4 today) ships 17 specialized agents whose roles match 2/3
-of Anand's custom Co-Dialectic + Independent Verification Gate pattern,
-which has been running for 6 months under a 22-principle Constitution.
-"I independently converged on the same architecture, but with principles
-the leading plugin still hasn't added" is the Track-3 headline. "Here are
-5 Claude Code plugins" is the Track-2 floor.
+*Pattern:* A leading open-source tool ships a feature set whose roles match 2/3 of the customer's custom architecture, which has been running for months with a documented governance layer. "I independently converged on the same architecture, but with the governance layer the leading tool still hasn't added" is the Track-3 headline. "Here are 5 [tools]" is the Track-2 floor. The customer's specific worked examples are in their `$CAREER_HOME/brain/social-distribution-engine/brand-patterns.md`.
 
 ### 2. Audit, don't recite
 
-Claim-by-claim verification is the partner-caliber move. A content-mill
-writer says "Everything Claude Code has 82K stars" because the sub-agent
-said so. A fund-voice writer says "A sub-agent asserted this; I fetched
-GitHub live and it's a hallucination — the real leader is oh-my-claudecode
-at 31.1k." Name the verification discipline explicitly. It distinguishes
-you from 99% of the timeline.
+Claim-by-claim verification is the partner-caliber move. A content-mill writer passes through unverified claims because a sub-agent said so. A fund-voice writer fetches live data and names the discrepancy: "A sub-agent asserted [X]; I fetched the source live and the real answer is [Y]." Name the verification discipline explicitly. It distinguishes you from 99% of the timeline.
 
 ### 3. Category thinking, not tool thinking
 
-"Here's the full stack: Input (voice) / Hardware (worktrees) / Governance
-(Constitution) / Execution (agents) / Verification (cross-model)" is
-category voice. "Here are 5 plugins" is tool voice. Category voice makes
-the reader think "this person sees the shape of the market." Tool voice
-makes the reader think "this person uses the tools."
+"Here's the full stack: Input / Hardware / Governance / Execution / Verification" is category voice. "Here are 5 plugins" is tool voice. Category voice makes the reader think "this person sees the shape of the market." Tool voice makes the reader think "this person uses the tools."
 
 ### 4. Principled contrarian, not neutral reviewer
 
-Pick a side on every claim. "oh-my-claudecode is brilliant for parallel
-orchestration but still missing a principled governance layer — which is
-why we built the Constitution" is a position. "Both approaches have
-tradeoffs" is content-mill. Neutrality reads as absence of conviction;
-funds invest in conviction.
+Pick a side on every claim. "[Tool X] is brilliant for parallel orchestration but still missing a principled governance layer — which is why we built [Y]" is a position. "Both approaches have tradeoffs" is content-mill. Neutrality reads as absence of conviction; funds invest in conviction.
 
 ### 5. Biographical shape, repeated
 
-Every article reinforces the biographical core: **6 years L6 SEM at Google,
-$40B portfolio, 6 months of multi-agent engineering across Claude + Codex +
-Gemini, 22-principle Constitution, founder of Resilience AI, Co-Dialectic
-OSS.** Not as credential spam — as *the shape the funds select for*. An
-article that positions the author as "a developer who uses Claude Code"
-actively erodes this shape. Every article must RE-establish it in the
-opening paragraphs. This is what Reid Hoffman calls "small plates, same
-table" — same biography served differently every time.
+Every article reinforces the biographical core specific to the customer — their years of experience at their most distinctive employer, their shipped systems, their open-source or published work. Not as credential spam — as *the shape the audience selects for*. An article that positions the author as "a developer who uses [tool]" actively erodes this shape. Every article must RE-establish it in the opening paragraphs. This is what Reid Hoffman calls "small plates, same table" — same biography served differently every time.
+
+The customer's biographical shape is declared in `$CAREER_HOME/brain/social-distribution-engine/brand-patterns.md` and `$CAREER_HOME/brain/identity/experience-history.md`. Read those before drafting any article — never from memory.
 
 ### 6. Receipts from real shipped systems
 
-First-hand paths (`~/.superset/worktrees/`), real CLI version checks
-(`omc --version` outputs), real hallucinations caught and named, real
-commits. Never synthetic examples ("imagine a workspace with three
-agents"). The reader — especially a fund partner — can smell synthetic
-receipts instantly. Real systems + shipped artifacts + honest blast-radius
-audits beat any amount of architectural theorizing.
+First-hand paths, real CLI version checks, real hallucinations caught and named, real commits. Never synthetic examples ("imagine a workspace with three agents"). The reader — especially a fund partner — can smell synthetic receipts instantly. Real systems + shipped artifacts + honest blast-radius audits beat any amount of architectural theorizing.
 
 ### 7. Name the hallucination
 
 When a model or sub-agent hallucinates, publish the correction explicitly.
-This is distinctive in the current landscape because 99% of AI-written
-content quietly ships the hallucination. "A sub-agent returned 'Everything
-Claude Code 82K stars' — that repo does not exist; the real leader is
-oh-my-claudecode at 31.1k" is a reputation-building moment. The fund
-partner reads that paragraph and thinks "this person has the verification
-discipline my portfolio companies need."
+This is distinctive because 99% of AI-written content quietly ships the hallucination. "A sub-agent returned [X claim] — that doesn't exist; the verified answer is [Y]" is a reputation-building moment. The fund partner reads that paragraph and thinks "this person has the verification discipline my portfolio companies need."
 
 ### 8. Receipts for the moat, not the feature
 
-Funds don't invest in features; they invest in moats. An article that
-shows "here's the Constitution that governs 20+ repos from one file, and
-here's what happens when it's missing (the before/after vignette)" is
-moat-voice. An article that shows "here's a cool hook I wrote" is
-feature-voice. Every Track-3 piece must answer: *what's the moat, and
-what happens without it?*
+Funds don't invest in features; they invest in moats. An article that shows "here's the governance layer that governs 20+ repos from one file, and here's what happens when it's missing (the before/after vignette)" is moat-voice. An article that shows "here's a cool hook I wrote" is feature-voice. Every Track-3 piece must answer: *what's the moat, and what happens without it?*
 
 ---
 
@@ -141,16 +98,11 @@ what happens without it?*
 - ❌ Credential spam (resume dump) without relating it to the argument.
 - ❌ Fake numbers from training recall (Ground Zero PRIOR-ART-FRESHNESS).
 - ❌ **Asking the user A/B/C on drafting choices the agent has info to make.**
-  Drafting is a two-way door (`autonomous-execution` slug / Kinetic Framework): pick the angle, write
-  the draft, let the user redline. Three headline options + two structure
-  options + "your call on both" is a waiter move, not a partner move. At
-  Anand's velocity target (1M-lines/day analog), each permission round-trip
-  costs 30–120 seconds; 100 prompts/day is 1–3 hours of Sacred Time destroyed.
-  *Origin incident: 2026-04-24 workspace-mgmt v0.3 session — TWC presented
-  3 headlines + 2 structures for approval after codifying the branding
-  framework that itself says "pick a side; neutrality reads as absence of
-  conviction." Direct user correction: "Asking permissions is slowing me
-  down by thousands of hours. We need to be very, very adaptive."*
+  Drafting is a two-way door (`autonomous-execution` / Kinetic Framework): pick the angle, write
+  the draft, let the customer redline. Three headline options + two structure options + "your call on both"
+  is a waiter move, not a partner move. Each permission round-trip costs Sacred Time (P13).
+  *Origin: the branding framework itself says "pick a side; neutrality reads as absence of conviction."
+  Asking A/B/C on drafts contradicts the framework's own first principle.*
 
 ---
 
@@ -167,33 +119,29 @@ Before any article ships, answer these out loud:
 7. **Does the reader arrive at a POSITION the author holds, or a survey they produced?** (Position = Track 3. Survey = Track 2.)
 8. **Where's the receipt?** (Real path, real commit, real version string — not synthetic.)
 
-An article that scores ≥6/8 is Track-3 ready. 4–5 is Track-1 floor. ≤3 is
-Track-2 or content-mill; do not publish under thewhyman unless explicitly
-writing to that track.
+An article that scores ≥6/8 is Track-3 ready. 4–5 is Track-1 floor. ≤3 is Track-2 or content-mill; do not publish under the customer's brand unless explicitly writing to that track.
 
 ---
 
 ## Agent operating mode: draft-first, ask-never
 
-Velocity target (1M-lines-of-code/day analog) demands zero-permission drafting.
-Every agent working on thewhyman-branded artifacts operates in **draft-first
-mode**:
+Every agent working on branded artifacts operates in **draft-first mode**:
 
 - **Default to action on every two-way door.** Drafts, outlines, headline
-  choices, structural decisions — all reversible. Pick, draft, let Anand
+  choices, structural decisions — all reversible. Pick, draft, let the customer
   redline. Never ask A/B/C.
 - **Present work, not questions.** End of turn = "here's the draft at
-  `/path/to/file`; I picked headline A and two-article structure Y because
+  `/path/to/file`; I picked headline A and structure Y because
   [one-sentence reason]; redline it or tell me to pivot." Never end with
   "what would you like me to do?"
 - **Irreversibles still ask.** Publishing, sending outreach, pushing to
   public repos — these still get explicit approval. Drafts into `WIP/` or
-  `research/` or `~/cyborg/` never do.
+  `research/` never do.
 - **When the agent pivots mid-draft, it pivots — doesn't ask.** If mid-way
   through drafting v0.3 the agent realizes Part 3 should be first, it
   re-orders, writes a one-line status, keeps going.
-- **Volume is the signal.** Ten drafts Anand redlines beats one draft Anand
-  approved after two rounds of "which option do you prefer?" The compounding
+- **Volume is the signal.** Ten drafts the customer redlines beats one draft the
+  customer approved after two rounds of "which option do you prefer?" The compounding
   is in the iteration cycle, not the pre-agreement.
 
 *Origin: same 2026-04-24 incident. This section was added inside the same
@@ -202,32 +150,29 @@ is the point.*
 
 ---
 
-## Applied to the Workspace-Management article (v0.2 → v0.3)
+## Applying the calibration checklist to a specific article
 
-v0.2 shipped 2026-04-20 scored roughly **5/8** against this framework:
-- ✅ Category thinking (prompting → workspace design, the "one sentence" thesis)
-- ✅ Receipts (real principle packet, real hook config, real failure vignette)
-- ✅ Biographical shape (6 years at Google, 6 months of pattern)
-- ✅ Position held ("mixing layers is a coherence violation")
-- ✅ Moat voice (Constitution as the compounding asset)
-- ❌ No convergence move (didn't locate us inside the plugin ecosystem)
+When evaluating a draft against this framework, score each of the 8 moves as ✅ or ❌, then note which moves are missing and what would add them. Example pattern:
+
+**Draft scores 5/8:**
+- ✅ Category thinking (the "one sentence" thesis)
+- ✅ Receipts (real system artifacts, real failure vignette)
+- ✅ Biographical shape (established in opening)
+- ✅ Position held (clear contrarian claim)
+- ✅ Moat voice (the compounding asset is named)
+- ❌ No convergence move (didn't locate the author inside the broader ecosystem)
 - ❌ No hallucination-naming move (no verification-discipline receipt)
-- ❌ Tool-adjacent in places (Superset got one sentence; hooks got 200 words)
+- ❌ Tool-adjacent in places (tactical sections without architectural commentary)
 
-v0.3 gets to ≥7/8 by adding:
-1. **Convergence opener** — oh-my-claudecode shipped 17 agents that map to our custom pattern; we were 6 months early to the architecture.
-2. **Hallucination-naming paragraph** — "a sub-agent claimed 82K-star plugins that don't exist; here's the real top-four."
-3. **Superhuman stack diagram** — Input / Hardware / Governance / Execution / Verification, with each layer having a concrete tool AND a principle.
-4. **The Superset section promoted from one sentence to a named primitive** — "git worktrees per branch is `multi-agent` (P15) solved at the filesystem level."
+**To reach 7/8:** add a convergence opener, a hallucination-naming paragraph, and elevate one tactical section to a named primitive.
 
-Track-3 angle ≠ Track-1 angle. For Track 3 (AI Fund / A16Z), the headline
-move is: *"I shipped the architecture the market's leading plugin just
-converged on — six months early, with the one layer that leading plugin
-is still missing."* For Track 1 (sponsored AI companies), the headline
-is tighter: *"Six-month receipts from a three-agent Claude + Codex +
-Gemini engineering workspace, with the Constitution open-sourced."*
+Track-3 angle ≠ Track-1 angle for the same evidence:
+- **Track 3:** *"I shipped the architecture the market's leading tool just converged on — [N] months early, with the one layer that leading tool is still missing."*
+- **Track 1:** *"[N]-month receipts from a [system] engineering workflow, with the governance layer open-sourced."*
 
 Same evidence. Different framing. Pick the track, then write.
+
+The customer's specific worked examples (their actual articles and scoring) are in `$CAREER_HOME/brain/social-distribution-engine/brand-patterns.md`.
 
 ---
 
@@ -235,9 +180,11 @@ Same evidence. Different framing. Pick the track, then write.
 
 - CONSTITUTION.md: P17 (learning velocity), P20 (signal curation), P22
   (boundary-first qualification), Zero Flattery invariant.
-- brand-identity.md: Master profile table, brand persona, creative assets.
-- identity.md + experience-history.md: Biographical shape source.
-- content-distribution-flywheel.md: Campaign-completeness + visual-review
-  invariants that govern the ship surface.
-- professional-brand.md: Related positioning artifact — cross-reference
-  before any Track-3 article is published.
+- Customer's `$CAREER_HOME/brain/social-distribution-engine/brand-patterns.md`:
+  specific track targets, biographical shape, and worked examples for this customer.
+- Customer's `$CAREER_HOME/brain/identity/experience-history.md`:
+  Biographical shape source — read before drafting any article or outreach.
+- `content-flywheel.md`: Campaign-completeness + visual-review invariants
+  that govern the ship surface.
+- Customer's `$CAREER_HOME/brain/identity/professional-brand.md`:
+  Related positioning artifact — cross-reference before any Track-3 article is published.

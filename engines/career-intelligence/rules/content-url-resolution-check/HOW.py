@@ -16,7 +16,7 @@ Usage:
 Input JSON:
     {
       "campaign_file": "/abs/path/to/campaign.json",
-      "career_os_home": "/abs/path/to/anand-career-os"
+      "career_os_home": "/abs/path/to/career-os"
     }
 
 Exit:

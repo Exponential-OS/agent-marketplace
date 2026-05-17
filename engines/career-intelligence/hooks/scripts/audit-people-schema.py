@@ -11,11 +11,13 @@ Usage: python3 audit-people-schema.py [--fix]
 CLI utility (not a hook). Called from SessionStart.
 """
 
+import os
 import sys
 from pathlib import Path
 
-
-PEOPLE_DIR = Path.home() / "anand-career-os" / "brain" / "network" / "people"
+_CAREER_HOME_RAW = os.environ.get("CAREER_HOME") or os.environ.get("CAREER_OS_HOME")
+_CAREER_HOME = Path(_CAREER_HOME_RAW).expanduser() if _CAREER_HOME_RAW else None
+PEOPLE_DIR = _CAREER_HOME / "brain" / "network" / "people" if _CAREER_HOME else Path.home() / "career-os" / "brain" / "network" / "people"
 
 REQUIRED_FIELDS = (
     "their_expertise",
@@ -27,7 +29,7 @@ REQUIRED_FIELDS = (
 SCHEMA_DEFAULTS = {
     "their_expertise": "[]  # topics they know better than us — never explain these back",
     "they_told_us":    "[]  # key facts they communicated — do not re-explain or re-raise",
-    "commitments_made":"[]  # what Anand committed to provide/do for them",
+    "commitments_made":"[]  # what the user committed to provide/do for them",
     "do_not_explain":  "[]  # topics to never explain in emails to this person",
 }
 

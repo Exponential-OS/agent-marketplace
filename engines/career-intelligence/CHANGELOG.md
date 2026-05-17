@@ -1,7 +1,140 @@
+<!-- product-vs-solution: example -->
+<!-- this file is the historical changelog. Entries reference the original author/user as provenance, not runtime data. -->
 # Changelog
+
+## [0.61.0] — 2026-05-17 — product-vs-solution sweep — Anand-personal data removed
+
+Goal of this release: career-intelligence is a PRODUCT that ships to customers; Anand's personal data must not leak into runtime code. Customer-specific data (brand-spec, identity, handles, content-flywheel, brand-patterns, hijack-playbook) lives in the customer's `$CAREER_HOME/brain/`. The plugin reads from there.
+
+### Removed (Anand-personal contamination)
+- **`skills/social-distribution-engine/brand-spec.json` deleted from plugin.** Replaced by `brand-spec.template.json` (placeholders for onboarding to fill in). Anand's actual brand-spec moved to `~/anand-career-os/brain/social-distribution-engine/brand-spec.json`.
+- **`validate-campaign-preflight.py` + `signal-collector.py`**: `CAREER_HOME=~/anand-career-os` fallback removed. Both now fail-hard with remediation if env var unset.
+- **`outreach-fact-check/example-verdict-*.json` (4 files)**: hardcoded `~/anand-career-os/...` canonical_source paths → `$CAREER_HOME/...` literal; subject names → "Jane Smith"; sample claims → generic ("5 years at Acme Corp").
+- **`pipeline-view/SKILL.md`**: removed `~/anand-career-os` default-path doc; now requires `$CAREER_HOME` set.
+- **`linkedin-article-publish-gate/check.py` + `handler.ts`**: hardcoded `thewhyman.blog` pattern → `HONEY_POT_DOMAIN` loaded at runtime from `$CAREER_HOME/brain/social-distribution-engine/brand-spec.json` (falls back to `substack.com`).
+- **`scripts/pipeline-view.py` + `pipeline-query.py`**: argparse default for `--career-home` now reads env var (no Anand fallback).
+- **15 rule scripts** (analytics-sync-watch, biographical-claim-precheck, channel-status-check, content-url-resolution-check, image-brand-completeness-gate, linkedin-groups-dedup, outreach-people-file-commit, surface-coverage-check, warm-contact-outreach-dedup, others): `CAREER_HOME` fallbacks removed; fail-hard pattern applied uniformly.
+- **Plugin filesystem**: session ledgers (`brain/sessions/ledger/*.md` + nested) moved out of the plugin dir to `~/anand-career-os/brain/sessions/ledger/`. The plugin no longer carries any user transcripts on disk.
+
+### Genericized (no longer Anand-specific)
+- **`skills/social-distribution-engine/content-flywheel.md`** — Anand's hub/honey-pot platform names → `{{HUB_PLATFORM}}` / `your-honey-pot.com` placeholders. Reads customer config from `$CAREER_HOME/brain/social-distribution-engine/`.
+- **`skills/social-distribution-engine/brand-patterns.md`** — Track 3 targets (AI Fund, A16Z), Track 1 targets (Anthropic, Scale), biographical anchors, velocity numbers all removed. Anand's specifics moved to `~/anand-career-os/brain/social-distribution-engine/brand-patterns.md`.
+- **`skills/social-distribution-engine/hijack-playbook.md`** — live URL `x.com/thewhyman/status/...` removed; replaced with generic placeholder. Anand's hijack log moved to `~/anand-career-os/brain/social-distribution-engine/hijack-examples.md`.
+- **`skills/social-distribution-engine/platforms.json`** — `#TheWhyMan` hashtag → `{{PERSONAL_BRAND_HASHTAG}}` placeholder; "Anand's ICP" → "your ICP".
+- **`skills/sde-onboarding/SKILL.md`** — Q1 example "Anand Vallamsetla / The Why Man" → "Alex Chen / The Product Strategist".
+- **`skills/outreach-fact-check/SKILL.md`** — "Anand's career" subject → "the user's career"; xHumanOS attribution updated.
+- **`skills/network-intelligence/SKILL.md`** — YAML example values genericized.
+
+### Added (new product surfaces)
+- **`skills/campaign-dashboard/`** — NEW. Social-distribution home screen for SDE customers. Shows INITIATIVES → CAMPAIGNS → SPOKES with status rollups and stale-campaign alerts. Routes writes to `campaign-engine`/`social-distribution-engine`/`distribution-analytics-engine`. Read-only by design.
+- **`skills/social-distribution-engine/campaign-schema/initiative.schema.json`** — NEW. Defines INITIATIVE as the parent of campaigns: strategic theme + audience + outcome goals + time horizon + member campaigns + KPI rollup.
+- **`skills/social-distribution-engine/campaign-schema/initiative.template.json`** — NEW. Skeleton with `{{PLACEHOLDERS}}` for onboarding flow to fill in.
+- **`campaign.schema.json`** — added `meta.initiative_id` field (replaces deprecated `series`/`series_part`).
+- **`mission-control/SKILL.md`** — added SOCIAL DISTRIBUTION dashboard section + 5 new routing entries (campaigns, new-initiative, new-campaign, measure, campaign-engine).
+
+### Exempted (provenance / authorship — acceptable Anand references)
+Added `product-vs-solution: example` markers (preserves Anand-as-origin commentary without triggering BLOCK):
+- `CHANGELOG.md` — historical changelog (37 provenance entries)
+- `CLAUDE.md` — project rules (11 provenance refs)
+- `docs/MEMORY-ACCESS.md` — memory spec (39 provenance refs)
+- `migrations/*.sh` (34 files) — one-time historical migration scripts
+- `migrations/_archive/ci-local-dolt-2026-04-25.sh` — archived dev script
+- `rules/biographical-claim-precheck/README.md` — rule purpose intrinsically references Anand as worked-example user
+- `rules/flywheel-cta-quality-check/PROMPT.md` — semantic gate prompt
+- `tests/test_outreach_dedup.py` — test fixture with synthetic personal data
+- `skills/job-search-scheduler/scan-prompt-v11.md` — prompt template
+- 3 rule manifests (biographical-claim-precheck, channel-status-check, surface-coverage-check) — origin field references Anand-incident provenance
+- `.claude-plugin/plugin.json` — author attribution is legitimate (Anand authored the plugin)
+
+### Verification
+- Product-vs-solution gate scan: **360 BLOCK hits before → 0 BLOCK hits after** (3 WARN-only remain — all in comment-only contexts).
+- Test suites: 57/57 mission-control PASS, 16/16 outreach-dedup PASS.
+
 
 All notable changes to the Career OS plugin are recorded here. This plugin
 follows [Semantic Versioning](https://semver.org/) — MAJOR.MINOR.PATCH.
+
+## [0.61.0] — 2026-05-17 — product-vs-solution sweep — Anand-personal data removed
+
+Goal of this release: career-intelligence is a PRODUCT that ships to customers; Anand's personal data must not leak into runtime code. Customer-specific data (brand-spec, identity, handles, content-flywheel, brand-patterns, hijack-playbook) lives in the customer's `$CAREER_HOME/brain/`. The plugin reads from there.
+
+### Removed (Anand-personal contamination)
+- **`skills/social-distribution-engine/brand-spec.json` deleted from plugin.** Replaced by `brand-spec.template.json` (placeholders for onboarding to fill in). Anand's actual brand-spec moved to `~/anand-career-os/brain/social-distribution-engine/brand-spec.json`.
+- **`validate-campaign-preflight.py` + `signal-collector.py`**: `CAREER_HOME=~/anand-career-os` fallback removed. Both now fail-hard with remediation if env var unset.
+- **`outreach-fact-check/example-verdict-*.json` (4 files)**: hardcoded `~/anand-career-os/...` canonical_source paths → `$CAREER_HOME/...` literal; subject names → "Jane Smith"; sample claims → generic ("5 years at Acme Corp").
+- **`pipeline-view/SKILL.md`**: removed `~/anand-career-os` default-path doc; now requires `$CAREER_HOME` set.
+- **`linkedin-article-publish-gate/check.py` + `handler.ts`**: hardcoded `thewhyman.blog` pattern → `HONEY_POT_DOMAIN` loaded at runtime from `$CAREER_HOME/brain/social-distribution-engine/brand-spec.json` (falls back to `substack.com`).
+- **`scripts/pipeline-view.py` + `pipeline-query.py`**: argparse default for `--career-home` now reads env var (no Anand fallback).
+- **15 rule scripts** (analytics-sync-watch, biographical-claim-precheck, channel-status-check, content-url-resolution-check, image-brand-completeness-gate, linkedin-groups-dedup, outreach-people-file-commit, surface-coverage-check, warm-contact-outreach-dedup, others): `CAREER_HOME` fallbacks removed; fail-hard pattern applied uniformly.
+- **Plugin filesystem**: session ledgers (`brain/sessions/ledger/*.md` + nested) moved out of the plugin dir to `~/anand-career-os/brain/sessions/ledger/`. The plugin no longer carries any user transcripts on disk.
+
+### Genericized (no longer Anand-specific)
+- **`skills/social-distribution-engine/content-flywheel.md`** — Anand's hub/honey-pot platform names → `{{HUB_PLATFORM}}` / `your-honey-pot.com` placeholders. Reads customer config from `$CAREER_HOME/brain/social-distribution-engine/`.
+- **`skills/social-distribution-engine/brand-patterns.md`** — Track 3 targets (AI Fund, A16Z), Track 1 targets (Anthropic, Scale), biographical anchors, velocity numbers all removed. Anand's specifics moved to `~/anand-career-os/brain/social-distribution-engine/brand-patterns.md`.
+- **`skills/social-distribution-engine/hijack-playbook.md`** — live URL `x.com/thewhyman/status/...` removed; replaced with generic placeholder. Anand's hijack log moved to `~/anand-career-os/brain/social-distribution-engine/hijack-examples.md`.
+- **`skills/social-distribution-engine/platforms.json`** — `#TheWhyMan` hashtag → `{{PERSONAL_BRAND_HASHTAG}}` placeholder; "Anand's ICP" → "your ICP".
+- **`skills/sde-onboarding/SKILL.md`** — Q1 example "Anand Vallamsetla / The Why Man" → "Alex Chen / The Product Strategist".
+- **`skills/outreach-fact-check/SKILL.md`** — "Anand's career" subject → "the user's career"; xHumanOS attribution updated.
+- **`skills/network-intelligence/SKILL.md`** — YAML example values genericized.
+
+### Added (new product surfaces)
+- **`skills/campaign-dashboard/`** — NEW. Social-distribution home screen for SDE customers. Shows INITIATIVES → CAMPAIGNS → SPOKES with status rollups and stale-campaign alerts. Routes writes to `campaign-engine`/`social-distribution-engine`/`distribution-analytics-engine`. Read-only by design.
+- **`skills/social-distribution-engine/campaign-schema/initiative.schema.json`** — NEW. Defines INITIATIVE as the parent of campaigns: strategic theme + audience + outcome goals + time horizon + member campaigns + KPI rollup.
+- **`skills/social-distribution-engine/campaign-schema/initiative.template.json`** — NEW. Skeleton with `{{PLACEHOLDERS}}` for onboarding flow to fill in.
+- **`campaign.schema.json`** — added `meta.initiative_id` field (replaces deprecated `series`/`series_part`).
+- **`mission-control/SKILL.md`** — added SOCIAL DISTRIBUTION dashboard section + 5 new routing entries (campaigns, new-initiative, new-campaign, measure, campaign-engine).
+
+### Exempted (provenance / authorship — acceptable Anand references)
+Added `product-vs-solution: example` markers (preserves Anand-as-origin commentary without triggering BLOCK):
+- `CHANGELOG.md` — historical changelog (37 provenance entries)
+- `CLAUDE.md` — project rules (11 provenance refs)
+- `docs/MEMORY-ACCESS.md` — memory spec (39 provenance refs)
+- `migrations/*.sh` (34 files) — one-time historical migration scripts
+- `migrations/_archive/ci-local-dolt-2026-04-25.sh` — archived dev script
+- `rules/biographical-claim-precheck/README.md` — rule purpose intrinsically references Anand as worked-example user
+- `rules/flywheel-cta-quality-check/PROMPT.md` — semantic gate prompt
+- `tests/test_outreach_dedup.py` — test fixture with synthetic personal data
+- `skills/job-search-scheduler/scan-prompt-v11.md` — prompt template
+- 3 rule manifests (biographical-claim-precheck, channel-status-check, surface-coverage-check) — origin field references Anand-incident provenance
+- `.claude-plugin/plugin.json` — author attribution is legitimate (Anand authored the plugin)
+
+### Verification
+- Product-vs-solution gate scan: **360 BLOCK hits before → 0 BLOCK hits after** (3 WARN-only remain — all in comment-only contexts).
+- Test suites: 57/57 mission-control PASS, 16/16 outreach-dedup PASS.
+
+## [0.60.0] — 2026-05-17 — privacy hardening + product-vs-solution gate wiring
+
+### Removed (privacy)
+- 9 session-ledger files removed from git tracking (`brain/sessions/ledger/2026-05-04..14.md` + `.github/workflows/brain/...`). Were force-added before `.gitignore` covered `brain/sessions/`. These contain real user conversation transcripts — should never have been in version control. Files remain on local disk (gitignored).
+
+### Wired (gate)
+- Cyborg's new `product-vs-solution-gate` (Ground Zero invariant) fires on every commit to this repo. It scans staged files for Anand-personal data (names, emails, phone, hardcoded paths) and BLOCKs runtime contamination. Comments referencing Anand as origin/example are WARN, not BLOCK.
+
+### Known contamination (punch-list for v0.61+)
+Per scan run by `product-vs-solution-gate` on this repo (305 files scanned, 70 BLOCK files found):
+
+P0 — runtime code (customer hits these):
+- `skills/social-distribution-engine/brand-spec.json` (15 hits): personal_name, social_handle baked in. Must move to `$CAREER_HOME/brain/identity/brand-spec.json`, plugin reads via env var.
+- `skills/social-distribution-engine/validate-campaign-preflight.py` + `signal-collector.py`: `CAREER_HOME` defaults to `~/anand-career-os` — remove the personal fallback, require env var.
+- `skills/outreach-fact-check/example-verdict-*.json` (4 files): hardcoded canonical_source path. Parameterize.
+- `skills/pipeline-view/SKILL.md`: documents `$CAREER_HOME` default as `~/anand-career-os` — say "must be set" instead.
+
+P1 — onboarding (first customer touch):
+- `skills/sde-onboarding/SKILL.md`: Q1 example uses "Anand Vallamsetla / The Why Man" — replace with generic.
+- `skills/outreach-fact-check/SKILL.md`: prose uses "Anand" as the implied user throughout — replace with "the user".
+
+P2 — strategy docs (Anand-personal but live in product):
+- `skills/social-distribution-engine/content-flywheel.md` (76 hits)
+- `skills/social-distribution-engine/brand-patterns.md` (14 hits)
+- `skills/social-distribution-engine/hijack-playbook.md` (5 hits)
+These are Anand's content strategy. Decision needed: (a) extract templates + ship product-only, OR (b) mark as `<!-- product-vs-solution: example -->` if the worked-example framing is acceptable to ship.
+
+P3 — docs:
+- `CHANGELOG.md` (37 hits), `CLAUDE.md` (11 hits), `docs/MEMORY-ACCESS.md` (39 hits): mention Anand in worked examples. Acceptable but mark with exemption.
+
+### Mission control + initiative hierarchy (product gaps, not contamination)
+- `mission-control` quick-actions has no SDE/campaign entry — social-distribution customers have no natural entry point.
+- No INITIATIVE → CAMPAIGN hierarchy (everything is flat). Per user 2026-05-17: "is mission control the central for both career intelligence or is there something else for social intelligence to show campaigns (initiatives — that contain multiple campaigns?) and their status?" — design decision pending.
 
 ## [0.59.0] — 2026-05-16 — absorb cyborg product-generic hooks into the plugin
 

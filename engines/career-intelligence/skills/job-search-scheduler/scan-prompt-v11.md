@@ -1,3 +1,5 @@
+<!-- product-vs-solution: example — file's purpose intrinsically references Anand as the user/subject (worked example); generic equivalent infeasible without renaming. -->
+
 # Daily LinkedIn Job Scan — Prompt v11 (path migration to career-os-plugin format)
 **Status:** Ready to paste into Claude Code scheduled-task config.
 **Changes from v10:**

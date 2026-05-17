@@ -76,6 +76,10 @@ perform the action yourself by directly editing files.
 | Find warm contacts | `network-intelligence` | "who do I know at [Co]", "warm intros for" |
 | Write outreach message | `outreach-composer` | "write outreach for [Name]", "follow up with" |
 | Write/draft content ⚡ | `social-distribution-engine` | "write a post", "LinkedIn post", "help me draft", "what should I post", "post about [X]", "content for [X]", "tweet about", "create content" |
+| Campaign dashboard / initiative status | `campaign-dashboard` | "campaigns", "campaign dashboard", "initiative status", "show initiatives", "social pulse", "what's live", "sde dashboard", "my campaigns" |
+| Create new initiative | `campaign-dashboard` (new-initiative sub-flow) | "new initiative", "start an initiative" |
+| Create new campaign | `campaign-engine` | "new campaign", "plan campaign for [topic]", "new campaign under [initiative]" |
+| Measure campaign KPIs | `distribution-analytics-engine` | "measure [campaign]", "kpis for [campaign]", "how did [campaign] perform" |
 | Sync/reconcile pipeline | `pipeline-sync` | "sync pipeline", "data health check" |
 | Batch-execute tasks | `cruise-control` | "cc", "go", "ship it", "execute" |
 | Update skills matrix | `skills-update` | "update my skills", "I learned [tech]" |
@@ -276,6 +280,13 @@ PIPELINE
 WARM CONTACTS — ACTION NEEDED (only if any due)
   | Contact | Company | Status | Next Action |
 
+SOCIAL DISTRIBUTION (only if professional-brand.md exists)
+  📡 Active initiatives: {N}
+       🟢 {Initiative title} — {N} live, {N} drafting          → "campaigns"
+       🟢 {Initiative title 2} — {N} live                       → "campaigns"
+  Recent (14d): {N campaigns}, {N spokes live} · stale: {N}
+  Full view → "campaigns" / "campaign dashboard"
+
 COMING UP
   [Date] — [Event/deadline]
 
@@ -305,6 +316,13 @@ QUICK ACTIONS
   → "prep me for [Co]"           Interview prep
   → "follow up with [Name]"      Time-calibrated follow-up
   → "who do I know at [Co]"      Find warm intros
+
+  ━━ Social Distribution (only if professional-brand.md exists) ━━
+  → "campaigns"                  Initiative + campaign dashboard
+  → "new initiative"             Start a strategic theme
+  → "new campaign"               Plan a single ship event
+  → "what's live"                Recent live spokes across all platforms
+  → "measure [campaign]"         Pull KPIs + analytics
 
   ━━ Execute ━━
   → "cc" / "cruise control"      Batch-execute task list

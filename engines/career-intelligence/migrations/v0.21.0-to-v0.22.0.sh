@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# product-vs-solution: example — historical migration script (one-time use), Anand-personal references are provenance.
 # Migration v0.21.0 → v0.22.0
 #
 # Campaign-ready release. No data transforms in the workspace.

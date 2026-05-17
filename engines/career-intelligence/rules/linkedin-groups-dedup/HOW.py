@@ -21,10 +21,9 @@ import sys
 RULE_SLUG = "linkedin-groups-dedup"
 LOG_FILE = pathlib.Path.home() / ".cyborg-enforcement-log.jsonl"
 
-_CAREER_HOME = pathlib.Path(
-    os.environ.get("CAREER_HOME", os.environ.get("CAREER_OS_HOME", str(pathlib.Path.home() / "anand-career-os")))
-)
-DEFAULT_LOG = _CAREER_HOME / "brain/social-distribution-engine/groups-post-log.jsonl"
+_CAREER_HOME_RAW = os.environ.get("CAREER_HOME") or os.environ.get("CAREER_OS_HOME")
+_CAREER_HOME = pathlib.Path(_CAREER_HOME_RAW).expanduser() if _CAREER_HOME_RAW else None
+DEFAULT_LOG = _CAREER_HOME / "brain/social-distribution-engine/groups-post-log.jsonl" if _CAREER_HOME else pathlib.Path("/nonexistent/career-home-not-set")
 DEFAULT_LOOKBACK_DAYS = 7
 
 

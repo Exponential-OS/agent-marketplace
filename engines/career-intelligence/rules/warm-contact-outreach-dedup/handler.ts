@@ -11,8 +11,8 @@ import { fileURLToPath } from "url";
 const SLUG = "warm-contact-outreach-dedup";
 const LOG_PATH = join(homedir(), ".career-os-enforcement-log.jsonl");
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
-const CAREER_HOME = process.env.CAREER_HOME ?? process.env.CAREER_OS_HOME ?? join(homedir(), "anand-career-os");
-const DEFAULT_PEOPLE_DIR = join(CAREER_HOME, "brain/network/people");
+const CAREER_HOME = process.env.CAREER_HOME ?? process.env.CAREER_OS_HOME ?? null;
+const DEFAULT_PEOPLE_DIR = CAREER_HOME ? join(CAREER_HOME, "brain/network/people") : null;
 const DEFAULT_LOOKBACK_DAYS = 14;
 
 interface InputCtx {

@@ -44,7 +44,14 @@ import subprocess
 import sys
 
 RULES_DIR = pathlib.Path(__file__).parent.parent.parent / "rules"
-CAREER_HOME = os.environ.get("CAREER_HOME", os.environ.get("CAREER_OS_HOME", str(pathlib.Path.home() / "anand-career-os")))
+_CAREER_HOME_RAW = os.environ.get("CAREER_HOME") or os.environ.get("CAREER_OS_HOME")
+if not _CAREER_HOME_RAW:
+    print(json.dumps({"verdict": "BLOCK", "reason": "CAREER_HOME env var not set. Run career-intelligence-onboarding first."}), file=sys.stderr)
+    sys.exit(1)
+CAREER_HOME = str(pathlib.Path(_CAREER_HOME_RAW).expanduser())
+if not pathlib.Path(CAREER_HOME).is_dir():
+    print(json.dumps({"verdict": "BLOCK", "reason": f"CAREER_HOME={CAREER_HOME} does not exist or is not a directory."}), file=sys.stderr)
+    sys.exit(1)
 
 
 GATES = [

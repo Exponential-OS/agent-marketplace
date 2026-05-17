@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# product-vs-solution: example — historical migration script (one-time use), Anand-personal references are provenance.
 # Migration v0.27.0 → v0.28.0
 #
 # Brain-layer canonicalization: all Career OS data files now live under

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# product-vs-solution: example — historical migration script (one-time use), Anand-personal references are provenance.
 # Migration: v0.3.0 → v0.4.0
 # Description: Reorganize flat folder structure into .career-os/ hierarchy
 # This script is idempotent — safe to run multiple times.

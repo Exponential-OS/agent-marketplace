@@ -23,7 +23,7 @@ triggers:
 
 Prevents biographical hallucinations from shipping in T4 (irreversible, external-facing)
 artifacts — outreach emails, LinkedIn DMs, cover letters, applications, public posts,
-any communication sent to a real human that makes a factual claim about Anand's career.
+any communication sent to a real human that makes a factual claim about the user's career.
 
 **Origin (2026-04-26 — [Recipient] near-miss):** An agent inherited a draft saying
 "last 4 as Google L6" and built a send-ready Gmail compose URL from it. Canonical source
@@ -171,10 +171,10 @@ per migration v4, 2026-04-27). Career-os plugin skills access these directly —
 | `experience-history.md` | Employment dates, titles, levels (L5/L6/etc.), team size, direct reports, scope, compensation ranges (when present), ROI figures, specific achievements per role |
 | `awards-education-speaking.md` | Degrees, certifications, hackathon wins, awards with citations, speaking engagements with event names + dates |
 | `identity.md` | Personal brand statement, coaching identity ("AI-native EM coach"), values, mission, career arc, persona |
-| `handles.md` | Social/professional handles — LinkedIn URL, GitHub, Substack, X/Twitter, thewhyman.com |
+| `handles.md` | Social/professional handles — LinkedIn URL, GitHub, Substack, X/Twitter, personal site |
 
-**Why `brain/identity/`, NOT `~/cyborg/`:** Instance-specific biographical content migrated
-from `~/cyborg/` to `$CAREER_HOME/brain/identity/` per migration v3 (2026-04-26) and
+**Why `brain/identity/`, NOT a shared config path:** Instance-specific biographical content lives at
+`$CAREER_HOME/brain/identity/` per migration v3 (2026-04-26) and
 confirmed by migration v4 (2026-04-27). Future xTeamOS / xFamilyOS verifiers will read
 from THEIR instance's `brain/identity/` — same pattern, different path.
 
@@ -239,7 +239,7 @@ note `"canonical_source": "UNAVAILABLE — {reason}"`. Never fabricate canonical
   review; NEVER fabricate compensation data.
 
 **Key rule:** If no compensation figure appears in canonical → verdict: `unknown`,
-  confidence: LOW, remediation: "Remove specific dollar figure or confirm with Anand."
+  confidence: LOW, remediation: "Remove specific dollar figure or confirm with the user."
 
 **Example claims to catch:**
 - "$200K floor" → cross-reference canonical; if no explicit anchor → unknown / flag
@@ -292,15 +292,15 @@ note `"canonical_source": "UNAVAILABLE — {reason}"`. Never fabricate canonical
 - "published in HBR" → verify against canonical; no such entry → unknown
 
 ### 8. Identity / Brand Claims
-**Pattern:** "thewhyman", "AI-native EM coach", "co-intelligence architect",
+**Pattern:** personal brand name, coaching identity label, online persona descriptor,
   handle references
 
 **Canonical source:** `identity.md` (brand statement, coaching identity) +
   `handles.md` (handle correctness)
 
 **Example claims to catch:**
-- Wrong handle (e.g., @thewhymann) → diff against `handles.md`
-- "career OS founder" vs actual positioning in `identity.md`
+- Wrong handle (misspelled or outdated) → diff against `handles.md`
+- Incorrect positioning descriptor → diff against `identity.md`
 
 ### 9. Uptime / Metric Claims
 **Pattern:** "[N]% uptime", "[N]x performance improvement", "$[N]M savings",
@@ -450,7 +450,7 @@ Future incarnations follow the same architecture, different canonical paths:
 
 | Product | Skill name | Canonical sources |
 |---------|-----------|-------------------|
-| xHumanOS (Anand) | `career-os:outreach-fact-check` (this skill) | `$CAREER_HOME/brain/identity/` |
+| xHumanOS (this instance) | `career-os:outreach-fact-check` (this skill) | `$CAREER_HOME/brain/identity/` |
 | xTeamOS | `team-claim-verifier` | `~/[team-instance]/brain/identity/` |
 | xFamilyOS | `family-claim-verifier` | `~/[family-instance]/brain/identity/` |
 | xCommunityOS | `community-claim-verifier` | `~/[community-instance]/brain/identity/` |

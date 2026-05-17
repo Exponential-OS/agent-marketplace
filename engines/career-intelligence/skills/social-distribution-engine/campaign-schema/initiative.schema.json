@@ -1,0 +1,94 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "initiative.schema.json",
+  "title": "Initiative",
+  "description": "An INITIATIVE is a strategic theme that contains multiple campaigns. It defines the audience, the outcome goals, and the time horizon. Campaigns are individual ship events that advance the initiative. Initiatives are the parent of campaigns in the social-distribution hierarchy.",
+  "version": "1.0.0",
+  "type": "object",
+  "required": ["id", "title", "audience", "outcome_goals", "started", "status", "campaigns"],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$",
+      "description": "Slug (lowercase, dashes). Stable identifier across all campaigns."
+    },
+    "title": {
+      "type": "string",
+      "description": "Short human-readable name (≤ 80 chars). Example: 'Cyborg Series — Co-Intelligence Manifesto'."
+    },
+    "tagline": {
+      "type": "string",
+      "description": "One-sentence strategic thesis. Example: 'AI is not replacing humans; it's giving us a new operating system.'"
+    },
+    "audience": {
+      "type": "object",
+      "required": ["primary"],
+      "properties": {
+        "primary":   { "type": "string", "description": "Who this initiative is for (one sentence)." },
+        "secondary": { "type": "string", "description": "Secondary audience (optional)." },
+        "exclude":   { "type": "string", "description": "Explicitly NOT for (e.g., 'not for B2C consumers')." }
+      }
+    },
+    "outcome_goals": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["metric", "target"],
+        "properties": {
+          "metric":   { "type": "string", "description": "What is being measured. Example: 'LinkedIn followers'." },
+          "target":   { "type": "string", "description": "Goal value. Example: '10,000 by EOY 2026'." },
+          "baseline": { "type": "string", "description": "Starting point. Example: '4,300 on 2026-04-15'." },
+          "current":  { "type": "string", "description": "Latest known value (updated by distribution-analytics-engine)." }
+        }
+      }
+    },
+    "started":       { "type": "string", "format": "date" },
+    "expected_end":  { "type": "string", "format": "date" },
+    "status": {
+      "type": "string",
+      "enum": ["planning", "active", "paused", "complete", "abandoned"]
+    },
+    "channels": {
+      "description": "Which hub / honey-pot / spokes this initiative will use (overrides defaults from brand-spec.json).",
+      "type": "object",
+      "properties": {
+        "hub":       { "type": "string", "description": "Engagement hub platform (e.g., linkedin)." },
+        "honey_pot": { "type": "string", "description": "Conversion hub platform (e.g., substack)." },
+        "spokes":    { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "campaigns": {
+      "type": "array",
+      "description": "Ordered list of campaigns under this initiative. Each entry references a campaign.json by id.",
+      "items": {
+        "type": "object",
+        "required": ["id", "status"],
+        "properties": {
+          "id":             { "type": "string", "description": "Campaign slug (matches campaign.meta.id)." },
+          "title":          { "type": "string" },
+          "ship_date":      { "type": "string", "format": "date" },
+          "status":         { "type": "string", "enum": ["planning", "drafting", "ready_for_review", "scheduled", "live", "measuring", "complete", "abandoned"] },
+          "campaign_path":  { "type": "string", "description": "Path to campaign.json (relative to $CAREER_HOME)." }
+        }
+      }
+    },
+    "kpis_rollup": {
+      "type": "object",
+      "description": "Aggregated metrics across all campaigns under this initiative (populated by distribution-analytics-engine).",
+      "properties": {
+        "campaigns_shipped":  { "type": "integer" },
+        "spokes_live":        { "type": "integer" },
+        "impressions_total":  { "type": "integer" },
+        "engagements_total":  { "type": "integer" },
+        "conversions_total":  { "type": "integer" },
+        "last_updated":       { "type": "string", "format": "date-time" }
+      }
+    },
+    "notes": {
+      "type": "string",
+      "description": "Free-text strategic notes. Decisions made, pivots, learnings."
+    }
+  }
+}

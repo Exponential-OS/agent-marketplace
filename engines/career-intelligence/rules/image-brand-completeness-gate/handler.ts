@@ -32,10 +32,11 @@ const SLUG = "image-brand-completeness-gate";
 const LOG_PATH = join(homedir(), ".career-os-enforcement-log.jsonl");
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 
-const DEFAULT_BRAND_SPEC_PATHS = [
-  join(SCRIPT_DIR, "..", "..", "skills", "social-distribution-engine", "brand-spec.json"),
-  join(SCRIPT_DIR, "brand-spec.json"),
-];
+function careerHomeBrandSpecPath(): string | null {
+  const raw = process.env["CAREER_HOME"] ?? process.env["CAREER_OS_HOME"] ?? null;
+  if (!raw) return null;
+  return join(raw, "brain", "social-distribution-engine", "brand-spec.json");
+}
 
 // Minimum number of child elements inside <svg> to count as "substantive visual"
 const MIN_SVG_CHILDREN = 5;
@@ -110,13 +111,12 @@ function loadBrandSpec(override?: string): BrandSpec {
     }
     return {};
   }
-  for (const p of DEFAULT_BRAND_SPEC_PATHS) {
-    if (existsSync(p)) {
-      try {
-        return JSON.parse(readFileSync(p, "utf-8"));
-      } catch {
-        return {};
-      }
+  const careerHomePath = careerHomeBrandSpecPath();
+  if (careerHomePath && existsSync(careerHomePath)) {
+    try {
+      return JSON.parse(readFileSync(careerHomePath, "utf-8"));
+    } catch {
+      return {};
     }
   }
   return {};
@@ -312,7 +312,7 @@ async function main(): Promise<void> {
           passed,
           remediation:
             "Fix all BLOCK issues before this campaign ships. " +
-            "Every image needs: (1) full brand signature (@thewhyman + thewhyman.com), " +
+            "Every image needs: (1) full brand signature (handles from brand-spec.json), " +
             "(2) substantive SVG visual (≥5 elements).",
         },
         1

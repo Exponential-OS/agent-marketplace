@@ -70,8 +70,7 @@ python3 ~/.career-os-state/scripts/pipeline-view.py \
   --section <section>
 ```
 
-`$CAREER_HOME` defaults to `~/anand-career-os`. If the user has set
-`--career-home` elsewhere, use that path.
+`$CAREER_HOME` must be set to the customer's workspace root (typically `~/career-os` or wherever they keep their career data). Run `career-intelligence-onboarding` if unsure.
 
 ### Step 3: Print the output verbatim
 

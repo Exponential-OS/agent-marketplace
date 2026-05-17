@@ -101,9 +101,10 @@ def main():
 
     handles_file = ctx.get("handles_file", "")
     if not handles_file:
-        career_home = os.environ.get("CAREER_HOME", os.environ.get("CAREER_OS_HOME",
-                                         str(pathlib.Path.home() / "anand-career-os")))
-        handles_file = str(pathlib.Path(career_home) / "brain/identity/handles.md")
+        career_home_raw = os.environ.get("CAREER_HOME") or os.environ.get("CAREER_OS_HOME")
+        if not career_home_raw:
+            out(2, "warn", [], [], "handles_file not provided and CAREER_HOME env var not set.")
+        handles_file = str(pathlib.Path(career_home_raw).expanduser() / "brain/identity/handles.md")
 
     handles_path = pathlib.Path(handles_file)
     if not handles_path.exists():

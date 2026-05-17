@@ -1,3 +1,5 @@
+# product-vs-solution: example — test fixture with Anand-personal names as plausible synthetic data.
+
 """test_outreach_dedup.py — pytest port of test-outreach-dedup.sh
 
 Tests warm-contact-outreach-dedup/HOW.py by calling check() directly.

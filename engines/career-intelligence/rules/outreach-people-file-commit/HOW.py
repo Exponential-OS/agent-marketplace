@@ -21,7 +21,7 @@ Usage (called by outreach-composer and network-intelligence after send):
 Input JSON:
     {
       "people_file": "/abs/path/to/brain/network/people/slug.md",
-      "career_home": "/abs/path/to/anand-career-os",
+      "career_home": "/abs/path/to/career-os",
       "updates": {
         "last_contact": "2026-05-05",
         "follow_up": "2026-05-08",

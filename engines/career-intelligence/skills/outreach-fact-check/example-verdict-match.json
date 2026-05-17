@@ -1,18 +1,18 @@
 {
-  "_comment": "Example: tenure claim that matches canonical exactly. Google period is January 2019 – May 2025 = 6 years 5 months per experience-history.md § 4.3.",
+  "_comment": "Example: tenure claim that matches canonical exactly. The period Jan 2019 – May 2025 = 6 years 5 months is recorded in experience-history.md.",
   "input": {
-    "claim": "6 years and 5 months as Senior Software Engineering Manager at Google",
+    "claim": "6 years and 5 months as Senior Software Engineering Manager at Acme Corp",
     "claim_class": "tenure",
     "artifact_type": "email",
     "recipient": "[Recipient]",
-    "context_excerpt": "My background includes 6 years and 5 months as Senior Software Engineering Manager at Google, where I led a $40B annual data center construction platform."
+    "context_excerpt": "My background includes 6 years and 5 months as Senior Software Engineering Manager at Acme Corp, where I led a $40B annual platform."
   },
   "output": {
-    "claim": "6 years and 5 months as Senior Software Engineering Manager at Google",
+    "claim": "6 years and 5 months as Senior Software Engineering Manager at Acme Corp",
     "claim_class": "tenure",
     "verdict": "match",
-    "canonical_source": "~/anand-career-os/brain/identity/experience-history.md",
-    "canonical_excerpt": "### 4.3 Google -- Senior Software Engineering Manager\n\n**Period:** January 2019 -- May 2025 (6 years 5 months)\n**LinkedIn title:** Senior Software Engineering Manager",
+    "canonical_source": "$CAREER_HOME/brain/identity/experience-history.md",
+    "canonical_excerpt": "### 4.3 Acme Corp -- Senior Software Engineering Manager\n\n**Period:** January 2019 -- May 2025 (6 years 5 months)\n**LinkedIn title:** Senior Software Engineering Manager",
     "diff": null,
     "confidence": "HIGH",
     "remediation": null,

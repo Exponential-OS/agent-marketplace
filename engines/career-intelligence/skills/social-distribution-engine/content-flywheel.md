@@ -2,14 +2,15 @@
 status: canonical
 source: "Codified from Co-Dialectic campaign learnings (Phase 1 + Phase 2) + 2026-04-20 content sprint learnings + 2026-04-23 Part 2 (jury-beats-judge) campaign status-ledger rule + 2026-04-23 Part 2 Substack-resend-to-subscribers incident (irreversible-action invariant). Generic principles in Constitution P16."
 created: 2026-04-13
-updated: 2026-05-05
+updated: 2026-05-17
+customer-config: "$CAREER_HOME/brain/social-distribution-engine/content-flywheel.md"
 ---
 
-# Content Distribution Flywheel — Personal Choices
 
-**Purpose:** Anand's platform-specific content distribution strategy. Generic flywheel principles live in the Constitution (P16 Content Flywheel). This file codifies personal platform choices, algorithm rules, and campaign patterns.
-**Used by:** Any agent executing marketing campaigns, social posts, or content distribution. **This is the canonical reference — before drafting any content campaign, load this file first.**
-**Last Updated:** 2026-04-20
+# Content Distribution Flywheel — Generic Strategy
+
+**Purpose:** Platform-agnostic content distribution strategy for the social-distribution-engine. Customer-specific platform topology (which platform is the hub, honey pot, spokes) lives in `$CAREER_HOME/brain/social-distribution-engine/content-flywheel.md`. This file is the canonical strategy reference — loaded by the skill; the customer config is the instance overlay.
+**Used by:** Any agent executing marketing campaigns, social posts, or content distribution. **Before drafting any content campaign, load this file AND the customer config.**
 
 ---
 
@@ -31,10 +32,10 @@ updated: 2026-05-05
 YOUR ESTATE (your full brand — all platforms, all products, all content)
 │
 │  ┌──────────────────────────────────────────────────────────────────┐
-│  │  THE GROVE (thewhyman.blog — your owned land, direct-to-inbox)  │
+│  │  THE GROVE (your-honey-pot.com — owned land, direct-to-inbox)   │
 │  │  ┌──────────────┬────────────┬──────────┬──────────────────────┐ │
-│  │  │ Artificial   │ Blockchain │ Signal   │ Under The Hood       │ │
-│  │  │ Intelligence │            │          │                      │ │
+│  │  │ Topic Row 1  │ Topic Row 2 │ Row 3   │ Topic Row 4          │ │
+│  │  │              │            │          │                      │ │
 │  │  │ 🌳🌳🌳🌳🌳    │  🌳🌳🌳🌳  │ 🌳🌳🌳🌳 │ 🌳🌳🌳🌳🌳🌳         │ │
 │  │  └──────────────┴────────────┴──────────┴──────────────────────┘ │
 │  │                                                                   │
@@ -74,7 +75,7 @@ YOUR ESTATE (your full brand — all platforms, all products, all content)
 
 **The nine named concepts (full docs in sections below):**
 - **The Estate** — your full brand; the property everything else lives on
-- **The Grove + Rows** — thewhyman.blog (direct-to-inbox, owned land); 4 rows for 4 audience types
+- **The Grove + Rows** — your-honey-pot.com (direct-to-inbox, owned land); 4 rows for 4 audience types
 - **Gardeners** — subscribers who share; they actively recruit more trees into your rows
 - **The Magnet Effect** — accumulated juice + Grove = Estate becomes a gravitational field; Naval Level 4
 - **The Rehydration Loop** — new campaigns water old nodes; dead ends become live entry points
@@ -163,19 +164,20 @@ Three reasons, all load-bearing:
 | **Spoke** | Any platform with active audience but not selected as hub or honey pot. Its job is to drive traffic INTO the hub, not to build a parallel hub. Spokes must link to the juice, not to each other. |
 | **SEO** | Platform indexed by search engines AND your ICP searches it for technical discovery. Drives long-tail, search-intent traffic. CTA = star / follow / install — not conversion. |
 
-**Anand's current configuration (derived from above criteria — re-evaluate quarterly or when ICP or platform changes):**
+**Customer platform configuration (derived from above criteria — re-evaluate quarterly or when ICP or platform changes):**
 
-| Layer | Platform | Handle | Role | Re-evaluation trigger |
-|---|---|---|---|---|
-| **Source** | Substack | thewhyman.blog | **Honey Pot** — email-backed, subscriber-owned | If open rates drop below 20% consistently |
-| **Article SEO Hub** | LinkedIn Article (Pulse) | `/in/anandvallam` | Google-indexed, evergreen, long-form depth. Triggers follower notification on publish. Body links to Substack. Post Hub first-comment links here. Compounds via Google search for months/years. | If organic search impressions plateau |
-| **Post Hub** | LinkedIn Post | `/in/anandvallam` | Campaign hub. All external spokes (X, Instagram, Reddit, Facebook) drive here. Algorithm-boosted juice, short-lived (48h window). First-comment links to Article SEO Hub (within-platform). | If engagement rate or algorithmic reach drops consistently |
-| **Spoke** | X (Twitter) | @thewhyman | Real-time signal distribution | Re-evaluate if algo continues suppressing link posts |
-| **Spoke** | Reddit | u/anandvallam | Engineering credibility, community trust-building | Re-evaluate per-subreddit quarterly |
-| **Spoke** | Instagram | @anandvallam | Visual hooks, carousel amplification | Re-evaluate if audience skews non-ICP |
-| **SEO** | GitHub | thewhyman | Technical CTA, star/install signal | Permanent — code repos always indexed |
+Read the customer's current platform assignments from `$CAREER_HOME/brain/social-distribution-engine/content-flywheel.md`. That file declares:
+- Which platform is the Honey Pot (owned, email-backed)
+- Which platform is the Article SEO Hub (Google-indexed long-form)
+- Which platform is the Post Hub (campaign juice hub)
+- Which platforms are Spokes
+- Which platform(s) serve the SEO role
+- Re-evaluation triggers for each assignment
+- Active handles for each platform
 
-*Platforms not listed (TikTok, Facebook, Threads, Bluesky, YouTube, Discord, Slack) are evaluated per campaign via the Surface Coverage Matrix. They are neither permanently in nor permanently out. Evaluate against ICP-concentration and active-audience criteria for each campaign.*
+Do not hardcode platform assignments or handles here — they are customer-specific and must be read from the instance config.
+
+*Platforms not listed in the instance config (TikTok, Facebook, Threads, Bluesky, YouTube, Discord, Slack) are evaluated per campaign via the Surface Coverage Matrix. They are neither permanently in nor permanently out. Evaluate against ICP-concentration and active-audience criteria for each campaign.*
 
 ---
 
@@ -222,13 +224,9 @@ Reddit communities must be evaluated PER CAMPAIGN against these criteria:
 - If banned: file modmail appeal with engineering-first framing. Wait for resolution before re-posting same content.
 - If uncertain: start with a comment in an existing thread before a standalone post
 
-**Current observations (snapshot — verify before each campaign):**
-- r/PromptEngineering: historically receptive to engineering-log style AI workflow posts
-- r/LocalLLaMA: model-agnostic technical angle historically works
-- r/ClaudeAI: engineering log for Claude-specific features historically works
-- r/programming: has aggressive anti-promotion filters — verify standing before posting
+**Community observations** are customer-specific and tracked in `$CAREER_HOME/brain/social-distribution-engine/social-channel-directory.md`. Read that file before every campaign — never rely on memory or hardcoded subreddit lists. Community standing is volatile; the channel directory is the live reference.
 
-*These are observations, not guarantees. Run the criteria check above before every campaign, not just once.*
+*Run the criteria check above before every campaign. A subreddit that worked last month may have changed moderation policy.*
 
 ### Substack
 - Source of truth for all long-form
@@ -347,16 +345,9 @@ Both payoffs compound. Neither is optional. A strategy optimizing ONLY for seeds
 
 ---
 
-### The Grove, Its Rows, and Gardeners (thewhyman.blog — direct-to-inbox, owned land)
+### The Grove, Its Rows, and Gardeners (owned channel — direct-to-inbox, owned land)
 
-**What it is:** The Grove is `thewhyman.blog` — one Substack publication, one email list, your owned land. It has 4 Rows (Sections), each growing a different tree type for a different audience:
-
-| Row (Section) | Tree / Audience type | Campaign series that belong here |
-|---|---|---|
-| **Artificial Intelligence** | AI/ML practitioners, LLM engineers, technical leaders | Defense in Depth, AI tooling, model evaluation |
-| **Blockchain** | Web3 builders, crypto developers, DeFi architects | Blockchain/on-chain analysis, decentralized systems |
-| **Signal** | Strategic thinkers, executives, investors | "Why it matters" perspectives, macro trend analysis |
-| **Under The Hood** | Implementers, builders, deep technical audience | Plugin architecture, technical how-tos, deep dives |
+**What it is:** The Grove is the customer's owned newsletter/subscription channel — one publication, one email list, owned land. It has Rows (Sections or Tags), each growing a different tree type for a different audience segment. The customer's specific Grove URL, platform, and Row names are declared in `$CAREER_HOME/brain/social-distribution-engine/content-flywheel.md`.
 
 **Why The Grove is fundamentally different from every other distribution surface:**
 
@@ -364,11 +355,11 @@ Both payoffs compound. Neither is optional. A strategy optimizing ONLY for seeds
 
 2. **You send, it arrives. No algorithm.** Social platforms decide who sees your content. With The Grove, you press Send → it lands in every subscriber's inbox. No suppression, no engagement-score gating, no feed ranking. Direct line from you to them.
 
-3. **Long-lived content compounds brand daily.** A LinkedIn post dies in 48h. A Grove post lives forever: in their inbox, on the thewhyman.blog URL (Google-indexed), in the Substack reader. Every newsletter send reinforces your brand in their inbox. Over months, that inbox presence compounds into authority — they start looking forward to hearing from you. Social builds reach; the Grove builds identity.
+3. **Long-lived content compounds brand daily.** A social post dies in 48h. A Grove post lives forever: in their inbox, on the publication URL (Google-indexed), in the subscriber reader. Every newsletter send reinforces your brand in their inbox. Over months, that inbox presence compounds into authority — they start looking forward to hearing from you. Social builds reach; the Grove builds identity.
 
-4. **Rows = audience targeting without splitting the list.** One shared email list compounds faster than 4 small separate lists. Substack notifies only the relevant Row's subscribers when you publish to that Section — you get targeting precision without fragmenting the asset. A subscriber who discovered you through the AI Row is already in your Grove; publishing to the Blockchain Row is cross-pollination to someone who already opted into your land.
+4. **Rows = audience targeting without splitting the list.** One shared email list compounds faster than N small separate lists. The platform notifies only the relevant Row's subscribers when you publish to that Section — you get targeting precision without fragmenting the asset.
 
-5. **Rain = permanent SEO.** Posts on `thewhyman.blog/p/<slug>` are Google-indexed on a high-authority domain that Substack maintains for you. Old posts bring new seeds indefinitely. Rain falls whether you run campaigns or not.
+5. **Rain = permanent SEO.** Posts on the owned channel are Google-indexed on a high-authority domain. Old posts bring new seeds indefinitely. Rain falls whether you run campaigns or not.
 
 **Gardeners — the multiplier most people ignore:**
 
@@ -377,10 +368,10 @@ A passive subscriber (tree) receives your newsletters and opens them. A Gardener
 **Gardeners are not a separate audience — they emerge from your trees.** The conversion rate from tree → Gardener is low (maybe 1-5%). But the compounding effect is not: one Gardener who shares consistently over 12 months can plant more trees than a full LinkedIn campaign. They have social proof you don't have ("my friend shared this" > "this promoted post appeared").
 
 **How to cultivate Gardeners:**
-- **Share CTA in every post.** Not a generic "please share" — a specific, easy action: "Forward this to one engineer who runs LLM evals. They'll thank you." Direct ask, specific recipient in mind, one click.
+- **Share CTA in every post.** Not a generic "please share" — a specific, easy action: "Forward this to one engineer on your team. They'll thank you." Direct ask, specific recipient in mind, one click.
 - **Referral link in the footer.** Substack has native referral infrastructure — every subscriber gets a personal link. They earn rewards (or simply social credit) for subscribers they refer. Link to it prominently.
 - **Acknowledge Gardeners publicly.** When a subscriber shares and brings new trees, mention them. Social recognition is the lowest-cost, highest-ROI Gardener conversion tool.
-- **Make sharing feel like being on the right team.** "If you think more engineers should be running cross-family eval — share this with your team." The sharer isn't just sharing content; they're signaling their values to their network.
+- **Make sharing feel like being on the right team.** "If you think more engineers should be seeing this — share with your team." The sharer isn't just sharing content; they're signaling their values to their network.
 
 **Litmus test:** "Did this campaign add trees to The Grove?" 10,000 impressions + 0 subscribers = 0 trees. 1,000 impressions + 50 subscribers = 50 trees compounding forever. And: "Does every post have a Gardener Tool (share CTA + referral link)?" If not — you are leaving recruiters on the table.
 
@@ -390,9 +381,9 @@ A passive subscriber (tree) receives your newsletters and opens them. A Gardener
 
 **Keywords:** estate · grove row · section · cross-row rehydration · your estate · other estates · content ecosystem architecture
 
-**The Estate** is your entire content ecosystem — every platform, every product, every series, every campaign, all of it together. The Grove (`thewhyman.blog`) is the owned land at the center of your Estate. Everything else (LinkedIn, X, Reddit, Instagram, Facebook) is the distribution infrastructure of the Estate. The Estate belongs to you. It grows with every campaign.
+**The Estate** is your entire content ecosystem — every platform, every product, every series, every campaign, all of it together. The Grove (the customer's owned newsletter) is the owned land at the center of your Estate. Everything else (LinkedIn, X, Reddit, Instagram, Facebook) is the distribution infrastructure of the Estate. The Estate belongs to you. It grows with every campaign.
 
-**Grove Rows** are the 4 Sections within thewhyman.blog. Each Row grows a different tree type. A campaign belongs to exactly one primary Row — this determines which Section's subscribers get notified on publish.
+**Grove Rows** are the Sections within the customer's owned newsletter. Each Row grows a different tree type. A campaign belongs to exactly one primary Row — this determines which Section's subscribers get notified on publish.
 
 **Why this matters for the Rehydration Loop:** Rehydration works at two levels:
 1. **Within a row**: new Defense in Depth Part 4 rehydrates Parts 1, 2, 3 (same AI row)
@@ -402,7 +393,7 @@ Cross-row rehydration feels like serendipity to the reader: they discovered you 
 
 **Other Estates** are other creators' full ecosystems — their LinkedIn, their Substack, their community, their full body of work. When you do Wild Foraging, you are visiting another Estate's active spaces and talking to their visitors. You add genuine value first; some follow you back to your Estate.
 
-**Estate architecture rule:** Every campaign in any row should carry a reference that names the Estate and Row: "Part of the Defense in Depth series — thewhyman.blog / Artificial Intelligence." A visitor who discovers Part 3 in isolation understands they've entered a series and a grove, not a floating post.
+**Estate architecture rule:** Every campaign in any row should carry a reference that names the Estate and Row: "Part of the [series name] — [your-grove-url] / [Row name]." A visitor who discovers Part 3 in isolation understands they've entered a series and a grove, not a floating post.
 
 **Litmus test:** "Does this campaign make my Estate richer or is it an island?" Links to prior rows + Rehydration Loop + drives to The Grove = richer. No forward/backward connections = island — juice with no seeds captured, no Gardeners cultivated.
 
@@ -629,7 +620,7 @@ NATION / RELIGION SCALE (your ideas travel without you)
 
 ---
 
-Every campaign lives in `WIP/branding-product/articles/<NN>-<slug>-<date>/` and MUST contain:
+Every campaign lives in `$CAMPAIGN_HOME/<NN>-<slug>-<date>/` and MUST contain:
 
 ```
 <NN>-<slug>-<date>/
@@ -638,7 +629,7 @@ Every campaign lives in `WIP/branding-product/articles/<NN>-<slug>-<date>/` and 
 │   ├── generate-images.py ← reproducible image generation (PIL/Pillow)
 │   └── *.png              ← generated assets (committed, not regenerated at publish time)
 └── content/
-    ├── 01-substack-hub.md         ← source (honey pot)
+    ├── 01-owned-hub.md            ← source (honey pot / owned channel)
     ├── 02-linkedin-post.md        ← LinkedIn gateway spoke (drives to article)
     ├── 03-linkedin-article.md     ← LinkedIn inner hub (SEO, evergreen)
     ├── 04-x-thread.md             ← spoke
@@ -648,13 +639,11 @@ Every campaign lives in `WIP/branding-product/articles/<NN>-<slug>-<date>/` and 
     └── 08-comment-cascade.md      ← flywheel amplification
 ```
 
+`$CAMPAIGN_HOME` is declared in the customer's instance config. Default: `$CAREER_HOME/WIP/branding-product/articles/`.
+
 **Why two formats:** `campaign.json` is the machine layer — schema-validated, grep-able, validator-enforceable, agent-readable state tracker. The `.md` files are the human layer — actual copyable content, review notes, publishing instructions. Agents read both; humans edit `.md` and set booleans in `campaign.json`. The split eliminates the pattern of "agent tries to parse publishing instructions from prose" — the JSON is the state machine, the MD files are the content payload.
 
-**Pre-flight requirement (objective codification):** Before generating any new campaign package, run:
-```bash
-bash ~/cyborg/rules/campaign-preflight/HOW.sh '{"campaign_dir":"<path>"}'
-```
-This gate reads `content-flywheel.md`, `campaign-schema/`, and `platform-asset-specs.json` and enforces all campaign completeness requirements before any spoke content is drafted.
+**Pre-flight requirement (objective codification):** Before generating any new campaign package, run the campaign-preflight gate. The gate reads this flywheel, `campaign-schema/`, and `platform-asset-specs.json` and enforces all campaign completeness requirements before any spoke content is drafted. The customer's instance config declares the gate invocation path.
 
 ---
 
@@ -662,16 +651,16 @@ This gate reads `content-flywheel.md`, `campaign-schema/`, and `platform-asset-s
 
 **Why:** A campaign that runs across 2-3 sessions, multiple agents (Claude + Gemini + Antigravity + whatever's next), and 5-6 spokes cannot be resumed if status lives only in one agent's memory or in a message that's been scrolled past. The **campaign-master doc inside the article folder** is the single source of truth. If it isn't updated the moment a spoke goes live, the next thread is blind — and at worst duplicate-posts, uses wrong assets, or misses the comment cascade window.
 
-**Origin:** 2026-04-23 Part-2 campaign (jury-beats-judge). Gemini/Antigravity published the Substack hub but (a) used a Co-Dialectic image by mistake, (b) didn't swap the cover retroactively, (c) the `campaign-master` status table still showed spoke 0 as "LIVE ✅" while the image was still wrong. Next thread couldn't tell what was actually live vs pending until the user manually walked back through Gemini's scrollback.
+**Origin:** 2026-04-23 Part-2 campaign (jury-beats-judge). An agent published the owned-channel hub but (a) used the wrong image, (b) didn't swap the cover retroactively, (c) the `campaign-master` status table still showed spoke 0 as "LIVE ✅" while the image was still wrong. Next thread couldn't tell what was actually live vs pending until the user manually walked back through the agent's scrollback.
 
 **The rule (applies to EVERY campaign, not just this one):**
 
-Every campaign-master doc (`WIP/branding-product/articles/<NN>-<slug>-<date>/campaign-master-<date>.md` or equivalent for other product campaigns) MUST contain a **live status ledger** with these columns:
+Every campaign-master doc (`$CAMPAIGN_HOME/<NN>-<slug>-<date>/campaign-master-<date>.md` or equivalent) MUST contain a **live status ledger** with these columns:
 
 | # | Spoke | Source file | Status | Published URL | Image attached | Last updated |
 |---|---|---|---|---|---|---|
-| 0 | Substack hub | `01-substack-hub.md` | ✅ LIVE / 🟡 PENDING / ⚠️ NEEDS-FIX | URL or `—` | `assets/<slug>-<role>-<dims>.png` or `⚠️ WRONG IMAGE` | ISO timestamp |
-| 1 | LinkedIn short | `02-linkedin-short.md` | ... | ... | ... | ... |
+| 0 | Owned channel hub | `01-owned-hub.md` | ✅ LIVE / 🟡 PENDING / ⚠️ NEEDS-FIX | URL or `—` | `assets/<slug>-<role>-<dims>.png` or `⚠️ WRONG IMAGE` | ISO timestamp |
+| 1 | LinkedIn post | `02-linkedin-post.md` | ... | ... | ... | ... |
 | ... | ... | ... | ... | ... | ... | ... |
 
 **Execution discipline (non-negotiable):**
@@ -690,8 +679,8 @@ Every campaign-master doc (`WIP/branding-product/articles/<NN>-<slug>-<date>/cam
 ---
 name: campaign-master-<campaign-slug>-<date>
 type: campaign-status-ledger
-article_folder: WIP/branding-product/articles/<NN>-<slug>-<date>/
-hub_platform: Substack | LinkedIn | X
+article_folder: $CAMPAIGN_HOME/<NN>-<slug>-<date>/
+hub_platform: <platform name>
 hub_url: <filled in when hub goes live>
 spokes_total: <N>
 spokes_live: <count, updated as they publish>
@@ -712,7 +701,7 @@ language_ownership_targets:
 ---
 ```
 
-That frontmatter is grep-able. `grep -rl "type: campaign-status-ledger" ~/anand-career-os/WIP/` finds every campaign's current state in one shell command — any agent in any future thread can discover where campaigns live without being told.
+That frontmatter is grep-able. `grep -rl "type: campaign-status-ledger" $CAMPAIGN_HOME` finds every campaign's current state in one shell command — any agent in any future thread can discover where campaigns live without being told.
 
 ---
 
@@ -727,63 +716,61 @@ After each new post, go back and comment on ALL previous hub/spoke posts:
 
 ## Campaign URLs — Discovery Rule
 
-Campaign-specific URLs (hub post, article, thread, Substack post) belong in the **campaign-master doc** for that campaign, NOT in this flywheel. This file is a canonical strategy reference — hardcoding specific URLs makes it stale on every new campaign.
+Campaign-specific URLs (hub post, article, thread, owned-channel post) belong in the **campaign-master doc** for that campaign, NOT in this flywheel. This file is a canonical strategy reference — hardcoding specific URLs makes it stale on every new campaign.
 
-**Persistent handles (not campaign-specific):**
-- Substack: https://thewhyman.blog
-- GitHub: https://github.com/Exponential-OS/prompt-engineering-in-action
-- LinkedIn profile: https://www.linkedin.com/in/anandvallam
+**Persistent handles (not campaign-specific):** declared in the customer's instance config (`$CAREER_HOME/brain/social-distribution-engine/content-flywheel.md`) and `$CAREER_HOME/brain/identity/handles.md`. Read from there at campaign time.
 
-**To find campaign-specific URLs:** `grep -rl "type: campaign-status-ledger" ~/anand-career-os/WIP/` — the campaign-master doc has the live status ledger with every spoke's URL, updated at publish time.
+**To find campaign-specific URLs:** `grep -rl "type: campaign-status-ledger" $CAMPAIGN_HOME` — the campaign-master doc has the live status ledger with every spoke's URL, updated at publish time.
 
 ---
-202. 
-203. ## Moderation & Ban Recovery Protocol (P16.5)
-204. 
-205. **Why:** Reddit (r/ClaudeAI, r/LocalLLaMA, r/MachineLearning) has aggressive anti-promotion filters. 2026-04-23 Part 2 campaign triggered a ban on r/ClaudeAI for "competitor superiority" claims. The response must be technical, measured, and transparent.
-206. 
-207. **Appeal Strategy:**
-208. 1. **Modmail FIRST:** Send a formal appeal via modmail immediately.
-209. 2. **Clarify Technical Intent:** Explain that the post is an architectural deep-dive (e.g., "Jury beats Judge" thesis), not a promotional vs. post.
-210. 3. **Avoid Inflammatory Language:** Use industry-standard terms (evals, invariants, failure modes) rather than marketing hooks.
-211. 4. **No Re-posting:** Do NOT attempt to re-post the same content to the same sub until the appeal is resolved.
-212. 
-213. **Protest Protocol (The "Transparency Loop"):**
-214. If a platform erroneously bans a post, leverage the other spokes to build a narrative of technical integrity:
-215. - **LinkedIn/X/Substack Update:** Add a note or a short post describing the moderation incident. "Reddit banned this for 'promotion'—here is why that's a misreading of the technical findings."
-216. - **Contextualize:** Re-frame the ban as a symptom of the exact "closed loop" bias discussed in the article.
-217. - **Redirect:** Use the friction to drive traffic to the Substack hub where the full, un-moderated context lives.
-218. 
-219. ---
+## Moderation & Ban Recovery Protocol (P16.5)
+
+**Why:** Reddit has aggressive anti-promotion filters. The response to a moderation action must be technical, measured, and transparent.
+
+**Appeal Strategy:**
+1. **Modmail FIRST:** Send a formal appeal via modmail immediately.
+2. **Clarify Technical Intent:** Explain that the post is an architectural deep-dive or engineering log, not a promotional post.
+3. **Avoid Inflammatory Language:** Use industry-standard terms (evals, invariants, failure modes) rather than marketing hooks.
+4. **No Re-posting:** Do NOT attempt to re-post the same content to the same sub until the appeal is resolved.
+
+**Protest Protocol (The "Transparency Loop"):**
+If a platform erroneously bans a post, leverage the other spokes to build a narrative of technical integrity:
+- **Other platforms update:** Add a note or a short post describing the moderation incident. "Reddit banned this for 'promotion' — here is why that's a misreading of the technical findings."
+- **Contextualize:** Re-frame the ban as a symptom of the exact "closed loop" bias discussed in the article.
+- **Redirect:** Use the friction to drive traffic to the owned-channel hub where the full, un-moderated context lives.
+
+---
 
 ## Surface Coverage Matrix (REQUIRED before every campaign ships — Campaign-Completeness Invariant)
 
-Every campaign-master MUST include this matrix, filled in against `~/cyborg/handles.md` (source of truth for which platforms exist) — not against the author's memory of "the usual suspects." A platform marked `out-of-scope` requires an explicit reason; silent omission is a Ground Zero violation. **This matrix is reviewed at the boundary (a second perspective — reviewer model, different agent, or human with explicit eyes-on) before the campaign fires.**
+Every campaign-master MUST include this matrix, filled in against the customer's `$CAREER_HOME/brain/identity/handles.md` (source of truth for which platforms exist) — not against the author's memory of "the usual suspects." A platform marked `out-of-scope` requires an explicit reason; silent omission is a Ground Zero violation. **This matrix is reviewed at the boundary (a second perspective — reviewer model, different agent, or human with explicit eyes-on) before the campaign fires.**
+
+Template — fill in handles from the customer's handles.md:
 
 | Surface | Handle (from handles.md) | In-scope? | Asset ready? | Copy drafted? | Scheduled? | Shipped? | URL / Status |
 |---|---|---|---|---|---|---|---|
-| Substack (hub) | `thewhyman.blog` | | | | | | |
-| LinkedIn article | `/in/anandvallam` | | | | | | |
-| LinkedIn post (short) | `/in/anandvallam` | | | | | | |
-| LinkedIn company page | (per-product) | | | | | | |
-| X / Twitter thread | `@anandvallam` | | | | | | |
-| Threads | `@anandvallam` | | | | | | |
-| Bluesky | `@anandvallam.bsky.social` | | | | | | |
-| Reddit (primary sub) | `u/anandvallam` | | | | | | |
-| Reddit (secondary sub) | `u/anandvallam` | | | | | | |
-| Instagram feed | `@anandvallam` | | | | | | |
-| Instagram story | `@anandvallam` | | | | | | |
-| Facebook | `anandvallam` | | | | | | |
-| YouTube (if video) | `@anandvallam` | | | | | | |
+| Owned channel (hub) | (from handles.md) | | | | | | |
+| LinkedIn article | (from handles.md) | | | | | | |
+| LinkedIn post (short) | (from handles.md) | | | | | | |
+| LinkedIn company page | (from handles.md or N/A) | | | | | | |
+| X / Twitter thread | (from handles.md) | | | | | | |
+| Threads | (from handles.md) | | | | | | |
+| Bluesky | (from handles.md) | | | | | | |
+| Reddit (primary sub) | (from handles.md) | | | | | | |
+| Reddit (secondary sub) | (from handles.md) | | | | | | |
+| Instagram feed | (from handles.md) | | | | | | |
+| Instagram story | (from handles.md) | | | | | | |
+| Facebook | (from handles.md) | | | | | | |
+| YouTube (if video) | (from handles.md) | | | | | | |
 | Email list / newsletter | — | | | | | | |
 | Slack communities (named) | — | | | | | | |
 | Discord communities (named) | — | | | | | | |
 | WhatsApp status / groups | — | | | | | | |
-| GitHub release notes (if code-adjacent) | `thewhyman/<repo>` | | | | | | |
+| GitHub release notes (if code-adjacent) | (from handles.md) | | | | | | |
 | Podcast cross-mention (if relevant) | — | | | | | | |
 
 **Rules for the matrix:**
-1. Rows come from `~/cyborg/handles.md` + this flywheel — not from memory. Add a row for every handle that has a distribution surface.
+1. Rows come from the customer's `$CAREER_HOME/brain/identity/handles.md` + this flywheel — not from memory. Add a row for every handle that has a distribution surface.
 2. `In-scope? = no` requires an explicit reason in the cell: `no — no image asset for IG this cycle` / `no — not a video campaign` / `no — platform deprecated`. Silent "no" is forbidden.
 3. Handles added in the current session are NOT auto-in-scope; the matrix must actively list them with a deliberate in-scope decision.
 4. `Asset ready?` requires the Visual-Asset Review Invariant to be satisfied for any image-bearing surface — a `yes` in this column implies the image was opened and reviewed at full resolution.
@@ -795,7 +782,7 @@ Every campaign-master MUST include this matrix, filled in against `~/cyborg/hand
 
 ## Irreversible-Action Invariant (HIGHEST SEVERITY — costs real subscribers, real career damage)
 
-**Why:** 2026-04-23 Part-2 campaign. Substack hub was published with a wrong cover image. Agent (Gemini/Antigravity) attempted to "fix" the cover by re-publishing the post, which triggered a **second email to every subscriber**. Subscribers received the same article twice → looks like spam → unsubscribe risk → brand damage with the exact audience the campaign is designed to reach (frontier AI recruiters, engineers, operators). User's direct words: *"you are costing me my career."* Re-send to an email list cannot be undone. This is the most expensive single failure mode in the entire content pipeline and must be prevented structurally, not by hoping the next agent remembers.
+**Why:** 2026-04-23 Part-2 campaign. Owned-channel hub was published with a wrong cover image. An agent attempted to "fix" the cover by re-publishing the post, which triggered a **second email to every subscriber**. Subscribers received the same article twice → looks like spam → unsubscribe risk → brand damage with the exact audience the campaign is designed to reach. User's direct words: *"you are costing me my career."* Re-send to an email list cannot be undone. This is the most expensive single failure mode in the entire content pipeline and must be prevented structurally, not by hoping the next agent remembers.
 
 **The invariant (applies to EVERY email-backed publishing surface — Substack posts, Beehiiv newsletters, Ghost newsletters, ConvertKit broadcasts, Mailchimp campaigns, podcast episodes via RSS, anything with a "notify subscribers" toggle):**
 
@@ -850,8 +837,8 @@ Spoke 0 | Substack hub | status | url | irreversible: true (sent to N subscriber
 2. **@tag for notification pull:** Use platform-specific @handle to notify them. If they like or comment, their followers see YOUR post. You gave nothing away; you may gain their entire audience.
 
 **Applied example (LinkedIn):**
-> "Ethan Mollick (@EthanMollick) has written about operating in cyborg mode. I built the OS."
-Mollick gets notified → reads → engages → his 200K followers see your post. Zero traffic given away.
+> "[Author name] (@handle) has written about [topic]. I built [your related work]."
+Author gets notified → reads → engages → their followers see your post. Zero traffic given away.
 
 **Per-platform tagging rules:**
 | Platform | Syntax | Notifies? | Use in body? | Rule |
@@ -875,7 +862,7 @@ Never maintain a static list of handles. Relevant authors change per topic, per 
 **Discovery criteria (who qualifies as a high-value tag target):**
 - Wrote something genuinely related to THIS campaign's core idea (not just adjacent to your general topic)
 - Active on the target platform within the last 30 days
-- Audience >10K on that platform, with meaningful overlap with your ICP (builders, enterprise buyers, AI leaders)
+- Audience >10K on that platform, with meaningful overlap with your ICP
 - Their idea is something you are building ON — not just name-dropping for clout
 
 **Discovery process (run once per campaign, per platform):**
@@ -887,7 +874,7 @@ Never maintain a static list of handles. Relevant authors change per topic, per 
 
 **Handle verification rule:** Always confirm the handle resolves to the right person on that platform before including in a post. Handles change. People create impersonators. One wrong tag wastes the notification pull entirely.
 
-**Accumulate discovered handles in `brain/distribution/tag-targets.md`** — not here. Campaign-specific discoveries compound into a queryable brain asset, not a static flywheel entry.
+**Accumulate discovered handles in `$CAREER_HOME/brain/distribution/tag-targets.md`** — not here. Campaign-specific discoveries compound into a queryable brain asset, not a static flywheel entry.
 
 **Amplifier selection — thesis extension over follower count (codified 2026-05-05):**
 
@@ -958,14 +945,14 @@ When shipping a new product version, update content in this order:
 3. **Vulnerability beats polish.** A post that admits a mistake, a fear, or an uncertainty gets 3-5x the comments of a polished announcement.
 4. **Serial content > one-shot posts.** Weekly rhythm trains an audience; one-shot posts train nobody. The flywheel only spins if there's a next post scheduled.
 5. **Engage other creators with substance, not self-promo.** 3-5 substantive comments per week on adjacent creators' posts — ONLY when you genuinely have something meaningful to add to THEIR conversation. The comment must earn its place on its merits. Not a reach tactic. No self-links. Algorithm starts showing YOUR content to THEIR audience, but only if the comment would stand alone without you.
-11. **Reference without redirect (codified 2026-05-05).** In YOUR OWN posts and comments, cite people by name to borrow credibility — but never link to them. "Mollick calls this cyborg mode" adds legitimacy. The link to Mollick's post sends your traffic TO him and spins his wheel, not yours. The name is the citation. The link is the exit door. Rule: attribute the idea, keep the audience. No exceptions for "being fair" — linking out is a distribution tax you pay with your own momentum. Applied example: "Ethan Mollick has written about operating in cyborg mode. I've been building the OS underneath it." — reader gets curious, searches your name, your profile gets the click.
+11. **Reference without redirect (codified 2026-05-05).** In YOUR OWN posts and comments, cite people by name to borrow credibility — but never link to them. Citing a known author by name adds legitimacy. Linking to their post sends your traffic TO them and spins their wheel, not yours. The name is the citation. The link is the exit door. Rule: attribute the idea, keep the audience. No exceptions for "being fair" — linking out is a distribution tax you pay with your own momentum. Applied example: "[Author] has written about [topic]. I've been building the [solution] underneath it." — reader gets curious, searches your name, your profile gets the click.
 6. **Reply-to-reply builds the thread the algo rewards.** Someone comments → you reply → they reply → you reply again. Aim for 3+ round-trips per thread.
 7. **Screenshot-worthy > text-worthy.** If someone could screenshot a single line and share it standalone, that line earned its keep. Every post should have at least one screenshot-worthy line.
 8. **Controversy within integrity bounds.** Take a stand someone could reasonably disagree with. Controversy drives comments; comments drive reach.
 9. **Build in public > launch in private.** Announce the patent the day you file it, the trademark the day you file it, the Substack the day you launch it. Calendar-driven announcements train the audience.
 10. **Cross-link every new post backward.** When a new post ships, go back to prior 3 posts and comment: "Follow-up to [prior] — just published [link]." 15 min/week, 10x compounding reach.
 12. **Three-act narrative as shareability structure (codified 2026-05-05).** When an article addresses a topic with active public discourse, frame it as: current discourse people are living through (Act 1) → the naive overcorrection (Act 2) → the precise fix (Act 3). The hook names the discourse — not just the problem — so it's shareable to people who haven't read the article yet. They share Act 1 because they're already living it; the article delivers the answer. Applied example: "Vibecoding gave us chaos → everyone added rigid rules → the rules are broken too" makes the article shareable to anyone in the vibecoding conversation before they've read a word of the fix. Rule: when the audience is already inside a discourse, the hook is the ticket into that conversation, not a summary of the answer.
-13. **Warm-path thread distribution (codified 2026-05-05).** Any existing foothold in a high-value person's thread — a comment, a reply, any prior presence — is a distribution channel. On article ship day: reply to your own prior comment with the article link in context. Not cold tagging. Not outreach. Replying inside a thread where the conversation is already happening and your name is already visible. This borrows the thread's existing engagement signal without injecting a cold link. *Live examples:* Naval's Substack posts on vibecoding have Anand's prior comment "vibe coding is 2 generations behind" — on Article 10 ship day, reply to that comment with the article link. Andrew Ng's active tweet thread on evals: on Article 10 ship day, reply "this is exactly right — and there's a specific failure mode most eval harnesses have that makes them miss violations entirely. Wrote it up: [URL]." Rule: before any article ships, audit existing thread presence on the article's topic. A prior comment in a relevant thread from a high-signal person is a warm path. Track these as distribution TODOs in the campaign master, not afterthoughts.
+13. **Warm-path thread distribution (codified 2026-05-05).** Any existing foothold in a high-value person's thread — a comment, a reply, any prior presence — is a distribution channel. On article ship day: reply to your own prior comment with the article link in context. Not cold tagging. Not outreach. Replying inside a thread where the conversation is already happening and your name is already visible. This borrows the thread's existing engagement signal without injecting a cold link. *Pattern example:* If you have a prior comment in a high-signal person's vibecoding thread and you've now published a piece on the topic, reply to your existing comment with the article link: "Wrote up the architectural answer to this → [URL]." Rule: before any article ships, audit existing thread presence on the article's topic. A prior comment in a relevant thread from a high-signal person is a warm path. Track these as `thread_presence_targets` in the campaign master, not afterthoughts.
 
 ---
 
@@ -973,7 +960,7 @@ When shipping a new product version, update content in this order:
 
 *Codified from empirical campaign observations. Each rule carries the reasoning; re-evaluate if platform behavior contradicts your own account analytics.*
 
-1. **Don't rely on static "best time to post" schedules.** Platform-wide averages don't predict YOUR audience's behavior. Discover optimal timing via native analytics (LinkedIn Creator Mode → Audience insights, Instagram Insights → Most Active Times). Re-check quarterly.
+1. **Don't rely on static "best time to post" schedules.** Platform-wide averages don't predict YOUR audience's behavior. Discover optimal timing via native analytics (e.g., LinkedIn Creator Mode → Audience insights, Instagram Insights → Most Active Times). Re-check quarterly.
 2. **Don't post 2 hub posts within 24-48 hours** — they cannibalize each other's algorithm test window. One hub post per 48 hours minimum; let the first fully absorb its engagement cycle before competing with it.
 3. **Don't over-tag in post body** (platform handles @-tags as potential reach dilution; tag only genuinely relevant people, max 2 per post — see Tagging Strategy section).
 4. **Don't edit a post within the first hour** (triggers re-evaluation by the algorithm and typically demotes the post in feeds).
@@ -993,21 +980,15 @@ When shipping a new product version, update content in this order:
 
 | Highway type | Purpose | Discovery cadence |
 |---|---|---|
-| **Brand tags** (build your own highway) | Establish a searchable surface you OWN. Drives discovery LATER as audience compounds. `#TheWhyCyborg` is the primary thesis tag for ALL Cyborg-series campaigns — links every post in the arc. | Fixed — always slot 1 on every Cyborg-related post, every platform. |
+| **Brand tags** (build your own highway) | Establish a searchable surface you OWN. Drives discovery LATER as audience compounds. The customer's primary thesis tag (declared in their instance config) should always be slot 1 on series-related posts. | Declared by customer — always slot 1 on relevant posts. |
 | **Highway tags** (join existing flow) | Tap an established audience already searching this topic. Drives discovery NOW. | Discover per campaign via detector protocol (see below). |
 | **Niche tags** (community-specific) | Reach a specific technical or interest community. Lower volume but higher signal-to-noise. | Discover per campaign per platform via search and community exploration. |
 
-**Primary brand tag — `#TheWhyCyborg`**
-This is the linking tag for ALL Cyborg Way campaigns (hero essay, ClawCamp, companion pieces, all 8 essays). Every Cyborg-related post on every platform includes this tag. It builds a searchable feed readers can follow across the entire arc. It is always priority 1, always slot 1.
-
-**Full brand tag hierarchy (Anand's current — pick by priority):**
-`#TheWhyCyborg` (P1 — always) · `#TheWhyMan` (P2 — profile-building posts) · `#CyborgWay` (P3 — series posts) · `#xHumanOS` (P4 — product posts only)
-
-*(Retired: #Kingdom, #BiologicalIntelligence, #CoIntelligence — generic, non-distinctive. #CyborgWay replaced by #TheWhyCyborg as primary since it encodes the author's identity + thesis simultaneously.)*
+**Customer brand tags** — declared in `$CAREER_HOME/brain/social-distribution-engine/content-flywheel.md`. Read from there at campaign time; never hardcode here. The instance config should list brand tags in priority order (P1 = always, P2 = profile-building posts, etc.) and any retired tags with reasons.
 
 **Slot-fill order (apply every time, in this sequence):**
-1. Brand tags — pick in priority order until brand slots filled
-2. Campaign-specific tags — event/series tags for THIS post (e.g. #ClawCamp, #AIInfraSummit)
+1. Brand tags — pick in priority order from instance config until brand slots filled
+2. Campaign-specific tags — event/series tags for THIS post
 3. Niche tags — most specific to post topic, in priority order from `platforms.json → _hashtag_banks`
 4. Highway tags — broadest reach, fill remaining slots, in priority order
 
@@ -1034,18 +1015,18 @@ This is the linking tag for ALL Cyborg Way campaigns (hero essay, ClawCamp, comp
 
 ---
 
-## Substack-First vs LinkedIn-First Decision Rule
+## Owned-Channel-First vs Hub-First Decision Rule
 
 *Added 2026-04-20.*
 
-**Substack-first** (source → LinkedIn adapts):
+**Owned-channel-first** (source → hub adapts):
 - Long-form depth essays (>1000 words)
 - Technical architecture pieces
 - Multi-part series where context compounds
 - Content you want to EMAIL to subscribers
 - Anything that benefits from permanent hosting
 
-**LinkedIn-first** (native post, maybe Substack later):
+**Hub-first** (native post, maybe owned channel later):
 - Short reflections (<600 words)
 - Gratitude posts
 - CTA / hiring posts
@@ -1053,7 +1034,7 @@ This is the linking tag for ALL Cyborg Way campaigns (hero essay, ClawCamp, comp
 - Personal moments
 - Anything emotionally / temporally bound to today
 
-**Decision test:** "Would I regret this post not existing a year from now?" Yes → Substack-first. "Is this emotionally/temporally bound to today?" Yes → LinkedIn-first.
+**Decision test:** "Would I regret this post not existing a year from now?" Yes → owned-channel-first. "Is this emotionally/temporally bound to today?" Yes → hub-first.
 
 ---
 
@@ -1065,7 +1046,7 @@ This is the linking tag for ALL Cyborg Way campaigns (hero essay, ClawCamp, comp
 - DMs generated (strongest — intent to act)
 - Comments with >3 round-trips (you're building threads)
 - Profile views in 24 hrs post-publish
-- Hub-to-spoke click-through rate (LinkedIn → Substack or external)
+- Hub-to-owned-channel click-through rate (Post Hub → owned channel or external)
 - Follower delta in 7 days
 - Comments (medium signal)
 - Reactions (weak signal)
@@ -1078,11 +1059,11 @@ This is the linking tag for ALL Cyborg Way campaigns (hero essay, ClawCamp, comp
 - Inbound-to-outbound ratio (Naval Level-3 → 4 metric)
 
 **Per article (in addition to per post metrics):**
-- Language ownership: did 1-2 terms coined in this article get used organically by someone else within 14 days of ship? Track coined terms per article in the campaign master (`language_ownership_targets`). Signal: someone uses "gate-type mismatch" or "enforcement harness" without prompting → the article landed at vocabulary level, not just engagement level. This is the highest-signal distribution metric for thought-leadership content — it means your framing is now running in someone else's mind.
+- Language ownership: did 1-2 terms coined in this article get used organically by someone else within 14 days of ship? Track coined terms per article in the campaign master (`language_ownership_targets`). Signal: someone uses a coined term without prompting → the article landed at vocabulary level, not just engagement level. This is the highest-signal distribution metric for thought-leadership content — it means your framing is now running in someone else's mind.
 
 **Per month:**
-- Brand hashtag equity — is `#TheWhyMan` consistently surfacing your content?
-- Cross-platform unique reach (Substack subs + LinkedIn followers + X followers)
+- Brand hashtag equity — is the primary brand hashtag (from instance config) consistently surfacing content?
+- Cross-platform unique reach (owned-channel subscribers + hub followers + spoke followers)
 - Quality of inbound — random scopers vs. named-warm-introductions
 - Language ownership sweep: search coined terms from the last 3 articles. Any organic use = ship signal.
 
@@ -1095,7 +1076,7 @@ This is the linking tag for ALL Cyborg Way campaigns (hero essay, ClawCamp, comp
 LinkedIn's algorithm samples a post's engagement rate on a small subset of your network (~10%, empirically) within the first 60-90 minutes. High engagement in this window expands distribution; low engagement suppresses it. The protocol below is designed to maximize signal quality during this window.
 
 1. **T+0 min:** publish. Immediately post first comment with tag list and external link (so the post body stays link-free).
-2. **T+5 min:** share post URL into 1-2 high-signal direct chats or WhatsApp groups where warm contacts are likely to engage genuinely. Authenticity matters — one real comment beats five hollow likes.
+2. **T+5 min:** share post URL into 1-2 high-signal direct chats or groups where warm contacts are likely to engage genuinely. Authenticity matters — one real comment beats five hollow likes.
 3. **T+15 min:** check for first comments. Reply to every one substantively within 30 minutes of the comment appearing.
 4. **T+30 min:** if engagement is slow, post a substantive self-reply to your own first comment that adds new information or a question — the new activity can revive the algorithm's attention.
 5. **T+60 min:** engage 3-5 adjacent creators' posts with substantive, on-topic comments (not self-promo, no links). This surfaces your profile to their followers and can pull engagement back to your post via their notification threads.
@@ -1105,19 +1086,19 @@ LinkedIn's algorithm samples a post's engagement rate on a small subset of your 
 
 ---
 
-## The B2B Trojan Horse Funnel (WhatsApp → LinkedIn → Demo)
+## The B2B Trojan Horse Funnel (Rented Channel → Owned Channel → Demo)
 
-*Added 2026-04-26. Codified from the EMBA '16 Alumni pipeline.*
+*Added 2026-04-26. Codified from the tactic of using a highly specific, tactical 1-hour session as a lead magnet.*
 
-**The Goal:** Use a highly specific, tactical 1-hour session (solving a bleeding-neck pain like "the ATS black hole") as a lead magnet to accomplish 5 strategic objectives simultaneously without triggering "sales resistance":
-1. Build a B2B sales pipeline (e.g., xTeamOS).
+**The Goal:** Use a highly specific, tactical 1-hour session (solving a bleeding-neck pain) as a lead magnet to accomplish multiple strategic objectives simultaneously without triggering "sales resistance":
+1. Build a B2B sales pipeline.
 2. Seed a Friends & Family funding round (high-net-worth individuals).
 3. Recruit high-caliber beta testers for new products.
 4. Establish a competitive intel network.
-5. Migrate rented audience (WhatsApp) into owned audience (LinkedIn Group).
+5. Migrate rented audience (chat groups, borrowed community) into owned audience (owned channel or LinkedIn Group).
 
 **The Execution Playbook:**
-1. **The Hook (Rented Land / WhatsApp):** Focus 100% on *their* immediate pain point. Do NOT mention funding, competitor analysis, or B2B platforms. The hook must be pure value. *Example: "I'm hosting a 1-hr session to teach you how to beat the ATS. +1 if interested."* 
-2. **The Vortex (Owned Land / LinkedIn):** Do not spam the same long pitch across multiple WhatsApp groups. Post the full details in your owned LinkedIn Group, and drop short "teasers" in the secondary WhatsApp groups driving them to the LinkedIn link. This centralizes all "+1s" on LinkedIn, pumping the algorithm and pulling people into your owned audience.
-3. **The Trap (The 1-Hour Session):** Deliver massive value on the promised topic. But design the "Run of Show" so the underlying engine (e.g., Co-Dialectic, xOS) is the hero. The goal is for them to say, *"Wait, my company needs this for our teams,"* without you ever explicitly selling it.
-4. **The Post-Session CTA:** Only *after* you have blown their minds in the session do you drop the link to join your private LinkedIn community. One CTA at a time.
+1. **The Hook (Rented Land):** Focus 100% on *their* immediate pain point. Do NOT mention funding, competitor analysis, or B2B platforms. The hook must be pure value. *Example: "I'm hosting a 1-hr session to teach you how to beat the ATS. +1 if interested."*
+2. **The Vortex (Owned Land):** Do not spam the same long pitch across multiple rented channels. Post the full details in your owned channel or community, and drop short "teasers" in the secondary channels driving them to the owned link. This centralizes all "+1s" on owned land, pumping the algorithm and pulling people into your owned audience.
+3. **The Trap (The 1-Hour Session):** Deliver massive value on the promised topic. But design the run-of-show so the underlying engine (your product, framework, methodology) is the hero. The goal is for them to say, *"Wait, my company needs this for our teams,"* without you ever explicitly selling it.
+4. **The Post-Session CTA:** Only *after* you have blown their minds in the session do you drop the link to join your private community or owned channel. One CTA at a time.

@@ -51,7 +51,7 @@ TERMINAL_STATUSES = {"DEAD", "SKIPPED", "REJECTED"}
 
 
 def _default_tracker() -> Path:
-    home = os.environ.get("CAREER_HOME", os.environ.get("CAREER_OS_HOME", str(Path.home() / "anand-career-os")))
+    home = os.environ.get("CAREER_HOME") or os.environ.get("CAREER_OS_HOME") or ""
     return Path(home) / "brain" / "projects" / "job-search" / "job-pipeline-match-tracker.json"
 
 

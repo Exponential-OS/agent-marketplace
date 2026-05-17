@@ -1,3 +1,5 @@
+<!-- product-vs-solution: example -->
+<!-- this file contains project rules authored by the original developer. Personal references are provenance context, not runtime data. -->
 # Career OS Plugin — Project Rules
 
 ## What This Is

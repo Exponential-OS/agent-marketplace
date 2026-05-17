@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# product-vs-solution: example — historical migration script (one-time use), Anand-personal references are provenance.
 # Migration v0.25.1 → v0.26.0
 #
 # `outreach-fact-check` skill added — read-only T4 pre-flight verifier for

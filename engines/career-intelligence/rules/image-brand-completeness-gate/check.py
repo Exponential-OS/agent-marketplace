@@ -18,6 +18,7 @@ Exit codes: 0=PASS, 1=BLOCK, 2=WARN
 from __future__ import annotations
 
 import json
+import os
 import pathlib
 import re
 import sys
@@ -28,11 +29,13 @@ MIN_SVG_CHILDREN = 5
 
 SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
 
-# Default brand-spec search path (relative to this gate, then SDE skills directory)
-DEFAULT_BRAND_SPEC_PATHS = [
-    SCRIPT_DIR.parent.parent / "skills" / "social-distribution-engine" / "brand-spec.json",
-    SCRIPT_DIR / "brand-spec.json",
-]
+
+def _career_home_brand_spec() -> pathlib.Path | None:
+    """Resolve brand-spec path from $CAREER_HOME. Returns None if env var not set."""
+    raw = os.environ.get("CAREER_HOME") or os.environ.get("CAREER_OS_HOME")
+    if not raw:
+        return None
+    return pathlib.Path(raw).expanduser() / "brain" / "social-distribution-engine" / "brand-spec.json"
 
 
 def _load_brand_spec(override: Optional[str]) -> dict:
@@ -41,9 +44,9 @@ def _load_brand_spec(override: Optional[str]) -> dict:
         if p.exists():
             return json.loads(p.read_text())
         return {}
-    for p in DEFAULT_BRAND_SPEC_PATHS:
-        if p.exists():
-            return json.loads(p.read_text())
+    career_home_path = _career_home_brand_spec()
+    if career_home_path and career_home_path.exists():
+        return json.loads(career_home_path.read_text())
     return {}
 
 
@@ -200,7 +203,7 @@ def main() -> int:
                 "passed": passed,
                 "remediation": (
                     "Fix all BLOCK issues before this campaign ships. "
-                    "Every image needs: (1) full brand signature (@thewhyman + thewhyman.com), "
+                    "Every image needs: (1) full brand signature (handles from brand-spec.json), "
                     "(2) substantive SVG visual (≥5 elements)."
                 ),
             }, indent=2))

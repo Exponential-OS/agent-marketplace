@@ -9,7 +9,10 @@ set -euo pipefail
 
 DAYS="${1:-7}"
 LOG="$HOME/.career-os-enforcement-log.jsonl"
-CAREER_HOME="${CAREER_HOME:-$HOME/anand-career-os}"
+if [[ -z "${CAREER_HOME:-}" ]]; then
+  echo "WARN — CAREER_HOME env var not set. Run career-intelligence-onboarding first."
+  exit 2
+fi
 CAMPAIGNS_DIR="$CAREER_HOME/brain/social-distribution-engine/campaigns"
 
 if [[ ! -f "$LOG" ]]; then

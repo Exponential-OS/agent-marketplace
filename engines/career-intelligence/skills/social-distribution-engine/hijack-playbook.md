@@ -3,10 +3,12 @@ name: Comment Hijack Playbook
 type: strategy
 scope: distribution-engine
 created: 2026-05-07
-updated: 2026-05-07
+updated: 2026-05-17
 status: active
-related: content-flywheel.md, ~/cyborg/rules/comment-hijack-gate/, ~/cyborg/distribution-engine/detect.py
+customer-config: "$CAREER_HOME/brain/social-distribution-engine/hijack-examples.md"
+related: content-flywheel.md
 ---
+
 
 # Comment / Article Hijack Playbook
 
@@ -15,9 +17,9 @@ that drives traffic to your hub. Spokes in the P16 hub-and-spoke flywheel.
 
 ## Enforcement gate
 
-Before any hijack comment posts, run:
+Before any hijack comment posts, run the comment-hijack gate from the installed plugin:
 ```
-python3 ~/cyborg/rules/comment-hijack-gate/HOW.py '{
+python3 $PLUGIN_RULES/comment-hijack-gate/HOW.py '{
   "platform": "linkedin",
   "target_post_url": "...",
   "target_post_age_hours": 18,
@@ -32,10 +34,10 @@ Exit 0 = safe to post. Exit 1 = blocked with remediation.
 
 ## Target Selection Criteria
 
-Run `detect.py` first — it scores all signals and returns HIJACK/MONITOR/SKIP.
+Run `$PLUGIN_RULES/detect.py` first — it scores all signals and returns HIJACK/MONITOR/SKIP.
 Manual thresholds below are for triage when the script isn't available.
 
-### Minimum thresholds (calibrated 2026-05-07 from Karpathy/Reid Hoffman hijacks)
+### Minimum thresholds
 | Signal | LinkedIn | X/Twitter | Notes |
 |--------|----------|-----------|-------|
 | Follower count | >50k | >500k | Below these, reach doesn't justify writing time |
@@ -102,16 +104,19 @@ Shorter comment (2-3 sentences) is fine here — signal/effort ratio matters mor
 
 ---
 
-## Logged Hijacks (fill in as campaign runs)
+## Logged Hijacks
+
+Customer-specific logged hijacks live in `$CAREER_HOME/brain/social-distribution-engine/hijack-examples.md`.
+
+Template for each row:
 
 | Date | Person | Platform | Post URL | Hub URL | Engagement delta | Outcome |
 |------|--------|----------|----------|---------|-----------------|---------|
-| 2026-05-06 | Karpathy | X | https://x.com/thewhyman/status/2052187167469035832 | x_thread_url | TBD | LIVE |
-| 2026-05-06 | Reid Hoffman | LinkedIn | https://www.linkedin.com/feed/update/urn:li:activity:7456009597926027264?commentUrn=... | linkedin_hub_post_url | TBD | LIVE |
+| YYYY-MM-DD | Name | LinkedIn/X | post_url | hub_url | TBD | LIVE/PENDING |
 
 ---
 
-## Completed
-- [x] Standalone_value LLM judge built in `~/cyborg/rules/comment-hijack-gate/check.py` Gate 4 (task #2)
-- [x] Calibrated thresholds from Karpathy/Reid Hoffman hijacks (task #3)
-- [x] Built `~/cyborg/distribution-engine/detect.py` for automated target scoring (task #4)
+## Implementation Status
+- [x] Standalone_value LLM judge built in comment-hijack-gate (Gate 4)
+- [x] Minimum thresholds calibrated from real hijack data
+- [x] `detect.py` built for automated target scoring

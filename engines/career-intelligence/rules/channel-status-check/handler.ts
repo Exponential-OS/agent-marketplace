@@ -11,8 +11,8 @@ import { fileURLToPath } from "url";
 const SLUG = "channel-status-check";
 const LOG_PATH = join(homedir(), ".career-os-enforcement-log.jsonl");
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
-const CAREER_HOME = process.env.CAREER_HOME ?? process.env.CAREER_OS_HOME ?? join(homedir(), "anand-career-os");
-const DEFAULT_CHANNEL_DIR = join(CAREER_HOME, "brain/social-distribution-engine/social-channel-directory.md");
+const CAREER_HOME = process.env.CAREER_HOME ?? process.env.CAREER_OS_HOME ?? null;
+const DEFAULT_CHANNEL_DIR = CAREER_HOME ? join(CAREER_HOME, "brain/social-distribution-engine/social-channel-directory.md") : null;
 
 interface Spoke {
   id?: string;

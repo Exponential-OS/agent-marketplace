@@ -13,14 +13,15 @@
       "type": "object",
       "required": ["id", "title", "ship_date", "folder", "status"],
       "properties": {
-        "id":          { "type": "string", "description": "Slug: NN-topic-YYYY-MM-DD" },
-        "title":       { "type": "string" },
-        "subtitle":    { "type": "string" },
-        "series":      { "type": "string" },
-        "series_part": { "type": "integer" },
-        "ship_date":   { "type": "string", "format": "date" },
-        "folder":      { "type": "string", "description": "Absolute or repo-relative path to campaign folder" },
-        "status":      { "type": "string", "enum": ["draft", "ready_for_review", "reviewed", "live", "complete"] }
+        "id":            { "type": "string", "description": "Slug: NN-topic-YYYY-MM-DD" },
+        "title":         { "type": "string" },
+        "subtitle":      { "type": "string" },
+        "initiative_id": { "type": "string", "description": "Parent initiative slug (matches initiative.id in initiative.json). Campaigns SHOULD belong to an initiative; standalone campaigns can omit this for backwards compatibility but campaign-dashboard will surface them under 'unaffiliated'." },
+        "series":        { "type": "string", "description": "Deprecated: use initiative_id instead. Retained for backwards compatibility." },
+        "series_part":   { "type": "integer", "description": "Deprecated: use initiative.campaigns[] order instead." },
+        "ship_date":     { "type": "string", "format": "date" },
+        "folder":        { "type": "string", "description": "Absolute or repo-relative path to campaign folder" },
+        "status":        { "type": "string", "enum": ["draft", "ready_for_review", "reviewed", "live", "complete"] }
       }
     },
 

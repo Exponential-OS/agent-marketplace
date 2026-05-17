@@ -30,7 +30,7 @@ from datetime import date, timedelta
 
 LIVE_STATUSES = {"published", "live", "sent"}
 DEFAULT_STALE_DAYS = 7
-CAREER_HOME_DEFAULT = str(pathlib.Path.home() / "anand-career-os")
+CAREER_HOME_DEFAULT = os.environ.get("CAREER_HOME") or os.environ.get("CAREER_OS_HOME") or ""
 
 
 def is_published(campaign):

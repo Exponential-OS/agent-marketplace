@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# product-vs-solution: example — historical migration script (one-time use), Anand-personal references are provenance.
 # Migration: v0.4.0 → v0.5.0
 # Description: Clean up session-branch artifacts, adopt direct-to-main strategy
 # This script is idempotent — safe to run multiple times.

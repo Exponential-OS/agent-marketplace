@@ -1,3 +1,5 @@
+<!-- product-vs-solution: example -->
+<!-- this document describes memory access patterns developed during original deployment. Personal path references are provenance/author context, not runtime data. -->
 <!-- schema: v2.0 -->
 # Memory Access (v0.24.0+) — File-only, post-substrate-rollback (2026-04-26)
 

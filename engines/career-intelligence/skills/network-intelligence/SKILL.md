@@ -323,7 +323,7 @@ relationship_tier: former-colleague-warm
 conversation_history:
   last_message_sent: 2019-06-19
   last_message_received: 2019-06-19
-  last_message_summary: "Congrats on new role / Thanks Anand"
+  last_message_summary: "Congrats on new role / Thanks for reaching out"
   platform: linkedin
 ```
 
@@ -419,7 +419,7 @@ cohort:
 conversation_history:
   last_message_sent: 2019-06-19
   last_message_received: 2019-06-19
-  last_message_summary: "Congrats on new role / Thanks Anand"
+  last_message_summary: "Congrats on new role / Thanks for reaching out"
   platform: linkedin
 ---
 ```

@@ -274,7 +274,7 @@ def render_summary(pipeline, tracker_data):
 
 def main():
     parser = argparse.ArgumentParser(description="Pipeline view — formatted output from JSON sources")
-    parser.add_argument("--career-home", default=os.path.expanduser("~/anand-career-os"))
+    parser.add_argument("--career-home", default=os.environ.get("CAREER_HOME") or os.environ.get("CAREER_OS_HOME") or "")
     parser.add_argument("--section", choices=["all", "active", "referrals", "applied", "queue", "summary"],
                         default="all")
     parser.add_argument("--format", choices=["text", "json"], default="text")

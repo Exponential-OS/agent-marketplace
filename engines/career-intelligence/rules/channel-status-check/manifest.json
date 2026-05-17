@@ -6,11 +6,11 @@
   "updated": "2026-05-07",
   "product_home": "career-os-plugin",
   "description": "Pre-distribution gate. Reads brain/social-distribution-engine/social-channel-directory.md (the Global Channel Value Directory) and BLOCKs distribution to any BANNED subreddit, community, or group. WARNs on Low ROI channels. Instance-portable via CAREER_OS_HOME env var.",
-  "litmus": "Run HOW.py with campaign_file — exit 0=no banned channels, exit 1=BLOCK (banned channel targeted), exit 2=WARN (low ROI or missing dir).",
+  "litmus": "Run HOW.py with campaign_file \u2014 exit 0=no banned channels, exit 1=BLOCK (banned channel targeted), exit 2=WARN (low ROI or missing dir).",
   "files": {
-    "HOW.py": "Enforcement gate — check all campaign spokes against channel directory",
-    "AUDIT.py": "Compliance audit — detect past banned-channel distribution attempts",
-    "WATCH.py": "Evolution scanner — signal stale_templates if block rate exceeds 20%"
+    "HOW.py": "Enforcement gate \u2014 check all campaign spokes against channel directory",
+    "AUDIT.py": "Compliance audit \u2014 detect past banned-channel distribution attempts",
+    "WATCH.py": "Evolution scanner \u2014 signal stale_templates if block rate exceeds 20%"
   },
   "callers": [
     "skills/social-distribution-engine/validate-campaign.py",
@@ -18,5 +18,7 @@
   ],
   "channel_directory": "$CAREER_OS_HOME/brain/social-distribution-engine/social-channel-directory.md",
   "origin_incident": "2026-04-23: r/ClaudeAI and r/LocalLLaMA were included in campaign spokes despite being banned. Gate built to prevent distribution to banned channels.",
-  "dispatch_slug": "channel-status-check"
+  "dispatch_slug": "channel-status-check",
+  "product_vs_solution_marker": "example",
+  "_product_vs_solution_marker": "product-vs-solution: example \u2014 origin docs / authorship attribution"
 }

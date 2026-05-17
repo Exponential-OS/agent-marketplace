@@ -13,9 +13,11 @@ const LOG_PATH = join(homedir(), ".career-os-enforcement-log.jsonl");
 const CAREER_HOME =
   process.env.CAREER_HOME ??
   process.env.CAREER_OS_HOME ??
-  join(homedir(), "anand-career-os");
+  null;
 
-const DEFAULT_CANONICAL = join(CAREER_HOME, "brain", "identity", "experience-history.md");
+const DEFAULT_CANONICAL = CAREER_HOME
+  ? join(CAREER_HOME, "brain", "identity", "experience-history.md")
+  : null;
 
 // Claim patterns — heuristic, high-recall
 const PATTERNS: Array<{ kind: string; re: RegExp }> = [

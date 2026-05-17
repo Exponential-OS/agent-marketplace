@@ -22,9 +22,14 @@ import pathlib
 import sys
 import uuid
 
-_CAREER_HOME = pathlib.Path(
-    os.environ.get("CAREER_HOME", os.environ.get("CAREER_OS_HOME", str(pathlib.Path.home() / "anand-career-os")))
-)
+_CAREER_HOME_RAW = os.environ.get("CAREER_HOME") or os.environ.get("CAREER_OS_HOME")
+if not _CAREER_HOME_RAW:
+    print(json.dumps({"verdict": "BLOCK", "reason": "CAREER_HOME env var not set. Run career-intelligence-onboarding first."}), file=sys.stderr)
+    sys.exit(1)
+_CAREER_HOME = pathlib.Path(_CAREER_HOME_RAW).expanduser()
+if not _CAREER_HOME.is_dir():
+    print(json.dumps({"verdict": "BLOCK", "reason": f"CAREER_HOME={_CAREER_HOME} does not exist or is not a directory."}), file=sys.stderr)
+    sys.exit(1)
 DEFAULT_SIGNALS_FILE = _CAREER_HOME / "brain/social-distribution-engine/signals/local-signals.jsonl"
 SIGNAL_VERSION = "1.0"
 

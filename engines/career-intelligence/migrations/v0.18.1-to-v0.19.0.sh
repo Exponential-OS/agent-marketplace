@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# product-vs-solution: example — historical migration script (one-time use), Anand-personal references are provenance.
 # Migration v0.18.1 → v0.19.0
 #
 # Interview-prep filename convention normalization + legacy ingest.

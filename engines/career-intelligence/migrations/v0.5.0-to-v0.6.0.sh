@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# product-vs-solution: example — historical migration script (one-time use), Anand-personal references are provenance.
 # Migration: v0.5.0 → v0.6.0
 # Description: Flag organize skill for first run.
 # New in v0.6.0: organize skill, migration test coverage, P6/P9 fixes.

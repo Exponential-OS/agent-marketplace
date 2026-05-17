@@ -19,7 +19,7 @@ Input JSON:
     }
 
     channel_dir_file defaults to $CAREER_HOME/brain/social-distribution-engine/social-channel-directory.md
-    CAREER_HOME defaults to ~/anand-career-os
+    CAREER_HOME must be set via environment variable
 
 Exit:
     0 = PASS  (no banned or low ROI channels targeted)
@@ -103,9 +103,10 @@ def main():
     # Resolve channel directory path
     channel_dir_file = ctx.get("channel_dir_file", "")
     if not channel_dir_file:
-        career_home = os.environ.get("CAREER_HOME", os.environ.get("CAREER_OS_HOME",
-                                         str(pathlib.Path.home() / "anand-career-os")))
-        channel_dir_file = str(pathlib.Path(career_home) /
+        career_home_raw = os.environ.get("CAREER_HOME") or os.environ.get("CAREER_OS_HOME")
+        if not career_home_raw:
+            out(2, "warn", [], [], "channel_dir_file not provided and CAREER_HOME env var not set.")
+        channel_dir_file = str(pathlib.Path(career_home_raw).expanduser() /
                                 "brain/social-distribution-engine/social-channel-directory.md")
 
     channel_dir_path = pathlib.Path(channel_dir_file)

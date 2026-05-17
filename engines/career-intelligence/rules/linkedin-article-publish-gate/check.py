@@ -37,6 +37,27 @@ import sys
 SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
 PROMPT_PATH = SCRIPT_DIR / "PROMPT.md"
 
+
+def _load_honey_pot_domain() -> str:
+    """Load the customer-configured honey-pot domain from $CAREER_HOME/brain/social-distribution-engine/brand-spec.json.
+    Falls back to 'substack.com' (the generic platform) if not set."""
+    career_home = os.environ.get("CAREER_HOME") or os.environ.get("CAREER_OS_HOME")
+    if not career_home:
+        return "substack.com"
+    try:
+        brand_spec_path = pathlib.Path(career_home).expanduser() / "brain" / "social-distribution-engine" / "brand-spec.json"
+        if brand_spec_path.is_file():
+            with open(brand_spec_path) as f:
+                spec = json.load(f)
+            return spec.get("honey_pot_domain", "substack.com")
+    except Exception:
+        pass
+    return "substack.com"
+
+
+HONEY_POT_DOMAIN = _load_honey_pot_domain()
+HONEY_POT_PATTERN = re.escape(HONEY_POT_DOMAIN)
+
 PLACEHOLDER_PATTERNS = [
     r"REPLACE_WITH_\w+",
     r"\[Part\s+\d[^\]]*\]\(#\)",       # [Part N →](#) — unresolved anchor
@@ -51,7 +72,7 @@ BACKLINK_PATTERNS = [
 
 CTA_PATTERNS = [
     r"substack\.com",
-    r"thewhyman\.blog",
+    HONEY_POT_PATTERN,  # customer-configured honey-pot domain (from $CAREER_HOME/brain/social-distribution-engine/brand-spec.json)
     r"github\.com/Exponential-OS",
 ]
 
@@ -63,7 +84,7 @@ SOURCE_ATTRIBUTION_PATTERNS = [
     r"cross.?posted from",
     r"first published on",
     r"this is an adaptation",
-    r"thewhyman\.blog",    # any link to the source counts
+    HONEY_POT_PATTERN,  # customer-configured honey-pot domain (from $CAREER_HOME/brain/social-distribution-engine/brand-spec.json)    # any link to the source counts
     r"substack\.com",
 ]
 
@@ -154,7 +175,7 @@ def main() -> int:
             ),
             "remediation": (
                 "Add an attribution line within the first paragraph, e.g.: "
-                "'Adaptation of [title] — originally published on thewhyman.blog.' "
+                "'Adaptation of [title] — originally published on " + HONEY_POT_DOMAIN + ".' "
                 "Include the Substack post URL so readers can find the original."
             ),
         }))
@@ -194,7 +215,7 @@ def main() -> int:
         print(json.dumps({
             "verdict": "BLOCK",
             "gate": "cta_check",
-            "reason": "No CTA found. Article must include at least one of: Substack URL (substack.com / thewhyman.blog) OR Co-Dialectic install link (github.com/Exponential-OS).",
+            "reason": "No CTA found. Article must include at least one of: Substack URL (substack.com or your configured honey-pot) OR Co-Dialectic install link (github.com/Exponential-OS).",
             "remediation": "Add a CTA section before the closing. Include either the Substack link for the full piece or the Co-Dialectic install link to drive action.",
         }))
         return 1

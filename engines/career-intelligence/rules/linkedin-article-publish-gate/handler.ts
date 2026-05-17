@@ -33,6 +33,27 @@ const LOG_PATH = join(homedir(), ".career-os-enforcement-log.jsonl");
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const PROMPT_PATH = join(SCRIPT_DIR, "PROMPT.md");
 
+function loadHoneyPotDomain(): string {
+  // Load customer-configured honey-pot domain from $CAREER_HOME/brain/social-distribution-engine/brand-spec.json.
+  // Falls back to "substack.com" (generic platform) if not set.
+  const careerHome = process.env.CAREER_HOME ?? process.env.CAREER_OS_HOME;
+  if (!careerHome) return "substack.com";
+  const specPath = join(careerHome.replace(/^~/, homedir()), "brain", "social-distribution-engine", "brand-spec.json");
+  try {
+    if (existsSync(specPath)) {
+      const spec = JSON.parse(readFileSync(specPath, "utf8")) as Record<string, unknown>;
+      const domain = spec["honey_pot_domain"];
+      if (typeof domain === "string" && domain.length > 0) return domain;
+    }
+  } catch {
+    /* fall through to default */
+  }
+  return "substack.com";
+}
+
+const HONEY_POT_DOMAIN = loadHoneyPotDomain();
+const HONEY_POT_PATTERN = new RegExp(HONEY_POT_DOMAIN.replace(/\./g, "\\."), "i");
+
 const PLACEHOLDER_PATTERNS: RegExp[] = [
   /REPLACE_WITH_\w+/,
   /\[Part\s+\d[^\]]*\]\(#\)/,       // [Part N →](#) — unresolved anchor
@@ -47,7 +68,7 @@ const BACKLINK_PATTERNS: RegExp[] = [
 
 const CTA_PATTERNS: RegExp[] = [
   /substack\.com/i,
-  /thewhyman\.blog/i,
+  HONEY_POT_PATTERN, // customer-configured honey-pot domain
   /github\.com\/Exponential-OS/i,
 ];
 
@@ -220,7 +241,7 @@ async function main(): Promise<void> {
         verdict: "BLOCK",
         gate: "cta_check",
         reason:
-          "No CTA found. Article must include at least one of: Substack URL (substack.com / thewhyman.blog) OR Co-Dialectic install link (github.com/Exponential-OS).",
+          "No CTA found. Article must include at least one of: Substack URL (substack.com or your honey-pot) OR Co-Dialectic install link (github.com/Exponential-OS).",
         remediation:
           "Add a CTA section before the closing. Include either the Substack link for the full piece or the Co-Dialectic install link to drive action.",
       },

@@ -74,7 +74,7 @@ After they answer (or press Enter for default):
    ```
 4. Proceed to Phase 1.
 
-**Default path for new users:** `~/career-os` (NOT `~/anand-career-os` — that is Anand Vallamsetla's personal workspace).
+**Default path for new users:** `~/career-os` (do not use personal workspace paths as defaults).
 
 ---
 
@@ -82,7 +82,7 @@ After they answer (or press Enter for default):
 
 Ask the following questions ONE AT A TIME. Wait for each answer before asking the next. Do not batch.
 
-**Q1:** "What's your full name and the brand name you use online? (e.g., 'Anand Vallamsetla / The Why Man')"
+**Q1:** "What's your full name and the brand name you use online? (e.g., 'Alex Chen / The Product Strategist')"
 
 **Q2:** "In 2-3 sentences: what do you do, who do you do it for, and what makes you different? This becomes your primary brand statement."
 
@@ -184,4 +184,4 @@ The 4 files are local to the user's machine and `$CAREER_HOME` directory. They a
 - **User skips a question:** Ask again with context ("This becomes your primary brand statement — it's what every future draft is anchored to. Even a rough version is better than leaving it blank.")
 - **User doesn't know their subreddits yet:** Leave `social-channel-directory.md` with placeholder rows and note: "Update this before your first Reddit spoke post — Gate 2 will block unknown channels."
 - **Files already exist:** Show a diff of what would change. Ask: "Overwrite, merge, or skip?" Never silently overwrite.
-- **$CAREER_HOME not set:** Phase 0 handles this — ask for path and create directory before the interview starts. Default is `~/career-os` for new users. Never default to `~/anand-career-os` (that is Anand Vallamsetla's personal workspace, not a template path).
+- **$CAREER_HOME not set:** Phase 0 handles this — ask for path and create directory before the interview starts. Default is `~/career-os` for new users. Never default to a personal workspace path.

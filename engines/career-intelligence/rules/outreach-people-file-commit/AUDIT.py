@@ -91,8 +91,8 @@ def main() -> int:
             "warn_entries": warn_summaries,
             "reasons": [
                 f"{len(warned)} outreach actions updated people files but git commit failed.",
-                "These changes may be uncommitted. Run: git -C ~/anand-career-os status to verify.",
-                "Commit manually: git -C ~/anand-career-os add brain/network/people/ && git -C ~/anand-career-os commit -m 'fix: recover uncommitted outreach state'"
+                "These changes may be uncommitted. Run: git -C $CAREER_HOME status to verify.",
+                "Commit manually: git -C $CAREER_HOME add brain/network/people/ && git -C $CAREER_HOME commit -m 'fix: recover uncommitted outreach state'"
             ]
         }))
         return 1

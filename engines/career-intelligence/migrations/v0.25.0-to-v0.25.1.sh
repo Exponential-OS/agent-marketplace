@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# product-vs-solution: example — historical migration script (one-time use), Anand-personal references are provenance.
 # Migration v0.25.0 → v0.25.1
 #
 # Patch: fix(hooks): `|| true` on python pipeline so `set -e` doesn't kill

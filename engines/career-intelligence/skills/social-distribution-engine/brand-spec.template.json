@@ -1,0 +1,31 @@
+{
+  "_comment": "Template — do NOT edit here. Customer config lives at $CAREER_HOME/brain/social-distribution-engine/brand-spec.json. Copy this template during onboarding and fill in your values.",
+  "handles": {
+    "social_handle": "{{SOCIAL_HANDLE}}",
+    "personal_name": "{{PERSONAL_NAME}}",
+    "personal_site": "{{PERSONAL_SITE}}",
+    "honey_pot": "{{HONEY_POT}}",
+    "company": "{{COMPANY}}",
+    "company_alt": "{{COMPANY_ALT}}",
+    "github": "{{GITHUB}}"
+  },
+  "image_requirements": {
+    "required_in_all": [
+      "{{SOCIAL_HANDLE}}",
+      "{{PERSONAL_SITE}}"
+    ],
+    "required_in_cta": [
+      "{{HONEY_POT}}"
+    ],
+    "required_in_company_context": [
+      "{{COMPANY}}"
+    ],
+    "bottom_bar_format": "{{PERSONAL_NAME}} · {{SOCIAL_HANDLE}}  |  {{HONEY_POT}} · {{COMPANY}}"
+  },
+  "platform_notes": {
+    "instagram": "All slides: {{SOCIAL_HANDLE}} + {{PERSONAL_SITE}}. CTA slide: {{HONEY_POT}}.",
+    "linkedin": "Hub and article share: {{PERSONAL_SITE}} + {{SOCIAL_HANDLE}}. No external link in body.",
+    "x": "Card image: {{PERSONAL_SITE}} + {{SOCIAL_HANDLE}}.",
+    "substack": "Cover: {{PERSONAL_SITE}} + {{HONEY_POT}} (this IS the honey pot)."
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "id": "{{INITIATIVE_SLUG}}",
+  "title": "{{INITIATIVE_TITLE}}",
+  "tagline": "{{ONE_SENTENCE_THESIS}}",
+  "audience": {
+    "primary": "{{PRIMARY_AUDIENCE}}",
+    "secondary": "{{SECONDARY_AUDIENCE_OR_EMPTY}}",
+    "exclude": "{{NOT_FOR_OR_EMPTY}}"
+  },
+  "outcome_goals": [
+    {
+      "metric": "{{METRIC_1_NAME}}",
+      "target": "{{METRIC_1_TARGET}}",
+      "baseline": "{{METRIC_1_BASELINE}}",
+      "current": ""
+    }
+  ],
+  "started": "{{START_DATE_YYYY_MM_DD}}",
+  "expected_end": "{{END_DATE_YYYY_MM_DD}}",
+  "status": "planning",
+  "channels": {
+    "hub": "{{HUB_PLATFORM_FROM_BRAND_SPEC}}",
+    "honey_pot": "{{HONEY_POT_PLATFORM_FROM_BRAND_SPEC}}",
+    "spokes": []
+  },
+  "campaigns": [],
+  "kpis_rollup": {
+    "campaigns_shipped": 0,
+    "spokes_live": 0,
+    "impressions_total": 0,
+    "engagements_total": 0,
+    "conversions_total": 0,
+    "last_updated": ""
+  },
+  "notes": ""
+}

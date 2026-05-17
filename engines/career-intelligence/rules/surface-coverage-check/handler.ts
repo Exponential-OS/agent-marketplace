@@ -114,7 +114,10 @@ async function main() {
 
   let handlesFile = ctx.handles_file || "";
   if (!handlesFile) {
-    const careerHome = process.env.CAREER_HOME || process.env.CAREER_OS_HOME || `${process.env.HOME}/anand-career-os`;
+    const careerHome = process.env.CAREER_HOME || process.env.CAREER_OS_HOME || null;
+    if (!careerHome) {
+      out(2, "warn", [], [], "handles_file not provided and CAREER_HOME env var not set.");
+    }
     handlesFile = `${careerHome}/brain/identity/handles.md`;
   }
 
