@@ -25,8 +25,8 @@
       "platform": "xOS",
       "license": "Proprietary",
       "source": "./engines/co-dialectic",
-      "description": "Co-Dialectic v4.14.0 - SURVIVAL LAYER. UserPromptSubmit hook now reads ~/.codialectic/state.json on every turn + statusline.sh renders codi state in Claude Code status bar. Codi no longer dies on compaction \u2014 persistent state file + hook config survive context drops. Other users can install + see codi alive in their IDE status bar without depending on AI to remember it is active.",
-      "version": "4.14.0",
+      "description": "Co-Dialectic v4.14.1 - SURVIVAL LAYER complete. Auto-installs state.json + statusLine wiring on first SessionStart (idempotent). New customers get the full survival experience zero-friction.",
+      "version": "4.14.1",
       "category": "ai-runtime",
       "homepage": "https://github.com/Exponential-OS/prompt-engineering-in-action"
     },
