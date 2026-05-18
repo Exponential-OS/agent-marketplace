@@ -1,8 +1,8 @@
 {
   "name": "career-intelligence",
   "platform": "xHumanOS",
-  "version": "0.64.0",
-  "description": "Career Intelligence (xHumanOS) v0.64.0 - Adds confidence-ladder for career irreversibles (ATS submit, LinkedIn DM). Anonymous reads stay playwright (headless OK).",
+  "version": "0.65.0",
+  "description": "Career Intelligence Engine (xHumanOS) v0.65.0 - Adds slash commands (/career-mcp-doctor, /career-mcp-setup) for deterministic typed invocation alongside natural-language triggers. Plugin-namespaced trigger prefix: 'career mcp doctor' / 'career mcp setup <recipe>'. Carries forward: confidence-ladder for career irreversibles (ATS submit, LinkedIn DM); anonymous reads stay playwright.",
   "author": {
     "name": "Anand Vallamsetla"
   },

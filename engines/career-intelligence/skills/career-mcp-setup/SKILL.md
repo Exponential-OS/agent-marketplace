@@ -6,7 +6,7 @@ description: >
   (LinkedIn People tab + DMs) and perplexity (interviewer research). Uses
   browser automation where OAuth is required.
 triggers:
-  - codi mcp setup career
+  - career mcp setup
   - mcp setup
   - install linkedin
   - install browserbase
@@ -38,7 +38,7 @@ The auto-installer detects browserbase quota exhaustion and prompts the customer
 ## Usage
 
 ```
-codi mcp setup career <recipe>
+career mcp setup <recipe>
 ```
 
 Recipes shipped at `recipes/`:
@@ -57,7 +57,7 @@ Recipes shipped at `recipes/`:
 3. Skill opens browser via playwright-ms (or chrome-devtools-mcp if installed).
 4. After human login, skill navigates to API Keys, extracts the key + project ID.
 5. Writes `BROWSERBASE_API_KEY` + `BROWSERBASE_PROJECT_ID` to `~/.codialectic/secrets.env` (chmod 600).
-6. Prints: *"Run `source ~/.codialectic/secrets.env`, restart Claude Code, then `codi mcp doctor`."*
+6. Prints: *"Run `source ~/.codialectic/secrets.env`, restart Claude Code, then `career mcp doctor`."*
 
 For recipes that just need an API key (perplexity), the flow is simpler: navigate, wait for login, extract key, write, done.
 

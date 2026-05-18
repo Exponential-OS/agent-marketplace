@@ -6,8 +6,8 @@ description: >
   or chrome-devtools-mcp), reports which are installed/auth-configured/working/missing,
   and surfaces install commands for each missing one.
 triggers:
-  - codi mcp career
-  - codi mcp doctor career
+  - career mcp doctor
+  - career mcp
   - mcp status
   - mcp doctor
   - check my mcps
@@ -27,7 +27,7 @@ Customer installs career-intelligence@xos, runs `network-intelligence`, hits "to
 
 ## Trigger
 
-`codi mcp doctor career` (or `mcp status`).
+`career mcp doctor` (or `mcp status`).
 
 ## Output
 
@@ -40,8 +40,8 @@ REQUIRED
 
 OPTIONAL
   ◯ browserbase OR chrome-devtools-mcp — for AUTHENTICATED browsing (LinkedIn People tab, DM threads)
-      browserbase (~$39/mo, low setup)  → codi mcp setup browserbase
-      chrome-devtools (free, launcher)  → codi mcp setup chrome-devtools
+      browserbase (~$39/mo, low setup)  → career mcp setup browserbase
+      chrome-devtools (free, launcher)  → career mcp setup chrome-devtools
 
 
 
@@ -62,8 +62,8 @@ OUT OF SCOPE (career-intel does NOT use these)
 
 ## Sub-flows
 
-- `codi mcp doctor career --quick` — skip probe, compare manifest only.
-- `codi mcp doctor career --json` — machine-readable.
+- `career mcp doctor --quick` — skip probe, compare manifest only.
+- `career mcp doctor --json` — machine-readable.
 
 ## Relationship to other skills
 
