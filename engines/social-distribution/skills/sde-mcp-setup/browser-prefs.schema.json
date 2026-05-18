@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "browser-prefs.schema.json",
+  "title": "Per-workflow browser preference",
+  "description": "Lets the customer pick which browser MCP each workflow uses. Setup defaults to browserbase (easy, cloud). Publishing defaults to chrome-devtools-mcp (Chrome Canary, local, visible — user can watch and intervene). After N successful runs of a workflow with chrome-devtools, mcp-doctor surfaces an opt-in suggestion to upgrade that workflow to browserbase.",
+  "version": "1.0.0",
+  "type": "object",
+  "required": ["schema_version", "defaults", "trust_counts", "upgrade_threshold"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0.0" },
+    "defaults": {
+      "type": "object",
+      "description": "Per-workflow browser MCP. Customer-editable. New workflows added here as the plugin evolves.",
+      "additionalProperties": {
+        "type": "string",
+        "enum": ["browserbase", "chrome-devtools-mcp", "playwright-ms"]
+      },
+      "properties": {
+        "mcp_setup":         { "default": "browserbase" },
+        "linkedin_post":     { "default": "chrome-devtools-mcp" },
+        "substack_publish":  { "default": "chrome-devtools-mcp" },
+        "linkedin_article":  { "default": "chrome-devtools-mcp" },
+        "linkedin_dm":       { "default": "chrome-devtools-mcp" },
+        "linkedin_people_tab": { "default": "chrome-devtools-mcp" },
+        "ats_form_submit":   { "default": "chrome-devtools-mcp" },
+        "reddit_post":       { "default": "chrome-devtools-mcp" },
+        "x_post":            { "default": "chrome-devtools-mcp" },
+        "anonymous_web_read":{ "default": "playwright-ms" },
+        "ats_scan":          { "default": "playwright-ms" }
+      }
+    },
+    "trust_counts": {
+      "type": "object",
+      "description": "Successful-run counter per workflow. mcp-doctor increments after each successful action. When count >= upgrade_threshold and default is chrome-devtools-mcp, doctor surfaces a one-time suggestion to graduate to browserbase.",
+      "additionalProperties": { "type": "integer", "minimum": 0 }
+    },
+    "upgrade_threshold": {
+      "type": "integer",
+      "default": 10,
+      "description": "Suggest browserbase upgrade after this many successful chrome-devtools runs of the same workflow."
+    },
+    "user_declined_upgrade": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Workflows where the user explicitly declined the browserbase-upgrade suggestion. Doctor stops asking."
+    }
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "name": "composio-reddit",
+  "provider": "composio",
+  "integration": "reddit",
+  "purpose": "Post to Reddit subreddits via composio HTTP MCP",
+  "prerequisite": "composio-linkedin (or any composio integration that already produced COMPOSIO_API_KEY)",
+  "browser_required": true,
+  "preferred_browser": "browserbase",
+  "fallback_browser": "chrome-devtools-mcp",
+  "env_vars_required_for_setup": ["BROWSERBASE_API_KEY", "COMPOSIO_API_KEY"],
+  "env_vars_produced": ["COMPOSIO_REDDIT_SESSION_ID"],
+  "mcp_url_template": "https://mcp.composio.dev/reddit/${COMPOSIO_REDDIT_SESSION_ID}",
+  "auth_header_template": "X-API-Key: ${COMPOSIO_API_KEY}",
+  "estimated_time_minutes": 3,
+  "steps": [
+    {
+      "id": "check-existing-composio",
+      "action": "env_check",
+      "vars": ["COMPOSIO_API_KEY"],
+      "fail_message": "Run codi mcp setup composio-linkedin first to get a composio account + API key."
+    },
+    {
+      "id": "navigate-composio",
+      "action": "navigate",
+      "url": "https://app.composio.dev/integrations"
+    },
+    {
+      "id": "find-reddit",
+      "action": "act",
+      "instruction": "Find Reddit in the integrations list and click 'Connect'"
+    },
+    {
+      "id": "human-oauth",
+      "action": "wait_for_human",
+      "prompt": "A Reddit OAuth popup opened. Sign in and click 'Allow' to grant composio access to your Reddit account. When redirected back to composio with Reddit shown as connected, type 'continue'."
+    },
+    {
+      "id": "extract-session",
+      "action": "extract",
+      "instruction": "Extract the Reddit connection/session ID from the new integration entry.",
+      "env_var": "COMPOSIO_REDDIT_SESSION_ID"
+    },
+    {
+      "id": "write-env",
+      "action": "write_env",
+      "target": "~/.codialectic/secrets.env",
+      "mode": "0600",
+      "vars": ["COMPOSIO_REDDIT_SESSION_ID"]
+    },
+    {
+      "id": "end-session",
+      "action": "end_session"
+    }
+  ],
+  "warning": "Reddit's API access changed in 2023. Composio integration requires you to have a Reddit account in good standing (not new, not heavily downvoted). Posts via API are subject to Reddit's spam filters — start with a low-volume subreddit you've contributed to organically."
+}

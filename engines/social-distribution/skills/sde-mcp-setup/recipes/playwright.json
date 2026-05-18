@@ -1,0 +1,12 @@
+{
+  "name": "playwright",
+  "purpose": "Content URL resolution check (Gate 4 in campaign-preflight) + anonymous web reads. No auth, fast, low-token.",
+  "required_for_sde": true,
+  "estimated_time_minutes": 0.5,
+  "browser_required": false,
+  "command": "npx -y @playwright/mcp@latest",
+  "manual_install": [
+    "Add to .mcp.json: {\"playwright-ms\": {\"command\": \"npx\", \"args\": [\"-y\", \"@playwright/mcp@latest\"]}}",
+    "First call downloads browser (~200MB). No further config."
+  ]
+}

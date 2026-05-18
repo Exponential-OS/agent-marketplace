@@ -77,14 +77,9 @@ today's date in `YYYY-MM-DD`.
 
 ### Tools / MCP
 
-- **Perplexity MCP** (`mcp__perplexity__perplexity_research` /
-  `perplexity_search`) — primary research tool for live interviewer
-  background. Use `perplexity_research` for VC partners / public CTOs
-  with substantial public footprints; `perplexity_search` for shallow
-  lookups (LinkedIn URL + brief background).
-- **LinkedIn MCP** (`mcp__linkedin-community__get_person_profile`) — when
-  a LinkedIn URL is known or fuzzy-resolvable, fetch structured profile
-  data (current role, prior roles, education).
+- **Playwright MCP** (`mcp__playwright-ms__browser_*`) + Claude's built-in `WebSearch` / `WebFetch` — primary research substrate. Free, fast, low-token. Use `WebSearch` for broad lookups ("VC partner background"), `WebFetch` for specific URLs (blog posts, company sites), and Playwright for JS-rendered pages.
+- **LinkedIn MCP** (`mcp__linkedin-community__get_person_profile`) — when a LinkedIn URL is known or fuzzy-resolvable, fetch structured profile data (current role, prior roles, education).
+- **Perplexity MCP** (`mcp__perplexity__perplexity_research`) — OPTIONAL. If installed (Anand-private setup), prefer it for VC partners / public CTOs with substantial public footprints. Most customers should skip — Playwright + WebSearch covers the same ground at zero cost.
 - **gh CLI** — opens the `kind:prep` GitHub Issue at
   `$CAREER_GITHUB_REPO` linking the dossier.
 

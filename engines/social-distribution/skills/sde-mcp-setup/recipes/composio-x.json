@@ -1,0 +1,17 @@
+{
+  "name": "composio-x",
+  "purpose": "Post to X/Twitter via composio HTTP MCP (NOT enabled by default — LinkedIn-only customers should skip).",
+  "prerequisite": "composio-linkedin",
+  "env_vars_required_for_setup": ["BROWSERBASE_API_KEY", "COMPOSIO_API_KEY"],
+  "env_vars_produced": ["COMPOSIO_X_SESSION_ID"],
+  "mcp_url_template": "https://mcp.composio.dev/x/${COMPOSIO_X_SESSION_ID}",
+  "estimated_time_minutes": 3,
+  "steps": [
+    {"action": "navigate", "url": "https://app.composio.dev/integrations"},
+    {"action": "act", "instruction": "Find X (Twitter) and click Connect"},
+    {"action": "wait_for_human", "prompt": "Sign in to X and click Authorize. Press ENTER when redirected back."},
+    {"action": "extract", "instruction": "Extract the X session/connection ID", "env_var": "COMPOSIO_X_SESSION_ID"},
+    {"action": "write_env", "target": "~/.codialectic/secrets.env", "mode": "0600", "vars": ["COMPOSIO_X_SESSION_ID"]}
+  ],
+  "warning": "X's API rate limits are aggressive on free tier. Composio bumps you into their paid tier for usable throughput."
+}

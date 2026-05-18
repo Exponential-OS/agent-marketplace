@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "defaults": {
+    "mcp_setup":            "browserbase",
+    "linkedin_dm":          "chrome-devtools-mcp",
+    "linkedin_people_tab":  "chrome-devtools-mcp",
+    "ats_form_submit":      "chrome-devtools-mcp",
+    "anonymous_web_read":   "playwright-ms",
+    "ats_scan":             "playwright-ms",
+    "profile_read":         "playwright-ms"
+  },
+  "trust_counts": {
+    "linkedin_dm": 0,
+    "ats_form_submit": 0
+  },
+  "upgrade_threshold": 10,
+  "user_declined_upgrade": []
+}

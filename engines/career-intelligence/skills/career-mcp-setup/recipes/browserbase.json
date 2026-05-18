@@ -1,0 +1,25 @@
+{
+  "name": "browserbase",
+  "purpose": "Hosted browser automation. Use for authenticated LinkedIn People tab + DM threads + Substack publishing.",
+  "required_for_career": "optional — without it, LinkedIn People tab + DM threads won't work. Public profile reads still work via linkedin-community.",
+  "estimated_time_minutes": 3,
+  "browser_required": true,
+  "preferred_browser_for_setup": "playwright (anonymous — we navigate to browserbase.com to get the customer's keys)",
+  "env_vars_produced": ["BROWSERBASE_API_KEY", "BROWSERBASE_PROJECT_ID"],
+  "steps": [
+    {"action": "navigate", "url": "https://www.browserbase.com/sign-up"},
+    {"action": "wait_for_human", "prompt": "Sign up for browserbase (FREE Hobby tier likely sufficient for typical use). Press ENTER when at the dashboard."},
+    {"action": "act", "instruction": "Navigate to Settings → API Keys (or the API section)"},
+    {"action": "extract", "instruction": "Extract the API key", "env_var": "BROWSERBASE_API_KEY"},
+    {"action": "extract", "instruction": "Extract the Project ID (usually visible on the dashboard or in project settings)", "env_var": "BROWSERBASE_PROJECT_ID"},
+    {"action": "write_env", "target": "~/.codialectic/secrets.env", "mode": "0600", "vars": ["BROWSERBASE_API_KEY", "BROWSERBASE_PROJECT_ID"]},
+    {"action": "end_session"}
+  ],
+  "manual_install": [
+    "Sign up at https://www.browserbase.com/sign-up",
+    "From the dashboard, go to API Keys, generate one, copy it",
+    "From project settings, copy the Project ID",
+    "Add to ~/.codialectic/secrets.env: BROWSERBASE_API_KEY=...   BROWSERBASE_PROJECT_ID=...",
+    "Restart Claude Code"
+  ]
+}

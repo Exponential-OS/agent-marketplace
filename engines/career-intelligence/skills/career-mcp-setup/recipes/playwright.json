@@ -1,0 +1,16 @@
+{
+  "name": "playwright",
+  "purpose": "Anonymous web scraping for ATS job listings (Greenhouse, Ashby, Workday). Fast, low-token, no auth required.",
+  "required_for": ["job-search-scheduler"],
+  "estimated_time_minutes": 0.5,
+  "browser_required": false,
+  "command": "npx -y @playwright/mcp@latest",
+  "env_vars_required": [],
+  "first_use_note": "Playwright downloads its browser on first run (~200MB). Subsequent calls are instant.",
+  "manual_install": [
+    "Ensure node + npx are installed.",
+    "Add to .mcp.json: {\"playwright-ms\": {\"command\": \"npx\", \"args\": [\"-y\", \"@playwright/mcp@latest\"]}}",
+    "First MCP call triggers browser download. No further config."
+  ],
+  "alternatives": "If you need authenticated browsing too (LinkedIn People tab, in-app DM threads), install browserbase or chrome-devtools-mcp ALONGSIDE playwright — they coexist."
+}

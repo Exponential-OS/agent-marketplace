@@ -1,0 +1,90 @@
+{
+  "name": "composio-linkedin",
+  "provider": "composio",
+  "integration": "linkedin",
+  "purpose": "Publish to LinkedIn (posts + articles) via composio HTTP MCP",
+  "browser_required": true,
+  "preferred_browser": "browserbase",
+  "fallback_browser": "chrome-devtools-mcp",
+  "env_vars_required_for_setup": ["BROWSERBASE_API_KEY"],
+  "env_vars_produced": ["COMPOSIO_API_KEY", "COMPOSIO_SESSION_ID"],
+  "mcp_url_template": "https://mcp.composio.dev/linkedin/${COMPOSIO_SESSION_ID}",
+  "auth_header_template": "X-API-Key: ${COMPOSIO_API_KEY}",
+  "estimated_time_minutes": 5,
+  "steps": [
+    {
+      "id": "navigate-composio",
+      "action": "navigate",
+      "url": "https://app.composio.dev/login",
+      "comment": "Composio's sign-up / login page"
+    },
+    {
+      "id": "human-login",
+      "action": "wait_for_human",
+      "prompt": "A browser opened to composio.dev. Sign up (free tier is fine) or sign in. When you see the dashboard, type 'continue'."
+    },
+    {
+      "id": "go-to-api-keys",
+      "action": "act",
+      "instruction": "Click the user menu (top right) and navigate to API Keys"
+    },
+    {
+      "id": "create-key",
+      "action": "act",
+      "instruction": "Click 'Create new API key', name it 'codi-social-distribution', and submit"
+    },
+    {
+      "id": "extract-api-key",
+      "action": "extract",
+      "instruction": "Extract the newly-created API key value. It typically starts with 'comp_' or similar. Capture the raw string only.",
+      "env_var": "COMPOSIO_API_KEY",
+      "validation": "non-empty, length > 20"
+    },
+    {
+      "id": "navigate-integrations",
+      "action": "act",
+      "instruction": "Navigate to the Integrations section in the sidebar"
+    },
+    {
+      "id": "find-linkedin",
+      "action": "act",
+      "instruction": "Find LinkedIn in the integrations list and click 'Connect' or 'Add'"
+    },
+    {
+      "id": "human-oauth",
+      "action": "wait_for_human",
+      "prompt": "A LinkedIn OAuth popup opened. Sign in to your LinkedIn account and click 'Allow' to grant composio access. When you're redirected back to composio's dashboard with LinkedIn shown as connected, type 'continue'."
+    },
+    {
+      "id": "extract-session",
+      "action": "extract",
+      "instruction": "Composio shows the new LinkedIn integration with a connection ID or session ID. Extract it. It might appear in the URL of the integration page, or in a 'Connection details' panel.",
+      "env_var": "COMPOSIO_SESSION_ID",
+      "validation": "non-empty"
+    },
+    {
+      "id": "test-mcp-endpoint",
+      "action": "http_check",
+      "url": "https://mcp.composio.dev/linkedin/${COMPOSIO_SESSION_ID}",
+      "headers": {"X-API-Key": "${COMPOSIO_API_KEY}"},
+      "expect_status": 200,
+      "comment": "Sanity check: the MCP endpoint should respond"
+    },
+    {
+      "id": "write-env",
+      "action": "write_env",
+      "target": "~/.codialectic/secrets.env",
+      "mode": "0600",
+      "vars": ["COMPOSIO_API_KEY", "COMPOSIO_SESSION_ID"]
+    },
+    {
+      "id": "end-session",
+      "action": "end_session"
+    },
+    {
+      "id": "next-steps",
+      "action": "print",
+      "message": "Done. To activate:\n  1. Run: source ~/.codialectic/secrets.env  (or add to ~/.zshrc)\n  2. Restart Claude Code to pick up the new env\n  3. Run: codi mcp doctor — composio-linkedin should now show ✓\n  4. To install Reddit too: codi mcp setup composio-reddit"
+    }
+  ]
+}

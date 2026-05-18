@@ -1,8 +1,8 @@
 {
   "name": "social-distribution",
   "platform": "xOS",
-  "version": "0.47.0",
-  "description": "Social Distribution (xOS) — content flywheel orchestrator + 9-gate preflight CI + platform-native distribution modules (LinkedIn, Substack, X, Reddit, Facebook, Instagram, Threads, LinkedIn Groups). Initiative → Campaign → Spoke hierarchy with campaign-dashboard. Extracted from career-intelligence-engine v0.61.0. Used by xHumanOS for individual brand + xTeamOS for team brand.",
+  "version": "0.49.0",
+  "description": "Social Distribution (xOS) v0.49.0 - CONFIDENCE LADDER. Per-workflow browser defaults: setup uses browserbase (cloud, easy); posting/sending/submitting uses Chrome Canary (local, visible \u2014 user watches and intervenes per Irreversible-Action Invariant). Graduates workflow-by-workflow to browserbase after ~10 successful runs. Browserbase free Hobby tier sufficient for typical use.",
   "author": {
     "name": "Anand Vallamsetla"
   },
@@ -19,5 +19,5 @@
     "preflight",
     "xOS"
   ],
-  "_product_vs_solution_marker": "product-vs-solution: example — author attribution is legitimate plugin authorship"
+  "_product_vs_solution_marker": "product-vs-solution: example \u2014 author attribution is legitimate plugin authorship"
 }

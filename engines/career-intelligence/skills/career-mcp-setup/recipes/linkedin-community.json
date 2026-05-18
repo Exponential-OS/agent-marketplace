@@ -1,0 +1,15 @@
+{
+  "name": "linkedin-community",
+  "purpose": "LinkedIn profile + people search reads via uvx-installed scraper MCP",
+  "required_for": ["network-intelligence", "outreach-composer", "interviewer-research"],
+  "estimated_time_minutes": 2,
+  "browser_required": false,
+  "command": "uvx linkedin-scraper-mcp@latest --slow-mo 2000",
+  "env_vars_required": [],
+  "first_use_note": "On the first MCP tool call (e.g. get_person_profile), a Chrome window opens. Log in to LinkedIn — the session persists in the MCP's profile dir. Subsequent calls reuse the session.",
+  "manual_install": [
+    "Ensure uv is installed: brew install uv (macOS) or curl -LsSf https://astral.sh/uv/install.sh | sh",
+    "The MCP is invoked via uvx on demand — no install step needed.",
+    "Add to your .mcp.json under mcpServers: {\"linkedin-community\": {\"command\": \"uvx\", \"args\": [\"linkedin-scraper-mcp@latest\", \"--slow-mo\", \"2000\"], \"env\": {\"UV_HTTP_TIMEOUT\": \"300\"}}}"
+  ]
+}

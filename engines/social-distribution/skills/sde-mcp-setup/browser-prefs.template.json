@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0.0",
+  "defaults": {
+    "mcp_setup":           "browserbase",
+    "linkedin_post":       "chrome-devtools-mcp",
+    "substack_publish":    "chrome-devtools-mcp",
+    "linkedin_article":    "chrome-devtools-mcp",
+    "linkedin_dm":         "chrome-devtools-mcp",
+    "linkedin_people_tab": "chrome-devtools-mcp",
+    "ats_form_submit":     "chrome-devtools-mcp",
+    "reddit_post":         "chrome-devtools-mcp",
+    "x_post":              "chrome-devtools-mcp",
+    "anonymous_web_read":  "playwright-ms",
+    "ats_scan":            "playwright-ms"
+  },
+  "trust_counts": {
+    "linkedin_post": 0,
+    "substack_publish": 0,
+    "linkedin_article": 0,
+    "linkedin_dm": 0,
+    "ats_form_submit": 0,
+    "reddit_post": 0,
+    "x_post": 0
+  },
+  "upgrade_threshold": 10,
+  "user_declined_upgrade": []
+}

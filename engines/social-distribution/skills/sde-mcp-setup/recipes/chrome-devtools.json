@@ -1,0 +1,18 @@
+{
+  "name": "chrome-devtools",
+  "purpose": "Free alternative to browserbase. Authenticated browser via remote-debugging on port 9222. Persistent profile = LinkedIn / Substack auth survives reboots.",
+  "required_for_sde": "optional — pick this OR browserbase, not both. Free but requires launcher script + Chrome/Canary installed.",
+  "estimated_time_minutes": 5,
+  "browser_required": false,
+  "launcher_script": "launchers/launch-chrome-devtools-mcp.sh",
+  "manual_install": [
+    "1. Install Chrome Canary (recommended): https://www.google.com/chrome/canary/",
+    "2. Copy launcher: cp $CLAUDE_PLUGIN_ROOT/skills/sde-mcp-setup/launchers/launch-chrome-devtools-mcp.sh ~/.codialectic/bin/",
+    "3. chmod +x ~/.codialectic/bin/launch-chrome-devtools-mcp.sh",
+    "4. Run it: ~/.codialectic/bin/launch-chrome-devtools-mcp.sh (opens Chrome Canary on port 9222 with persistent profile at ~/.codialectic/chrome-mcp-profile)",
+    "5. Log in to LinkedIn + Substack ONCE — sessions persist via the profile dir.",
+    "6. (Optional) Auto-start on boot — see chrome-devtools-launchagent.plist template for macOS LaunchAgent setup.",
+    "7. Add to .mcp.json: {\"chrome-devtools-mcp\": {\"command\": \"npx\", \"args\": [\"-y\", \"chrome-devtools-mcp@latest\", \"--browserUrl\", \"http://localhost:9222\"]}}",
+    "8. Restart Claude Code"
+  ]
+}
