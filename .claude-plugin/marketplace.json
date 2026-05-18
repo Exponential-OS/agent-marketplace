@@ -25,8 +25,8 @@
       "platform": "xOS",
       "license": "Proprietary",
       "source": "./engines/co-dialectic",
-      "description": "Co-Dialectic v4.15.0 - DEV-CYCLE VISIBILITY. New PreToolUse(Skill) hook emits a one-line banner on every skill invocation showing which plugin@marketplace v? scope won the scope-resolution race. Eliminates the 'wrong-version-won-quietly' debug class. Carries forward survival-layer auto-install + state.json persistence from v4.14.x.",
-      "version": "4.15.0",
+      "description": "Co-Dialectic v4.16.0 - FOUNDATION INVARIANT HARNESSES. Three wired harnesses turn prose-only invariants into auto-firing gates: temporal-grounding (OS datetime injected every prompt), codify-or-mark-uncodified scan auto-fire on .md edits (prose-only invariants surfaced as WARN before edit lands), and unit-of-work-commit (Stop hook reminds when workspace cwd is dirty). Harness = (codify + wire + self-verify). Carries forward v4.15 skill-version-banner + v4.14 survival layer.",
+      "version": "4.16.0",
       "category": "ai-runtime",
       "homepage": "https://github.com/Exponential-OS/prompt-engineering-in-action"
     },
