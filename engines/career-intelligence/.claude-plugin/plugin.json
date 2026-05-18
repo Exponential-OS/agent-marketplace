@@ -1,8 +1,8 @@
 {
   "name": "career-intelligence",
   "platform": "xHumanOS",
-  "version": "0.65.0",
-  "description": "Career Intelligence Engine (xHumanOS) v0.65.0 - Adds slash commands (/career-mcp-doctor, /career-mcp-setup) for deterministic typed invocation alongside natural-language triggers. Plugin-namespaced trigger prefix: 'career mcp doctor' / 'career mcp setup <recipe>'. Carries forward: confidence-ladder for career irreversibles (ATS submit, LinkedIn DM); anonymous reads stay playwright.",
+  "version": "0.66.0",
+  "description": "Career Intelligence Engine (xHumanOS) v0.66.0 - FOUNDATION-FIRST FIX: session-logger hook contamination. The capture-prompt.sh + capture-response.sh hooks were polluting any cwd they fired in (not just Career OS workspaces): writing brain/sessions/ledger/ files, git-committing, and pushing to origin/main in unrelated repos (agent-marketplace, exponentialos, thewhyman-com, etc — 408 stray commits across 6 repos as of 2026-05-18). TWO bug fixes: (1) workspace-identity gate at top of each hook — exit silently if cwd is not a Career OS workspace (detected via CAREER_HOME match OR brain/identity/ marker OR .career-os-workspace sentinel); (2) scoped commit using `git commit -- <paths>` so the hook only commits paths it staged, never sweeping up other agents' work in the index. Carries forward: confidence-ladder + slash commands from v0.65.",
   "author": {
     "name": "Anand Vallamsetla"
   },

@@ -12,6 +12,12 @@
 # v0.29.0:
 #   - ledger relocated to brain/sessions/ledger/; logs to $STATE_DIR
 #   - LLM judge invoked after ledger append (advisory, non-blocking)
+#
+# v0.66.0 (2026-05-18): WORKSPACE-IDENTITY GATE + SCOPED COMMIT
+#   See capture-prompt.sh header for full rationale. Same two bugs fixed here:
+#     1. Wrong-cwd execution → workspace-identity gate prevents pollution
+#     2. Index sweep → scoped `git commit -- <paths>` prevents sweeping up
+#        other agents' staged work.
 
 set -euo pipefail
 
@@ -50,6 +56,30 @@ WORKSPACE_ROOT="$(pwd)"
 STATE_DIR="${CLAUDE_PLUGIN_DATA:-$HOME/.career-os-state}"
 MAIN_BRANCH="main"
 
+# ─────────────────────────────────────────────────────────────────────────────
+# WORKSPACE-IDENTITY GATE (v0.66.0)
+# ─────────────────────────────────────────────────────────────────────────────
+# Refuse to write ledger / commit / push if this cwd is not a Career OS
+# workspace. See capture-prompt.sh for full detection logic.
+
+is_career_os_workspace() {
+    if [ -n "${CAREER_HOME:-}" ] && [ "$CAREER_HOME" = "$WORKSPACE_ROOT" ]; then
+        return 0
+    fi
+    if [ -d "$WORKSPACE_ROOT/brain/identity" ]; then
+        return 0
+    fi
+    if [ -f "$WORKSPACE_ROOT/.career-os-workspace" ]; then
+        return 0
+    fi
+    return 1
+}
+
+if ! is_career_os_workspace; then
+    # Silent no-op — this is NOT a Career OS workspace. Never log here.
+    exit 0
+fi
+
 cd "$WORKSPACE_ROOT"
 
 TODAY=$(date +%Y-%m-%d)
@@ -86,14 +116,28 @@ if [ -f "$JUDGE_SCRIPT" ] && command -v python3 &>/dev/null; then
         2>> "$LOG_FILE" || true  # judge failures are non-blocking
 fi
 
-# Unified commit: brain/sessions/ + CLAUDE.md + handoff + output folder + WIP/
-# Fix 2: error logging instead of || true. Fix 5: WIP/ added to scope.
-git add brain/sessions/ 2>> "$LOG_FILE" || echo "[$(date)] git add brain/sessions/ failed" >> "$LOG_FILE"
-git add CLAUDE.md 2>/dev/null || true
-git add NEXT_SESSION_HANDOFF.md 2>/dev/null || true
-git add "Resumes & Cover Letters/" 2>/dev/null || true
-git add WIP/ 2>> "$LOG_FILE" || echo "[$(date)] git add WIP/ failed" >> "$LOG_FILE"
-git commit -q -m "session-log: response $TODAY $TIMESTAMP" 2>> "$LOG_FILE" || echo "[$(date)] git commit (response) failed" >> "$LOG_FILE"
+# ─────────────────────────────────────────────────────────────────────────────
+# SCOPED COMMIT (v0.66.0)
+# ─────────────────────────────────────────────────────────────────────────────
+# Use `git commit -- <paths>` so only the paths the hook owns get committed,
+# regardless of what's in the staged index.
+HOOK_PATHS=()
+[ -d "brain/sessions" ] && HOOK_PATHS+=("brain/sessions")
+[ -f "CLAUDE.md" ] && HOOK_PATHS+=("CLAUDE.md")
+[ -f "NEXT_SESSION_HANDOFF.md" ] && HOOK_PATHS+=("NEXT_SESSION_HANDOFF.md")
+[ -d "Resumes & Cover Letters" ] && HOOK_PATHS+=("Resumes & Cover Letters")
+[ -d "WIP" ] && HOOK_PATHS+=("WIP")
+
+if [ "${#HOOK_PATHS[@]}" -eq 0 ]; then
+    exit 0
+fi
+
+for p in "${HOOK_PATHS[@]}"; do
+    git add -- "$p" 2>> "$LOG_FILE" || echo "[$(date)] git add -- \"$p\" failed" >> "$LOG_FILE"
+done
+
+git commit -q -m "session-log: response $TODAY $TIMESTAMP" -- "${HOOK_PATHS[@]}" \
+    2>> "$LOG_FILE" || echo "[$(date)] git commit (response) failed" >> "$LOG_FILE"
 
 # Serial push (Fix 4: blocking push replaces fire-and-forget background push)
 if git remote get-url origin &>/dev/null; then

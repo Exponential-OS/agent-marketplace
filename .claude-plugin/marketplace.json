@@ -15,8 +15,8 @@
       "platform": "xHumanOS",
       "license": "Proprietary",
       "source": "./engines/career-intelligence",
-      "description": "Career Intelligence Engine \u2014 xHumanOS engine for job search, network, pipeline, and sessions. v0.65.0: plugin-namespaced trigger fix \u2014 'codi mcp doctor career' \u2192 'career mcp doctor'; adds /career-mcp-doctor + /career-mcp-setup slash commands. Composes Brand Amplification (BAE) for outbound content. Future warm-network detection skill (network-intelligence) reserved for extraction to Relationship Intelligence Engine (RIE).",
-      "version": "0.65.0",
+      "description": "Career Intelligence Engine \u2014 xHumanOS engine for job search, network, pipeline, and sessions. v0.66.0: FOUNDATION-FIRST FIX \u2014 session-logger hook cross-repo pollution eliminated (workspace-identity gate + scoped commit). Carries forward v0.65 plugin-namespaced triggers + slash commands. Composes Brand Amplification (BAE) for outbound content.",
+      "version": "0.66.0",
       "category": "career",
       "homepage": "https://github.com/Exponential-OS/career-intelligence-engine"
     },

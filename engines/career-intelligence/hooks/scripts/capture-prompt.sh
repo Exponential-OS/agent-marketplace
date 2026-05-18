@@ -15,6 +15,21 @@
 #   P5: Defense in Depth — every exchange persisted immediately (survives crash)
 #
 # v0.29.0: ledger relocated to brain/sessions/ledger/; logs to $STATE_DIR.
+#
+# v0.66.0 (2026-05-18): WORKSPACE-IDENTITY GATE + SCOPED COMMIT
+#   Two interlocking bugs caused cross-repo pollution (2026-05-17 incident):
+#     1. wrong-cwd execution — the hook fired in non-Career-OS repos (e.g.
+#        ~/aiprojects/agent-marketplace) and wrote ledger files + git commit +
+#        push there, polluting unrelated repos with workspace ledger files.
+#     2. index sweep — the hook used `git commit -m ...` without path filter,
+#        so it committed the ENTIRE staged index — sweeping up any other
+#        session's staged work into a "session-log:" commit.
+#   Fix:
+#     1. Workspace-identity gate at the top — exit silently if cwd is not a
+#        Career OS workspace (no brain/identity/ AND no $CAREER_HOME match).
+#     2. Scoped commit using `git commit -- <paths>` so only the files the
+#        hook itself staged get committed, regardless of other agents'
+#        staged work in the same index.
 
 set -euo pipefail
 
@@ -52,6 +67,39 @@ WORKSPACE_ROOT="$(pwd)"
 STATE_DIR="${CLAUDE_PLUGIN_DATA:-$HOME/.career-os-state}"
 MAIN_BRANCH="main"
 
+# ─────────────────────────────────────────────────────────────────────────────
+# WORKSPACE-IDENTITY GATE (v0.66.0)
+# ─────────────────────────────────────────────────────────────────────────────
+# Refuse to write ledger / commit / push if this cwd is not a Career OS
+# workspace. Detection (any one is sufficient):
+#   1. $CAREER_HOME env var is set and matches $WORKSPACE_ROOT
+#   2. cwd contains brain/identity/ directory (workspace marker)
+#   3. cwd contains .career-os-workspace sentinel file (explicit opt-in)
+# If none match → exit silently with {"decision":"approve"}. The hook MUST
+# never write to or commit in a non-Career-OS repo.
+
+is_career_os_workspace() {
+    # Check 1: $CAREER_HOME env var match
+    if [ -n "${CAREER_HOME:-}" ] && [ "$CAREER_HOME" = "$WORKSPACE_ROOT" ]; then
+        return 0
+    fi
+    # Check 2: brain/identity/ marker (durable workspace signature)
+    if [ -d "$WORKSPACE_ROOT/brain/identity" ]; then
+        return 0
+    fi
+    # Check 3: explicit sentinel file
+    if [ -f "$WORKSPACE_ROOT/.career-os-workspace" ]; then
+        return 0
+    fi
+    return 1
+}
+
+if ! is_career_os_workspace; then
+    # Silent no-op — this is NOT a Career OS workspace. Never log here.
+    echo '{"decision": "approve"}'
+    exit 0
+fi
+
 cd "$WORKSPACE_ROOT"
 
 # Ledger uses calendar date (searchable across marathon sessions)
@@ -76,16 +124,42 @@ fi
     echo ""
 } >> "$LEDGER_FILE"
 
-# Unified commit: brain/sessions/ + CLAUDE.md + handoff + output folder + WIP/
-# Fix 2: error logging instead of || true. Fix 5: WIP/ added to scope.
+# ─────────────────────────────────────────────────────────────────────────────
+# SCOPED COMMIT (v0.66.0)
+# ─────────────────────────────────────────────────────────────────────────────
+# Use `git commit -- <paths>` to commit ONLY the paths the hook itself owns.
+# This prevents the hook from sweeping up other agents' staged work in the
+# index (2026-05-17 incident: marketplace.json + engines/co-dialectic/* were
+# accidentally committed under a "session-log:" message because they were
+# staged but not by this hook).
 LOG_FILE="$STATE_DIR/git-errors.log"
 mkdir -p "$(dirname "$LOG_FILE")"
-git add brain/sessions/ 2>> "$LOG_FILE" || echo "[$(date)] git add brain/sessions/ failed" >> "$LOG_FILE"
-git add CLAUDE.md 2>/dev/null || true
-git add NEXT_SESSION_HANDOFF.md 2>/dev/null || true
-git add "Resumes & Cover Letters/" 2>/dev/null || true
-git add WIP/ 2>> "$LOG_FILE" || echo "[$(date)] git add WIP/ failed" >> "$LOG_FILE"
-git commit -q -m "session-log: prompt $TODAY $TIMESTAMP" 2>> "$LOG_FILE" || echo "[$(date)] git commit (prompt) failed" >> "$LOG_FILE"
+
+# Build the list of paths the hook is allowed to commit. Skip ones that don't
+# exist on disk — `git commit -- path` errors on non-existent path.
+HOOK_PATHS=()
+[ -d "brain/sessions" ] && HOOK_PATHS+=("brain/sessions")
+[ -f "CLAUDE.md" ] && HOOK_PATHS+=("CLAUDE.md")
+[ -f "NEXT_SESSION_HANDOFF.md" ] && HOOK_PATHS+=("NEXT_SESSION_HANDOFF.md")
+[ -d "Resumes & Cover Letters" ] && HOOK_PATHS+=("Resumes & Cover Letters")
+[ -d "WIP" ] && HOOK_PATHS+=("WIP")
+
+if [ "${#HOOK_PATHS[@]}" -eq 0 ]; then
+    # Nothing to commit
+    echo '{"decision": "approve"}'
+    exit 0
+fi
+
+# Stage ONLY the hook's paths (use --update to skip untracked-but-not-existing
+# items, but we want new files too — so use plain add).
+for p in "${HOOK_PATHS[@]}"; do
+    git add -- "$p" 2>> "$LOG_FILE" || echo "[$(date)] git add -- \"$p\" failed" >> "$LOG_FILE"
+done
+
+# Commit ONLY those paths. The `-- <paths>` arg makes git commit ignore any
+# OTHER staged paths in the index. This is the key isolation fix.
+git commit -q -m "session-log: prompt $TODAY $TIMESTAMP" -- "${HOOK_PATHS[@]}" \
+    2>> "$LOG_FILE" || echo "[$(date)] git commit (prompt) failed" >> "$LOG_FILE"
 
 # WO-046: Push prompt commits to remote (eliminates push asymmetry between prompt/response hooks)
 if git remote get-url origin &>/dev/null; then
