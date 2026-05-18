@@ -84,7 +84,7 @@
     {
       "id": "next-steps",
       "action": "print",
-      "message": "Done. To activate:\n  1. Run: source ~/.codialectic/secrets.env  (or add to ~/.zshrc)\n  2. Restart Claude Code to pick up the new env\n  3. Run: codi mcp doctor — composio-linkedin should now show ✓\n  4. To install Reddit too: codi mcp setup composio-reddit"
+      "message": "Done. To activate:\n  1. Run: source ~/.codialectic/secrets.env  (or add to ~/.zshrc)\n  2. Restart Claude Code to pick up the new env\n  3. Run: brand mcp doctor — composio-linkedin should now show ✓\n  4. To install Reddit too: brand mcp setup composio-reddit"
     }
   ]
 }

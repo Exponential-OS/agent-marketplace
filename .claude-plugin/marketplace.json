@@ -51,14 +51,14 @@
       "homepage": "https://github.com/Exponential-OS/knowledge-graph-engine"
     },
     {
-      "name": "social-distribution",
+      "name": "brand-amplification",
       "platform": "xOS",
       "license": "Proprietary",
-      "source": "./engines/social-distribution",
-      "description": "Social Distribution \u2014 9-gate preflight CI for content campaigns. Hub-spoke flywheel, golden-hour scheduling, invisible signal CTAs (bookmark/save/DM-share), platform-native routing. Requires Brand Intelligence for persona-aware distribution.",
-      "version": "0.49.0",
+      "source": "./engines/brand-amplification",
+      "description": "Brand Amplification Engine (BAE) \u2014 outbound brand-building umbrella. Includes the social distribution engine (SDE master orchestrator), flywheel amplification module, hub-and-spoke surface coverage, 9-gate preflight CI for content campaigns, golden-hour scheduling, invisible signal CTAs (bookmark/save/DM-share), platform-native routing across LinkedIn / Substack / Reddit / X / Instagram / Facebook / Threads, and the confidence-ladder browser MCP defaults (browserbase for setup; chrome-devtools-mcp for posting per Irreversible-Action Invariant).",
+      "version": "0.50.0",
       "category": "distribution",
-      "homepage": "https://github.com/Exponential-OS/social-distribution-engine"
+      "homepage": "https://github.com/Exponential-OS/brand-amplification-engine"
     },
     {
       "name": "coordination",

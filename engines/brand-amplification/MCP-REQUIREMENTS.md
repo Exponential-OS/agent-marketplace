@@ -1,5 +1,5 @@
 <!-- product-vs-solution: example -->
-# MCP Requirements — social-distribution@xos
+# MCP Requirements — brand-amplification@xos
 
 
 ## The confidence ladder (NEW in this release)
@@ -16,7 +16,7 @@ After 10 successful runs of a chrome-devtools workflow, the plugin nudges: "Conf
 
 This is the design — graceful confidence-building, not forced trust.
 
-Run `codi mcp doctor sde` to verify.
+Run `brand mcp doctor` to verify.
 
 ## The cascade for authenticated browsing (Substack publish, LinkedIn People tab, OAuth setup flows)
 
@@ -37,24 +37,24 @@ The MCP-Auto-Installer pattern: install browserbase free tier first as the *setu
 
 | MCP | Used by | Install |
 |---|---|---|
-| `composio` (LinkedIn) | social-distribution-engine, campaign-engine, linkedin-distribution-module | `codi mcp setup sde composio-linkedin` |
-| `playwright-ms` | content-url-resolution-check (Gate 4), web reads | `codi mcp setup sde playwright` |
+| `composio` (LinkedIn) | social-distribution-engine, campaign-engine, linkedin-distribution-module | `brand mcp setup composio-linkedin` |
+| `playwright-ms` | content-url-resolution-check (Gate 4), web reads | `brand mcp setup playwright` |
 
 ## At least ONE required (cascade above applies)
 
 | MCP | Best for | Install |
 |---|---|---|
-| `browserbase` (free Hobby tier) | Casual users; easy setup | `codi mcp setup sde browserbase` |
-| `chrome-devtools-mcp` (free, unlimited) | Heavy use OR quota-conscious users | `codi mcp setup sde chrome-devtools` |
+| `browserbase` (free Hobby tier) | Casual users; easy setup | `brand mcp setup browserbase` |
+| `chrome-devtools-mcp` (free, unlimited) | Heavy use OR quota-conscious users | `brand mcp setup chrome-devtools` |
 
 ## Optional spokes
 
 | MCP | When | Install |
 |---|---|---|
-| `composio` (Reddit) | Reddit spoke | `codi mcp setup sde composio-reddit` |
-| `composio` (X/Twitter) | X spoke | `codi mcp setup sde composio-x` |
+| `composio` (Reddit) | Reddit spoke | `brand mcp setup composio-reddit` |
+| `composio` (X/Twitter) | X spoke | `brand mcp setup composio-x` |
 
 ## Not required
 
-- `linkedin-community` — that's career-intel's (profile reads)
+- `linkedin-community` — that's career-intelligence's (profile reads). Will move to relationship-intelligence-engine (RIE) when network-intelligence skill is extracted to its own xOS plugin.
 - `perplexity`, `supabase`, `gitkraken`, `vercel` — none needed

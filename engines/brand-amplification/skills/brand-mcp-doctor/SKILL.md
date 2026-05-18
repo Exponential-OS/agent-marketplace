@@ -1,16 +1,16 @@
 ---
-name: sde-mcp-doctor
+name: brand-mcp-doctor
 description: >
-  Diagnose MCP server availability for social-distribution. Probes the MCPs
+  Diagnose MCP server availability for brand-amplification. Probes the MCPs
   this plugin needs (composio for LinkedIn publish, browserbase for authenticated
   browsing, playwright for content URL checks), reports which are working/missing,
   and surfaces install commands.
 triggers:
-  - codi mcp sde
-  - codi mcp doctor sde
-  - mcp sde
-  - sde mcp doctor
-  - check sde mcps
+  - brand mcp doctor
+  - brand mcp
+  - mcp brand
+  - check brand mcps
+  - check my brand mcps
 metadata:
   version: "1.0.0"
   author: "Anand Vallamsetla"
@@ -18,30 +18,31 @@ metadata:
 
 <!-- product-vs-solution: example -->
 
-### BEGIN SDE-MCP-DOCTOR ###
+### BEGIN BRAND-MCP-DOCTOR ###
 
-# MCP Doctor (social-distribution) — Required vs. Installed
+# MCP Doctor (brand-amplification) — Required vs. Installed
 
 ## Output
 
 ```
-━━━ MCP Doctor (social-distribution) · Status ━━━
+━━━ MCP Doctor (brand-amplification) · Status ━━━
 
 REQUIRED (publishing breaks without these)
   ✓ composio (LinkedIn)  — installed, COMPOSIO_API_KEY + COMPOSIO_SESSION_ID set
   ✓ playwright-ms        — installed, working (content URL resolution, web reads)
   ✗ browserbase OR chrome-devtools-mcp — at least ONE required for Substack publish
-      browserbase   (~$39/mo)              → codi mcp setup sde browserbase
-      chrome-devtools (free, launcher)     → codi mcp setup sde chrome-devtools
+      browserbase   (~$39/mo)              → brand mcp setup browserbase
+      chrome-devtools (free, launcher)     → brand mcp setup chrome-devtools
 
 OPTIONAL (per spoke)
   ◯ composio (Reddit)    — only if you post to Reddit
-      → codi mcp setup sde composio-reddit
+      → brand mcp setup composio-reddit
   ◯ composio (X)         — only if you post to X/Twitter (LinkedIn-only customers skip)
-      → codi mcp setup sde composio-x
+      → brand mcp setup composio-x
 
-OUT OF SCOPE (social-distribution does NOT use these)
-  ◯ linkedin-community   — that's career-intel's MCP (profile reads, not publishing)
+OUT OF SCOPE (brand-amplification does NOT use these)
+  ◯ linkedin-community   — that's career-intelligence's MCP (profile reads, not publishing).
+                            Will move to relationship-intelligence-engine when extracted.
   ◯ perplexity, supabase, gitkraken
 ```
 
@@ -55,12 +56,12 @@ OUT OF SCOPE (social-distribution does NOT use these)
    - browserbase (HTTP): tools/list with API key
    - chrome-devtools-mcp: check port 9222
 4. Render report.
-5. Save to `~/.codialectic/mcp-status-sde.json`.
+5. Save to `~/.codialectic/mcp-status-brand.json`.
 
 ## Relationship to other skills
 
-- `sde-mcp-setup` — installs missing MCPs.
-- `sde-onboarding` — calls sde-mcp-doctor as Phase 0.
-- `social-distribution-engine` — runs `sde-mcp-doctor --quick` before publish.
+- `brand-mcp-setup` — installs missing MCPs.
+- `sde-onboarding` — calls brand-mcp-doctor as Phase 0 (the distribution sub-engine inside brand-amplification).
+- `social-distribution-engine` — the master distribution orchestrator inside BAE; runs `brand-mcp-doctor --quick` before publish.
 
-### END SDE-MCP-DOCTOR ###
+### END BRAND-MCP-DOCTOR ###

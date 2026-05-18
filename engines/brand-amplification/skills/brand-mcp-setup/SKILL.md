@@ -1,19 +1,18 @@
 ---
-name: sde-mcp-setup
+name: brand-mcp-setup
 description: >
-  THE MCP-AUTO-INSTALLER + CONFIDENCE LADDER. Browserbase bootstraps every
-  other online config setup (1 install + N magic setups). For posting,
-  defaults to Chrome Canary (local, visible — user watches and intervenes,
-  honoring the Irreversible-Action Invariant). After confidence builds
-  (~10 successful runs of a workflow), suggests graduating to browserbase
+  THE MCP-AUTO-INSTALLER + CONFIDENCE LADDER for brand-amplification.
+  Browserbase bootstraps every other online config setup (1 install + N magic
+  setups). For posting, defaults to Chrome Canary (local, visible — user watches
+  and intervenes, honoring the Irreversible-Action Invariant). After confidence
+  builds (~10 successful runs of a workflow), suggests graduating to browserbase
   for that workflow.
 triggers:
-  - codi mcp setup sde
-  - sde mcp setup
+  - brand mcp setup
   - install composio
-  - install sde browserbase
-  - install sde chrome-devtools
-  - help me set up sde mcp
+  - install brand browserbase
+  - install brand chrome-devtools
+  - help me set up brand mcp
   - magic mcp install
   - browser prefs
   - graduate to browserbase
@@ -24,9 +23,9 @@ metadata:
 
 <!-- product-vs-solution: example -->
 
-### BEGIN SDE-MCP-SETUP ###
+### BEGIN BRAND-MCP-SETUP ###
 
-# MCP Setup (social-distribution) — Auto-Installer + Confidence Ladder
+# MCP Setup (brand-amplification) — Auto-Installer + Confidence Ladder
 
 ## Two ladders, not one
 
@@ -63,19 +62,19 @@ After N successful runs (default `upgrade_threshold: 10`) of a workflow with chr
 ```
 💡 You've published 10 LinkedIn posts via Chrome Canary. Confident in the flow now?
    Graduate to browserbase for this workflow (faster, no local Chrome window):
-     codi mcp graduate linkedin_post
+     brand mcp graduate linkedin_post
    Or keep watching (no further reminders):
-     codi mcp keep-watching linkedin_post
+     brand mcp keep-watching linkedin_post
 ```
 
 User can decline forever (`user_declined_upgrade` array tracks this). Doctor never nags twice.
 
 ## Install order for new customers
 
-1. **`codi mcp setup sde browserbase`** — bootstrap, 5 min. FREE Hobby tier sufficient for casual use.
-2. **`codi mcp setup sde chrome-devtools`** — install for visible posting, 5 min. Launcher script ships with the plugin.
-3. **`codi mcp setup sde composio-linkedin`** — fully automated OAuth dance via browserbase. 5 min.
-4. **`codi mcp setup sde playwright`** — 30 sec, no auth.
+1. **`brand mcp setup browserbase`** — bootstrap, 5 min. FREE Hobby tier sufficient for casual use.
+2. **`brand mcp setup chrome-devtools`** — install for visible posting, 5 min. Launcher script ships with the plugin.
+3. **`brand mcp setup composio-linkedin`** — fully automated OAuth dance via browserbase. 5 min.
+4. **`brand mcp setup playwright`** — 30 sec, no auth.
 5. Optional spokes (Reddit, X) as needed.
 
 Total: ~15 min to fully configured publishing pipeline. Posting starts in Chrome Canary (visible). When confidence builds, graduate workflow-by-workflow to browserbase.
@@ -91,4 +90,4 @@ Recipes at `recipes/<name>.json`. Drop a new file = new MCP supported, no code c
 - Never modifies `.mcp.json` (workspace-install-gate would BLOCK)
 - Browserbase sessions end after extraction
 
-### END SDE-MCP-SETUP ###
+### END BRAND-MCP-SETUP ###

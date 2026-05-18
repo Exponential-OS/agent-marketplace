@@ -1,33 +1,34 @@
 ---
-name: sde-onboarding
+name: brand-onboarding
 description: >
-  Week 1 onboarding wizard for new SDE users. Interviews the user across 3 areas
-  (brand identity, platform handles, distribution topology), then generates the 4
-  required context files that the SDE needs to run. Cross-session memory baked in
-  from day one — the user never re-explains who they are.
+  Week 1 onboarding wizard for new Brand Amplification Engine (BAE) users.
+  Interviews the user across 3 areas (brand identity, platform handles,
+  distribution topology), then generates the 4 required context files BAE
+  needs to run. Cross-session memory baked in from day one — the user never
+  re-explains who they are.
 triggers:
-  - onboard me to SDE
-  - sde setup
-  - sde onboarding
+  - onboard me to brand amplification
+  - brand setup
+  - brand onboarding
   - week 1 setup
-  - set up my sde
+  - set up my brand engine
   - new user setup
   - set up my distribution engine
-  - i'm new to sde
-  - get me started with sde
+  - i'm new to brand amplification
+  - get me started with brand
 ---
 
-# SDE Onboarding — Week 1 Setup
+# Brand Amplification Onboarding — Week 1 Setup
 
 ## Purpose
 
-New SDE users need 4 files before the first campaign can run. This skill generates all four through a structured interview. Once complete, the user has cross-session memory baked in — brand voice, handles, channel directory, and distribution topology persist across every future session automatically.
+New BAE users need 4 files before the first campaign can run. This skill generates all four through a structured interview. Once complete, the user has cross-session memory baked in — brand voice, handles, channel directory, and distribution topology persist across every future session automatically.
 
 ## Output Format
 
 Always start with:
 ```
-━━━ Career OS: SDE Onboarding ━━━
+━━━ Brand Amplification Engine · Onboarding ━━━
 ```
 
 ## The 4 Files This Skill Generates
@@ -142,7 +143,7 @@ After all 9 answers are collected:
 Print this summary:
 
 ```
-━━━ SDE Onboarding Complete ━━━
+━━━ Brand Amplification · Onboarding Complete ━━━
 
 Files created:
   ✅ brain/identity/professional-brand.md

@@ -17,7 +17,7 @@
       "id": "check-existing-composio",
       "action": "env_check",
       "vars": ["COMPOSIO_API_KEY"],
-      "fail_message": "Run codi mcp setup composio-linkedin first to get a composio account + API key."
+      "fail_message": "Run brand mcp setup composio-linkedin first to get a composio account + API key."
     },
     {
       "id": "navigate-composio",

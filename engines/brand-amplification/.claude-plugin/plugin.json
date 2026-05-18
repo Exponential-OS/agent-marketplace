@@ -1,0 +1,23 @@
+{
+  "name": "brand-amplification",
+  "platform": "xOS",
+  "version": "0.50.0",
+  "description": "Brand Amplification Engine (xOS) v0.50.0 - The outbound brand-building engine for xOS. Coordinated content distribution across owned surfaces (LinkedIn, Substack, Reddit, X, Instagram, Facebook, Threads) with hub-and-spoke flywheel, surface coverage matrix, pre-publish quality gates, and confidence-ladder browser defaults (browserbase for setup; chrome-devtools-mcp for posting per Irreversible-Action Invariant). Graduates workflow-by-workflow to browserbase after ~10 successful runs. Future sibling engine: Relationship Intelligence Engine (RIE, inbound warm-network detection).",
+  "author": {
+    "name": "Anand Vallamsetla"
+  },
+  "repository": "https://github.com/Exponential-OS/social-distribution-plugin",
+  "homepage": "https://github.com/Exponential-OS/social-distribution-plugin",
+  "license": "Proprietary",
+  "keywords": [
+    "social-distribution",
+    "content-flywheel",
+    "campaign",
+    "initiative",
+    "linkedin",
+    "substack",
+    "preflight",
+    "xOS"
+  ],
+  "_product_vs_solution_marker": "product-vs-solution: example \u2014 author attribution is legitimate plugin authorship"
+}
