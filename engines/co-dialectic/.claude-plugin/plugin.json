@@ -1,9 +1,31 @@
 {
   "name": "co-dialectic",
-  "description": "Co-Dialectic v4.16.0 - FOUNDATION INVARIANT HARNESSES. Adds three wired harnesses turning prose-only invariants into auto-firing gates: (1) TEMPORAL-GROUNDING — OS-grounded datetime injected into every UserPromptSubmit; no more 'tonight' said at Monday afternoon. (2) CODIFY-OR-MARK-UNCODIFIED scan auto-fire on PreToolUse(Edit/Write/MultiEdit) of .md files in invariant-carrier locations (cyborg/, plugins/, CLAUDE.md, references/invariants/); surfaces prose-only invariants as WARNING before edits land. (3) UNIT-OF-WORK-COMMIT — Stop hook checks workspace cwd for uncommitted changes (gated by workspace-identity), surfaces reminder per CLAUDE.md protocol. Carries forward v4.15 skill-version-banner + v4.14 survival layer.",
-  "version": "4.16.0",
+  "description": "Co-Dialectic v4.19.1 - HOTFIX Stop hook schema (unit-of-work-check). emitReminder() in hooks/unit-of-work-check.ts was emitting hookSpecificOutput.additionalContext (PreToolUse/UserPromptSubmit only — invalid for Stop). Context folded into systemMessage. Same-class bug as cyborg/scripts/stop-hook-learning-flywheel.ts (6bf6a8a 2026-05-22) — single-slot-learning sweep failure now corrected. Carries forward v4.19.0 concise-by-default + v4.18.0 task-first persona routing.",
+  "version": "4.19.1",
+  "depends_on_kernel": ["brain-kernel >= 1.0.0", "co-dialectic >= 4.16.0"],
+  "brain": {
+    "namespace": "co-dialectic",
+    "owned_paths": [
+      "feedback/**",
+      "personas/**",
+      "calibration-history.md",
+      "status-state.json"
+    ],
+    "writes_to_primitives": [],
+    "reads_from_primitives": [
+      "identity/handles.md"
+    ],
+    "reads_from_engines": [
+      "career-intelligence/skills-matrix.md"
+    ],
+    "linters": [
+      "feedback-contradictions",
+      "persona-drift",
+      "calibration-drift"
+    ]
+  },
   "author": {
     "name": "Anand Vallamsetla"
   },
-  "_product_vs_solution_marker": "product-vs-solution: example \u2014 Anand authorship attribution is legitimate"
+  "_product_vs_solution_marker": "product-vs-solution: example — Anand authorship attribution is legitimate"
 }
