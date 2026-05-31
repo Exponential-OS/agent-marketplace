@@ -25,8 +25,8 @@
       "platform": "xOS",
       "license": "Proprietary",
       "source": "./engines/co-dialectic",
-      "description": "Co-Dialectic v4.21.0 - AUTO-HANDOFF BEFORE COMPACTION. New PreCompact hook (hooks/precompact-handoff.ts) fires when Claude Code is about to summarize the context window. Emits a strong system-reminder telling Claude to invoke the codi-handoff skill IMMEDIATELY before the conversation context is lost to summarization. Closes the gap where Protocol 9 closure-detection misses compaction events that fire without explicit user closure phrases \u2014 the most common case for long working sessions. Carries forward v4.20.0 named-person-claim-grounding gate + v4.19 concise mode + v4.18 task-first persona routing.",
-      "version": "4.21.0",
+      "description": "Co-Dialectic v4.21.1 - AUTO-HANDOFF BELT-AND-SUSPENDERS. Extends v4.21.0 PreCompact hook with Layer 2 CAPTURE: in addition to emitting a system-reminder telling Claude to invoke codi-handoff (Layer 1 RECOMMEND), the hook now also writes a structured deterministic packet to ~/.codialectic/precompact-packet-<timestamp>.json containing timestamp, trigger, cwd, git state (branch + uncommitted files + recent commits + HEAD subject), session_id, transcript_path. Even if Claude ignores the reminder, the structural floor is preserved. Marker file at ~/.codialectic/last-precompact.json points at the packet. Together: deterministic floor + conversational ceiling.",
+      "version": "4.21.1",
       "category": "ai-runtime",
       "homepage": "https://github.com/Exponential-OS/prompt-engineering-in-action"
     },
