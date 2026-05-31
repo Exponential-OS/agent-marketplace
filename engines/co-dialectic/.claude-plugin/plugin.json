@@ -1,7 +1,7 @@
 {
   "name": "co-dialectic",
-  "description": "Co-Dialectic v4.19.1 - HOTFIX Stop hook schema (unit-of-work-check). emitReminder() in hooks/unit-of-work-check.ts was emitting hookSpecificOutput.additionalContext (PreToolUse/UserPromptSubmit only — invalid for Stop). Context folded into systemMessage. Same-class bug as cyborg/scripts/stop-hook-learning-flywheel.ts (6bf6a8a 2026-05-22) — single-slot-learning sweep failure now corrected. Carries forward v4.19.0 concise-by-default + v4.18.0 task-first persona routing.",
-  "version": "4.19.1",
+  "description": "Co-Dialectic v4.21.0 - AUTO-HANDOFF BEFORE COMPACTION. New PreCompact hook (hooks/precompact-handoff.ts) fires when Claude Code is about to summarize the context window. Emits a strong system-reminder telling Claude to invoke the codi-handoff skill IMMEDIATELY before the conversation context is lost to summarization. Closes the gap where Protocol 9 closure-detection misses compaction events that fire without explicit user closure phrases ('bye', 'wrap up', etc.) — the most common case for long working sessions. Carries forward v4.20.0 named-person-claim-grounding gate + v4.19 concise mode + v4.18 task-first persona routing.",
+  "version": "4.21.0",
   "depends_on_kernel": ["brain-kernel >= 1.0.0", "co-dialectic >= 4.16.0"],
   "brain": {
     "namespace": "co-dialectic",

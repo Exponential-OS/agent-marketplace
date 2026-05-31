@@ -1,5 +1,69 @@
 # Changelog — Co-Dialectic
 
+## [4.21.0] — 2026-05-31 — AUTO-HANDOFF BEFORE COMPACTION
+
+### Added — PreCompact hook (hooks/precompact-handoff.ts)
+- New PreCompact hook fires when Claude Code is about to summarize the context window. Before compaction proceeds, the hook:
+  1. Writes a marker file at `~/.codialectic/last-precompact.json` (timestamp + trigger + transcript path + cwd + session_id) so post-compaction Claude can verify a handoff was attempted.
+  2. Emits a strong `<system-reminder>` via `hookSpecificOutput.additionalContext` telling Claude to INVOKE the `codi-handoff` skill IMMEDIATELY before the conversation context is lost to summarization.
+- hooks.json wires `PreCompact` event with 5s timeout. Fail-safe: hook ALWAYS exits 0 — never blocks compaction.
+
+### Why this exists
+- User flagged 2026-05-31: "for session end - write to handoff doc hook is not there either for codi or claude. what happened?"
+- Diagnosis: the codi-handoff skill (Protocol 9 — auto closure detection) was designed to fire on conversation closure signals ("bye", "wrap up", "EOD", etc.). It works when the user types a closure phrase. It FAILS when:
+  - Compaction fires silently because the context window is full (the most common case for long working sessions)
+  - The user's last message doesn't contain a closure phrase
+  - Claude pattern-matches the trigger but writes the handoff manually instead of invoking the skill (which happened on 2026-05-17 — manual NEXT_SESSION_HANDOFF.md write instead of skill invocation)
+- Claude Code DOES have a `PreCompact` event that fires before summarization. No prior codi version wired it (`git log --grep="PreCompact"` returned zero across full history).
+- This hook closes the gap: every compaction now triggers an explicit handoff capture before context is lost.
+
+### Design choice — option (b) reminder, not direct file write
+- Considered (a) write handoff packet directly to NEXT_SESSION_HANDOFF.md from the hook
+- Chose (b) inject reminder → let Claude invoke the codi-handoff skill
+- Rationale: the codi-handoff skill already owns Protocol 9 closure-detection logic, structured-packet schema (v4.1 spec with model nested + uuid-v4 session_id + schema_version 1.0), workspace-substrate dispatch (GitHub Issues / HANDOFF.md / etc.). Duplicating that in TypeScript would diverge over time. Hook stays minimal — single responsibility (trigger). Skill invocation lets the active persona + caliber rules shape the handoff content.
+
+### Restart required
+PreCompact hook only takes effect after Claude Code reloads its hooks from the cached plugin. Per the v4.20.0 RELOAD-REQUIRED note: older project-scope installs (v4.9–v4.16) need `claude plugin reinstall co-dialectic@xos` or session restart to pick up the new hook event.
+
+## [4.20.0] — 2026-05-22 — TRUST THESIS REPAIR (GH #11 CRITICAL)
+
+### Added — named-person-claim-grounding semantic gate
+- New rule `~/cyborg/rules/named-person-claim-grounding/` (three-layer TS+Bun per Constitution P4):
+  - `handler.ts` (Layer 2 — invariant): PreToolUse hook on Write|Edit. Scans the proposed content for biographical/logistical/relational claims about named people; invokes `claude -p` with `PROMPT.md`; parses verdict; exits 0 PASS / 1 BLOCK. Fail-CLOSED on errors per FAIL-HARD invariant.
+  - `PROMPT.md` (Layer 1 — semantic): LLM judge instructions. For each named person referenced, reads `network/people/<slug>.json`; checks claim against `their_expertise` / `they_told_us` / `commitments_made` / `family_context` fields OR user's explicit statement this session; BLOCK with quoted sentence if neither.
+  - `AUDIT.ts` + `WATCH.ts` (TS+Bun, no shell — `no-shell-in-rules-tree` gate enforces). WATCH covers the 5 acceptance shapes from issue #11 (pronoun, geography, schedule, vague-they, voice attribution) using synthetic names only.
+  - `README.md` + `manifest.json` per the reference shape from `least-privilege-self-check`.
+- Constitution Ground Zero stub: NAMED-PERSON-CLAIM-GROUNDING INVARIANT.
+- PreToolUse hook wired in `~/.claude/settings.json` (Write|Edit matcher).
+
+### Added — Protocol 3 referent-ambiguity detection
+- `skills/co-dialectic/SKILL-lite.md` Protocol 3 — new "Referent ambiguity" criterion. When prompt contains a pronoun / possessive / vague subject with ≥2 candidate antecedents in recent context, do NOT infer — either rewrite the prompt to disambiguate OR ask ONE clarify question before answering. Specific patterns: pronouns with multiple candidates, possessives over family terms, vague subjects ("they decided"), direction/voice attribution in quoted dialogue, geographic ambiguity ("south USA" vs "south India").
+
+### Fixed — honesty:undefined cosmetic bug in survival reminder
+- `hooks/user-prompt-submit.ts → buildReminder()` — when `state.json` lacks the `honesty` field (older state schemas, fresh installs, post-migration shapes), the prior conditional `state.honesty !== "grounded"` was true for `undefined`, producing the literal string `"honesty:undefined"` in the user-facing reminder. Fixed with defensive coding: only append the honesty suffix when honesty is a non-empty string AND not the default. Same defensive treatment for `state.mode` (fallback to "drive") and `state.wildcard` (only when explicitly `true`).
+- 6 new tests in `tests/test_user_prompt_submit.ts` covering missing honesty, default honesty, brutal honesty, missing mode, wildcard-on, wildcard-missing.
+
+### Why this exists
+- **Issue #11 CRITICAL** — Anand reported 5 same-class named-person hallucinations in a single ~50-minute session involving Abhiram Battini family. Verbatim trust-thesis statement: *"if we can't trust codi, who else will?"* Pattern was structural (referent ambiguity → partial-signal inference → confident ship), not "be more careful." Structural fix required.
+- **honesty:undefined** surfaced during diagnosis. Same class of "missing field → confident-but-wrong output" bug, smaller blast radius (cosmetic), shipping together.
+
+### CRITICAL — RELOAD REQUIRED
+Multiple project scopes in `~/.claude/plugins/installed_plugins.json` are pinned to OLDER cached versions (v4.9.4, v4.15.0). The session that filed #11 was running a v4.14–v4.16-era hook, NOT v4.19.1's source. This means v4.18 task-first persona routing + v4.19 concise-by-default fixes have NOT been firing for the user.
+
+To pick up v4.20.0 (and retroactively pick up v4.18 + v4.19):
+1. `claude` → `/plugin reinstall co-dialectic@xos`
+2. Or quit the session and start a fresh one — the harness re-resolves the latest cached version on session start.
+
+### Tests
+- New + existing hook tests: 30+ pass / 0 fail.
+- WATCH on named-person-claim-grounding: 5 acceptance shapes pass deterministically.
+
+## [4.19.1] — 2026-05-22 — HOTFIX Stop-hook schema (unit-of-work-check)
+
+### Fixed
+- `hooks/unit-of-work-check.ts → emitReminder()` was emitting `hookSpecificOutput.additionalContext`, which is valid only for `PreToolUse` and `UserPromptSubmit` — invalid for `Stop`. Context folded into `systemMessage`.
+- Same-class single-slot-learning bug as `cyborg/scripts/stop-hook-learning-flywheel.ts` (6bf6a8a 2026-05-22). The sweep that fixed the cyborg side missed the codi side; v4.19.1 closes that gap.
+
 ## [4.19.0] — 2026-05-22 — concise by default (GH #10 tone reversal)
 
 ### Added
