@@ -1,8 +1,42 @@
 {
   "name": "career-intelligence",
   "platform": "xHumanOS",
-  "version": "0.66.0",
-  "description": "Career Intelligence Engine (xHumanOS) v0.66.0 - FOUNDATION-FIRST FIX: session-logger hook contamination. The capture-prompt.sh + capture-response.sh hooks were polluting any cwd they fired in (not just Career OS workspaces): writing brain/sessions/ledger/ files, git-committing, and pushing to origin/main in unrelated repos (agent-marketplace, exponentialos, thewhyman-com, etc — 408 stray commits across 6 repos as of 2026-05-18). TWO bug fixes: (1) workspace-identity gate at top of each hook — exit silently if cwd is not a Career OS workspace (detected via CAREER_HOME match OR brain/identity/ marker OR .career-os-workspace sentinel); (2) scoped commit using `git commit -- <paths>` so the hook only commits paths it staged, never sweeping up other agents' work in the index. Carries forward: confidence-ladder + slash commands from v0.65.",
+  "version": "0.67.0",
+  "depends_on_kernel": ["brain-kernel >= 1.0.0"],
+  "brain": {
+    "namespace": "career-intelligence",
+    "owned_paths": [
+      "stories/**",
+      "projects/**",
+      "pipeline.json",
+      "match-tracker.json",
+      "resumes/**",
+      "cover-letters/**"
+    ],
+    "writes_to_primitives": [
+      "identity/skills-matrix.md",
+      "identity/experience-history.md",
+      "network/people/**",
+      "network/companies/**",
+      "network/outreach/**",
+      "network/events/**"
+    ],
+    "reads_from_primitives": [
+      "identity/**",
+      "network/**"
+    ],
+    "reads_from_engines": [
+      "co-dialectic/feedback/**",
+      "co-dialectic/personas/**",
+      "brand-amplification/campaigns/**"
+    ],
+    "linters": [
+      "story-completeness",
+      "skill-staleness",
+      "pipeline-job-staleness"
+    ]
+  },
+  "description": "Career Intelligence Engine (xHumanOS) v0.67.0 - SWEEP-ALL FIX for session-logger contamination. The v0.66.0 fix added a workspace-identity gate to capture-prompt.sh + capture-response.sh, but MISSED init-repo.sh (the third sister script in the same family, fired on SessionStart). Without the gate, init-repo.sh was scaffolding brain/sessions/ledger/, brain/sessions/judgments/, CLAUDE.md template, 'Resumes & Cover Letters/' dir, writing session-start markers, AND git-add+commit+push — in WHATEVER cwd Claude Code opened, including AI Fund Work Product repos. Single-slot-learning failure (fixed 2 of 3 sister scripts on 2026-05-18; this ships the 3rd). Detection unchanged from v0.66: $CAREER_HOME match OR brain/identity/ marker OR .career-os-workspace sentinel. Carries forward all v0.65/v0.66 features.",
   "author": {
     "name": "Anand Vallamsetla"
   },

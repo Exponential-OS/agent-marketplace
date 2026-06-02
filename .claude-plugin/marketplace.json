@@ -15,8 +15,8 @@
       "platform": "xHumanOS",
       "license": "Proprietary",
       "source": "./engines/career-intelligence",
-      "description": "Career Intelligence Engine \u2014 xHumanOS engine for job search, network, pipeline, and sessions. v0.66.0: FOUNDATION-FIRST FIX \u2014 session-logger hook cross-repo pollution eliminated (workspace-identity gate + scoped commit). Carries forward v0.65 plugin-namespaced triggers + slash commands. Composes Brand Amplification (BAE) for outbound content.",
-      "version": "0.66.0",
+      "description": "Career Intelligence Engine \u2014 xHumanOS engine for job search, network, pipeline, and sessions. v0.67.0: SWEEP-ALL FIX for session-logger contamination. v0.66 added workspace-identity gate to 2 of 3 sister scripts; v0.67 adds it to init-repo.sh (the SessionStart hook that was scaffolding brain/sessions/, writing CLAUDE.md templates, and creating Resumes/ in non-workspace cwds like Adapt.ai). Privacy + IP-firewall fix. Carries forward v0.65 namespaced triggers + slash commands.",
+      "version": "0.67.0",
       "category": "career",
       "homepage": "https://github.com/Exponential-OS/career-intelligence-engine"
     },

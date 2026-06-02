@@ -29,6 +29,53 @@ LOG_FILE="$STATE_DIR/git-errors.log"
 
 mkdir -p "$STATE_DIR"
 
+# ─────────────────────────────────────────────────────────────────────────────
+# WORKSPACE-IDENTITY GATE (v0.67.0)
+# ─────────────────────────────────────────────────────────────────────────────
+# career-intelligence@xos is installed at USER scope, so SessionStart fires in
+# WHATEVER cwd Claude Code opens. Without a gate, init-repo.sh scaffolds
+# brain/sessions/ledger/, writes a CLAUDE.md template, creates "Resumes & Cover
+# Letters/", writes session-start markers, and git-commits+pushes the result —
+# in ANY cwd, including AI Fund Work Product repos that must stay IP-firewalled
+# from cyborg/codi context (per Adapt.ai handoff §4.2 EIR).
+#
+# v0.66 added this gate to capture-prompt.sh + capture-response.sh but MISSED
+# init-repo.sh — the third sister script in the same family. Single-slot
+# learning failure (see memory: feedback_single_slot_learning_structural).
+#
+# Detection (any one sufficient):
+#   1. $CAREER_HOME env var matches $WORKSPACE_ROOT
+#   2. brain/identity/ dir exists in cwd (durable workspace signature)
+#   3. .career-os-workspace sentinel file exists
+# If none match → silent no-op exit 0. The hook MUST never scaffold or
+# write to a non-Career-OS workspace.
+#
+# Carve-out: the STATE_DIR creation above is plugin-state (global), not
+# workspace state. Safe to leave it before the gate.
+
+is_career_os_workspace() {
+    # Check 1: $CAREER_HOME env var match (canonical signal)
+    if [ -n "${CAREER_HOME:-}" ] && [ "$CAREER_HOME" = "$WORKSPACE_ROOT" ]; then
+        return 0
+    fi
+    # Check 2: brain/identity/ marker (durable workspace signature)
+    if [ -d "$WORKSPACE_ROOT/brain/identity" ]; then
+        return 0
+    fi
+    # Check 3: explicit sentinel file
+    if [ -f "$WORKSPACE_ROOT/.career-os-workspace" ]; then
+        return 0
+    fi
+    return 1
+}
+
+if ! is_career_os_workspace; then
+    # Silent no-op — this is NOT a Career OS workspace.
+    # NEVER scaffold brain/, NEVER write CLAUDE.md, NEVER create Resumes/,
+    # NEVER write ledger markers, NEVER git add/commit/push.
+    exit 0
+fi
+
 # --- Version check + migration (P6: Zero-Data-Loss Upgrades) ---
 # Must run BEFORE any other logic. Migration scripts know old file locations.
 PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
