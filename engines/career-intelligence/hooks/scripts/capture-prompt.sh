@@ -30,6 +30,18 @@
 #     2. Scoped commit using `git commit -- <paths>` so only the files the
 #        hook itself staged get committed, regardless of other agents'
 #        staged work in the same index.
+#
+# v0.68.0 (2026-06-04): co-dialectic/ added to HOOK_PATHS (brain-kernel codi
+#   state migrated into the workspace 2026-05/06 — quiets unit-of-work noise);
+#   commit messages carry file count + path preview; [DEBUG] forensic line per
+#   fire; skip commit+push when no HOOK_PATHS changes (no empty commits).
+#   NOTE (lost-commit postmortem 2026-06-04): the "lost status: Mercury commit"
+#   was NOT this script — a stale career-os v0.29.0 plugin copy in the
+#   workspace's .claude/skills/ became a live second hook source when Claude
+#   Code ~2.1.15x started loading skills-directory plugins; its UNSCOPED
+#   `git commit` swept the agent's staged files. Zombie deleted 2026-06-04.
+#   Full forensics: WIP/xHumanOS-platform/career-intelligence-product/
+#   spec-session-logger-improvements-2026-06-04.md
 
 set -euo pipefail
 
@@ -139,6 +151,7 @@ mkdir -p "$(dirname "$LOG_FILE")"
 # exist on disk — `git commit -- path` errors on non-existent path.
 HOOK_PATHS=()
 [ -d "brain/sessions" ] && HOOK_PATHS+=("brain/sessions")
+[ -d "co-dialectic" ] && HOOK_PATHS+=("co-dialectic")
 [ -f "CLAUDE.md" ] && HOOK_PATHS+=("CLAUDE.md")
 [ -f "NEXT_SESSION_HANDOFF.md" ] && HOOK_PATHS+=("NEXT_SESSION_HANDOFF.md")
 [ -d "Resumes & Cover Letters" ] && HOOK_PATHS+=("Resumes & Cover Letters")
@@ -150,15 +163,32 @@ if [ "${#HOOK_PATHS[@]}" -eq 0 ]; then
     exit 0
 fi
 
+# v0.68.0 debug trail: forensic line per fire so lost-commit mysteries are
+# diagnoseable (branch + how much was staged before the hook touched anything).
+PRE_HOOK_STAGED=$(git diff --cached --name-only | wc -l | tr -d ' ')
+echo "[DEBUG $(date)] hook=capture-prompt branch=$(git branch --show-current) pre_hook_staged=$PRE_HOOK_STAGED hook_paths=${#HOOK_PATHS[@]}" >> "$LOG_FILE"
+
 # Stage ONLY the hook's paths (use --update to skip untracked-but-not-existing
 # items, but we want new files too — so use plain add).
 for p in "${HOOK_PATHS[@]}"; do
     git add -- "$p" 2>> "$LOG_FILE" || echo "[$(date)] git add -- \"$p\" failed" >> "$LOG_FILE"
 done
 
+# Commit-message file summary — scoped to HOOK_PATHS so the message matches
+# what the partial commit actually contains (NOT the whole staged index).
+STAGED_FILES_COUNT=$(git diff --cached --name-only -- "${HOOK_PATHS[@]}" | wc -l | tr -d ' ')
+STAGED_FILES_PREVIEW=$(git diff --cached --name-only -- "${HOOK_PATHS[@]}" | head -3 | tr '\n' ',' | sed 's/,$//' | cut -c1-80)
+
+if [ "$STAGED_FILES_COUNT" -eq 0 ]; then
+    # Nothing the hook owns changed — skip commit AND push (no empty commits,
+    # no error-log noise from git commit failing on an empty set).
+    echo '{"decision": "approve"}'
+    exit 0
+fi
+
 # Commit ONLY those paths. The `-- <paths>` arg makes git commit ignore any
 # OTHER staged paths in the index. This is the key isolation fix.
-git commit -q -m "session-log: prompt $TODAY $TIMESTAMP" -- "${HOOK_PATHS[@]}" \
+git commit -q -m "session-log: prompt $TODAY $TIMESTAMP — $STAGED_FILES_COUNT files ($STAGED_FILES_PREVIEW)" -- "${HOOK_PATHS[@]}" \
     2>> "$LOG_FILE" || echo "[$(date)] git commit (prompt) failed" >> "$LOG_FILE"
 
 # WO-046: Push prompt commits to remote (eliminates push asymmetry between prompt/response hooks)

@@ -18,35 +18,84 @@
 #     1. Wrong-cwd execution → workspace-identity gate prevents pollution
 #     2. Index sweep → scoped `git commit -- <paths>` prevents sweeping up
 #        other agents' staged work.
+#
+# v0.68.0 (2026-06-04): Stop-payload parser reads transcript_path (Claude Code
+#   Stop payload no longer carries response text — pre-fix cost: ZERO response
+#   captures, verified 2026-06-04: 30 prompt commits / 0 response commits);
+#   co-dialectic/ added to HOOK_PATHS; commit messages carry file count +
+#   path preview; [DEBUG] forensic line per fire; skip commit+push when no
+#   HOOK_PATHS changes.
 
 set -euo pipefail
 
 PAYLOAD=$(cat)
 
 RESPONSE_TEXT=$(echo "$PAYLOAD" | python3 -c "
-import sys, json
+import sys, json, os, glob
+
+def last_assistant_text(path):
+    # Parse a Claude Code session transcript (JSONL) and return the text of
+    # the last main-chain assistant message. Sidechain (subagent) entries are
+    # skipped — they are not the response the user saw.
+    try:
+        with open(path) as f:
+            lines = f.readlines()
+    except OSError:
+        return None
+    for line in reversed(lines):
+        try:
+            obj = json.loads(line)
+        except Exception:
+            continue
+        if obj.get('isSidechain'):
+            continue
+        if obj.get('type') == 'assistant' or obj.get('role') == 'assistant':
+            msg = obj.get('message', obj)
+            content = msg.get('content', [])
+            if isinstance(content, list):
+                text = '\n'.join(c.get('text', '') for c in content
+                                 if isinstance(c, dict) and c.get('type') == 'text')
+            else:
+                text = str(content)
+            if text.strip():
+                return text
+    return None
+
 try:
     data = json.load(sys.stdin)
-    text = None
-    if 'response' in data:
-        text = data['response']
-    elif 'message' in data and 'content' in data['message']:
-        text = data['message']['content']
-    elif 'content' in data:
-        text = data['content']
-    if text and str(text).strip() and str(text) != 'null':
-        print(str(text))
-    else:
-        sys.exit(1)
 except Exception:
     sys.exit(1)
+
+# 1. Direct text keys (legacy payload shapes / future-proofing)
+for key in ('response', 'content'):
+    if data.get(key) and str(data[key]).strip() and str(data[key]) != 'null':
+        print(str(data[key])); sys.exit(0)
+if isinstance(data.get('message'), dict) and data['message'].get('content'):
+    print(str(data['message']['content'])); sys.exit(0)
+
+# 2. Current Claude Code Stop payload: {stop_hook_active, session_id,
+#    transcript_path, hook_event_name, ...} — response text lives in the
+#    session transcript, not the payload. (v0.68.0 fix: pre-fix cost was
+#    ZERO response captures — verified 2026-06-04, 30 prompt commits / 0
+#    response commits across the full day.)
+transcript_path = data.get('transcript_path') or data.get('session_transcript_path')
+if not transcript_path and data.get('session_id'):
+    matches = glob.glob(os.path.expanduser('~') +
+                        '/.claude/projects/*/' + data['session_id'] + '.jsonl')
+    if matches:
+        transcript_path = matches[0]
+if transcript_path and os.path.exists(transcript_path):
+    text = last_assistant_text(transcript_path)
+    if text:
+        print(text); sys.exit(0)
+sys.exit(1)
 " 2>/dev/null || true)
 # || true neutralizes set -o pipefail+errexit when the python parser exits 1
-# on Stop-hook payloads lacking response/message/content (real shape is
-# {stop_hook_active, session_id, hook_event_name}). Without it, set -e fires
-# on the assignment and the script exits BEFORE the empty-RESPONSE_TEXT
-# handler below runs. Pre-fix cost: ZERO session-log:response commits ever
-# landed (verified 2026-04-27 across full git history).
+# (no assistant text found). Without it, set -e fires on the assignment and
+# the script exits BEFORE the empty-RESPONSE_TEXT handler below runs.
+# History: 2026-04-27 added || true; 2026-06-04 (v0.68.0) added the
+# transcript_path parser because the Stop payload itself stopped carrying
+# response text — the || true kept the failure silent for weeks.
 
 if [ -z "$RESPONSE_TEXT" ]; then
     exit 0
@@ -123,6 +172,7 @@ fi
 # regardless of what's in the staged index.
 HOOK_PATHS=()
 [ -d "brain/sessions" ] && HOOK_PATHS+=("brain/sessions")
+[ -d "co-dialectic" ] && HOOK_PATHS+=("co-dialectic")
 [ -f "CLAUDE.md" ] && HOOK_PATHS+=("CLAUDE.md")
 [ -f "NEXT_SESSION_HANDOFF.md" ] && HOOK_PATHS+=("NEXT_SESSION_HANDOFF.md")
 [ -d "Resumes & Cover Letters" ] && HOOK_PATHS+=("Resumes & Cover Letters")
@@ -132,11 +182,27 @@ if [ "${#HOOK_PATHS[@]}" -eq 0 ]; then
     exit 0
 fi
 
+# v0.68.0 debug trail: forensic line per fire so lost-commit mysteries are
+# diagnoseable (branch + how much was staged before the hook touched anything).
+PRE_HOOK_STAGED=$(git diff --cached --name-only | wc -l | tr -d ' ')
+echo "[DEBUG $(date)] hook=capture-response branch=$(git branch --show-current) pre_hook_staged=$PRE_HOOK_STAGED hook_paths=${#HOOK_PATHS[@]}" >> "$LOG_FILE"
+
 for p in "${HOOK_PATHS[@]}"; do
     git add -- "$p" 2>> "$LOG_FILE" || echo "[$(date)] git add -- \"$p\" failed" >> "$LOG_FILE"
 done
 
-git commit -q -m "session-log: response $TODAY $TIMESTAMP" -- "${HOOK_PATHS[@]}" \
+# Commit-message file summary — scoped to HOOK_PATHS so the message matches
+# what the partial commit actually contains (NOT the whole staged index).
+STAGED_FILES_COUNT=$(git diff --cached --name-only -- "${HOOK_PATHS[@]}" | wc -l | tr -d ' ')
+STAGED_FILES_PREVIEW=$(git diff --cached --name-only -- "${HOOK_PATHS[@]}" | head -3 | tr '\n' ',' | sed 's/,$//' | cut -c1-80)
+
+if [ "$STAGED_FILES_COUNT" -eq 0 ]; then
+    # Nothing the hook owns changed — skip commit AND push (no empty commits,
+    # no error-log noise from git commit failing on an empty set).
+    exit 0
+fi
+
+git commit -q -m "session-log: response $TODAY $TIMESTAMP — $STAGED_FILES_COUNT files ($STAGED_FILES_PREVIEW)" -- "${HOOK_PATHS[@]}" \
     2>> "$LOG_FILE" || echo "[$(date)] git commit (response) failed" >> "$LOG_FILE"
 
 # Serial push (Fix 4: blocking push replaces fire-and-forget background push)
