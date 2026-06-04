@@ -5,7 +5,7 @@ description: >
   the user's skills-matrix.md. Activates when the user mentions learning a
   technology, disputes a gap flagged by the job-match-scorer, or asks to update their
   skills profile. On gap closure, offers to re-score affected pipeline roles.
-  Owns all writes to: brain/identity/skills-matrix.md.
+  Owns all writes to: identity/skills-matrix.md (xOS primitive) via brain.write().
 triggers:
   - su
   # Explicit update
@@ -60,21 +60,35 @@ Always start your response with:
 
 ## DATA ARCHITECTURE
 
+### Brain API (brain-kernel >= 1.0.0)
+
+`identity/skills-matrix.md` is an xOS primitive. This skill writes it via
+`brain.write()` with `engine_id: "career-intelligence"` — permitted because
+`identity/skills-matrix.md` is in this engine's `writes_to_primitives` declaration.
+
 ### Inputs (what the skill reads)
 
-| Source | Path | What It Provides |
-|--------|------|------------------|
-| Skills matrix | `brain/identity/skills-matrix.md` | Current skills state |
-| Match Tracker | `brain/projects/job-search/job-pipeline-match-tracker.json` | Active pipeline roles with gap flags |
-| Pipeline | `brain/projects/job-search/job-pipeline.json` | Companies to check for gap closure impact |
+| Source | brain.read() path | What It Provides |
+|--------|------------------|------------------|
+| Skills matrix | `brain.read("identity/skills-matrix.md")` | Current skills state |
+| Match Tracker | `brain.read("career-intelligence/match-tracker.json")` | Active pipeline roles with gap flags |
+| Pipeline | `brain.read("career-intelligence/pipeline.json")` | Companies to check for gap closure impact |
 
 ### Outputs (what the skill writes)
 
-| Output | Path | What It Contains |
-|--------|------|------------------|
-| Skills matrix (updated) | `brain/identity/skills-matrix.md` | New/modified skill rows |
+| Output | brain.write() path | What It Contains |
+|--------|-------------------|------------------|
+| Skills matrix (updated) | `identity/skills-matrix.md` | New/modified skill rows |
 | Handoff entry | `NEXT_SESSION_HANDOFF.md` | Note on significant changes (especially gap closures) |
 | Console output | — | Re-score offer for affected pipeline roles |
+
+**Write call pattern (primitive write):**
+```
+brain.write("identity/skills-matrix.md", content, {
+  provenance: { who: "career-intelligence", why: "skill updated by user", source: "skills-update" },
+  engine_id: "career-intelligence"
+})
+```
 
 ---
 
@@ -175,7 +189,7 @@ This closes the self-evolution loop: skill improves → score improves → pipel
 
 ## MULTI-AGENT SAFETY (P15)
 
-1. Re-read `skills-matrix.md` immediately before any write
+1. `brain.read("identity/skills-matrix.md")` immediately before any write (kernel pull ensures latest)
 2. Surgical edits — append rows or update specific cells, never rewrite tables
 3. Update `Last updated` date on every write
 4. Log significant changes to `NEXT_SESSION_HANDOFF.md` (especially gap closures)
@@ -185,7 +199,7 @@ This closes the self-evolution loop: skill improves → score improves → pipel
 ## EDGE CASES
 
 - **Duplicate skill**: warn "X already exists at [level] — want to update proficiency instead?"
-- **skills-matrix.md doesn't exist**: create with header structure and category sections
+- **skills-matrix.md doesn't exist**: write via `brain.write("identity/skills-matrix.md", ...)` with header structure and category sections
 - **No active pipeline roles**: gap closure re-score offer is skipped gracefully
 - **User disputes but evidence is ambiguous**: ask for evidence ("What project did you use X on?") before updating
 - **Bulk rescan with no GitHub access**: surface the limitation, offer manual add instead

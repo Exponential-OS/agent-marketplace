@@ -27,7 +27,9 @@ RULE_SLUG = "warm-contact-outreach-dedup"
 LOG_FILE = pathlib.Path.home() / ".cyborg-enforcement-log.jsonl"
 _CAREER_HOME_RAW = os.environ.get("CAREER_HOME") or os.environ.get("CAREER_OS_HOME")
 _CAREER_HOME = pathlib.Path(_CAREER_HOME_RAW).expanduser() if _CAREER_HOME_RAW else None
-DEFAULT_PEOPLE_DIR = _CAREER_HOME / "brain/network/people" if _CAREER_HOME else pathlib.Path("/nonexistent/career-home-not-set")
+# BRAIN-KERNEL-BYPASS: subprocess gate reads filesystem directly, bypassing kernel ACL.
+# Resolved by V1.1-WORK-001 (kernel CLI mode) — at that point this can use brain.read().
+DEFAULT_PEOPLE_DIR = _CAREER_HOME / "network/people" if _CAREER_HOME else pathlib.Path("/nonexistent/career-home-not-set")
 DEFAULT_LOOKBACK_DAYS = 14
 
 

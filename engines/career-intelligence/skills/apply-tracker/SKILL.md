@@ -76,22 +76,35 @@ Always start your response with:
 
 ## DATA ARCHITECTURE
 
+### Brain API (brain-kernel >= 1.0.0)
+
+Pipeline and tracker are owned by this engine under `career-intelligence/` namespace.
+All writes go through `brain.write()` with `engine_id: "career-intelligence"`.
+
 ### Files This Skill Writes To
 
-| File | Path | What Gets Updated |
-|------|------|-------------------|
-| Pipeline JSON | `brain/projects/job-search/job-pipeline.json` | Update/add `stage_data[]` entries (recruiter, HM, comp, stage, next_action); add to `pending_referrals[]` when referral initiated |
-| Match Tracker | `brain/projects/job-search/job-pipeline-match-tracker.json` | Update `status` field on the role object (e.g., `APPLIED`, `REJECTED`, `INTERVIEWING`) + set `updated_at` |
+| File | brain.write() path | What Gets Updated |
+|------|-------------------|-------------------|
+| Pipeline JSON | `career-intelligence/pipeline.json` | Update/add `stage_data[]` entries (recruiter, HM, comp, stage, next_action); add to `pending_referrals[]` when referral initiated |
+| Match Tracker | `career-intelligence/match-tracker.json` | Update `status` field on the role object (e.g., `APPLIED`, `REJECTED`, `INTERVIEWING`) + set `updated_at` |
 | Tasks | GitHub Issues `$CAREER_GITHUB_REPO` | Open issues for new apps (`kind:waiting-on`), interview prep (`kind:prep`), offer eval (`kind:offer-eval`); close on rejection / advance. Labels: `tier:*`, `cadence:operational`, `repo:career-os-data`. |
 | Handoff | `NEXT_SESSION_HANDOFF.md` | Log significant state changes (advances, rejections) for other agents |
 
+**Write call pattern:**
+```
+brain.write("career-intelligence/pipeline.json", content, {
+  provenance: { who: "career-intelligence", why: "application status updated", source: "apply-tracker" },
+  engine_id: "career-intelligence"
+})
+```
+
 ### Files This Skill Reads
 
-| Source | Path | What It Provides |
-|--------|------|------------------|
-| Pipeline JSON | `brain/projects/job-search/job-pipeline.json` | Current stage_data entries and pending_referrals |
-| Match Tracker | `brain/projects/job-search/job-pipeline-match-tracker.json` | Role id, batch, score, current status |
-| People | `brain/network/people/*.md` | Contact info for follow-up suggestions |
+| Source | brain.read() path | What It Provides |
+|--------|------------------|------------------|
+| Pipeline JSON | `brain.read("career-intelligence/pipeline.json")` | Current stage_data entries and pending_referrals |
+| Match Tracker | `brain.read("career-intelligence/match-tracker.json")` | Role id, batch, score, current status |
+| People | `brain.list("network/people/")` | Contact info for follow-up suggestions |
 
 ---
 

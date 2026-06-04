@@ -135,13 +135,18 @@ existing behavior (accept company name, ask for track selection).
 | JD Alignment Framework | `brain/projects/jd-alignment-framework.md` | Track definitions and emphasis areas — used for track selection when customizing resume |
 | Resume Generation Guide | `brain/projects/resume-generation-guide.md` | 12 build rules, 4-track map, generation procedures — this IS the build protocol |
 
+### Brain API (brain-kernel >= 1.0.0)
+
+Resumes and cover letters are owned paths. All writes go through `brain.write()`
+with `engine_id: "career-intelligence"`.
+
 ### Outputs
 
-| Output | Path | When Created |
-|--------|------|-------------|
-| Customized resume | `Resumes & Cover Letters/{company}-{track}-{date}.md` | Every customize |
-| Cover letter (DOCX) | `Resumes & Cover Letters/{company}-cover-{date}.docx` | Every cover letter (editable source) |
-| Cover letter (PDF) | `Resumes & Cover Letters/{company}-cover-{date}.pdf` | Every cover letter (final for upload) |
+| Output | brain.write() path | When Created |
+|--------|-------------------|-------------|
+| Customized resume | `career-intelligence/resumes/{company}-{track}-{date}.md` | Every customize |
+| Cover letter (DOCX) | `career-intelligence/cover-letters/{company}-cover-{date}.docx` | Every cover letter (editable source) |
+| Cover letter (PDF) | `career-intelligence/cover-letters/{company}-cover-{date}.pdf` | Every cover letter (final for upload) |
 
 ---
 
@@ -211,7 +216,7 @@ Fix the 2 quantification warnings? I can suggest metrics from your stories.
 
 ### Step 5: Output
 
-Write to `Resumes & Cover Letters/{company}-{track}-{date}.md`
+Write via `brain.write("career-intelligence/resumes/{company}-{track}-{date}.md", ...)` with engine_id "career-intelligence"
 
 Present summary:
 ```
@@ -291,13 +296,16 @@ formats using the same toolchain as resumes:
 
 2. **Generate PDF** via LibreOffice headless conversion:
    ```bash
-   libreoffice --headless --convert-to pdf "{company}-cover-{date}.docx"
+   libreoffice --headless --convert-to pdf --outdir "{output_dir}" "{output_dir}/{company}-cover-{date}.docx"
    ```
+   Where `{output_dir}` is the absolute path to `$CAREER_HOME/career-intelligence/cover-letters/`.
+   The `--outdir` flag ensures the PDF lands in a known location regardless of the current working
+   directory, so `brain.write()` can reliably read from `{output_dir}/{company}-cover-{date}.pdf`.
 
-3. **Output paths:**
+3. **Output paths (via brain.write()):**
    ```
-   Resumes & Cover Letters/{company}-cover-{date}.docx  (editable)
-   Resumes & Cover Letters/{company}-cover-{date}.pdf   (final)
+   career-intelligence/cover-letters/{company}-cover-{date}.docx  (editable)
+   career-intelligence/cover-letters/{company}-cover-{date}.pdf   (final)
    ```
 
 4. **Summary output:**

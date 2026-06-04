@@ -37,7 +37,7 @@ This skill reads/writes via:
 - `gh` CLI (universal, all agents)
 - `github-mcp` MCP server (post-restart, when MCP boots — at `npx @modelcontextprotocol/server-github`)
 
-Network-intelligence READS people files + pipeline (markdown) and produces intro recommendations. Recommendation reports remain markdown files at `brain/tasks/intros-{company}-{date}.md` (working drafts, not tasks). When a recommendation graduates to a scheduled outreach action, it's the **outreach-composer** skill that opens a `kind:follow-up` issue — not this skill.
+Network-intelligence READS people files + pipeline (markdown) and produces intro recommendations. Recommendation reports remain markdown files at `career-intelligence/tasks/intros-{company}-{date}.md` (working drafts, not tasks). When a recommendation graduates to a scheduled outreach action, it's the **outreach-composer** skill that opens a `kind:follow-up` issue — not this skill.
 
 ## Purpose
 
@@ -67,21 +67,34 @@ Always start with:
 
 | Source | Path | What It Provides |
 |--------|------|------------------|
-| Contact profiles | `brain/network/people/*.md` | Structured contact data with company history, relationship |
-| Pipeline | `brain/projects/job-search/job-pipeline.json` | Target companies to map against |
-| Glossary | `brain/identity/glossary.md` | Hot cache of key contacts |
+| Contact profiles | `network/people/*.md` | Structured contact data with company history, relationship |
+| Pipeline | `career-intelligence/pipeline.json` | Target companies to map against |
 | CLAUDE.md | People table | Quick reference for top contacts |
-| Experience history | `brain/identity/experience-history.md` | User's own employment timeline (for origin cross-reference) |
+| Experience history | `identity/experience-history.md` | User's own employment timeline (for origin cross-reference) |
 | LinkedIn contact_info | LinkedIn MCP `get_person_profile(sections="contact_info")` | Connection date (when relationship started on LinkedIn) |
 | LinkedIn experience | LinkedIn MCP `get_person_profile(sections="experience")` | Their employment timeline (for employer overlap detection) |
 | LinkedIn inbox | LinkedIn MCP `search_conversations` + `get_conversation` | Message history (relationship warmth, dormancy, last exchange) |
 
+### Brain API (brain-kernel >= 1.0.0)
+
+`network/people/**` is an xOS primitive. Writes go through `brain.write()` with
+`engine_id: "career-intelligence"` — permitted because `network/people/**` is in
+this engine's `writes_to_primitives` declaration.
+
 ### Outputs
 
-| Output | Path | When Created |
-|--------|------|-------------|
-| Contact profiles | `brain/network/people/{name}.md` | Contact ingestion or update |
-| Intro recommendations | `brain/tasks/intros-{company}-{date}.md` | Path finding results |
+| Output | brain.write() path | When Created |
+|--------|-------------------|-------------|
+| Contact profiles | `network/people/{slug}.md` | Contact ingestion or update |
+| Intro recommendations | `career-intelligence/projects/intros-{company}-{date}.md` | Path finding results |
+
+**Write call pattern (people — primitive write):**
+```
+brain.write("network/people/{slug}.md", content, {
+  provenance: { who: "career-intelligence", why: "contact ingested", source: "network-intelligence" },
+  engine_id: "career-intelligence"
+})
+```
 
 ---
 
@@ -89,7 +102,7 @@ Always start with:
 
 ### Step 1: Scan Network
 
-1. Read ALL contact profiles from `brain/network/people/`
+1. Read ALL contact profiles from `network/people/`
 2. For each contact, check:
    - Current company matches target?
    - Company history includes target?
@@ -134,7 +147,8 @@ Always start with:
 
 ### Step 4: Write Recommendations
 
-Save to `brain/tasks/intros-{company}-{date}.md`:
+Save via `brain.write("career-intelligence/projects/intros-{company}-{date}.md", ...)`:
+<!-- Path mapped from legacy brain/tasks/ to career-intelligence/projects/ (owned_paths: projects/**) -->
 
 ```markdown
 # Warm Intro Paths — {Company}
@@ -182,7 +196,7 @@ Saved Piyush's profile. Cross-referencing with your pipeline...
 
 ### Step 4: Write/Update Profile
 
-Write to `brain/network/people/{name}.md` with frontmatter:
+Write via `brain.write("network/people/{slug}.md", content, { provenance: { who: "career-intelligence", why: "contact ingested", source: "network-intelligence" }, engine_id: "career-intelligence" })` with frontmatter:
 
 ```yaml
 ---
@@ -242,7 +256,7 @@ Worth a check-in before asking for an intro?
 
 ## BEHAVIOR: Empty Network
 
-If `brain/network/people/` is empty or has < 3 profiles:
+If `network/people/` is empty or has < 3 profiles:
 
 ```
 ━━━ Career OS: Network Intelligence ━━━
@@ -279,7 +293,7 @@ If LinkedIn username unknown: search `search_people(keywords="Name Company")` fi
 
 ### Step 2: Read user's employment timeline
 
-Read `brain/identity/experience-history.md` → extract companies + date ranges.
+Read `identity/experience-history.md` → extract companies + date ranges.
 
 ### Step 3: Cross-reference timelines
 
@@ -311,7 +325,7 @@ From `get_conversation(thread_id)`:
 
 ### Step 6: Update people file
 
-Write or update `brain/network/people/{slug}.md` frontmatter:
+Write or update via `brain.write("network/people/{slug}.md", ...)` with engine_id "career-intelligence". Frontmatter:
 
 ```yaml
 relationship_origin:
@@ -352,7 +366,7 @@ One shared opener warms the entire cluster simultaneously.
 
 ### Step 1: Identify cohort candidates
 
-Read ALL people files in `brain/network/people/`. A contact is a cohort candidate if:
+Read ALL people files in `network/people/`. A contact is a cohort candidate if:
 - `relationship_origin.company` matches the target company, OR
 - `relationship_origin` is unset AND LinkedIn `connected` date falls within ±18 months of the anchor connection
 
@@ -391,7 +405,7 @@ Sandeep → MongoDB referral path (direct). Rob/Sambasiva → general warm recon
 
 ## PEOPLE FILE SCHEMA (v0.30.0+)
 
-Full frontmatter schema for `brain/network/people/{slug}.md`:
+Full frontmatter schema for `network/people/{slug}.md`:
 
 ```yaml
 ---
@@ -438,8 +452,8 @@ When network-intelligence triggers an outreach send (path finding → outreach-c
 
 ## Dependencies
 
-- `organize` — contact profiles need to exist in `brain/network/people/` (required for path finding)
+- `organize` — contact profiles need to exist in `network/people/` (required for path finding)
 - `outreach-composer` — drafts the actual messages after paths are identified (recommended)
 - Pipeline entry — provides target companies (recommended)
 - LinkedIn MCP (`mcp__linkedin-community__`) — required for relationship origin scan and cohort detection
-- `brain/identity/experience-history.md` — required for employer overlap cross-reference
+- `identity/experience-history.md` — required for employer overlap cross-reference

@@ -51,12 +51,17 @@ Always start with:
 | Skills matrix | `brain/identity/skills-matrix.md` | Technology proficiency for technical rounds |
 | JD Alignment Framework | `brain/projects/jd-alignment-framework.md` | Track definitions and requirements — used for story-to-track mapping and round preparation |
 
+### Brain API (brain-kernel >= 1.0.0)
+
+All writes go through `brain.write()`. `interview-prep/` maps to the engine's
+`projects/**` owned namespace. Mock debriefs land in `stories/**`.
+
 ### Outputs
 
-| Output | Path | When Created |
-|--------|------|-------------|
-| Prep document | `brain/interview-prep/prep-{company}.md` | Every prep session |
-| Mock debrief | `brain/stories/mock-{company}-{date}.md` | After mock session |
+| Output | brain.write() path | When Created |
+|--------|-------------------|-------------|
+| Prep document | `career-intelligence/projects/interview-prep/prep-{company}.md` | Every prep session |
+| Mock debrief | `career-intelligence/stories/mock-{company}-{date}.md` | After mock session |
 
 ### Legacy Read Tolerance
 
@@ -94,7 +99,7 @@ the migration the single source of truth for filename shape changes.
 
 ### Step 2: Generate Prep Doc
 
-Write to `brain/interview-prep/prep-{company}.md`:
+Write via `brain.write("career-intelligence/projects/interview-prep/prep-{company}.md", ...)`:
 
 ```markdown
 # Interview Prep — {Company} ({Role})
@@ -164,7 +169,7 @@ STORY MAP: {N} requirements matched, {N} gaps identified
 STRONGEST MATCH: {story} → {requirement}
 BIGGEST GAP: {requirement} — suggested angle: {1-line framing}
 
-Full prep: brain/interview-prep/prep-{company}.md
+Full prep: career-intelligence/projects/interview-prep/prep-{company}.md
 
 Want to run a mock round? Say "mock interview for {Company}"
 ```
@@ -220,7 +225,7 @@ Needs work: {question topic} — {specific improvement}
 Debrief saved to brain/stories/mock-{company}-{date}.md
 ```
 
-Write debrief to `brain/stories/mock-{company}-{date}.md` with frontmatter:
+Write debrief via `brain.write("career-intelligence/stories/mock-{company}-{date}.md", ...)` with frontmatter:
 ```yaml
 ---
 type: mock-interview

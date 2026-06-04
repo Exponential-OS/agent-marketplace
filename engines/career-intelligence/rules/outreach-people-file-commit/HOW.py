@@ -20,7 +20,7 @@ Usage (called by outreach-composer and network-intelligence after send):
 
 Input JSON:
     {
-      "people_file": "/abs/path/to/brain/network/people/slug.md",
+      "people_file": "/abs/path/to/network/people/slug.md",
       "career_home": "/abs/path/to/career-os",
       "updates": {
         "last_contact": "2026-05-05",
@@ -90,6 +90,8 @@ def update_conversation_history(content, conv_updates):
 
 
 def git_commit(career_home, people_file, commit_message):
+    # BRAIN-KERNEL-BYPASS: subprocess gate writes filesystem directly, bypassing kernel ACL.
+    # Resolved by V1.1-WORK-001 (kernel CLI mode) — at that point this can use brain.write().
     """Stage the people file and commit. Returns (success, sha_or_error)."""
     rel = os.path.relpath(people_file, career_home)
     try:

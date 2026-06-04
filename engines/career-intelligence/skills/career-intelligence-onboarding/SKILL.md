@@ -33,10 +33,14 @@ Always start with:
 
 ## The 2 Files This Skill Generates
 
-| File | Path | What it does |
+All writes go through `brain.write()` with `engine_id: "career-intelligence"`.
+`identity/experience-history.md` is an xOS primitive — permitted via
+`writes_to_primitives` declaration.
+
+| File | brain.write() path | What it does |
 |---|---|---|
-| `experience-history.md` | `brain/identity/experience-history.md` | Work history, key achievements, skills, education. Loaded by outreach-fact-check before every outreach draft to prevent fabricated claims. |
-| `job-search-config.md` | `brain/projects/job-search/job-search-config.md` | Target roles, companies, location, salary, and non-negotiables. Loaded by job-match-scorer and mission-control. |
+| `experience-history.md` | `identity/experience-history.md` | Work history, key achievements, skills, education. Loaded by outreach-fact-check before every outreach draft to prevent fabricated claims. |
+| `job-search-config.md` | `career-intelligence/projects/job-search-config.md` | Target roles, companies, location, salary, and non-negotiables. Loaded by job-match-scorer and mission-control. |
 
 ## Execution Flow
 
@@ -49,7 +53,7 @@ Check `$CAREER_HOME`. If not set or directory doesn't exist:
 > Default: `~/career-os` (press Enter to accept, or type a different path)"
 
 After they answer:
-1. Create: `mkdir -p "$CAREER_HOME/brain/identity" "$CAREER_HOME/brain/projects/job-search"`
+1. Create: `mkdir -p "$CAREER_HOME/identity" "$CAREER_HOME/network/people" "$CAREER_HOME/career-intelligence"`
 2. Persist: `echo 'export CAREER_HOME="<path>"' >> ~/.zshrc && export CAREER_HOME="<path>"`
 3. Print: "Workspace ready at `$CAREER_HOME`. Let's capture your background."
 
@@ -92,12 +96,18 @@ After all 8 answers:
 
 2. Fill in all `{{PLACEHOLDER}}` tokens with the user's answers. For multi-role work history (Q2): expand the template's role blocks to cover all roles mentioned.
 
-3. Write the 2 files:
+3. Write the 2 files via brain.write():
    ```
-   $CAREER_HOME/brain/identity/experience-history.md
-   $CAREER_HOME/brain/projects/job-search/job-search-config.md
+   brain.write("identity/experience-history.md", content, {
+     provenance: { who: "career-intelligence", why: "onboarding: experience history", source: "career-intelligence-onboarding" },
+     engine_id: "career-intelligence"
+   })
+   brain.write("career-intelligence/projects/job-search-config.md", content, {
+     provenance: { who: "career-intelligence", why: "onboarding: job search config", source: "career-intelligence-onboarding" },
+     engine_id: "career-intelligence"
+   })
    ```
-   **If files already exist: show what would change. Ask: "Overwrite, merge, or skip?"**
+   **If files already exist (brain.exists() returns true): show what would change. Ask: "Overwrite, merge, or skip?"**
 
 4. Validate: confirm both files exist and are non-empty.
 

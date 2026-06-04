@@ -53,25 +53,39 @@ Always start your response with:
 
 ## DATA ARCHITECTURE
 
+### Brain API (brain-kernel >= 1.0.0)
+
+All reads go through `brain.read()` / `brain.list()`. The match tracker is an
+owned path (`career-intelligence/match-tracker.json`). Skills matrix at
+`identity/skills-matrix.md` is an xOS primitive — read via `brain.read()`.
+
 ### Inputs (what the skill reads)
 
-| Source | Path | What It Provides |
-|--------|------|------------------|
-| Scan reports | `brain/projects/job-search/scans/{YYYY-MM-DD}/` | Roles to score (title, company, URL, requirements) |
-| Skills matrix | `brain/identity/skills-matrix.md` | Technology proficiency levels, recency, learnability |
-| Stories | `brain/stories/*.md` | Evidence for domain, leadership, ambiguity categories |
-| Identity | `brain/identity/identity.md` | Values and philosophy for culture fit |
-| Pipeline | `brain/projects/job-search/job-pipeline.json` | Already-applied roles (avoid re-scoring) |
-| Match Tracker | `brain/projects/job-search/job-pipeline-match-tracker.json` | Previously scored roles (avoid duplicates, continue numbering) |
-| People | `brain/network/people/*.md` | Warm contacts at target companies (bonus signal) |
-| JD Alignment Framework | `brain/projects/jd-alignment-framework.md` | Track definitions, JD requirements tables, match evidence — used for track alignment scoring |
+| Source | brain.read() path | What It Provides |
+|--------|------------------|------------------|
+| Scan reports | `brain.list("career-intelligence/projects/scans/{YYYY-MM-DD}/")` | Roles to score (title, company, URL, requirements) |
+| Skills matrix | `brain.read("identity/skills-matrix.md")` | Technology proficiency levels, recency, learnability |
+| Stories | `brain.list("career-intelligence/stories/")` | Evidence for domain, leadership, ambiguity categories |
+| Identity | `brain.read("identity/identity.md")` | Values and philosophy for culture fit |
+| Pipeline | `brain.read("career-intelligence/pipeline.json")` | Already-applied roles (avoid re-scoring) |
+| Match Tracker | `brain.read("career-intelligence/match-tracker.json")` | Previously scored roles (avoid duplicates, continue numbering) |
+| People | `brain.list("network/people/")` | Warm contacts at target companies (bonus signal) |
+| JD Alignment Framework | `brain.read("career-intelligence/projects/jd-alignment-framework.md")` | Track definitions, JD requirements tables, match evidence |
 
 ### Outputs (what the skill writes)
 
-| Output | Path | What It Contains |
-|--------|------|------------------|
-| Match Tracker (appended) | `brain/projects/job-search/job-pipeline-match-tracker.json` | New scored rows appended to JSON array |
+| Output | brain.write() path | What It Contains |
+|--------|-------------------|------------------|
+| Match Tracker (appended) | `career-intelligence/match-tracker.json` | New scored rows appended to JSON array |
 | Console output | — | Formatted scoring summary with recommendations |
+
+**Write call pattern:**
+```
+brain.write("career-intelligence/match-tracker.json", content, {
+  provenance: { who: "career-intelligence", why: "roles scored", source: "job-match-scorer" },
+  engine_id: "career-intelligence"
+})
+```
 
 ---
 
@@ -387,7 +401,7 @@ observation only — collect outcome data without adjusting thresholds.
 
 The Match Tracker is a shared read file but the job-match-scorer is its sole writer.
 Before appending:
-1. Re-read the file to get the current last entry number
+1. `brain.read("career-intelligence/match-tracker.json")` — kernel pull ensures latest
 2. Append only — never rewrite existing batch sections
 3. If another agent somehow wrote to the tracker, re-read and continue
    numbering from the actual last entry

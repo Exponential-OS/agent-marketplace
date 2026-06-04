@@ -39,7 +39,7 @@ gh issue create --repo $CAREER_GITHUB_REPO \
   --body "<context summary + suggested approach + last_contact date>"
 ```
 
-Outreach drafts themselves remain markdown files in `brain/tasks/outreach-{contact}-{date}.md` (drafts are working artifacts, not tasks). Only the **scheduled follow-up nudge** is a task issue.
+Outreach drafts are written via `brain.write("career-intelligence/tasks/outreach-{contact}-{date}.md", ...)` (drafts are working artifacts in `tasks/**`, which is in career-intelligence `owned_paths`). Only the **scheduled follow-up nudge** is a task issue.
 
 ## Purpose
 
@@ -76,12 +76,17 @@ Always start with:
 | Key assets | CLAUDE.md Key Assets section | LinkedIn article, GitHub, demo URLs |
 | Glossary | `brain/identity/glossary.md` | Contact quick-reference |
 
+### Brain API (brain-kernel >= 1.0.0)
+
+All writes go through `brain.write()`. Contact profiles at `network/people/**` are
+xOS primitives — permitted via `writes_to_primitives` declaration.
+
 ### Outputs
 
-| Output | Path | When Created |
-|--------|------|-------------|
-| Message draft | `brain/tasks/outreach-{contact}-{date}.md` | Every outreach |
-| New contact profile | `brain/network/people/{name}.md` | When new contact ingested |
+| Output | brain.write() path | When Created |
+|--------|-------------------|-------------|
+| Message draft | `career-intelligence/projects/outreach-{contact}-{date}.md` | Every outreach |
+| New contact profile | `network/people/{slug}.md` | When new contact ingested |
 
 ---
 
@@ -239,7 +244,7 @@ Includes: role name ✅ | HM name ✅ | forwardable blurb ✅
 ```
 
 4. **Run Canonical-Claim Verification** (see section above) against the in-progress draft. BLOCK on any unanchored claim. Do NOT proceed to step 5 until verdict is PASS.
-5. Write draft to `brain/tasks/outreach-{contact}-{date}.md`.
+5. Write draft via `brain.write("career-intelligence/projects/outreach-{contact}-{date}.md", ...)`.
 6. In the agent's response to the user, include a one-line evidence note: `Canonical-claim verification: PASS (N claims, all anchored).`
 
 ---
@@ -272,7 +277,7 @@ Proof-of-work: LinkedIn article ✅
 ```
 
 4. **Run Canonical-Claim Verification** (see "Canonical-Claim Verification" section under "Forwardable Email" above) against the in-progress draft. BLOCK on any unanchored claim. The [Connection] LinkedIn DM (2026-04-26) was the originating incident — casual peer-to-peer DM that still produced credibility-killing hallucination. No skip-rule for casual register.
-5. Write draft to outreach file.
+5. Write draft via `brain.write("career-intelligence/projects/outreach-{contact}-{date}.md", ...)`.
 6. Include in agent response: `Canonical-claim verification: PASS (N claims).`
 
 ---
@@ -306,7 +311,7 @@ Channel: {from contact profile}
 ```
 
 4. **Run Canonical-Claim Verification** if the follow-up references any new biographical claim about the user not present in the prior outreach. (Pure-recall follow-ups that only reference previous conversation can skip — but ANY new claim must verify.)
-5. Write draft to outreach file.
+5. Write draft via `brain.write("career-intelligence/projects/outreach-{contact}-{date}.md", ...)`.
 
 ---
 
@@ -335,7 +340,7 @@ Channel: {from profile}
 ---
 ```
 
-4. Write draft to outreach file
+4. Write draft via `brain.write("career-intelligence/projects/outreach-{contact}-{date}.md", ...)`
 
 ---
 
@@ -356,7 +361,7 @@ Tell me about them — I'll save their profile and compose the message.
 ```
 
 After user describes the contact:
-- Extract structured data → write `brain/network/people/{name}.md`
+- Extract structured data → write via `brain.write("network/people/{slug}.md", ...)` (primitive write, engine_id: "career-intelligence")
 - Proceed with the original outreach request
 
 ---

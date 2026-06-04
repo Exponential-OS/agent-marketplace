@@ -4,8 +4,8 @@ description: >
   Real-time career story capture with STAR structure extraction, YAML frontmatter
   generation, and automatic STORY_INDEX update. Activates whenever the user shares
   a career narrative, wants to save an experience, or references past work worth
-  preserving. Owns all writes to: brain/stories/*.md and
-  brain/stories/STORY_INDEX.md.
+  preserving. Owns all writes to: career-intelligence/stories/*.md and
+  career-intelligence/stories/STORY_INDEX.md via brain.write().
 triggers:
   - stc
   # Explicit capture
@@ -52,23 +52,37 @@ Always start your response with:
 
 ## DATA ARCHITECTURE
 
+### Brain API (brain-kernel >= 1.0.0)
+
+All writes go through `brain.write(path, content, opts)`. All reads go through
+`brain.read(path)` / `brain.list(prefix)`. Direct filesystem writes are
+FORBIDDEN — the kernel enforces ACL and provenance on every operation.
+
 ### Inputs (what the skill reads)
 
-| Source | Path | What It Provides |
-|--------|------|------------------|
+| Source | Brain path | What It Provides |
+|--------|-----------|------------------|
 | Conversation context | (in-session) | The narrative to extract STAR elements from |
-| Existing stories | `brain/stories/*.md` | Duplicate detection, cross-referencing |
-| Story index | `brain/stories/STORY_INDEX.md` | Current index state for append |
-| People | `brain/network/people/*.md` | Link mentioned people to `related_people` |
-| Pipeline | `brain/projects/job-search/job-pipeline.json` | Link mentioned companies to `related_companies` |
+| Existing stories | `brain.list("career-intelligence/stories/")` | Duplicate detection, cross-referencing |
+| Story index | `brain.read("career-intelligence/stories/STORY_INDEX.md")` | Current index state for append |
+| People | `brain.list("network/people/")` | Link mentioned people to `related_people` |
+| Pipeline | `brain.read("career-intelligence/pipeline.json")` | Link mentioned companies to `related_companies` |
 
 ### Outputs (what the skill writes)
 
-| Output | Path | What It Contains |
-|--------|------|------------------|
-| Story file | `brain/stories/{slug}.md` | STAR-structured story with YAML frontmatter |
-| Story index (appended) | `brain/stories/STORY_INDEX.md` | New row: title, company, timeframe, competencies, tags |
+| Output | brain.write() path | What It Contains |
+|--------|-------------------|------------------|
+| Story file | `career-intelligence/stories/{slug}.md` | STAR-structured story with YAML frontmatter |
+| Story index (appended) | `career-intelligence/stories/STORY_INDEX.md` | New row: title, company, timeframe, competencies, tags |
 | Handoff entry | `NEXT_SESSION_HANDOFF.md` | Note that a new story was captured |
+
+**Write call pattern:**
+```
+brain.write("career-intelligence/stories/{slug}.md", content, {
+  provenance: { who: "career-intelligence", why: "story captured", source: "story-capture" },
+  engine_id: "career-intelligence"
+})
+```
 
 ---
 
@@ -132,9 +146,9 @@ last_updated: "{YYYY-MM-DD}"
 
 ### Step 4: Write on Approval
 
-1. Write story file to `brain/stories/{slug}.md`
-2. Re-read `STORY_INDEX.md` (P15 — another agent may have updated it)
-3. Append row to `STORY_INDEX.md`
+1. Write story file via `brain.write("career-intelligence/stories/{slug}.md", ...)`
+2. Re-read `brain.read("career-intelligence/stories/STORY_INDEX.md")` (P15 — another agent may have updated it)
+3. Append row via `brain.write("career-intelligence/stories/STORY_INDEX.md", ...)`
 4. Scan existing stories for cross-references (same company/project/outcome)
 5. Update `related_stories` frontmatter on any connected stories
 6. Log to `NEXT_SESSION_HANDOFF.md`
@@ -217,6 +231,6 @@ Log which competencies are most frequently tagged. Over time surface:
 
 - **Partial story** (missing Result or timeframe): capture with `TBD` fields, do not block
 - **Duplicate title/company**: warn before creating, offer to update existing story instead
-- **Stories dir doesn't exist**: create `brain/stories/`
-- **STORY_INDEX.md doesn't exist**: create with header row
+- **Stories dir doesn't exist**: `brain.write()` creates parent dirs automatically
+- **STORY_INDEX.md doesn't exist**: write it fresh via `brain.write("career-intelligence/stories/STORY_INDEX.md", ...)`
 - **User declines capture**: respect immediately, do not re-prompt for same narrative
