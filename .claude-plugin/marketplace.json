@@ -26,7 +26,7 @@
       "license": "Proprietary",
       "source": "./engines/co-dialectic",
       "description": "Co-Dialectic v4.21.1 - AUTO-HANDOFF BELT-AND-SUSPENDERS. Extends v4.21.0 PreCompact hook with Layer 2 CAPTURE: in addition to emitting a system-reminder telling Claude to invoke codi-handoff (Layer 1 RECOMMEND), the hook now also writes a structured deterministic packet to ~/.codialectic/precompact-packet-<timestamp>.json containing timestamp, trigger, cwd, git state (branch + uncommitted files + recent commits + HEAD subject), session_id, transcript_path. Even if Claude ignores the reminder, the structural floor is preserved. Marker file at ~/.codialectic/last-precompact.json points at the packet. Together: deterministic floor + conversational ceiling.",
-      "version": "4.21.1",
+      "version": "4.22.0",
       "category": "ai-runtime",
       "homepage": "https://github.com/Exponential-OS/prompt-engineering-in-action"
     },
