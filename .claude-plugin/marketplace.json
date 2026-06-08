@@ -15,8 +15,8 @@
       "platform": "xHumanOS",
       "license": "Proprietary",
       "source": "./engines/career-intelligence",
-      "description": "Career Intelligence Engine \u2014 xHumanOS engine for job search, network, pipeline, and sessions. v0.68.0: session-logger critical fixes (transcript_path parser restores response capture; zombie v0.29.0 hook killed; co-dialectic/ auto-committed; commit messages with file preview; [DEBUG] forensic logging). v0.67: workspace-identity gate on init-repo.sh.",
-      "version": "0.68.0",
+      "description": "Career Intelligence Engine \u2014 xHumanOS engine for job search, network, pipeline, sessions. v0.69.0: init-repo.sh scoped session-start commit (multi-agent data-loss fix) + CI deploy-gate repair (was red+bypassed since v0.67).",
+      "version": "0.69.0",
       "category": "career",
       "homepage": "https://github.com/Exponential-OS/career-intelligence-engine"
     },
