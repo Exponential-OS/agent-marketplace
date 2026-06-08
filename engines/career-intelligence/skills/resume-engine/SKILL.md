@@ -192,14 +192,31 @@ ALL must pass before output. If any fail, report failures and suggest fixes — 
 
 | Gate | Check | Threshold |
 |------|-------|-----------|
-| **Canonical claim verification** | Every biographical claim (tenure, role title, report count, scale-figure, date range) anchors in `$CAREER_HOME/brain/identity/experience-history.md`. Run `python3 "$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/biographical-claim-precheck/HOW.py 2>/dev/null | tail -1)"` against the in-progress draft; verdict must be PASS before any other gate fires. | Hard fail (BLOCK) |
+| **Canonical claim verification (MECHANICAL — see below)** | Every biographical claim (tenure, role title, report count, scale-figure, percentage, date range) anchors in `$CAREER_HOME/brain/identity/experience-history.md`. This is NOT a self-attestation — you MUST run the precheck script against the FINAL rendered draft and read its exit code. | Hard fail (BLOCK) |
 | **Page count** | IC roles: 1 page. Leadership: 2 pages max. | Hard fail |
 | **Banned phrases** | No "responsible for", "helped with", "worked on", "assisted in", "was involved in" | Hard fail |
-| **Quantification** | Every bullet has a metric, scope indicator, or measurable outcome | Warn if >2 bullets lack metrics |
+| **Quantification** | Prefer quantified bullets. But a TRUE unquantified bullet always beats an invented metric — NEVER synthesize a number, %, $, or scale figure to satisfy this gate. If a real metric isn't in experience-history.md or a story file, leave the bullet qualitative and tell the user "bullet X has no grounded metric — add one?" | Warn if >2 bullets lack metrics. Inventing a metric = canonical-claim BLOCK, not a warn. |
 | **Contact info** | Name, email, LinkedIn, phone all present | Hard fail |
 | **ATS keywords** | ≥70% of JD technical keywords appear in resume | Warn if <70%, fail if <50% |
 
-**Canonical-claim gate origin (2026-04-26):** Resume customization injects biographical content (roles, tenures, metrics) — exactly the failure surface that produced [Recipient] + [Connection] hallucinations in outreach drafts the same day. The `biographical-claim-precheck` rule (Constitution rule directory) is the mechanical gate. No skip-rule, including "fast-pass" customizations.
+#### Canonical-claim gate — run it mechanically, do not self-attest
+
+The model cannot grade its own grounding — a self-attested "PASS — no fabrication" is worthless (it has been observed to print PASS over a draft that contained invented metrics). The exit code of the script is the gate, not your opinion.
+
+After rendering the FINAL resume draft (Step 3, fully customized), before Step 5 output:
+
+1. Write the rendered draft to a temp file, e.g. `/tmp/resume-draft.md`.
+2. Run the precheck against it. Canonical sources are the candidate's own data — `experience-history.md`, `skills-matrix.md`, and every `brain/stories/*.md` file (résumé metrics legitimately come from all three: tenures/scale from experience-history, tool counts like "40+ services" from the skills matrix, project metrics from stories). **NEVER pass the JD as canonical** — the JD's numbers describe the *employer* (e.g. "50M events/sec"), not the candidate; passing the JD is exactly how employer figures bleed into the bio (the XOS-34 JD-bleed failure):
+   ```bash
+   PRECHECK="$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/biographical-claim-precheck/HOW.py 2>/dev/null | tail -1)"
+   CANON_JSON="$(python3 -c "import json,glob,os; h=os.environ['CAREER_HOME']; b=h+'/brain'; print(json.dumps([b+'/identity/experience-history.md', b+'/identity/skills-matrix.md']+sorted(glob.glob(b+'/stories/*.md'))))")"
+   python3 "$PRECHECK" "$(printf '{"draft_path":"/tmp/resume-draft.md","canonical_sources":%s,"stakes":"T4"}' "$CANON_JSON")"
+   echo "exit=$?"
+   ```
+3. **Exit 0 = PASS** → continue to output. **Exit 1 = BLOCK** → the JSON lists each unanchored claim under `claims_unanchored`. Remove or correct every one (delete the invented figure, or replace with a grounded one), re-render, and re-run. Do NOT output until exit 0.
+4. Report the gate result by quoting the script's verdict + claim counts — not a hand-written "looks good."
+
+**Canonical-claim gate origin (2026-04-26):** Resume customization injects biographical content (roles, tenures, metrics) — exactly the failure surface that produced [Recipient] + [Connection] hallucinations in outreach drafts the same day. **Reinforced 2026-06-07 (XOS-34):** an eval found the quantification gate pressured the model into inventing metrics ("60% overhead reduction", "$1.1M savings", a 4→5 promotion inflation) and then self-attesting "PASS — no fabrication." The mechanical exit-code gate above exists because the self-attested version cannot be trusted. No skip-rule, including "fast-pass" customizations.
 
 QA output:
 ```

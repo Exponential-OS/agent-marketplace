@@ -2,6 +2,41 @@
 <!-- this file is the historical changelog. Entries reference the original author/user as provenance, not runtime data. -->
 # Changelog
 
+## [0.71.0] — 2026-06-08 — claim-grounding gate + off-rubric risk scan (XOS-34, XOS-35)
+
+### Fixed — resume-engine could fabricate metrics and self-attest "PASS" (XOS-34, HIGH)
+The XOS-11 eval loop found resume-engine UNDERPERFORMED the no-skill baseline on
+canonical grounding (76% vs 94%). Two compounding defects:
+- The quantification gate ("every bullet needs a metric") pressured the model into
+  inventing figures (`60% overhead`, `$1.1M savings`, a 4→5 promotion inflation),
+  and JD-bleed planted the employer's `50M events/sec` into the candidate's bio.
+- The **self-attested** canonical-claim gate printed "PASS — no fabrication" over
+  those very fabrications in 3 separate runs. A self-attested LLM gate is not a gate.
+
+Fix: resume-engine SKILL.md now runs `biographical-claim-precheck` against the FINAL
+rendered draft and reads its **exit code** (no self-attestation); canonical sources =
+experience-history + skills-matrix + stories, **never the JD**. Quantification gate
+reworded so a true unquantified bullet beats an invented metric.
+
+### Fixed — biographical-claim-precheck couldn't see the fabrications (HOW.py + handler.ts, in parity)
+The gate previously only matched `$`-prefixed scale and `engineer`-suffixed counts, so
+`%`, bare scale (`50M`/`180k`/`1M TPS`), and `N+` counts slipped through. Now:
+- value-normalized token set (`1M`=`1,000,000`; `2.3k`=`2,300`); every numeric token
+  in a claim must anchor (was first-number-only); lookbehind excludes letter-glued
+  identifiers (`P99`/`H100`) and never splits a multi-digit number; unit must be glued
+  and not begin a word (`7 months` ≠ `7M`); `N+ years` career-totals exempt;
+  case-insensitive scale.
+
+### Added — job-match-scorer Off-Rubric Risk Scan (XOS-35)
+After the 6-category score and before the decision: scan for employment gaps,
+over-qualification, title-scope mismatch, and hard-constraint conflicts the rubric
+never sees. New match-tracker field `off_rubric_risks`. A 95% rubric score can still
+die at recruiter screen.
+
+### Tests
+- `tests/test_biographical_claim_precheck.py` (pytest, 8) + `tests/biographical-claim-precheck.test.ts` (bun, 9).
+- Verified against XOS-11 eval outputs: clean baselines PASS, all fabricating drafts BLOCK; HOW.py ≡ handler.ts.
+
 ## [0.70.0] — 2026-06-08 — v0.66 flat-path sweep completion + flags-gate safety (XOS-26)
 
 ### Fixed — the core career-OS data-path incoherence (C-1 + H-1 + M-1 + H-3)

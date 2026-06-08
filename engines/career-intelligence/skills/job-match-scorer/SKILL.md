@@ -144,6 +144,39 @@ If a contact exists in `network/people/` at the target company:
 Note the warm path in the scoring output but keep the bonus modest — it
 shouldn't push a poor-fit role into apply territory.
 
+### Off-Rubric Risk Scan (run AFTER the 6 categories, BEFORE the decision)
+
+The 6 categories measure *fit*. They do NOT measure how a recruiter will *read* the
+candidacy. A role can score 95% on the rubric and still die at the first recruiter
+screen because of something the rubric never looks at. Rubric-completeness is not
+risk-completeness — so before committing to a decision, scan for risks that live
+outside the six categories:
+
+- **Employment gaps / short tenures / a long "exploring" stretch.** Convert
+  experience-history end-dates against *today's* date. A multi-month gap since the
+  last role is the first thing a recruiter notices; the rubric never times it.
+- **Over-qualification.** Is this a step down in scope or level? Recruiters read
+  that as flight risk.
+- **Title-vs-scope mismatch.** Check the JD against the candidate's stated dislikes
+  in `identity.md` (e.g. "IC-heavy Director roles"). A title that matches but a
+  scope that contradicts their stated wants is a real risk.
+- **Hard-constraint conflicts.** Comp band, location, visa, remote policy the JD
+  implies that `identity.md` contradicts.
+- **Domain-pivot optics.** Does the résumé *read* as missing the JD's core domain,
+  even if adjacent skills transfer (payments → AI infra)?
+
+List each detected risk in one line with a suggested mitigation. If none apply, say
+"No off-rubric risks detected." This does NOT change the weighted score — a high
+score with an unaddressed off-rubric risk is a FULL_INVESTMENT that dies at screen.
+Surface it now, and record it in the Match Tracker `off_rubric_risks` field.
+
+```
+━━━ Off-Rubric Risks ━━━
+⚠️ 18-month employment gap (last role ended 2024-11). Recruiter will ask.
+   Mitigation: lead with open-source maintenance + advisory work during the gap.
+✓  No over-qualification, title-scope, or hard-constraint conflicts.
+```
+
 ### Decision Thresholds
 
 | Score Range | Action | What Happens Next |
@@ -204,6 +237,7 @@ the only format, no MD batch sections). Read the file first to get the current m
   "warm_path": "Cold",
   "jd_url": "https://jobs.ashbyhq.com/acme/abc123",
   "status": "QUEUED",
+  "off_rubric_risks": ["18mo employment gap — prep narrative"],
   "updated_at": "2026-05-05"
 }
 ```
@@ -224,6 +258,7 @@ the only format, no MD batch sections). Read the file first to get the current m
 | `warm_path` | string or null | Contact name or `"Cold"` |
 | `jd_url` | string or null | Full HTTPS URL; null if expired/missing |
 | `status` | string | `"QUEUED"` \| `"CHECK_DELTA"` \| `"SKIPPED"` \| `"APPLIED"` \| `"INTERVIEWING"` \| `"REJECTED"` \| `"DEAD"` \| `"OFFERED"` |
+| `off_rubric_risks` | array of string or null | One line per risk from the Off-Rubric Risk Scan; `[]` or null if none |
 | `updated_at` | string | `YYYY-MM-DD` |
 
 **Score Quality values:**

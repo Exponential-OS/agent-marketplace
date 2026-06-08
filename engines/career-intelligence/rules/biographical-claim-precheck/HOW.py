@@ -55,6 +55,31 @@ PATTERNS = [
         re.compile(r"\$\d+(?:\.\d+)?\s*[BKMbkm]\b"),
     ),
     (
+        # bare scale/throughput units without a $ prefix: "50M events", "1M TPS",
+        # "180k", "10M+ shipments", "3x latency". These are the JD-bleed / inflation
+        # surface (XOS-34): an employer's "50M events/sec" lifted into the candidate's
+        # bio reads as a bare number+unit, never a $-figure.
+        "metric_scale",
+        re.compile(
+            r"\b\d+(?:\.\d+)?\s*(?:[KMB]\b|TPS|[Xx]\b|/(?:sec|day|year|yr|mo|month))",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        # percentages: "40% cost reduction", "60% overhead", "45% MTTR". The
+        # quantification gate pressures the model into inventing these; the gate
+        # must therefore be able to see them.
+        "percentage",
+        re.compile(r"\b\d+(?:\.\d+)?\s*%"),
+    ),
+    (
+        # "N+" count claims with no unit/$/%: "400+ payment corridors",
+        # "10M+ shipments". The trailing "+" marks a quantified boast the
+        # other patterns miss when there's no currency/percent/scale suffix.
+        "plus_count",
+        re.compile(r"\b\d+(?:\.\d+)?[KMBkmb]?\+"),
+    ),
+    (
         "date_range",
         re.compile(
             r"\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4}"
@@ -71,8 +96,58 @@ PATTERNS = [
     ),
 ]
 
-NUMBER_RE = re.compile(r"\b\d+(?:\.\d+)?\b")
+# Numeric-claim tokenizer. A claim and its canonical anchor must compare as the SAME
+# token even when written differently, so we normalize each number to a VALUE:
+#   "1M" / "1,000,000" / "1m" → "1000000";  "2.3k" / "2,300" → "2300";  "$2B" → "2000000000"
+# Percentages and multipliers keep their unit ("40%", "5x"). Comparing values (not raw
+# strings) fixes the "1M TPS" boundary bug, the "2,300 vs 2.3k" format mismatch, and keeps
+# "18" from matching "180". A digit run glued to a letter ("P99", "H100", "S3", "EC2",
+# "k8s") is a technical IDENTIFIER, not a quantity claim, and is excluded.
+# Lookbehind `(?<![A-Za-z0-9.])` starts the match at a clean number boundary: it skips
+# digits glued to a leading letter (identifiers — "P99", "H100", "EC2", "S3") and, by
+# also excluding a preceding digit/dot, never splits a multi-digit number (an earlier
+# ".?"-prefix version cannibalized "180k" into "80k" → 80,000, position-dependently).
+# The unit must be GLUED to the digits and not begin a following word — `(?![A-Za-z])`
+# stops "7 months" capturing "m" as mega (→ 7,000,000) and "18 months" → 18,000,000.
+SCAN_RE = re.compile(
+    r"(?<![A-Za-z0-9.])(?P<num>\d[\d,]*(?:\.\d+)?)(?P<unit>%|TPS|[KMB]|[Xx])?(?![A-Za-z])",
+    re.IGNORECASE,
+)
+_UNIT_MULT = {"k": 1_000, "m": 1_000_000, "b": 1_000_000_000}
 CAP_WORD_RE = re.compile(r"\b[A-Z][A-Za-z]{2,}\b")
+
+# Approximate career-totals like "10+ years" / "10+ yrs". The trailing "+" signals
+# an approximation a candidate derives from grounded date ranges (2014→2024 ≈ 10y),
+# not a precise performance metric. These are near-universal in résumé summaries and
+# are NOT the fabrication surface XOS-34 targets (invented %, $, throughput, counts).
+# Strip them before numeric anchoring so the gate doesn't block honest summaries.
+# Precise tenures without the "+" ("15 years") stay strict — those can be inflated.
+APPROX_TENURE_RE = re.compile(r"\b\d+(?:\.\d+)?\+\s*(?:years?|yrs?)\b", re.IGNORECASE)
+
+
+def _numeric_tokens(text: str) -> set[str]:
+    """Normalize every quantity in `text` to a comparable token (value, or value+unit).
+
+    Skips digit runs glued to a letter (identifiers like P99/H100/S3). Returns a set so
+    a claim is anchored iff each of its quantities also appears in the canonical set.
+    """
+    out: set[str] = set()
+    for m in SCAN_RE.finditer(text):
+        num = m.group("num").replace(",", "")
+        unit = (m.group("unit") or "").lower()
+        try:
+            val = float(num)
+        except ValueError:
+            continue
+        if unit in _UNIT_MULT:
+            val *= _UNIT_MULT[unit]
+            out.add(str(int(val)) if val == int(val) else str(val))
+        elif unit in ("%", "x"):
+            base = str(int(val)) if val == int(val) else str(val)
+            out.add(base + unit)
+        else:  # bare number, or TPS-style throughput where the magnitude is what matters
+            out.add(str(int(val)) if val == int(val) else str(val))
+    return out
 
 
 def _read_context() -> str:
@@ -107,26 +182,39 @@ def _extract_claims(draft_text: str) -> list[tuple[str, int, str]]:
     return out
 
 
-def _is_anchored(phrase: str, canonical_texts: list[str]) -> int:
-    """Return: 1 = anchored, 0 = unanchored, 2 = no distinctive tokens (WARN)."""
-    numbers = NUMBER_RE.findall(phrase)[:3]
-    words = CAP_WORD_RE.findall(phrase)[:3]
-    if not numbers and not words:
+def _word_in_any(word: str, canonical_texts: list[str]) -> bool:
+    return any(
+        re.search(rf"\b{re.escape(word)}\b", canon, re.IGNORECASE)
+        for canon in canonical_texts
+    )
+
+
+def _is_anchored(phrase: str, canonical_tokens: set[str], canonical_texts: list[str]) -> int:
+    """Return: 1 = anchored, 0 = unanchored, 2 = no distinctive tokens (WARN).
+
+    A numeric claim is anchored ONLY if EVERY numeric token in it is in the canonical
+    token set. Checking just the first number (the old behaviour) let fabricated and
+    inflated figures pass whenever one grounded number sat beside them — e.g.
+    "scaled from 180k to 1M TPS" passed on 1M alone even when 180k was invented,
+    and "$2M savings on the $4.2M budget" passed on 4.2 while $2M was fabricated.
+    Every-token-must-anchor is what catches metric inflation and JD-bleed (the XOS-34
+    failure mode). Tokens carry their unit ("1m", "40%", "2b") so the comparison is
+    consistent between draft and canonical, and set membership keeps "18" from falsely
+    matching "180". For non-numeric claims (e.g. role titles) the first capitalized
+    token must anchor.
+    """
+    scrubbed = APPROX_TENURE_RE.sub(" ", phrase)
+    tokens = _numeric_tokens(scrubbed)
+    words = CAP_WORD_RE.findall(scrubbed)[:3]
+    if not tokens and not words:
         return 2
 
-    first_num = numbers[0] if numbers else None
-    first_word = words[0] if words else None
+    if tokens:
+        # Every numeric token must be grounded. One unanchored token = fabrication risk.
+        return 1 if tokens <= canonical_tokens else 0
 
-    for canon in canonical_texts:
-        num_hit = True if first_num is None else bool(
-            re.search(rf"\b{re.escape(first_num)}\b", canon)
-        )
-        word_hit = True if first_word is None else bool(
-            re.search(rf"\b{re.escape(first_word)}\b", canon, re.IGNORECASE)
-        )
-        if num_hit and word_hit:
-            return 1
-    return 0
+    # No numbers — anchor on the first distinctive capitalized token (e.g. employer/title).
+    return 1 if _word_in_any(words[0], canonical_texts) else 0
 
 
 def main() -> int:
@@ -196,13 +284,17 @@ def main() -> int:
         except OSError:
             canonical_texts.append("")
 
+    canonical_tokens: set[str] = set()
+    for ct in canonical_texts:
+        canonical_tokens |= _numeric_tokens(ct)
+
     claims = _extract_claims(draft_text)
     claims_total = len(claims)
     claims_anchored = 0
     unanchored: list[dict] = []
 
     for kind, ln, phrase in claims:
-        anchored = _is_anchored(phrase, canonical_texts)
+        anchored = _is_anchored(phrase, canonical_tokens, canonical_texts)
         if anchored == 1:
             claims_anchored += 1
         else:

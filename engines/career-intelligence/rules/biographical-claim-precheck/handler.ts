@@ -34,6 +34,22 @@ const PATTERNS: Array<{ kind: string; re: RegExp }> = [
     re: /\$\d+(?:\.\d+)?\s*[BKMbkm]\b/,
   },
   {
+    // bare scale/throughput without $ — "50M events", "1M TPS", "180k", "3x".
+    // The JD-bleed / inflation surface (XOS-34).
+    kind: "metric_scale",
+    re: /\b\d+(?:\.\d+)?\s*(?:[KMB]\b|TPS|[Xx]\b|\/(?:sec|day|year|yr|mo|month))/i,
+  },
+  {
+    // percentages — "40% cost reduction", "60% overhead", "45% MTTR".
+    kind: "percentage",
+    re: /\b\d+(?:\.\d+)?\s*%/,
+  },
+  {
+    // "N+" count boasts with no unit/$/% — "400+ corridors", "10M+ shipments".
+    kind: "plus_count",
+    re: /\b\d+(?:\.\d+)?[KMBkmb]?\+/,
+  },
+  {
     kind: "date_range",
     re: /\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4}\s*[-–—to]+\s*(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+)?\d{4}/i,
   },
@@ -43,8 +59,41 @@ const PATTERNS: Array<{ kind: string; re: RegExp }> = [
   },
 ];
 
-const NUMBER_RE = /\b\d+(?:\.\d+)?\b/g;
+// Numeric-claim tokenizer (mirrors HOW.py). Each quantity normalizes to a comparable
+// token (value, or value+unit): "1M"/"1,000,000" → "1000000"; "2.3k"/"2,300" → "2300";
+// "$2B" → "2000000000"; "40%"/"5x" keep their unit. Lookbehind skips identifiers glued
+// to a letter ("P99","H100","EC2") and never splits a multi-digit number; the unit must
+// be glued and not begin a following word (so "7 months" is 7, not 7,000,000).
+const SCAN_RE = /(?<![A-Za-z0-9.])(\d[\d,]*(?:\.\d+)?)(%|TPS|[KMB]|[Xx])?(?![A-Za-z])/gi;
+const UNIT_MULT: Record<string, number> = { k: 1_000, m: 1_000_000, b: 1_000_000_000 };
+// Approximate career-totals ("10+ years") — derived from grounded dates, not a fabricated
+// metric; strip before anchoring so honest summaries don't block. Precise "15 years" stays strict.
+const APPROX_TENURE_RE = /\b\d+(?:\.\d+)?\+\s*(?:years?|yrs?)\b/gi;
 const CAP_WORD_RE = /\b[A-Z][A-Za-z]{2,}\b/g;
+
+function numericTokens(text: string): Set<string> {
+  const out = new Set<string>();
+  for (const m of text.matchAll(SCAN_RE)) {
+    const num = m[1].replace(/,/g, "");
+    const unit = (m[2] ?? "").toLowerCase();
+    const v = parseFloat(num);
+    if (Number.isNaN(v)) continue;
+    if (unit in UNIT_MULT) {
+      const val = v * UNIT_MULT[unit];
+      out.add(Number.isInteger(val) ? String(val) : String(val));
+    } else if (unit === "%" || unit === "x") {
+      out.add((Number.isInteger(v) ? String(v) : String(v)) + unit);
+    } else {
+      out.add(Number.isInteger(v) ? String(v) : String(v));
+    }
+  }
+  return out;
+}
+
+function isSubset(a: Set<string>, b: Set<string>): boolean {
+  for (const x of a) if (!b.has(x)) return false;
+  return true;
+}
 
 interface ClaimItem {
   text: string;
@@ -102,20 +151,21 @@ function extractClaims(text: string): Array<{ kind: string; line: number; phrase
   return out;
 }
 
-// 1 = anchored, 0 = unanchored, 2 = no distinctive tokens (WARN-equivalent)
-function isAnchored(phrase: string, canonicalTexts: string[]): number {
-  const numbers = [...phrase.matchAll(NUMBER_RE)].map(m => m[0]).slice(0, 3);
-  const words = [...phrase.matchAll(CAP_WORD_RE)].map(m => m[0]).slice(0, 3);
+// 1 = anchored, 0 = unanchored, 2 = no distinctive tokens (WARN-equivalent).
+// A numeric claim anchors iff EVERY numeric token in it is in the canonical token set
+// (one ungrounded number = fabrication risk — XOS-34). Non-numeric claims anchor on
+// the first capitalized token.
+function isAnchored(phrase: string, canonicalTokens: Set<string>, canonicalTexts: string[]): number {
+  const scrubbed = phrase.replace(APPROX_TENURE_RE, " ");
+  const tokens = numericTokens(scrubbed);
+  const words = [...scrubbed.matchAll(CAP_WORD_RE)].map(m => m[0]).slice(0, 3);
 
-  if (numbers.length === 0 && words.length === 0) return 2;
+  if (tokens.size === 0 && words.length === 0) return 2;
+  if (tokens.size > 0) return isSubset(tokens, canonicalTokens) ? 1 : 0;
 
-  const firstNum = numbers[0] ?? null;
-  const firstWord = words[0] ?? null;
-
+  const firstWord = words[0];
   for (const canon of canonicalTexts) {
-    const numHit = firstNum === null || new RegExp(`\\b${firstNum.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(canon);
-    const wordHit = firstWord === null || new RegExp(`\\b${firstWord.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i").test(canon);
-    if (numHit && wordHit) return 1;
+    if (new RegExp(`\\b${firstWord.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i").test(canon)) return 1;
   }
   return 0;
 }
@@ -210,6 +260,8 @@ async function main(): Promise<void> {
   const canonicalTexts = canonicalPaths.map(p => {
     try { return readFileSync(p, "utf-8"); } catch { return ""; }
   });
+  const canonicalTokens = new Set<string>();
+  for (const ct of canonicalTexts) for (const t of numericTokens(ct)) canonicalTokens.add(t);
 
   const claims = extractClaims(draftText!);
   const claimsTotal = claims.length;
@@ -217,7 +269,7 @@ async function main(): Promise<void> {
   const unanchored: ClaimItem[] = [];
 
   for (const { kind, line, phrase } of claims) {
-    const anchored = isAnchored(phrase, canonicalTexts);
+    const anchored = isAnchored(phrase, canonicalTokens, canonicalTexts);
     if (anchored === 1) {
       claimsAnchored++;
     } else {
