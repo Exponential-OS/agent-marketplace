@@ -131,7 +131,7 @@ existing behavior (accept company name, ask for track selection).
 | Resume tracks | `Resumes & Cover Letters/` | Source templates per track |
 | Stories | `brain/stories/*.md` | Evidence to inject (metrics, projects) |
 | Skills matrix | `brain/identity/skills-matrix.md` | Technology proficiency for keyword injection |
-| Pipeline | `brain/projects/job-search/job-pipeline.json` | Role context, stage |
+| Pipeline | `career-intelligence/projects/job-search/job-pipeline.json` | Role context, stage |
 | JD Alignment Framework | `brain/projects/jd-alignment-framework.md` | Track definitions and emphasis areas — used for track selection when customizing resume |
 | Resume Generation Guide | `brain/projects/resume-generation-guide.md` | 12 build rules, 4-track map, generation procedures — this IS the build protocol |
 

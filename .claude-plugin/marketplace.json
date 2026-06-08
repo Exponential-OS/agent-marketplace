@@ -16,7 +16,7 @@
       "license": "Proprietary",
       "source": "./engines/career-intelligence",
       "description": "Career Intelligence Engine \u2014 xHumanOS engine for job search, network, pipeline, sessions. v0.69.0: init-repo.sh scoped session-start commit (multi-agent data-loss fix) + CI deploy-gate repair (was red+bypassed since v0.67).",
-      "version": "0.69.0",
+      "version": "0.70.0",
       "category": "career",
       "homepage": "https://github.com/Exponential-OS/career-intelligence-engine"
     },

@@ -11,6 +11,10 @@ Icon*
 
 # Runtime artifacts (these live in user's data repo, not the plugin repo)
 .career-os/
+# XOS-33: test fixtures embed a .career-os/ tree on purpose — they MUST be
+# tracked so the CI gate is hermetic on a clean clone. Negate the ignore for them.
+!tests/fixtures/**/.career-os/
+!tests/fixtures/**/.career-os/**
 .current-session
 .career-os-state
 

@@ -2,6 +2,26 @@
 <!-- this file is the historical changelog. Entries reference the original author/user as provenance, not runtime data. -->
 # Changelog
 
+## [0.70.0] — 2026-06-08 — v0.66 flat-path sweep completion + flags-gate safety (XOS-26)
+
+### Fixed — the core career-OS data-path incoherence (C-1 + H-1 + M-1 + H-3)
+The v0.66 migration moved job-search data to `career-intelligence/projects/job-search/`
+(stripped `brain/`, kept the subpath) but skill/script references were left split
+across THREE names. Verified ground truth (2026-06-08): live data is
+`career-intelligence/projects/job-search/{job-pipeline.json 10KB, job-pipeline-match-tracker.json 113KB}`;
+13/16 refs + the company-flags.json precedent all point there. The flat
+`career-intelligence/{pipeline,match-tracker}.json` writer paths were phantom —
+**the scorer was writing scores to a file nothing reads (C-1)**.
+
+- Swept 19 skills/scripts to canonical `career-intelligence/projects/job-search/`
+  (zero data migration — everything now points at the existing live files)
+- C-1: job-match-scorer write/read → canonical (scores now land where dashboard/sync read)
+- H-1: 15 legacy `brain/projects/job-search/` readers repointed
+- M-1: apply-tracker dual-write unified
+- H-3: company-flags-filter FAIL-HARD on missing flags file + flat path (was silent pass-all → do_not_apply leak)
+- **New CI guard (Suite 1b):** grep-zero gate blocks any future flat/`brain/` path reference
+- Verified: hermetic CI green (hooks 17 baseline, outreach-dedup, mission-control 57/0) + Suite 1b clean
+
 ## [0.69.0] — 2026-06-07 — init-repo scoped commit + CI gate repair (XOS-28 + XOS-33)
 
 ### Fixed — CI deploy gate was red+bypassed for two releases (XOS-33)

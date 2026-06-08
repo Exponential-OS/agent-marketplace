@@ -334,10 +334,10 @@ QUICK ACTIONS
 | Section | Source | Read Pattern |
 |---------|--------|-------------|
 | Priorities | GitHub Issues `$CAREER_GITHUB_REPO` | `gh issue list --state open` filtered by `tier:p1`/`tier:p2`, sort by tier ascending |
-| Pipeline | `brain/projects/job-search/job-pipeline.json` → `stage_data[]` | Active/advancing entries |
-| Metrics | `brain/projects/job-search/job-pipeline-match-tracker.json` | Count by `status` field (APPLIED, REJECTED, INTERVIEWING, OFFERED) |
-| Warm Contacts | `people/*.json` + `people-followup-query.py` | Run: `python3 ~/.career-os-state/scripts/people-followup-query.py --people-dir $CAREER_HOME/brain/network/people --days 7 --format json` — returns contacts with follow_up ≤ today+7d. Falls back to `.md` frontmatter for unmigrated files. NEVER hand-scan people files. |
-| Company Action Gate | `company-flags.json` + `company-flags-filter/HOW.py` | Before surfacing ANY action for a named company, run: `python3 $(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/company-flags-filter/HOW.py 2>/dev/null \| tail -1) '{"company":"<name>","action":"<apply\|follow_up\|referral>","flags_file":"$CAREER_HOME/brain/projects/job-search/company-flags.json"}'` — exit 1=BLOCK (suppress), exit 2=WARN (surface referral status instead). A 92% score on a deprioritized company must never surface as an action. |
+| Pipeline | `career-intelligence/projects/job-search/job-pipeline.json` → `stage_data[]` | Active/advancing entries |
+| Metrics | `career-intelligence/projects/job-search/job-pipeline-match-tracker.json` | Count by `status` field (APPLIED, REJECTED, INTERVIEWING, OFFERED) |
+| Warm Contacts | `people/*.json` + `people-followup-query.py` | Run: `python3 ~/.career-os-state/scripts/people-followup-query.py --people-dir $CAREER_HOME/network/people --days 7 --format json` — returns contacts with follow_up ≤ today+7d. Falls back to `.md` frontmatter for unmigrated files. NEVER hand-scan people files. |
+| Company Action Gate | `company-flags.json` + `company-flags-filter/HOW.py` | Before surfacing ANY action for a named company, run: `python3 $(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/company-flags-filter/HOW.py 2>/dev/null \| tail -1) '{"company":"<name>","action":"<apply\|follow_up\|referral>","flags_file":"$CAREER_HOME/career-intelligence/projects/job-search/company-flags.json"}'` — exit 1=BLOCK (suppress), exit 2=WARN (surface referral status instead). A 92% score on a deprioritized company must never surface as an action. Gate FAIL-HARDs (BLOCK) if flags_file path is given but the file is missing (XOS-27) — never silent-pass on absent safety config. |
 | Coming Up | GitHub Issues + `job-pipeline.json` → `pending_referrals[].follow_up_date` | Extract due dates from issue body / `due:*` labels + referral follow-up dates |
 | Career Brain | `stories/**/*.md` (recursive), `people/*.json` | Count `.md` files recursively under `stories/` (stories are organized into category subdirs like `stories/google/`, `stories/independent/`). Exclude `STORY_INDEX.md` and `README.md`. For `people/`, count `*.json` files (migrated as of v0.37.0); fall back to `*.md` count if no JSON found. |
 | Stale Alerts | `job-pipeline.json` → `stage_data[]` | Compute days-in-stage from `stage_detail` date or tracker `updated_at` |
@@ -447,7 +447,7 @@ Set initial version in `~/.career-os-state/version`.
 For each named contact about to appear in any action suggestion:
 
 ```
-people_file = brain/network/people/<slug>.md
+people_file = network/people/<slug>.md
 ```
 
 If the file does not exist: emit `⚠️ No people file for {Name} — action suggestion suppressed. Say "add {Name} to network" to create one.` Do NOT suggest the action.

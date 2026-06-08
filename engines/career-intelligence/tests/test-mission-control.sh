@@ -206,7 +206,7 @@ assert_file_contains "has returning-user behavior" "$SKILL" "Returning User"
 # MC-008: Contact Action Pre-Flight Protocol (v0.35.3)
 echo "-- MC-008: Contact Action Pre-Flight Protocol ----"
 assert_file_contains "protocol section exists" "$SKILL" "Contact Action Pre-Flight"
-assert_file_contains "protocol reads people file" "$SKILL" "brain/network/people/"
+assert_file_contains "protocol reads people file" "$SKILL" "network/people/"
 assert_file_contains "protocol checks interaction log" "$SKILL" "Interaction Log"
 assert_file_contains "protocol has staleness check" "$SKILL" "last_contact"
 assert_file_contains "protocol has suppress rule" "$SKILL" "SUPPRESS"

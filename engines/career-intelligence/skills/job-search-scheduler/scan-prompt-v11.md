@@ -5,12 +5,12 @@
 **Changes from v10:**
 - **All `.career-os/` paths migrated** to canonical plugin paths per `job-search-scheduler/SKILL.md`:
   - `brain/config/job-search.md` → `brain/config/job-search.md`
-  - `brain/projects/job-search/job-pipeline.json` → `brain/projects/job-search/job-pipeline.json`
-  - `brain/network/people/` → `brain/network/people/`
+  - `career-intelligence/projects/job-search/job-pipeline.json` → `career-intelligence/projects/job-search/job-pipeline.json`
+  - `network/people/` → `network/people/`
   - `brain/identity/skills-matrix.md` → `brain/identity/skills-matrix.md`
-  - `brain/projects/job-search/scans/` → `brain/projects/job-search/scans/`
+  - `career-intelligence/projects/job-search/scans/` → `career-intelligence/projects/job-search/scans/`
   - `brain/reference/jd-samples/` → `brain/reference/jd-samples/`
-- **Warm Intros table removed** from pipeline read list (SSOT moved to `brain/network/people/*.md` per ADR-001, 2026-04-06). Warm path tagging now reads people files only.
+- **Warm Intros table removed** from pipeline read list (SSOT moved to `network/people/*.md` per ADR-001, 2026-04-06). Warm path tagging now reads people files only.
 - **Write-back row format made explicit** — 8-column table matching current `job-pipeline.json` Ready to Apply format.
 - **Scan type label** updated in output template.
 
@@ -45,7 +45,7 @@ Run via bash BEFORE any other action:
 - `date +%H-%M` → use as {SCAN_TIME}
 
 Use these values for:
-- Scan file path: `brain/projects/job-search/scans/{SCAN_DATE}/scan-{SCAN_TIME}.md`
+- Scan file path: `career-intelligence/projects/job-search/scans/{SCAN_DATE}/scan-{SCAN_TIME}.md`
 - Scan header: `# Job Scan — {SCAN_DATE} {SCAN_TIME}`
 - "Posted" column normalization: LinkedIn "3 days ago" → {SCAN_DATE minus 3 days}
 - Pipeline write-back tag: `Scan {SCAN_DATE} — awaiting scoring`
@@ -83,14 +83,14 @@ Maintain a counter `mcp_calls_used`. Before every MCP call, check `mcp_calls_use
 ### BEFORE SCANNING — Read These Files
 
 1. `brain/config/job-search.md` — SOURCE OF TRUTH for targeting. Read: target roles, company tiers, ATS URLs, LinkedIn keywords, filters, skip rules, structural gap rules, resume tracks. Do NOT hardcode.
-2. `brain/projects/job-search/job-pipeline.json` — Already Applied + Active + Ready to Apply. **Note:** Warm Intros & Follow-Ups table was removed from job-pipeline.json per ADR-001 (2026-04-06). Warm path data now lives in `brain/network/people/*.md` — read via the PEOPLE INDEX (item 4 below), not the pipeline.
-3. Most recent file in `brain/projects/job-search/scans/` — delta tracking.
-4. `brain/network/people/` — directory listing only (company names for warm-path tagging) PLUS per-file names/titles for 2nd-degree mutual matching.
+2. `career-intelligence/projects/job-search/job-pipeline.json` — Already Applied + Active + Ready to Apply. **Note:** Warm Intros & Follow-Ups table was removed from job-pipeline.json per ADR-001 (2026-04-06). Warm path data now lives in `network/people/*.md` — read via the PEOPLE INDEX (item 4 below), not the pipeline.
+3. Most recent file in `career-intelligence/projects/job-search/scans/` — delta tracking.
+4. `network/people/` — directory listing only (company names for warm-path tagging) PLUS per-file names/titles for 2nd-degree mutual matching.
 5. `brain/identity/skills-matrix.md` — quick-filter gap detection.
 
 Build the DEDUP SET in memory from job-pipeline.json: every {company, normalized-title} pair across Already Applied (all statuses), Active (all states), and Ready to Apply. COUNT rows yourself — do NOT trust the header. Log the actual count (e.g., "Already Applied: 120 rows counted, dedup set size: 142").
 
-Build the PEOPLE INDEX in memory from `brain/network/people/`: map of `{full_name_lowercased → {company, tier, relationship}}`. Used for 2nd-degree mutual matching (Phase 2b).
+Build the PEOPLE INDEX in memory from `network/people/`: map of `{full_name_lowercased → {company, tier, relationship}}`. Used for 2nd-degree mutual matching (Phase 2b).
 
 ---
 
@@ -228,7 +228,7 @@ Other JS-rendered sites in config `JS-Rendered Sites`: covered by LinkedIn MCP/C
 
 ### WARM PATH TAGGING (Phase 2a — no extra navigation)
 
-For every NEW role, check company name against the PEOPLE INDEX (built from `brain/network/people/`). The Warm Intros & Follow-Ups table no longer exists in job-pipeline.json (removed ADR-001 2026-04-06) — people files are the SSOT.
+For every NEW role, check company name against the PEOPLE INDEX (built from `network/people/`). The Warm Intros & Follow-Ups table no longer exists in job-pipeline.json (removed ADR-001 2026-04-06) — people files are the SSOT.
 
 - Match → `Existing: [Name]`. Multiple matches for same company → tag STRONGEST: (1) 🔥 ACTIVE referral, (2) ✅ REFERRAL CONFIRMED, (3) ✅ Resume sent, (4) other.
 - Source A3 returned 1st-degree → `1st: [Name] — [Title]`
@@ -321,7 +321,7 @@ If LinkedIn surfaces a company not in config's ATS list or Company Tiers: "New C
 
 ### OUTPUT
 
-Save to: `brain/projects/job-search/scans/{SCAN_DATE}/scan-{SCAN_TIME}.md`
+Save to: `career-intelligence/projects/job-search/scans/{SCAN_DATE}/scan-{SCAN_TIME}.md`
 
 ```markdown
 # Job Scan — {SCAN_DATE} {SCAN_TIME}
@@ -409,7 +409,7 @@ List source failures.
 ### WRITE-BACK (after scan output saved)
 
 For each NEW role (not dedup, not skipped):
-1. Double-check against `brain/projects/job-search/job-pipeline.json` Active / Ready to Apply.
+1. Double-check against `career-intelligence/projects/job-search/job-pipeline.json` Active / Ready to Apply.
 2. If NOT present: append a new "Ready to Apply" section with this exact format:
 
 ```markdown

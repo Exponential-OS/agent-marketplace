@@ -48,7 +48,7 @@ Classify each file into one of:
 | Type | Destination | Detection signals |
 |------|-------------|-------------------|
 | Story | `brain/stories/` | Contains narrative about a project, achievement, or experience |
-| Contact | `brain/network/people/` | Contains info about a person — name, company, relationship |
+| Contact | `network/people/` | Contains info about a person — name, company, relationship |
 | Resume | `Resumes & Cover Letters/` | Contains employment history, skills summary |
 | Cover letter | `Resumes & Cover Letters/` | Addressed to hiring manager, references specific role |
 | JD | `brain/reference/jd-samples/` | Job posting content — requirements, responsibilities |
@@ -65,7 +65,7 @@ I found these career-relevant files:
 | File | Type | Action |
 |------|------|--------|
 | my-google-story.md | Story | → brain/stories/google-story.md |
-| john-doe-notes.md | Contact | → brain/network/people/john-doe.md |
+| john-doe-notes.md | Contact | → network/people/john-doe.md |
 | resume-2025.pdf | Resume | → Resumes & Cover Letters/ |
 | random.txt | Notes | Leave in place |
 

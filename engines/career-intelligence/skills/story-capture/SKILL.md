@@ -66,7 +66,7 @@ FORBIDDEN — the kernel enforces ACL and provenance on every operation.
 | Existing stories | `brain.list("career-intelligence/stories/")` | Duplicate detection, cross-referencing |
 | Story index | `brain.read("career-intelligence/stories/STORY_INDEX.md")` | Current index state for append |
 | People | `brain.list("network/people/")` | Link mentioned people to `related_people` |
-| Pipeline | `brain.read("career-intelligence/pipeline.json")` | Link mentioned companies to `related_companies` |
+| Pipeline | `brain.read("career-intelligence/projects/job-search/job-pipeline.json")` | Link mentioned companies to `related_companies` |
 
 ### Outputs (what the skill writes)
 

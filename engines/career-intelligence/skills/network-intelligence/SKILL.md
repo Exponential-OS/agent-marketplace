@@ -68,7 +68,7 @@ Always start with:
 | Source | Path | What It Provides |
 |--------|------|------------------|
 | Contact profiles | `network/people/*.md` | Structured contact data with company history, relationship |
-| Pipeline | `career-intelligence/pipeline.json` | Target companies to map against |
+| Pipeline | `career-intelligence/projects/job-search/job-pipeline.json` | Target companies to map against |
 | CLAUDE.md | People table | Quick reference for top contacts |
 | Experience history | `identity/experience-history.md` | User's own employment timeline (for origin cross-reference) |
 | LinkedIn contact_info | LinkedIn MCP `get_person_profile(sections="contact_info")` | Connection date (when relationship started on LinkedIn) |

@@ -81,8 +81,8 @@ Always start with:
 |--------|------|------------------|
 | Target contact | User request (name or company) | Who to write to |
 | Knowledge context | `python3 $CAREER_HOME/brain/assembler.py "<contact>"` | WHY-relative context: goal alignment, typed edges, ranked related nodes |
-| Contact profiles | `brain/network/people/*.md` | Relationship warmth, shared history, channel preference |
-| Pipeline | `brain/projects/job-search/job-pipeline.json` | Company context, role, hiring manager, stage |
+| Contact profiles | `network/people/*.md` | Relationship warmth, shared history, channel preference |
+| Pipeline | `career-intelligence/projects/job-search/job-pipeline.json` | Company context, role, hiring manager, stage |
 | Stories | `brain/stories/*.md` | Shared history with contact |
 | Outreach patterns | `brain/projects/outreach-patterns.md` (if exists) | Proven templates (Pattern D, etc.) |
 | Key assets | CLAUDE.md Key Assets section | LinkedIn article, GitHub, demo URLs |
@@ -358,7 +358,7 @@ Channel: {from profile}
 
 ## BEHAVIOR: No Contact Profile
 
-If no `brain/network/people/{name}.md` exists:
+If no `network/people/{name}.md` exists:
 
 ```
 ━━━ Career OS: Outreach Composer ━━━
@@ -390,7 +390,7 @@ A draft shown is NOT a message sent (see protocol 1 above). This section fires O
 
 ```bash
 python3 $(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/outreach-people-file-commit/HOW.py 2>/dev/null | tail -1) "$(jq -nc \
-  --arg people_file "$CAREER_HOME/brain/network/people/{slug}.json" \
+  --arg people_file "$CAREER_HOME/network/people/{slug}.json" \
   --arg career_home "$CAREER_HOME" \
   --arg last_contact "$(date +%Y-%m-%d)" \
   --arg follow_up "{follow_up_date}" \
@@ -410,7 +410,7 @@ python3 $(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/outreach
 
 ## Dependencies
 
-- `organize` — contact profiles in `brain/network/people/` (required for warm outreach)
+- `organize` — contact profiles in `network/people/` (required for warm outreach)
 - Pipeline entry — helpful for company context (recommended)
 - `network-intelligence` — identifies paths before outreach is composed (optional)
 - Key assets in CLAUDE.md — LinkedIn article, GitHub links for proof-of-work

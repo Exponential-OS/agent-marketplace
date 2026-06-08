@@ -56,7 +56,7 @@ Always start your response with:
 ### Brain API (brain-kernel >= 1.0.0)
 
 All reads go through `brain.read()` / `brain.list()`. The match tracker is an
-owned path (`career-intelligence/match-tracker.json`). Skills matrix at
+owned path (`career-intelligence/projects/job-search/job-pipeline-match-tracker.json`). Skills matrix at
 `identity/skills-matrix.md` is an xOS primitive — read via `brain.read()`.
 
 ### Inputs (what the skill reads)
@@ -67,8 +67,8 @@ owned path (`career-intelligence/match-tracker.json`). Skills matrix at
 | Skills matrix | `brain.read("identity/skills-matrix.md")` | Technology proficiency levels, recency, learnability |
 | Stories | `brain.list("career-intelligence/stories/")` | Evidence for domain, leadership, ambiguity categories |
 | Identity | `brain.read("identity/identity.md")` | Values and philosophy for culture fit |
-| Pipeline | `brain.read("career-intelligence/pipeline.json")` | Already-applied roles (avoid re-scoring) |
-| Match Tracker | `brain.read("career-intelligence/match-tracker.json")` | Previously scored roles (avoid duplicates, continue numbering) |
+| Pipeline | `brain.read("career-intelligence/projects/job-search/job-pipeline.json")` | Already-applied roles (avoid re-scoring) |
+| Match Tracker | `brain.read("career-intelligence/projects/job-search/job-pipeline-match-tracker.json")` | Previously scored roles (avoid duplicates, continue numbering) |
 | People | `brain.list("network/people/")` | Warm contacts at target companies (bonus signal) |
 | JD Alignment Framework | `brain.read("career-intelligence/projects/jd-alignment-framework.md")` | Track definitions, JD requirements tables, match evidence |
 
@@ -76,12 +76,12 @@ owned path (`career-intelligence/match-tracker.json`). Skills matrix at
 
 | Output | brain.write() path | What It Contains |
 |--------|-------------------|------------------|
-| Match Tracker (appended) | `career-intelligence/match-tracker.json` | New scored rows appended to JSON array |
+| Match Tracker (appended) | `career-intelligence/projects/job-search/job-pipeline-match-tracker.json` | New scored rows appended to JSON array |
 | Console output | — | Formatted scoring summary with recommendations |
 
 **Write call pattern:**
 ```
-brain.write("career-intelligence/match-tracker.json", content, {
+brain.write("career-intelligence/projects/job-search/job-pipeline-match-tracker.json", content, {
   provenance: { who: "career-intelligence", why: "roles scored", source: "job-match-scorer" },
   engine_id: "career-intelligence"
 })
@@ -136,7 +136,7 @@ score that dimension ≤40%. It will likely not clear 80%.
 
 ### Warm Path Bonus
 
-If a contact exists in `brain/network/people/` at the target company:
+If a contact exists in `network/people/` at the target company:
 - Active referral: +3% to overall score
 - Confirmed connection: +2%
 - Resume sent / loose connection: +1%
@@ -167,7 +167,7 @@ shouldn't push a poor-fit role into apply territory.
 
 ### Step 1: Find Unscored Roles
 
-- Read the latest scan report(s) from `brain/projects/job-search/scans/`
+- Read the latest scan report(s) from `career-intelligence/projects/job-search/scans/`
 - Read the Match Tracker to find the last entry number
 - Identify roles in scans that don't appear in the Match Tracker
 
@@ -250,7 +250,7 @@ title only turned out to be a filled role).
 
 **JD URL source:** Read from scan report `URL` column. If no URL, write `—`.
 
-**Warm Path source:** Check `brain/network/people/*.md` for contacts at target company. If found, include contact name. If not, `Cold` + optional LinkedIn alumni count.
+**Warm Path source:** Check `network/people/*.md` for contacts at target company. If found, include contact name. If not, `Cold` + optional LinkedIn alumni count.
 
 After the summary table, write detailed scoring per role (category breakdowns,
 rationale, gap analysis). The detailed sections are narrative — only the
@@ -401,7 +401,7 @@ observation only — collect outcome data without adjusting thresholds.
 
 The Match Tracker is a shared read file but the job-match-scorer is its sole writer.
 Before appending:
-1. `brain.read("career-intelligence/match-tracker.json")` — kernel pull ensures latest
+1. `brain.read("career-intelligence/projects/job-search/job-pipeline-match-tracker.json")` — kernel pull ensures latest
 2. Append only — never rewrite existing batch sections
 3. If another agent somehow wrote to the tracker, re-read and continue
    numbering from the actual last entry

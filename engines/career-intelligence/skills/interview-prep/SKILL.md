@@ -45,7 +45,7 @@ Always start with:
 | Target company/role | User request or pipeline entry | Which interview to prepare for |
 | Stories | `brain/stories/*.md` | Career stories with competency frontmatter |
 | Story Index | `brain/stories/STORY_INDEX.md` | Competency clusters for fast matching |
-| Pipeline | `brain/projects/job-search/job-pipeline.json` | Stage, contacts, next steps for target |
+| Pipeline | `career-intelligence/projects/job-search/job-pipeline.json` | Stage, contacts, next steps for target |
 | JD | `brain/reference/jd-samples/{company}*.pdf` | Role requirements, competencies sought |
 | Personality | `brain/config/personality.md` (optional) | RHETI type for coaching calibration |
 | Skills matrix | `brain/identity/skills-matrix.md` | Technology proficiency for technical rounds |

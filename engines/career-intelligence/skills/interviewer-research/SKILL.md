@@ -61,8 +61,8 @@ Always start with:
 | Experience | `~/<workspace>/brain/identity/experience-history.md` | Canonical role-by-role history (used for resume-claim mapping) |
 | Story Index | `~/<workspace>/brain/stories/STORY_INDEX.md` | Competency clusters → story mapping |
 | Stories | `~/<workspace>/brain/stories/*.md` | STAR-structured narratives with metrics |
-| People | `~/<workspace>/brain/network/people/*.md` (optional) | If interviewer is already in the network — prior context, warm-path notes |
-| Pipeline | `brain/projects/job-search/job-pipeline.json` | Stage / role context for the company |
+| People | `~/<workspace>/network/people/*.md` (optional) | If interviewer is already in the network — prior context, warm-path notes |
+| Pipeline | `career-intelligence/projects/job-search/job-pipeline.json` | Stage / role context for the company |
 
 ### Outputs
 
@@ -307,7 +307,7 @@ cover the most ground.)
   Workflow: dossier first (research) → prep doc (talking points) →
   mock interview (practice).
 - **`network-intelligence`** — if an interviewer is already in
-  `~/<workspace>/brain/network/people/`, this skill reads that file first; the
+  `~/<workspace>/network/people/`, this skill reads that file first; the
   network-intelligence skill writes to people files on contact ingest.
 - **`outreach-composer`** — post-interview thank-you notes can reference
   specific dossier callbacks (e.g., "your point on [thesis area] resonated

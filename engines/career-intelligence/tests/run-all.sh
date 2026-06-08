@@ -47,6 +47,27 @@ else
 fi
 echo ""
 
+# ── Suite 1b: canonical-path guard (XOS-26 — hard fail) ───────────────────────
+# Locks the v0.66 flat-path sweep: no skill/script may reference the phantom flat
+# names or the dead brain/ path. Canonical = career-intelligence/projects/job-search/.
+echo "Suite 1b: canonical job-search paths..."
+# Forbidden flat/legacy refs (disk-verified canonical, v0.70.0 XOS-26):
+#   brain/projects/job-search/ → career-intelligence/projects/job-search/   (C-1 pipeline)
+#   brain/scans/               → career-intelligence/projects/job-search/scans/   (F2)
+#   brain/network/people       → network/people   (kernel-relative; 238 live files at bare path)
+# NOT yet swept (ambiguous/tangled, tracked as follow-on): brain/config/, brain/stories/,
+#   brain/reference/jd-samples/. brain/identity/ is INTENTIONALLY kept (live data lives there).
+PATH_VIOLATIONS=$(grep -rn -E "career-intelligence/match-tracker\.json|career-intelligence/pipeline\.json|brain/projects/job-search/|brain/scans/|brain/network/people" "$REPO_DIR/skills" "$REPO_DIR/scripts" 2>/dev/null || true)
+if [ -z "$PATH_VIOLATIONS" ]; then
+  echo "  → canonical paths: clean ✓"
+  SUITE1B_STATUS="PASS"
+else
+  echo "  → canonical paths: VIOLATIONS ✗ (job-search→career-intelligence/projects/job-search/; people→network/people)"
+  echo "$PATH_VIOLATIONS"
+  exit $FAIL
+fi
+echo ""
+
 # ── Suite 2: outreach-dedup (pytest, hard fail) ───────────────────────────────
 echo "Suite 2: outreach-dedup (pytest)..."
 if pytest "$REPO_DIR/tests/test_outreach_dedup.py" -v 2>&1; then

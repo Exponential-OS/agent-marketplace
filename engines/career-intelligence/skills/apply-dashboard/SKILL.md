@@ -74,8 +74,8 @@ sorted results. The dashboard skill runs this script and renders its output.
 
 | File | Path | What It Provides |
 |------|------|------------------|
-| Match Tracker | `brain/projects/job-search/job-pipeline-match-tracker.json` | All scored roles across all batches |
-| Pipeline | `brain/projects/job-search/job-pipeline.json` | stage_data — Applied/Active cross-reference |
+| Match Tracker | `career-intelligence/projects/job-search/job-pipeline-match-tracker.json` | All scored roles across all batches |
+| Pipeline | `career-intelligence/projects/job-search/job-pipeline.json` | stage_data — Applied/Active cross-reference |
 
 ### Files This Skill Writes
 
@@ -112,7 +112,7 @@ Execute the script with the appropriate flags. Map user intent to CLI args:
 Run:
 ```bash
 python3 ~/.career-os-state/scripts/pipeline-query.py [flags] \
-  --tracker-path $CAREER_HOME/brain/projects/job-search/job-pipeline-match-tracker.json
+  --tracker-path $CAREER_HOME/career-intelligence/projects/job-search/job-pipeline-match-tracker.json
 ```
 
 ### Step 3: Render Output

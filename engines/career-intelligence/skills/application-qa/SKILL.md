@@ -52,12 +52,12 @@ Always start with:
 | Source | Path | What It Provides |
 |--------|------|------------------|
 | Role context | Resolved via `pipeline-query.py --lookup` | Company, role, score, JD URL, resume track |
-| JD content | Fetched from JD URL (WebFetch) or cached in `brain/scans/` | Requirements, responsibilities, company values |
+| JD content | Fetched from JD URL (WebFetch) or cached in `career-intelligence/projects/job-search/scans/` | Requirements, responsibilities, company values |
 | Identity | `brain/identity/identity.md` | Career narrative, values, motivation, "why" |
 | Stories | `brain/stories/*.md` | Evidence for behavioral/situational answers |
 | Skills matrix | `brain/identity/skills-matrix.md` | Technical proficiency evidence |
-| Match scoring | `brain/projects/job-search/job-pipeline-match-tracker.json` | Category scores, gap analysis, match rationale |
-| People | `brain/network/people/*.md` | Warm contacts (for "how did you hear about us") |
+| Match scoring | `career-intelligence/projects/job-search/job-pipeline-match-tracker.json` | Category scores, gap analysis, match rationale |
+| People | `network/people/*.md` | Warm contacts (for "how did you hear about us") |
 | JD Alignment Framework | `brain/projects/jd-alignment-framework.md` | Track definitions and match evidence — used for grounding portal answers in alignment data |
 | Resume Generation Guide | `brain/projects/resume-generation-guide.md` | Generation context — ensures portal answers are coherent with resume narrative |
 
@@ -92,7 +92,7 @@ Read these files (lazy-load — only what's needed):
 
 1. **JD content** — Try in order:
    a. Fetch from JD URL via WebFetch (if URL is available and valid)
-   b. Read from scan cache: `brain/scans/{batch-date}/` matching company/role
+   b. Read from scan cache: `career-intelligence/projects/job-search/scans/{batch-date}/` matching company/role
    c. Read from match tracker detailed scoring section for this role
    d. If none available, work from the role title + company research only
 
@@ -104,7 +104,7 @@ Read these files (lazy-load — only what's needed):
 4. **Match scoring** — Read the detailed scoring section for this role from
    the match tracker (provides category scores and gap analysis)
 
-5. **People** — Check `brain/network/people/` for contacts at this
+5. **People** — Check `network/people/` for contacts at this
    company (for "how did you hear about us" and referral mentions)
 
 ### Step 3: Generate Standard Q&A

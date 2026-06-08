@@ -124,7 +124,7 @@ Print this summary:
 
 Files created:
   ✅ brain/identity/experience-history.md
-  ✅ brain/projects/job-search/job-search-config.md
+  ✅ career-intelligence/projects/job-search/job-search-config.md
 
 Cross-session memory: ACTIVE
   → Your background is now loaded into every outreach draft automatically.
@@ -137,7 +137,7 @@ What's next:
   → "write outreach to [name] at [company]" — grounded in your real background
 
 One optional step: git commit your context files so they're versioned:
-  git -C $CAREER_HOME add brain/identity/experience-history.md brain/projects/job-search/job-search-config.md
+  git -C $CAREER_HOME add brain/identity/experience-history.md career-intelligence/projects/job-search/job-search-config.md
   git -C $CAREER_HOME commit -m "feat(career): Week 1 onboarding — experience history + job search config"
 ```
 

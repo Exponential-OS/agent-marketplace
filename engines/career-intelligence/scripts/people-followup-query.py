@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-people-followup-query.py — Scan brain/network/people/ for contacts with
+people-followup-query.py — Scan network/people/ for contacts with
 follow_up dates due within a window.
 
 Reads *.json people files (migrated from .md in v0.37.0). Falls back to

@@ -281,8 +281,8 @@ def main():
     args = parser.parse_args()
 
     career_home = args.career_home
-    pipeline_path = os.path.join(career_home, "brain/projects/job-search/job-pipeline.json")
-    tracker_path = os.path.join(career_home, "brain/projects/job-search/job-pipeline-match-tracker.json")
+    pipeline_path = os.path.join(career_home, "career-intelligence/projects/job-search/job-pipeline.json")
+    tracker_path = os.path.join(career_home, "career-intelligence/projects/job-search/job-pipeline-match-tracker.json")
 
     pipeline = load_json(pipeline_path)
     tracker_data = load_json(tracker_path)

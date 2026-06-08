@@ -56,12 +56,12 @@ gh issue create --repo $CAREER_GITHUB_REPO \
   --body "<scan-source URL + JD path + warm-path tag + suggested resume track>"
 ```
 
-Scan reports themselves remain markdown files at `brain/projects/job-search/scans/{date}/scan-{HH}-{MM}.md` — those are READ artifacts, not tasks.
+Scan reports themselves remain markdown files at `career-intelligence/projects/job-search/scans/{date}/scan-{HH}-{MM}.md` — those are READ artifacts, not tasks.
 
 ## FIRST-TIME SETUP (new users — run this before your first scan)
 
 **Prerequisite: career-intelligence-onboarding must be complete.**
-Say "onboard me to career intelligence" to run it. It creates `brain/identity/experience-history.md` and `brain/projects/job-search/job-search-config.md` from an 8-question interview. Without these files, the scanner has no targeting config and will produce irrelevant results.
+Say "onboard me to career intelligence" to run it. It creates `brain/identity/experience-history.md` and `career-intelligence/projects/job-search/job-search-config.md` from an 8-question interview. Without these files, the scanner has no targeting config and will produce irrelevant results.
 
 **Step 1 — Expand job search config**
 After onboarding, say: "set up my job search config" or "expand job search targeting". This reads your preferences from `job-search-config.md` and creates the full operational config at `brain/config/job-search.md` — adding ATS direct URLs, LinkedIn search keywords, company tiers, and warm-path settings. This is what the scanner reads on every run.
@@ -155,22 +155,22 @@ If you change scan logic → update this SKILL.md AND the scheduled task prompt.
 |--------|------|------------------|
 | Config | `brain/config/job-search.md` | Target roles, company tiers, ATS URLs, LinkedIn keywords, filters, skip rules, warm-path settings |
 | JD samples | `brain/reference/jd-samples/*.md` | Saved JD snapshots for roles already fetched |
-| Pipeline | `brain/projects/job-search/job-pipeline.json` | Already Applied table (skip dupes) + Warm Intros table (existing contacts) |
+| Pipeline | `career-intelligence/projects/job-search/job-pipeline.json` | Already Applied table (skip dupes) + Warm Intros table (existing contacts) |
 | Skills matrix | `brain/identity/skills-matrix.md` | Technology proficiency for quick-filter gap detection |
-| People | `brain/network/people/*.md` | Contact network for warm-path cross-referencing |
+| People | `network/people/*.md` | Contact network for warm-path cross-referencing |
 | Identity | `brain/identity/identity.md` | Values, philosophy for culture fit |
 | LinkedIn (via Chrome MCP) | Browser navigation | Job feeds, company pages, People tabs, connection data |
-| Previous scan | `brain/projects/job-search/scans/{latest}/*.md` | Delta tracking — what changed since last scan |
+| Previous scan | `career-intelligence/projects/job-search/scans/{latest}/*.md` | Delta tracking — what changed since last scan |
 
 ### Outputs (what the skill writes)
 
 | Output | Path | What It Contains |
 |--------|------|------------------|
-| Scan report | `brain/projects/job-search/scans/{YYYY-MM-DD}/scan-{HH}-{MM}.md` | Roles found, warm tags, JD quality, verify queue |
-| Enrichment report | `brain/projects/job-search/scans/{YYYY-MM-DD}/enrich-{HH}-{MM}.md` | Deep warm-path results for roles from latest scan |
+| Scan report | `career-intelligence/projects/job-search/scans/{YYYY-MM-DD}/scan-{HH}-{MM}.md` | Roles found, warm tags, JD quality, verify queue |
+| Enrichment report | `career-intelligence/projects/job-search/scans/{YYYY-MM-DD}/enrich-{HH}-{MM}.md` | Deep warm-path results for roles from latest scan |
 | JD snapshots | `brain/reference/jd-samples/{company}-{role-slug}.md` | Fetched JD text (permanent — URLs die, snapshots don't) |
 | Task updates | GitHub Issues `$CAREER_GITHUB_REPO` | New `kind:scan-result` issues opened per high-priority role |
-| Pipeline updates | `brain/projects/job-search/job-pipeline.json` | New "Ready to Apply" entries |
+| Pipeline updates | `career-intelligence/projects/job-search/job-pipeline.json` | New "Ready to Apply" entries |
 
 ---
 
@@ -307,13 +307,13 @@ from the company's LinkedIn People tab.
 #### 3a: 1st-Degree Detection
 - Navigate to People tab filtered by 1st connections (URL param or JS filter)
 - Extract via DOM: name, title, relationship context
-- Cross-reference against `brain/network/people/*.md`
+- Cross-reference against `network/people/*.md`
 - Cross-reference against pipeline Warm Intros table
 
 #### 3b: 2nd-Degree Detection (HIGH VALUE)
 - Navigate to People tab filtered by 2nd connections (URL param or JS filter)
 - For each 2nd-degree contact: extract WHO the mutual connection is from DOM
-- If mutual connection is in `brain/network/people/*.md` → **actionable intro path**
+- If mutual connection is in `network/people/*.md` → **actionable intro path**
 - Record: 2nd-degree name + title, mutual connection name, relationship strength
 
 **2nd-degree scoring:**
@@ -360,7 +360,7 @@ After scan completes, suggest: `"score the latest scan"` to invoke job-match-sco
 
 ### Step 5: Write Outputs
 
-**Scan report** (`brain/projects/job-search/scans/{YYYY-MM-DD}/scan-{HH}-{MM}.md`):
+**Scan report** (`career-intelligence/projects/job-search/scans/{YYYY-MM-DD}/scan-{HH}-{MM}.md`):
 
 ```markdown
 # Job Scan — {date} {time}
@@ -434,7 +434,7 @@ People files: {N} contacts loaded
 When user says "enrich warm paths", "find connections", "check my network", etc.:
 
 ### Step 1: Find Unenriched Scans
-- Find ALL scan files across `brain/projects/job-search/scans/` (any date directory, pattern `scan-*.md`)
+- Find ALL scan files across `career-intelligence/projects/job-search/scans/` (any date directory, pattern `scan-*.md`)
 - For each scan, check if a corresponding enrichment file exists:
   - Enrichment files match pattern `enrich-*.md` in the same date directory
   - A scan is "enriched" if an enrichment file's `Scan enriched:` field references it
@@ -455,7 +455,7 @@ For each role from the unenriched scans that needs enrichment (Cold or surface-l
 If Chrome MCP unavailable: "Chrome MCP needed for LinkedIn People tab navigation. Run this in a session with Chrome access."
 
 ### Step 3: Write Enrichment Report
-Save to `brain/projects/job-search/scans/{YYYY-MM-DD}/enrich-{HH}-{MM}.md`:
+Save to `career-intelligence/projects/job-search/scans/{YYYY-MM-DD}/enrich-{HH}-{MM}.md`:
 
 ```markdown
 # Warm Path Enrichment — {date} {time}

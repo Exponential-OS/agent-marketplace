@@ -6,7 +6,7 @@ id uniqueness, and date format.
 
 Usage:
     python3 scripts/validate-tracker-json.py \
-        --input brain/projects/job-search/job-pipeline-match-tracker.json
+        --input career-intelligence/projects/job-search/job-pipeline-match-tracker.json
 
 Exit: 0=valid, 1=invalid
 """

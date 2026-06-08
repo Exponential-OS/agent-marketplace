@@ -45,8 +45,8 @@ The three core files and their roles:
 
 | File | Path | Role |
 |------|------|------|
-| Pipeline | `brain/projects/job-search/job-pipeline.json` | Source of truth for **status** (stage, comp, next action) |
-| Match Tracker | `brain/projects/job-search/job-pipeline-match-tracker.json` | Source of truth for **scoring** (match %, category breakdowns) |
+| Pipeline | `career-intelligence/projects/job-search/job-pipeline.json` | Source of truth for **status** (stage, comp, next action) |
+| Match Tracker | `career-intelligence/projects/job-search/job-pipeline-match-tracker.json` | Source of truth for **scoring** (match %, category breakdowns) |
 | Tasks | GitHub Issues `$CAREER_GITHUB_REPO` | Source of truth for **action items** (what to do next, priority via `tier:*` label) |
 
 ## Output Format
@@ -72,17 +72,17 @@ Cowork's `schedule` skill infrastructure.
 
 | Source | Path | What It Provides |
 |--------|------|------------------|
-| Pipeline | `brain/projects/job-search/job-pipeline.json` | Current status of all roles |
-| Match Tracker | `brain/projects/job-search/job-pipeline-match-tracker.json` | Scoring history for all evaluated roles |
+| Pipeline | `career-intelligence/projects/job-search/job-pipeline.json` | Current status of all roles |
+| Match Tracker | `career-intelligence/projects/job-search/job-pipeline-match-tracker.json` | Scoring history for all evaluated roles |
 | Tasks | GitHub Issues `$CAREER_GITHUB_REPO` (open, `kind:waiting-on`/`kind:prep`/etc.) | Current action items and "Waiting On" entries |
-| Scan reports | `brain/scans/{YYYY-MM-DD}/` | Recent scan outputs (for new roles not yet in pipeline) |
+| Scan reports | `career-intelligence/projects/job-search/scans/{YYYY-MM-DD}/` | Recent scan outputs (for new roles not yet in pipeline) |
 | Handoff | `NEXT_SESSION_HANDOFF.md` | Recent state changes that may not be reflected in files |
 
 ### Outputs (what the skill writes)
 
 | Output | Path | What It Contains |
 |--------|------|------------------|
-| Pipeline (updated) | `brain/projects/job-search/job-pipeline.json` | Reconciled statuses, corrected row counts |
+| Pipeline (updated) | `career-intelligence/projects/job-search/job-pipeline.json` | Reconciled statuses, corrected row counts |
 | Tasks (updated) | GitHub Issues `$CAREER_GITHUB_REPO` | New issues (`kind:waiting-on`, action items), closed stale issues |
 | Sync report | Console output | Summary of what was found and fixed |
 
@@ -122,7 +122,7 @@ Run these checks:
 - Flag missing entries
 
 **D. Scan → Pipeline propagation**
-- Check the most recent scan date in `brain/scans/`
+- Check the most recent scan date in `career-intelligence/projects/job-search/scans/`
 - For each role in that scan: verify it appears in Pipeline (either Ready to Apply,
   Already Applied, or explicitly skipped)
 - Flag roles found in scans but missing from Pipeline
@@ -207,7 +207,7 @@ sync: reconcile pipeline, tasks, and tracker ({N} fixes)
 
 When triggered after a job scan completes (either manually or via schedule):
 
-1. Read the latest scan report from `brain/scans/{today}/`
+1. Read the latest scan report from `career-intelligence/projects/job-search/scans/{today}/`
 2. For each new role in the scan:
    - If score ≥ 80%: add to Pipeline "Ready to Apply" section with score and
      recommended resume track

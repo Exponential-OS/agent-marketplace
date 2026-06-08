@@ -29,13 +29,29 @@ import json
 import sys
 
 
+class FlagsConfigError(Exception):
+    """flags_file path was given but does not resolve to a readable JSON file.
+
+    Misconfiguration, NOT 'no flags configured'. Per FAIL-HARD: a safety gate
+    that silently PASSES when its config is missing is worse than no gate — it
+    leaked do_not_apply companies (OpenAI/Google) into actions while reporting
+    healthy (XOS-27 / review H-3, 2026-06-05). The legitimate 'no flags' case
+    is an existing file containing {} — that still passes.
+    """
+
+
 def load_flags(flags_file):
     try:
         with open(flags_file, "r", encoding="utf-8") as f:
             return json.load(f)
+    except FileNotFoundError:
+        raise FlagsConfigError(
+            f"flags_file not found at '{flags_file}'. Refusing to pass-all on a "
+            f"missing safety config — fix the path or create the file (use an "
+            f"empty {{}} to intentionally configure no flags)."
+        )
     except (OSError, json.JSONDecodeError) as e:
-        # If flags file missing or unreadable, PASS (don't block on missing config)
-        return {}
+        raise FlagsConfigError(f"flags_file at '{flags_file}' unreadable: {e}")
 
 
 def normalize(name):
@@ -61,7 +77,10 @@ def main():
     if not flags_file:
         out(1, "block", "flags_file path is required")
 
-    flags = load_flags(flags_file)
+    try:
+        flags = load_flags(flags_file)
+    except FlagsConfigError as e:
+        out(1, "block", str(e))
     company_lc = normalize(company)
 
     # Check deprioritized list

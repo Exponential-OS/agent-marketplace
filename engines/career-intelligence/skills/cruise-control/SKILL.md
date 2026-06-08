@@ -253,11 +253,11 @@ Completed: 3/5 | Blocked: 1 | Needs Review: 1
 | Source | Path | What It Provides |
 |--------|------|------------------|
 | Tasks | GitHub Issues `$CAREER_GITHUB_REPO` | The execution queue (open issues, sorted by `tier:*` label) |
-| Pipeline | `brain/projects/job-search/job-pipeline.json` | Role details for execution |
-| Match Tracker | `brain/projects/job-search/job-pipeline-match-tracker.json` | Scores and recommendations |
-| Scan reports | `brain/scans/{YYYY-MM-DD}/` | Roles to process |
+| Pipeline | `career-intelligence/projects/job-search/job-pipeline.json` | Role details for execution |
+| Match Tracker | `career-intelligence/projects/job-search/job-pipeline-match-tracker.json` | Scores and recommendations |
+| Scan reports | `career-intelligence/projects/job-search/scans/{YYYY-MM-DD}/` | Roles to process |
 | Handoff | `NEXT_SESSION_HANDOFF.md` | Inherited tasks and context |
-| People | `brain/network/people/*.md` | Contact info for outreach tasks |
+| People | `network/people/*.md` | Contact info for outreach tasks |
 
 ### Outputs
 

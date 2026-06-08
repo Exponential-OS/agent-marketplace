@@ -71,8 +71,8 @@ Always start your response with:
 | Source | brain.read() path | What It Provides |
 |--------|------------------|------------------|
 | Skills matrix | `brain.read("identity/skills-matrix.md")` | Current skills state |
-| Match Tracker | `brain.read("career-intelligence/match-tracker.json")` | Active pipeline roles with gap flags |
-| Pipeline | `brain.read("career-intelligence/pipeline.json")` | Companies to check for gap closure impact |
+| Match Tracker | `brain.read("career-intelligence/projects/job-search/job-pipeline-match-tracker.json")` | Active pipeline roles with gap flags |
+| Pipeline | `brain.read("career-intelligence/projects/job-search/job-pipeline.json")` | Companies to check for gap closure impact |
 
 ### Outputs (what the skill writes)
 
