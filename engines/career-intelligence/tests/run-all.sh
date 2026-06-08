@@ -9,7 +9,16 @@
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-HOOKS_BASELINE=13
+# XOS-33: count the true `=== Results: N failed` number, not a raw `grep -c FAIL`
+# (which counted assertion-detail lines — 138 for ~68 real fails — masking the
+# real count and letting the gate be bypassed for two releases). Current 17
+# known failures = 5 genuine product findings (4× C1 schema-coherence → XOS-31;
+# social-distribution-engine phantom dir → XOS-30) + 12 deeper multi-step
+# harness-debt (migrate-chain version propagation + integration/upgrade capture
+# setup) under XOS-33 follow-on. The ws_mark workspace-identity repair restored
+# 51 spuriously-failing tests (68→17). Drive to 0 via XOS-30/31 + harness-debt;
+# lower this baseline as each lands.
+HOOKS_BASELINE=17
 PASS=0
 FAIL=1
 
@@ -18,9 +27,15 @@ echo ""
 
 # ── Suite 1: hooks (structural, baseline-gated) ──────────────────────────────
 echo "Suite 1: hooks..."
-HOOKS_OUTPUT=$(bash "$REPO_DIR/tests/test-hooks.sh" 2>&1)
-HOOKS_FAILURES=$(echo "$HOOKS_OUTPUT" | grep -c "FAIL" || true)
-echo "$HOOKS_OUTPUT" | tail -5
+# test-hooks.sh exits 1 whenever it has ANY failure; under set -e that aborted
+# run-all here before the baseline check ever ran (the real bypass mechanism).
+# || true lets us read the output and apply the baseline gate ourselves.
+HOOKS_OUTPUT=$(bash "$REPO_DIR/tests/test-hooks.sh" 2>&1 || true)
+# Parse the authoritative summary line ("=== Results: N passed, M failed ===")
+# rather than counting every line containing FAIL.
+HOOKS_FAILURES=$(echo "$HOOKS_OUTPUT" | sed -nE 's/.*Results: [0-9]+ passed, ([0-9]+) failed.*/\1/p' | tail -1)
+HOOKS_FAILURES=${HOOKS_FAILURES:-999}
+echo "$HOOKS_OUTPUT" | tail -2
 
 if [ "$HOOKS_FAILURES" -le "$HOOKS_BASELINE" ]; then
   echo "  → hooks: $HOOKS_FAILURES failures (baseline $HOOKS_BASELINE) ✓"

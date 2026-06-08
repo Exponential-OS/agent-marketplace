@@ -282,13 +282,24 @@ fi
 } >> "$LEDGER_FILE"
 
 # Commit session start marker (Fix 2: error logging, Fix 5: WIP/ scope)
+# XOS-28 (2026-06-06): SCOPED COMMIT — back-port the v0.66 sister-script fix that
+# was missed on this third sister twice. Build a pathspec of only paths that
+# exist, then `git commit -- <paths>` so a concurrent agent's staged work is
+# NEVER swept into the session-start commit (the 2026-06-04 lost-commit class).
 mkdir -p "$(dirname "$LOG_FILE")"
-git add brain/sessions/ 2>> "$LOG_FILE" || echo "[$(date)] git add brain/sessions/ failed" >> "$LOG_FILE"
-git add CLAUDE.md 2>/dev/null || true
-git add NEXT_SESSION_HANDOFF.md 2>/dev/null || true
-git add "Resumes & Cover Letters/" 2>/dev/null || true
-git add WIP/ 2>> "$LOG_FILE" || echo "[$(date)] git add WIP/ failed" >> "$LOG_FILE"
-git commit -q -m "session-start: $TODAY $TIMESTAMP" 2>> "$LOG_FILE" || echo "[$(date)] git commit (session-start) failed" >> "$LOG_FILE"
+COMMIT_PATHS=()
+[ -d "brain/sessions" ] && COMMIT_PATHS+=("brain/sessions")
+[ -f "CLAUDE.md" ] && COMMIT_PATHS+=("CLAUDE.md")
+[ -f "NEXT_SESSION_HANDOFF.md" ] && COMMIT_PATHS+=("NEXT_SESSION_HANDOFF.md")
+[ -d "Resumes & Cover Letters" ] && COMMIT_PATHS+=("Resumes & Cover Letters")
+[ -d "WIP" ] && COMMIT_PATHS+=("WIP")
+if [ "${#COMMIT_PATHS[@]}" -gt 0 ]; then
+    for p in "${COMMIT_PATHS[@]}"; do
+        git add -- "$p" 2>> "$LOG_FILE" || echo "[$(date)] git add -- \"$p\" failed" >> "$LOG_FILE"
+    done
+    git commit -q -m "session-start: $TODAY $TIMESTAMP" -- "${COMMIT_PATHS[@]}" \
+        2>> "$LOG_FILE" || echo "[$(date)] git commit (session-start) failed" >> "$LOG_FILE"
+fi
 
 # Serial push (Fix 4: blocking push replaces fire-and-forget background push)
 if git remote get-url origin &>/dev/null; then

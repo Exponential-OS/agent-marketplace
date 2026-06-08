@@ -2,6 +2,87 @@
 <!-- this file is the historical changelog. Entries reference the original author/user as provenance, not runtime data. -->
 # Changelog
 
+## [0.69.0] — 2026-06-07 — init-repo scoped commit + CI gate repair (XOS-28 + XOS-33)
+
+### Fixed — CI deploy gate was red+bypassed for two releases (XOS-33)
+`tests/run-all.sh` never actually gated: `set -e` aborted it at Suite 1 the
+moment `test-hooks.sh` returned nonzero (which it does on ANY failure), so it
+crashed silently instead of applying the baseline — v0.67 and v0.68 both shipped
+past a "green" gate that wasn't running. Compounding it, the failure counter used
+`grep -c FAIL` (counted assertion-detail lines: 138 for ~68 real fails). Fixes:
+(a) `|| true` on the test-hooks capture so the baseline check runs; (b) count the
+authoritative `=== Results: N failed ===` line; (c) the v0.67 workspace-identity
+gate silently no-op'd init-repo/capture in throwaway test dirs — added a
+`ws_mark` helper dropping the `.career-os-workspace` sentinel in each test
+workspace, restoring 51 spuriously-failing tests (68→17). Baseline set to the
+honest 17 (5 genuine findings → XOS-30/31; 12 deeper harness-debt → XOS-33
+follow-on), ratcheting down as each lands. The gate now enforces — an 18th
+failure trips it.
+
+
+
+### Fixed — the third sister script finally gets the v0.66 isolation fix
+`hooks/scripts/init-repo.sh` SessionStart commit was UNSCOPED — `git commit -m
+"session-start: …"` with no `-- <paths>` pathspec, then push. Any files a
+concurrent agent left staged got swept into the session-start commit and pushed
+— the same multi-agent index-sweep data-loss class that ate a deliberate commit
+on 2026-06-04. v0.66.0 fixed this in the two sister scripts (capture-prompt.sh,
+capture-response.sh) but missed init-repo.sh — and v0.67 back-ported only the
+workspace-identity gate, not the scoped commit. Now builds a COMMIT_PATHS
+pathspec of existing paths and runs `git commit … -- "${COMMIT_PATHS[@]}"`,
+mirroring the sisters. Verified: cross-family judge clean (no path coupling),
+test suite parity 140/68.
+
+NOTE: the flags-gate FAIL-HARD + flat-path safety fixes (XOS-26/27, also
+verified) are NOT in this release — a cross-family judge proved they're coupled
+to the C-1 match-tracker rename and must ship coherently with the full v0.66
+flat-path sweep. They live on branch feat/v0.69.0-review-fixes pending XOS-26.
+
+## [0.68.0] — 2026-06-04 — Session-logger improvements (Task #67)
+
+### Root cause fix: capture-response.sh was capturing ZERO responses
+Claude Code's Stop-hook payload stopped carrying inline response text (shape is
+`{stop_hook_active, session_id, transcript_path, hook_event_name}`). The Python
+parser only checked `response`/`message.content`/`content` keys — none present →
+`RESPONSE_TEXT` was always empty → exit-before-ledger-write. Verified: 30 prompt
+commits / 0 response commits across all of 2026-06-04 before fix.
+
+Fix: parser now reads `transcript_path` (a JSONL file Claude Code provides in the
+Stop payload), finds the last non-sidechain assistant message, extracts its text.
+Falls back to a glob-search by `session_id` if `transcript_path` is absent.
+
+### Root cause fix: zombie plugin double-fired every hook
+A stale v0.29.0 copy of the plugin in the workspace's `.claude/skills/career-os-plugin/`
+directory (with a `.claude-plugin/plugin.json`) was being loaded by Claude Code
+~v2.1.15x as a live second plugin source. Result: every UserPromptSubmit and Stop
+event fired BOTH the v0.67.0 HOOK_PATHS-scoped hook AND the v0.29.0 UNSCOPED hook.
+The v0.29.0 hook used `git commit` without `-- <paths>`, sweeping the entire staged
+index. This is why agent-deliberate commits (like `status: Mercury...`) were
+silently overwritten by session-log commits — the zombie hook re-committed the index.
+The zombie has been deleted from the workspace (2026-06-04).
+
+### Changes
+- `capture-response.sh`: transcript_path JSONL parser (reads last main-chain
+  assistant message; skips sidechain/subagent entries)
+- `capture-prompt.sh` + `capture-response.sh`: `co-dialectic/` added to
+  HOOK_PATHS (brain-kernel codi state auto-committed; silences unit-of-work noise)
+- Both hooks: commit messages now include file count + path preview
+  (`session-log: prompt 2026-06-04 11:21 — 2 files (brain/sessions/ledger/...,WIP/...)`)
+- Both hooks: `[DEBUG]` forensic line written to git-errors.log on every fire
+  (branch + pre_hook_staged + hook_paths count)
+- Both hooks: skip commit + push when HOOK_PATHS has zero staged changes (eliminates
+  empty-commit error noise in git-errors.log)
+- New migration scripts: `v0.66.0-to-v0.67.0.sh` + `v0.67.0-to-v0.68.0.sh`
+  (gap-filling; no schema changes)
+
+### Tests added
+- `[V1]` commit message includes file count + path preview
+- `[V2]` no commit on empty Stop payload
+- `[V3]` transcript_path parsing — full round-trip
+- `[V4]` co-dialectic/ committed when present
+- `[V5]` DEBUG line appears in git-errors.log
+- `[V6]` sidechain assistant messages NOT captured (main-chain only)
+
 ## [0.62.0] — 2026-05-17 — SPLIT: social-distribution extracted to its own xOS plugin
 
 ### The architectural split

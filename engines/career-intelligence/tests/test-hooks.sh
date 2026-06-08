@@ -77,6 +77,16 @@ STATE_DIR=$(mktemp -d)
 export CLAUDE_PLUGIN_ROOT="$PLUGIN_ROOT"
 export CLAUDE_PLUGIN_DATA="$STATE_DIR"
 
+# XOS-33: the v0.67 workspace-identity gate (init-repo/capture-prompt/
+# capture-response) silently no-ops unless the cwd looks like a Career OS
+# workspace. Tests create throwaway mktemp dirs that don't, so ~55 hook
+# assertions failed (gate exited 0 before any scaffold/ledger/commit ran),
+# and the red CI was bypassed for two releases. `ws_mark <dir>` drops the
+# explicit .career-os-workspace sentinel (gate Check 3) so the hooks under
+# test actually execute. Call it on every throwaway dir a hook runs in.
+ws_mark() { touch "$1/.career-os-workspace"; }
+ws_mark "$TEST_DIR"
+
 cleanup() {
     rm -rf "$TEST_DIR" "$REMOTE_DIR" "$STATE_DIR"
 }
@@ -258,6 +268,7 @@ echo "[B2] Version mismatch triggers migration"
 # and removes .career-os/.
 MIGRATE_DIR=$(mktemp -d)
 MIGRATE_STATE_DIR=$(mktemp -d)
+ws_mark "$MIGRATE_DIR"
 cd "$MIGRATE_DIR"
 git init -b main &>/dev/null
 git config user.email "test@test.com" && git config user.name "Test"
@@ -282,6 +293,7 @@ echo ""
 echo "[B3] Legacy install (no version file) triggers migration"
 LEGACY_DIR=$(mktemp -d)
 LEGACY_STATE_DIR=$(mktemp -d)
+ws_mark "$LEGACY_DIR"
 cd "$LEGACY_DIR"
 git init -b main &>/dev/null
 git config user.email "test@test.com" && git config user.name "Test"
@@ -649,6 +661,7 @@ echo "-- Integration ---------------------------------"
 echo "[I1] Full lifecycle: init -> prompt -> response -> verify"
 INTEGRATION_DIR=$(mktemp -d)
 INTEGRATION_REMOTE=$(mktemp -d)
+ws_mark "$INTEGRATION_DIR"
 cd "$INTEGRATION_REMOTE" && git init --bare -b main &>/dev/null
 cd "$INTEGRATION_DIR"
 export CLAUDE_PLUGIN_DATA=$(mktemp -d)
@@ -690,6 +703,7 @@ echo "[I3] Post-upgrade lifecycle: old data -> session start -> auto-migrate -> 
 # first session start should auto-migrate then proceed normally.
 UPGRADE_DIR=$(mktemp -d)
 UPGRADE_REMOTE=$(mktemp -d)
+ws_mark "$UPGRADE_DIR"
 cd "$UPGRADE_REMOTE" && git init --bare -b main &>/dev/null
 cd "$UPGRADE_DIR"
 export CLAUDE_PLUGIN_DATA=$(mktemp -d)
@@ -815,6 +829,7 @@ echo ""
 echo "[R7] Health check warns on stale commits"
 # Create a workspace where last commit is very old
 STALE_DIR=$(mktemp -d)
+ws_mark "$STALE_DIR"
 cd "$STALE_DIR"
 git init -b main &>/dev/null
 git config user.email "test@test.com" && git config user.name "Test"
@@ -916,6 +931,7 @@ echo "[R8] First-run gate keys on STATE_DIR/version (v0.29.0)"
 # Plugin owns its first-run signal; workspace artifacts are independent.
 WO052_DIR=$(mktemp -d)
 WO052_STATE_DIR=$(mktemp -d)
+ws_mark "$WO052_DIR"
 cd "$WO052_DIR"
 # Plugin state is initialized → NOT first-run.
 SAVED_STATE_DIR="$CLAUDE_PLUGIN_DATA"
@@ -928,6 +944,7 @@ assert_not_contains "does not report first-run when STATE_DIR has version" "$OUT
 rm -rf "$WO052_DIR" "$WO052_STATE_DIR"
 WO052_DIR=$(mktemp -d)
 WO052_STATE_DIR=$(mktemp -d)
+ws_mark "$WO052_DIR"
 cd "$WO052_DIR"
 export CLAUDE_PLUGIN_DATA="$WO052_STATE_DIR"
 OUTPUT2=$(bash "$PLUGIN_ROOT/hooks/scripts/init-repo.sh" 2>&1 || true)
@@ -980,6 +997,95 @@ SECOND_RUN_EXIT=$?
 assert_eq "B-interview-prep-convention: migration is idempotent (run 2 exits 0)" "0" "$SECOND_RUN_EXIT"
 rm -rf "$WO054_DIR"
 cd "$TEST_DIR"
+echo ""
+
+# ============================================================
+echo "-- v0.68.0 Hook Improvements (spec 2026-06-04) -----"
+# ============================================================
+
+echo "[V1] Commit message includes file count + path preview"
+BEFORE=$(git rev-parse HEAD)
+echo "test content $(date +%s)" >> "$TEST_DIR/NEXT_SESSION_HANDOFF.md"
+echo '{"prompt": "test commit message format"}' | bash "$PLUGIN_ROOT/hooks/scripts/capture-prompt.sh" &>/dev/null
+AFTER=$(git rev-parse HEAD)
+if [ "$BEFORE" != "$AFTER" ]; then
+    COMMIT_MSG=$(git log -1 --format="%s")
+    assert_contains "V1: commit message has file count" "$COMMIT_MSG" " files ("
+    assert_contains "V1: commit message has path" "$COMMIT_MSG" "NEXT_SESSION_HANDOFF"
+else
+    fail "V1: commit message format" "no commit was created"
+fi
+echo ""
+
+echo "[V2] No changes in HOOK_PATHS -> no empty commit"
+# Touch a file OUTSIDE hook scope — hook should skip commit gracefully
+echo "non-hook file" > "$TEST_DIR/non-hook-file.txt"
+git add "$TEST_DIR/non-hook-file.txt" &>/dev/null || true
+BEFORE=$(git rev-parse HEAD)
+# Use a payload with valid prompt but ensure ledger already has the same content
+# by piping a prompt that only affects ledger (already captured) — harder to test
+# directly so we test the response side with empty payload
+echo '{}' | bash "$PLUGIN_ROOT/hooks/scripts/capture-response.sh" &>/dev/null
+assert_head_unchanged "V2: empty Stop payload makes no commit" "$BEFORE" "$(git rev-parse HEAD)"
+git checkout -- . &>/dev/null 2>&1 || true
+git clean -f "$TEST_DIR/non-hook-file.txt" &>/dev/null 2>&1 || true
+echo ""
+
+echo "[V3] capture-response.sh: transcript_path parsing"
+# Build a minimal JSONL transcript with a main-chain assistant message
+TRANSCRIPT_DIR=$(mktemp -d)
+SESSION_ID="test-session-v68"
+TRANSCRIPT_FILE="$TRANSCRIPT_DIR/${SESSION_ID}.jsonl"
+cat > "$TRANSCRIPT_FILE" <<'JSONL'
+{"type":"user","role":"user","message":{"content":"test prompt"}}
+{"type":"assistant","role":"assistant","isSidechain":false,"message":{"content":[{"type":"text","text":"This is the captured assistant response for the v0.68 transcript test."}]}}
+JSONL
+# Feed a Stop-like payload with transcript_path
+STOP_PAYLOAD="{\"stop_hook_active\":true,\"session_id\":\"$SESSION_ID\",\"transcript_path\":\"$TRANSCRIPT_FILE\"}"
+BEFORE=$(git rev-parse HEAD)
+echo "$STOP_PAYLOAD" | bash "$PLUGIN_ROOT/hooks/scripts/capture-response.sh" 2>&1
+AFTER=$(git rev-parse HEAD)
+if [ "$BEFORE" != "$AFTER" ]; then
+    pass "V3: transcript_path parsed and response committed"
+    LEDGER_CONTENT=$(cat "$LEDGER_FILE")
+    assert_contains "V3: response text in ledger" "$LEDGER_CONTENT" "v0.68 transcript test"
+    assert_contains "V3: Claude header in ledger" "$LEDGER_CONTENT" "— Claude"
+    COMMIT_MSG=$(git log -1 --format="%s")
+    assert_contains "V3: response commit message" "$COMMIT_MSG" "session-log: response"
+else
+    fail "V3: transcript_path parsed" "no commit created from transcript_path payload"
+fi
+rm -rf "$TRANSCRIPT_DIR"
+echo ""
+
+echo "[V4] co-dialectic/ committed when present"
+mkdir -p "$TEST_DIR/co-dialectic"
+echo '{"persona":"test"}' > "$TEST_DIR/co-dialectic/status-state.json"
+echo '{"prompt": "test co-dialectic capture"}' | bash "$PLUGIN_ROOT/hooks/scripts/capture-prompt.sh" &>/dev/null
+FILES_IN_COMMIT=$(git show --stat --format="" HEAD)
+assert_contains "V4: co-dialectic in prompt commit" "$FILES_IN_COMMIT" "co-dialectic"
+echo ""
+
+echo "[V5] DEBUG line logged to git-errors.log on hook fire"
+# The debug line should be present after any hook fire
+assert_file_contains "V5: DEBUG line in log" "${CLAUDE_PLUGIN_DATA}/git-errors.log" "[DEBUG"
+assert_file_contains "V5: hook name in debug line" "${CLAUDE_PLUGIN_DATA}/git-errors.log" "hook=capture-prompt"
+echo ""
+
+echo "[V6] Sidechain messages NOT captured (regression: capture only main chain)"
+SC_DIR=$(mktemp -d)
+SESSION_ID_SC="test-session-sc"
+TRANSCRIPT_SC="$SC_DIR/${SESSION_ID_SC}.jsonl"
+cat > "$TRANSCRIPT_SC" <<'JSONL'
+{"type":"assistant","role":"assistant","isSidechain":true,"message":{"content":[{"type":"text","text":"sidechain response that should be ignored"}]}}
+{"type":"assistant","role":"assistant","isSidechain":false,"message":{"content":[{"type":"text","text":"main chain response that should be captured for the v68 sidechain test"}]}}
+JSONL
+STOP_PAYLOAD="{\"stop_hook_active\":true,\"session_id\":\"$SESSION_ID_SC\",\"transcript_path\":\"$TRANSCRIPT_SC\"}"
+echo "$STOP_PAYLOAD" | bash "$PLUGIN_ROOT/hooks/scripts/capture-response.sh" &>/dev/null
+LEDGER_CONTENT=$(cat "$LEDGER_FILE")
+assert_not_contains "V6: sidechain text NOT in ledger" "$LEDGER_CONTENT" "sidechain response that should be ignored"
+assert_contains "V6: main chain text in ledger" "$LEDGER_CONTENT" "v68 sidechain test"
+rm -rf "$SC_DIR"
 echo ""
 
 # ============================================================
