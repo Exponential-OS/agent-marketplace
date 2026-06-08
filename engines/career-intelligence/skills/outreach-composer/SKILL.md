@@ -4,8 +4,11 @@ description: >
   Writes calibrated outreach messages — forwardable emails in the champion's
   voice, LinkedIn DMs with proof-of-work hooks, time-appropriate follow-ups,
   and thank-you notes with specific conversation callbacks. Respects contact
-  channel preferences. Say "write outreach for [Contact]" or "follow up with
-  [Contact]".
+  channel preferences. Use this skill whenever the user wants to contact,
+  message, email, DM, text, thank, reconnect with, or ask a favor of any
+  named person — even if they never say the word "outreach" (e.g. "can you
+  ping Sarah about the role", "I should reply to Mike", "ask Priya for an
+  intro"). Say "write outreach for [Contact]" or "follow up with [Contact]".
 triggers:
   - write outreach for
   - oc
@@ -43,7 +46,16 @@ Outreach drafts are written via `brain.write("career-intelligence/tasks/outreach
 
 ## Purpose
 
-Generates personalized outreach messages calibrated to the relationship, channel, and context. Applies networking psychology (invisible board principle, serotonin from helping, proof-of-work hooks) to maximize response rates without being pushy.
+Generates personalized outreach messages calibrated to the relationship, channel, and context. Applies networking psychology to maximize response rates without being pushy:
+
+- **Invisible board principle** — people quietly evaluate whether helping you makes them look good to THEIR network. Position the ask so saying yes is low-risk and reflects well on them.
+- **Serotonin from helping** — asking for *advice* triggers the advisor's reward circuit; asking for a *favor* triggers cost-accounting. Frame asks as advice whenever the relationship allows.
+- **Proof-of-work hooks** — a concrete artifact (article, repo, demo) converts "stranger asking for time" into "builder worth meeting." Every cold-ish message carries one.
+
+## Two non-negotiable protocols (apply to EVERY behavior below)
+
+1. **Draft → Show → Wait.** Every message is presented to the user and explicitly approved before any send. A blanket "yes, send messages to X and Y" approves ZERO sends — each message needs its own approval in its own turn. Showing a draft is NOT sending; never record `message_sent`/`last_contact` from a draft. Only a confirmed send (user says sent, or user approves an automated send) updates the people file.
+2. **Plain text for copy-paste output.** Anything the user will paste into WhatsApp, Gmail, LinkedIn, or iMessage must be plain prose: no markdown tables, no pipe characters, no `**bold**`, no backticks, no code fences. Pipes and asterisks paste as literal junk characters and make the sender look careless. If a structured reference view helps, put the plain-text message FIRST and alone, then a clearly-labeled "for reference" section.
 
 ## Output Format
 
@@ -374,7 +386,7 @@ After user describes the contact:
 
 ## UNIT-OF-WORK COMMIT (MANDATORY — same execution turn as confirmed send)
 
-When the user confirms a message was sent (or you send it via browser automation), immediately call:
+A draft shown is NOT a message sent (see protocol 1 above). This section fires ONLY on confirmed send. When the user confirms a message was sent (or you send it via browser automation after explicit per-message approval), immediately call:
 
 ```bash
 python3 $(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/outreach-people-file-commit/HOW.py 2>/dev/null | tail -1) "$(jq -nc \
