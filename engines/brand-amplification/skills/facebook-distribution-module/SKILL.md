@@ -22,3 +22,22 @@ Facebook acts as a Spoke for network amplification, reaching personal and extend
 
 ### 2. Record Execution
 Update the campaign tracker with the URL and status.
+
+## Publish Gate (MANDATORY — run immediately before posting)
+
+Content-readiness gate (`social-content-readiness-check`): three parallel LLM judges
+(tone/authenticity, IP/patent firewall, narrative clarity) + metadata completeness.
+OAuth CLIs, no API key (claude → gemini → codex fallback). This gate lives in
+career-intelligence and is called cross-plugin (same as the other distribution modules).
+
+```bash
+GATE=$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/social-content-readiness-check/HOW.py 2>/dev/null | tail -1)
+if [ -z "$GATE" ]; then
+  echo '{"verdict":"BLOCK","reason":"social-content-readiness-check script not found — plugin may need reinstall","remediation":"Run: claude plugin update career-intelligence@xos --scope user"}'
+  exit 1
+fi
+python3 "$GATE" \
+  '{"text":"<post body>","platform":"facebook","title":"<campaign title>","metadata":{"audience":"<target audience>"}}'
+```
+
+Exit 0 = PASS → post. Exit 1 = BLOCK → revise and re-run. Exit 2 = WARN → human approval before posting.

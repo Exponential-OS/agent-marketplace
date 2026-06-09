@@ -26,8 +26,13 @@ _TOOL_PLATFORM: dict[str, str] = {
 # LinkedIn activity URN → URL template
 _LI_ACTIVITY_URL = "https://www.linkedin.com/feed/update/{urn}/"
 
-CAMPAIGN_TRACKER = pathlib.Path(__file__).parent.parent.parent / \
-    "aiprojects/career-os-plugin/skills/social-distribution-engine/campaign_tracker.py"
+# Plugin-root-relative. $CLAUDE_PLUGIN_ROOT when set (install context); else derive from
+# this script's location (hooks/scripts/postpublish-campaign-tracker.py → plugin root).
+# XOS-8: prior code appended a bogus "aiprojects/career-os-plugin/..." segment → resolved
+# to a nonexistent path → every post-publish URL-track silently dropped (fail-open exit 0).
+_PLUGIN_ROOT = pathlib.Path(os.environ["CLAUDE_PLUGIN_ROOT"]).expanduser() \
+    if os.environ.get("CLAUDE_PLUGIN_ROOT") else pathlib.Path(__file__).resolve().parent.parent.parent
+CAMPAIGN_TRACKER = _PLUGIN_ROOT / "skills/social-distribution-engine/campaign_tracker.py"
 
 
 def _warn(msg: str) -> None:

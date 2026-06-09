@@ -1,6 +1,14 @@
 <!-- product-vs-solution: example -->
 # Changelog
 
+## [0.53.0] — 2026-06-09 — gate coverage for IG/Threads/FB + fix post-publish tracker path (XOS-8)
+
+### Fixed — Instagram / Threads / Facebook had ZERO gate coverage
+Wired the `social-content-readiness-check` publish gate (tone/IP-firewall/clarity LLM judges) into instagram/threads/facebook distribution modules, mirroring the social-distribution-engine pattern. Gate lives in career-intelligence (cross-plugin call). Closes a CAMPAIGN-COMPLETENESS hole — these surfaces previously published with no structural validation.
+
+### Fixed — post-publish campaign tracker silently dropped every URL (XOS-8)
+hooks/scripts/postpublish-campaign-tracker.py had a CAMPAIGN_TRACKER path that appended a bogus "aiprojects/career-os-plugin/..." segment to the plugin root → resolved to a nonexistent path → every LinkedIn/Reddit post-publish URL-track silently dropped (fail-open exit 0). Now plugin-root-relative ($CLAUDE_PLUGIN_ROOT, else derived from script location).
+
 ## [0.52.0] — 2026-06-09 — fix stale post-extract gate globs (XOS-7, CRITICAL)
 
 ### Fixed — every per-content gate was silently skipping (campaigns shipped UNVALIDATED)
