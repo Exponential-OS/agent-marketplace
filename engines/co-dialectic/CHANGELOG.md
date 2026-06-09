@@ -1,5 +1,51 @@
 # Changelog — Co-Dialectic
 
+## [4.24.0] — 2026-06-09 — Co-Education Flywheel (teachme tool lessons)
+
+### Added — skills/teachme/SKILL.md
+Extends the existing teachme skill with a second lesson domain: **tool usage**
+alongside prompt techniques. The new `learning time` / `teach me today` mode
+runs a local, cheap-tier audit over session ledger, git history, installed-tool
+inventory, and existing hook signals; detects the five inefficiency classes;
+ranks by `yield = time burned × recurrence`; teaches the single highest-yield
+lesson in teachme format; and tracks adoption in `growth.jsonl`.
+
+The same audit is bidirectional: it emits one human-side tool lesson and one
+cyborg-side codified fix per session, routing existing `flywheel-capture`,
+`fish-dispatch`, and `codify-or-mark-uncodified` signals into the same
+RANK→one-lesson pipeline instead of rebuilding those hooks.
+
+### Added — Protocol 3 productivity footer
+`skills/co-dialectic/SKILL.md` now instructs the prompt sharpener to compare
+the user's intent against the installed environment already visible in session
+(Workflow, agent teams, `/schedule`, `/dream`, loaded skills, MCPs, plugins,
+fish/presets, YOLO containment). When an installed capability is higher
+leverage, it appends exactly one line:
+
+`⚡ Productivity: <the prompt you should have typed, given this env> — <tool>, <why better>`
+
+### Added — shipped learning triggers and deferred weekly digest instruction
+Shipped learning triggers are the per-turn `⚡ Productivity` footer, explicit
+`learning time` / `teach me today`, and the session-close teaser.
+
+`skills/handoff/SKILL.md` now appends the session-close teaser:
+
+`📚 Today's 1%: <headline> — say 'learning time' for the 60-sec version.`
+
+Teachme also records the deferred Sunday `/schedule` digest instruction: when
+cron infrastructure is built, report top-3 inefficiencies, adoption scorecard,
+and two-strikes hookify-candidate escalations. No cron infrastructure ships in
+this release.
+
+### Changed — skills/teachme/growth.schema.json
+Adds `event_type: "tool_lesson"` with required fields `cited_log_evidence`,
+`inefficiency_class`, `tool`, `yield_estimate`, `taught_at`, `adopted`, and
+`teach_count`.
+Existing `sharpening_turn` records keep their required fields through
+event-specific schema requirements.
+
+---
+
 ## [4.23.0] — 2026-06-05 — FORAGE: Epistemic Foraging flywheel
 
 ### Added — skills/forage/SKILL.md (new soul-tier skill)
