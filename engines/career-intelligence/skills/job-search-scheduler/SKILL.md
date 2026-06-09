@@ -138,9 +138,9 @@ report for user to review or enrich manually.
 |----------|----------|-------------|
 | Config (targeting) | `brain/config/job-search.md` | Source of truth for all targeting parameters |
 | Scheduled task prompt | `skills/job-search-scheduler/scan-prompt-v11.md` | Canonical scanner prompt (v11 — plugin path format). Paste into scheduled-task config. |
-| Mission-control routing | `career-os-plugin/skills/mission-control/SKILL.md` | Routes scan + enrich triggers to this skill |
-| Job-match-scorer skill | `career-os-plugin/skills/job-match-scorer/SKILL.md` | Receives scan output for deep scoring |
-| Network-intelligence skill | `career-os-plugin/skills/network-intelligence/SKILL.md` | Deep contact analysis for individual companies |
+| Mission-control routing | `skills/mission-control/SKILL.md` | Routes scan + enrich triggers to this skill |
+| Job-match-scorer skill | `skills/job-match-scorer/SKILL.md` | Receives scan output for deep scoring |
+| Network-intelligence skill | `skills/network-intelligence/SKILL.md` | Deep contact analysis for individual companies |
 
 If you change targeting → edit config only (both consumers read it).
 If you change scan logic → update this SKILL.md AND the scheduled task prompt.

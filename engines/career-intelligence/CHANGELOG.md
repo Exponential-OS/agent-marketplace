@@ -2,6 +2,35 @@
 <!-- this file is the historical changelog. Entries reference the original author/user as provenance, not runtime data. -->
 # Changelog
 
+## [0.72.0] — 2026-06-09 — dedup gate JSON-aware + doc hygiene (XOS-29 pt2, XOS-32)
+
+### Fixed — warm-contact-outreach-dedup gate was a no-op against live data (XOS-29 pt2, HIGH)
+The dedup gate globbed `*.md` only, but the live workspace is 100% `.json` people files
+(238 of them, 0 `.md`). It found zero candidates and silently never blocked — the
+double-outreach guard (the 2026-05-04 double-outreach class) had been defeated since the
+JSON migration. `HOW.py` now reads both `.json` (canonical) and `.md` (legacy): filename
+slug match works for both; for `.json` it reads `last_contact`/`last_interaction`,
+`follow_up`, and an `interaction_log`/`interaction_notes`/`relationship` summary directly
+from the JSON keys. +5 regression tests (16 → 21) asserting `.json` block/pass, content-name
+match when the filename differs, summary extraction, and `.md` backward-compat.
+
+### Fixed — documented install path could never succeed (XOS-32 M-5)
+`dev/install-plugin` + `dev/ci` referenced the dead repo slug `career-os-plugin` (install
+commands, cache glob, GitHub URL) — the verify step could never pass. Updated to
+`career-intelligence@xos` (marketplace) / `career-intelligence-engine` (repo) /
+`~/.claude/plugins/cache/xos/career-intelligence/`. `job-search-scheduler` cross-skill
+routing refs made repo-relative (`skills/...`).
+
+### Fixed — migration chain gap + description lag (XOS-32 L-1, P9)
+v0.71.0 shipped without a migration script, leaving the coherence test red (plugin.json
+0.71.0 vs latest migration target 0.70.0). Backfilled `v0.70.0-to-v0.71.0.sh` and added
+`v0.71.0-to-v0.72.0.sh`. `plugin.json` description synced from its frozen v0.67.0 text to
+current state.
+
+### Deferred (tracked, not dropped)
+- XOS-32 M-4 (outreach-fact-check Mode-2 ship-vs-retire) — needs a product decision, not a
+  mechanical fix; the dead-slug wiring example and v0.26/v0.27 disclaimers stay until then.
+
 ## [0.71.0] — 2026-06-08 — claim-grounding gate + off-rubric risk scan (XOS-34, XOS-35)
 
 ### Fixed — resume-engine could fabricate metrics and self-attest "PASS" (XOS-34, HIGH)

@@ -16,7 +16,7 @@
       "license": "Proprietary",
       "source": "./engines/career-intelligence",
       "description": "Career Intelligence Engine \u2014 xHumanOS engine for job search, network, pipeline, sessions. v0.71.0: mechanical claim-grounding gate (resume-engine no longer fabricates metrics or self-attests PASS over them; numbers must anchor in experience-history/skills-matrix/stories, never the JD) + job-match-scorer off-rubric risk scan (employment gaps, over-qualification, title-scope).",
-      "version": "0.71.0",
+      "version": "0.72.0",
       "category": "career",
       "homepage": "https://github.com/Exponential-OS/career-intelligence-engine"
     },

@@ -1,7 +1,7 @@
 {
   "name": "career-intelligence",
   "platform": "xHumanOS",
-  "version": "0.71.0",
+  "version": "0.72.0",
   "depends_on_kernel": [
     "brain-kernel >= 1.0.0"
   ],
@@ -38,7 +38,7 @@
       "pipeline-job-staleness"
     ]
   },
-  "description": "Career Intelligence Engine (xHumanOS) v0.67.0 - SWEEP-ALL FIX for session-logger contamination. The v0.66.0 fix added a workspace-identity gate to capture-prompt.sh + capture-response.sh, but MISSED init-repo.sh (the third sister script in the same family, fired on SessionStart). Without the gate, init-repo.sh was scaffolding brain/sessions/ledger/, brain/sessions/judgments/, CLAUDE.md template, 'Resumes & Cover Letters/' dir, writing session-start markers, AND git-add+commit+push \u2014 in WHATEVER cwd Claude Code opened, including AI Fund Work Product repos. Single-slot-learning failure (fixed 2 of 3 sister scripts on 2026-05-18; this ships the 3rd). Detection unchanged from v0.66: $CAREER_HOME match OR brain/identity/ marker OR .career-os-workspace sentinel. Carries forward all v0.65/v0.66 features.",
+  "description": "Career Intelligence Engine (xHumanOS) v0.72.0 \u2014 job search, network, pipeline, resume, interview-prep, and outreach skills for Claude Code, backed by the brain-kernel. Recent: warm-contact-outreach-dedup gate made JSON-aware (it globbed .md only while live people files are 100% .json, so the double-outreach guard silently never fired \u2014 now reads .json people files for name/date/summary), claim-grounding + off-rubric risk gates, flat-path canonicalization onto career-intelligence/projects/job-search/, and a workspace-identity gate across all session hooks so the engine never scaffolds or commits outside its own workspace. Detection: $CAREER_HOME match OR brain/identity/ marker OR .career-os-workspace sentinel.",
   "author": {
     "name": "Anand Vallamsetla"
   },

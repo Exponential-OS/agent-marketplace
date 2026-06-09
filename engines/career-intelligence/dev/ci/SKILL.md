@@ -112,7 +112,7 @@ Refresh the local Claude Code plugin cache.
 
 1. Check `claude plugin list` for current installed version
 2. If installed version matches new release → skip (already current)
-3. Run `claude plugin update career-os-plugin` or uninstall + reinstall
+3. Run `claude plugin update career-intelligence@xos` or uninstall + reinstall
 4. Verify: `claude plugin list` shows new version
 5. Report: "Installed v{new} — plugin cache refreshed"
 

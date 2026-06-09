@@ -48,6 +48,23 @@ def _write_person(tmp_path: pathlib.Path, name: str, *, last_contact: str | None
     return p
 
 
+def _write_person_json(tmp_path: pathlib.Path, name: str, *, last_contact: str | None = None,
+                       follow_up: str | None = None, interaction_log: list | None = None) -> pathlib.Path:
+    """Write a .json people file — the canonical live format (workspace is 100% .json)."""
+    import json as _json
+    slug = name.lower().replace(" ", "-")
+    p = tmp_path / f"{slug}.json"
+    data: dict = {"name": name, "slug": slug}
+    if last_contact:
+        data["last_contact"] = last_contact
+    if follow_up:
+        data["follow_up"] = follow_up
+    if interaction_log:
+        data["interaction_log"] = interaction_log
+    p.write_text(_json.dumps(data, indent=2))
+    return p
+
+
 def _call(d: dict, tmp_path: pathlib.Path) -> dict:
     """Call HOW.check() and normalise to a result dict."""
     d.setdefault("people_dir", str(tmp_path))
@@ -123,6 +140,43 @@ class TestPass:
         _write_person(tmp_path, "Custom Person 2", last_contact=_date(5))
         r = _call({"contact_name": "Custom Person 2", "lookback_days": 3}, tmp_path)
         assert "verdict" in r
+
+
+class TestJsonFormat:
+    """Regression for XOS-29 pt2: the gate globbed *.md only while live people files
+    are 100% .json — it found ZERO candidates and silently never blocked, defeating
+    the double-outreach guard (the 2026-05-04 double-outreach class). These assert the
+    gate now reads .json people files for filename match, date, and summary."""
+
+    def test_json_recent_contact_blocks(self, tmp_path):
+        _write_person_json(tmp_path, "Json Recent", last_contact=_date(3))
+        r = _call({"contact_name": "Json Recent"}, tmp_path)
+        assert r["verdict"] == "BLOCK"
+        assert r["last_contact"] == _date(3)
+
+    def test_json_old_contact_passes(self, tmp_path):
+        _write_person_json(tmp_path, "Json Old", last_contact=_date(40))
+        r = _call({"contact_name": "Json Old"}, tmp_path)
+        assert r["verdict"] == "PASS"
+
+    def test_json_content_name_match_blocks(self, tmp_path):
+        # filename slug differs from query; match must come from the JSON "name" field
+        p = _write_person_json(tmp_path, "Iuliia Melnychuk", last_contact=_date(2))
+        p.rename(tmp_path / "contact-0042.json")
+        r = _call({"contact_name": "Iuliia Melnychuk"}, tmp_path)
+        assert r["verdict"] == "BLOCK"
+
+    def test_json_summary_from_interaction_log(self, tmp_path):
+        _write_person_json(tmp_path, "Json Log", last_contact=_date(2),
+                           interaction_log=["2026-06-01 LinkedIn DM sent"])
+        r = _call({"contact_name": "Json Log"}, tmp_path)
+        assert "LinkedIn DM sent" in r["reason"]
+
+    def test_md_still_works_alongside_json(self, tmp_path):
+        # backward-compat: .md fixture must still block
+        _write_person(tmp_path, "Legacy Md", last_contact=_date(3))
+        r = _call({"contact_name": "Legacy Md"}, tmp_path)
+        assert r["verdict"] == "BLOCK"
 
 
 class TestSkillMd:

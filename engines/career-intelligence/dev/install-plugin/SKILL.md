@@ -41,7 +41,7 @@ Run `claude plugin list 2>/dev/null` and check if `career-os` appears.
 **If installed:**
 - Show the installed version
 - Ask: "Career OS plugin is already installed (v{version}). Update to latest? (y/n)"
-- If yes → run `claude plugin update career-os-plugin` or uninstall + reinstall
+- If yes → run `claude plugin update career-intelligence@xos` or uninstall + reinstall
 - If no → skip to Step 5 (verify)
 
 **If not installed:** proceed to Step 4.
@@ -49,7 +49,7 @@ Run `claude plugin list 2>/dev/null` and check if `career-os` appears.
 ### 4. Install the plugin
 Run:
 ```bash
-claude plugin install github:Exponential-OS/career-os-plugin
+claude plugin install career-intelligence@xos --scope user
 ```
 
 If the install command fails:
@@ -59,8 +59,8 @@ If the install command fails:
 
 ### 5. Verify installation
 Run these checks:
-1. `claude plugin list` — confirm `career-os` appears
-2. Check that the plugin cache directory exists: `~/.claude/plugins/cache/*/career-os-plugin/`
+1. `claude plugin list` — confirm `career-intelligence` appears
+2. Check that the plugin cache directory exists: `~/.claude/plugins/cache/xos/career-intelligence/`
 3. Validate plugin.json exists in the cached path
 4. Check hooks.json exists and registers all 3 hooks (SessionStart, UserPromptSubmit, Stop)
 5. Read the installed version from plugin.json
@@ -92,11 +92,11 @@ Error: {error message}
 
 {If network issue}
 → Check your internet connection
-→ Verify https://github.com/Exponential-OS/career-os-plugin is accessible
+→ Verify https://github.com/Exponential-OS/career-intelligence-engine is accessible
 
 {If plugin system issue}
-→ Try manual install: claude plugin install github:Exponential-OS/career-os-plugin
-→ Or load per-session: claude --plugin-dir /path/to/career-os-plugin
+→ Try manual install: claude plugin install career-intelligence@xos --scope user
+→ Or load per-session: claude --plugin-dir /path/to/career-intelligence-engine
 ```
 
 ## Security Notes
