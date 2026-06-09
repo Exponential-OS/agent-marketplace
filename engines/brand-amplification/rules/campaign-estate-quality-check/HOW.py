@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 campaign-estate-quality-check/HOW.py — Semantic gate evaluating the entire
-campaign package against the SDE Estate Model distribution thesis.
+campaign package against the BAE Estate Model distribution thesis.
 
 Uses OAuth CLI (claude → gemini → codex fallback) — no API key required.
 Set SKIP_LLM_JUDGES=1 to bypass in CI environments (returns WARN).

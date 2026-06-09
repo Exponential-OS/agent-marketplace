@@ -11,32 +11,32 @@ triggers:
   - trigger distribution
 ---
 
-# Social Distribution Engine — Master Orchestrator
+# Brand Amplification Engine — Master Orchestrator
 
 ## Purpose
 
-The Social Distribution Engine is the ultimate distribution and kinetic learning hub for xOS. It orchestrates content distribution across multiple platforms, adhering strictly to **The Scraping Invariant**: protecting human trust by recognizing that internet publishing is permanent. It prevents spam by parking low-confidence content and escalating to the human.
+The Brand Amplification Engine is the ultimate distribution and kinetic learning hub for xOS. It orchestrates content distribution across multiple platforms, adhering strictly to **The Scraping Invariant**: protecting human trust by recognizing that internet publishing is permanent. It prevents spam by parking low-confidence content and escalating to the human.
 
-## Why SDE — What Vanilla Claude Cowork Cannot Do
+## Why BAE — What Vanilla Claude Cowork Cannot Do
 
-Most users capture ~10% of Claude's capability by treating it as a chatbot. SDE closes that gap with machine-enforced structure:
+Most users capture ~10% of Claude's capability by treating it as a chatbot. BAE closes that gap with machine-enforced structure:
 
-| Capability | Claude Cowork | SDE |
+| Capability | Claude Cowork | BAE |
 |---|---|---|
 | **Cross-session memory** | ❌ No memory between sessions | ✅ Git-versioned brain — brand voice, audience, handles, campaign history persist forever across every session |
 | **Distribution enforcement** | ❌ Guidelines the user must remember | ✅ 10-gate preflight CI blocks distribution until all best practices are met |
-| **Invisible signal CTAs** | ❌ Not checked | ✅ Gate 8 BLOCKs if missing bookmark ask, Instagram save prompt, DM-share prompt, mid-content Substack forward |
-| **Timing optimization** | ❌ Not checked | ✅ Gate 9 warns when scheduled outside platform golden windows |
+| **Invisible signal CTAs** | ❌ Not checked | ✅ Gate 10 BLOCKs if missing bookmark ask, Instagram save prompt, DM-share prompt, mid-content Substack forward |
+| **Timing optimization** | ❌ Not checked | ✅ Gate 8 warns when scheduled outside platform golden windows |
 | **Platform-native routing** | ❌ User must remember rules | ✅ Estate model enforces hub-spoke routing, Post Hub tension, link-in-comment discipline |
 | **Cross-session brand voice** | ❌ Re-explained each session | ✅ professional-brand.md auto-loaded — every draft starts on-voice |
 
-**The cross-session memory gap specifically:** Claude Cowork lists "no cross-session memory" as its #1 limitation. SDE solves this at the infrastructure level — your brand voice, platform handles, campaign history, and audience context are git-versioned and auto-loaded at session start. You never re-explain who you are.
+**The cross-session memory gap specifically:** Claude Cowork lists "no cross-session memory" as its #1 limitation. BAE solves this at the infrastructure level — your brand voice, platform handles, campaign history, and audience context are git-versioned and auto-loaded at session start. You never re-explain who you are.
 
 ## Output Format
 
 Always start your response with:
 ```
-━━━ Career OS: Social Distribution Engine ━━━
+━━━ Brand Amplification: Brand Amplification Engine ━━━
 ```
 
 ## Capabilities
@@ -74,7 +74,7 @@ Before distributing to *any* channel, check the Global Channel Value Directory v
 | `professional-brand.md` | `brain.read("brand-amplification/identity/professional-brand.md")` | Brand voice, tone, positioning, narrative pillars | Emit `⚠️ brand context missing — draft may be off-voice` and proceed |
 | `handles.md` | `brain.read("identity/handles.md")` | Active platform handles, CTA destinations | Proceed, but omit handle-specific CTAs |
 | `content-flywheel.md` | `brain.read("brand-amplification/voice-strategies/content-flywheel.md")` — IP Firewall section | Terms that must NEVER appear in published content | **BLOCK** — cannot draft without IP firewall loaded |
-| Campaign master file (if distributing existing campaign) | `brain.read("brand-amplification/campaigns/<slug>/master.md")` | Assets, platform copy, surface coverage matrix | Required for distribution mode; not required for fresh-draft mode |
+| Campaign package (if distributing existing campaign) | `brain.read("brand-amplification/campaigns/initiatives/<initiative-slug>/campaigns/<campaign-slug>/campaign.json")` | Assets, platform copy, surface coverage matrix | Required for distribution mode; not required for fresh-draft mode |
 
 **Context load is silent** — do not narrate "loading brand context…" to the user. Just load, then draft.
 
@@ -105,7 +105,7 @@ This meta-harness runs 10 gates in sequence:
 
 ## Draft Handoff Gate (MANDATORY — runs BEFORE presenting any LinkedIn copy to the user)
 
-**Origin:** 2026-05-14 — posts were drafted directly in conversation, bypassing SDE gates entirely. Gate 1 (structural) and hashtag selection only fired at "pre-publication" — by then the user had already seen and sometimes posted malformatted, hashtag-free copy. Root cause: two failures — (1) SDE workflow bypassed at draft time, (2) even when Gate 1 ran, `hashtag_count == 0` was WARN not BLOCK.
+**Origin:** 2026-05-14 — posts were drafted directly in conversation, bypassing BAE gates entirely. Gate 1 (structural) and hashtag selection only fired at "pre-publication" — by then the user had already seen and sometimes posted malformatted, hashtag-free copy. Root cause: two failures — (1) BAE workflow bypassed at draft time, (2) even when Gate 1 ran, `hashtag_count == 0` was WARN not BLOCK.
 
 **Rule:** Before handing ANY LinkedIn post copy to the user, this agent MUST:
 

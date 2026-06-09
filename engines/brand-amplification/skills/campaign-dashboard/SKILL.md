@@ -1,7 +1,7 @@
 ---
 name: campaign-dashboard
 description: >
-  Social-distribution home screen for SDE customers. Shows INITIATIVES
+  Brand amplification home screen for BAE customers. Shows INITIATIVES
   (strategic themes) rolled up with their member CAMPAIGNS (individual ship
   events) and SPOKES (per-platform posts). Read-only — never writes; routes
   edits to campaign-engine and distribution-analytics-engine.
@@ -29,7 +29,7 @@ triggers:
 Always start with:
 
 ```
-━━━ Career OS · Campaign Dashboard ━━━
+━━━ Brand Amplification · Campaign Dashboard ━━━
 ```
 
 ## Purpose
@@ -170,7 +170,7 @@ The agent rendering this dashboard:
 
 If no initiatives exist:
 ```
-━━━ Career OS · Campaign Dashboard ━━━
+━━━ Brand Amplification · Campaign Dashboard ━━━
 
 You haven't started any initiatives yet.
 
@@ -193,6 +193,6 @@ The dashboard renders in markdown for terminal display. If the user asks for con
 
 ## Relationship to mission-control
 
-Mission-control is the top-level home screen for the WHOLE Career OS (job-search + SDE). Campaign-dashboard is the SDE-focused home screen — invoked from mission-control via the `campaigns` / `campaign dashboard` triggers, or directly.
+Mission-control is the top-level home screen for the WHOLE Career OS (job-search + BAE). Campaign-dashboard is the BAE-focused home screen — invoked from mission-control via the `campaigns` / `campaign dashboard` triggers, or directly.
 
-For SDE-only customers (career-intelligence-onboarding not run), mission-control short-circuits and shows campaign-dashboard as the default view.
+For BAE-only customers (career-intelligence-onboarding not run), mission-control short-circuits and shows campaign-dashboard as the default view.

@@ -21,8 +21,8 @@ The Campaign Engine is the upstream planner. Rather than acting as a monolithic 
 
 ### Brain API (brain-kernel >= 1.0.0)
 
-All reads go through `brain.read(path)` / `brain.list(prefix)`. Campaign master
-files are written via `brain.write()`. Direct filesystem writes are FORBIDDEN.
+All reads go through `brain.read(path)` / `brain.list(prefix)`. Campaign package
+state is written via `brain.write()`. Direct filesystem writes are FORBIDDEN.
 
 ### 1. Campaign Initialization
 **Triggers:** "create campaign [topic/thesis]"
@@ -35,15 +35,18 @@ Instead, it invokes the Platform Modules in "Drafting Mode":
 - Sends the core thesis to `linkedin-distribution-module`. The LinkedIn module applies its invisible rules (e.g., plans a comment cascade, schedules a T+15 min self-comment) and returns the draft + execution plan.
 - Sends the core thesis to `reddit-distribution-module`. The Reddit module applies its anti-promotion rules and returns a highly technical case-study draft.
 
-### 3. Ledger Generation
+### 3. Campaign Package Generation
 - Aggregates the drafts and execution plans from all modules.
-- Generates the canonical `campaign-master-<date>.md` file via:
+- Generates the canonical machine-readable `campaign.json` under the parent initiative via:
   ```
-  brain.write("brand-amplification/campaigns/<campaign-slug>/master.md", content, {
-    provenance: { who: "brand-amplification", why: "campaign ledger generated", source: "campaign-engine" },
+  brain.write("brand-amplification/campaigns/initiatives/<initiative-slug>/campaigns/<campaign-slug>/campaign.json", content, {
+    provenance: { who: "brand-amplification", why: "campaign package generated", source: "campaign-engine" },
     engine_id: "brand-amplification"
   })
   ```
+- Uses the schema at `skills/social-distribution-engine/campaign-schema/campaign.schema.json`.
+- Writes draft Markdown payloads as content files referenced by `campaign.json`; the JSON is the state machine read by dashboard and preflight gates.
+- Updates the parent `initiative.json` campaign reference if the initiative tracks `campaigns[]`.
 
 ### 4. Ground Zero Verification
 - Enforces the **Visual-Asset Review Invariant**. It prevents the campaign from moving to the `social-distribution-engine` until a human or secondary reviewer has explicitly verified the visual assets for the generated drafts.

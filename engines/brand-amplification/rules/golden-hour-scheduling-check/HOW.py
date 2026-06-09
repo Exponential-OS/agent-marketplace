@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-golden-hour-scheduling-check/HOW.py — Gate 9 in the SDE pre-flight CI.
+golden-hour-scheduling-check/HOW.py — a Pre-Distribution scheduling gate in the
+BAE pre-flight CI (advisory; one of the 10 gates run by validate-campaign-preflight.py).
 
 Validates that campaign components are scheduled during platform-specific
 golden-hour windows — the peak-velocity windows where early engagement
@@ -265,7 +266,7 @@ def main() -> None:
         print(json.dumps(result))
         sys.exit(0)
 
-    # Gate 9 is advisory — all findings are WARNs (wrong timing ≠ invalid campaign)
+    # This gate is advisory — all findings are WARNs (wrong timing ≠ invalid campaign)
     msg = f"{len(findings)} golden-hour warning(s): " + "; ".join(f["issue"] for f in findings[:2])
     if len(findings) > 2:
         msg += f" (+{len(findings) - 2} more)"

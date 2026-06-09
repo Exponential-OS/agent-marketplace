@@ -6,7 +6,7 @@
   "updated": "2026-05-07",
   "product_home": "career-os-plugin",
   "gate_type": "semantic",
-  "description": "Semantic LLM judge that evaluates the entire campaign package against the SDE Estate Model thesis. Catches packaging violations that structural gates cannot: wrong hub-spoke routing, Post Hub summarizing instead of hooking, Article missing Substack CTA, platform-non-native copy, weak Estate narrative flow. Uses OAuth CLI (claude → gemini → codex fallback) — no API key required.",
+  "description": "Semantic LLM judge that evaluates the entire campaign package against the BAE Estate Model thesis. Catches packaging violations that structural gates cannot: wrong hub-spoke routing, Post Hub summarizing instead of hooking, Article missing Substack CTA, platform-non-native copy, weak Estate narrative flow. Uses OAuth CLI (claude → gemini → codex fallback) — no API key required.",
   "litmus": "Run HOW.py with campaign_file — exit 0=Estate model correctly implemented, exit 1=BLOCK (hard violation), exit 2=WARN (advisory or CI mode).",
   "skip_env": "SKIP_LLM_JUDGES=1",
   "cli_order": ["claude", "gemini", "codex"],
@@ -35,6 +35,6 @@
   "callers": [
     "skills/social-distribution-engine/validate-campaign-preflight.py"
   ],
-  "phase_in_preflight": "Semantic (Gate 7)",
+  "phase_in_preflight": "Semantic (Gate 9)",
   "dispatch_slug": "campaign-estate-quality-check"
 }

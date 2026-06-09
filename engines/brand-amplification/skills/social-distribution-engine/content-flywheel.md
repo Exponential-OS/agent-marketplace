@@ -224,7 +224,7 @@ Reddit communities must be evaluated PER CAMPAIGN against these criteria:
 - If banned: file modmail appeal with engineering-first framing. Wait for resolution before re-posting same content.
 - If uncertain: start with a comment in an existing thread before a standalone post
 
-**Community observations** are customer-specific and tracked in `$CAREER_HOME/brain/social-distribution-engine/social-channel-directory.md`. Read that file before every campaign — never rely on memory or hardcoded subreddit lists. Community standing is volatile; the channel directory is the live reference.
+**Community observations** are customer-specific and tracked in `$CAREER_HOME/brain/brand-amplification/campaigns/social-channel-directory.md`. Read that file before every campaign — never rely on memory or hardcoded subreddit lists. Community standing is volatile; the channel directory is the live reference.
 
 *Run the criteria check above before every campaign. A subreddit that worked last month may have changed moderation policy.*
 

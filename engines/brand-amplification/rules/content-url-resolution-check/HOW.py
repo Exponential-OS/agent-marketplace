@@ -6,7 +6,7 @@ content file in a campaign contains unresolved URL placeholder tokens.
 Tokens are patterns like [PART-3-URL], [ARTICLE-URL], [HUB-URL], [PASTE-URL-HERE],
 [INSERT-LINK], or any bracketed ALL-CAPS phrase containing "URL", "LINK", or "HREF".
 
-Called by validate-campaign.py and the SDE distribute-campaign flow before any
+Called by validate-campaign.py and the BAE distribute-campaign flow before any
 distribution action is taken. A campaign with unresolved tokens will publish broken
 content — the gate must BLOCK, not warn.
 

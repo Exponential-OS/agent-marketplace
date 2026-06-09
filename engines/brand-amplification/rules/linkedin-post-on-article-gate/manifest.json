@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "status": "active",
   "created": "2026-05-15",
-  "origin": "SDE flywheel requires hub posts to amplify LinkedIn Articles without triggering suppression. LinkedIn penalizes posts with external URLs in body; article hub posts must use within-platform linkedin.com/pulse/ URLs and keep all external links in first comment.",
+  "origin": "BAE flywheel requires hub posts to amplify LinkedIn Articles without triggering suppression. LinkedIn penalizes posts with external URLs in body; article hub posts must use within-platform linkedin.com/pulse/ URLs and keep all external links in first comment.",
   "description": "Gate for LinkedIn hub posts that share a LinkedIn Article. Blocks external links in post body, validates article URL is within-platform, blocks placeholder tokens, warns on weak hook.",
   "gates": [
     "external_link_in_body: any non-linkedin.com URL in post body = BLOCK (move to first comment)",
@@ -20,7 +20,7 @@
   },
   "applies_to": [
     "LinkedIn ugcPost that shares or references a LinkedIn Article",
-    "LinkedIn hub posts in any SDE campaign where spoke type is linkedin-hub",
+    "LinkedIn hub posts in any BAE campaign where spoke type is linkedin-hub",
     "Any LinkedIn post body that needs to link to an article"
   ],
   "litmus": "Run HOW.py with post_body and article_url — exit 0=safe, exit 1=blocked with remediation",

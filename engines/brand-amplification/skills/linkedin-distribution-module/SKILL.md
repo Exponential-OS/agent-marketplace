@@ -19,7 +19,7 @@ This skill specializes in LinkedIn content distribution. It encapsulates the "in
 
 Always start your response with:
 ```
-━━━ Career OS: LinkedIn Distribution Module ━━━
+━━━ Brand Amplification: LinkedIn Distribution Module ━━━
 ```
 
 ## Comment Hijack Gates (MANDATORY for hijack-style comments)

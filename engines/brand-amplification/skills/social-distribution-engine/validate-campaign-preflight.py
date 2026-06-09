@@ -3,7 +3,7 @@
 validate-campaign-preflight.py — Meta-harness that runs all campaign gate checks
 in sequence and produces a consolidated CI report.
 
-This is the machine-actionable pre-flight check for the SDE distribute-campaign flow.
+This is the machine-actionable pre-flight check for the BAE distribute-campaign flow.
 It runs the 8 structural gates + 2 semantic gates and exits with the worst result.
 
 Gate sequence (fail-fast within each, report all):
@@ -57,12 +57,8 @@ if not pathlib.Path(CAREER_HOME).is_dir():
 GATES = [
     # (phase, gate_slug, extra_args_fn, timeout_seconds)
     ("Planning",  "campaign-schema-validator",     lambda cf, _: {"campaign_file": cf},                                                                                                                                                        30),
-    # SPEC-DRIFT-DETECTED: these gate scripts read brain paths directly via $CAREER_HOME.
-    # Migration target: channel_dir_file → brain.read("brand-amplification/campaigns/social-channel-directory.md")
-    #                   handles_file     → brain.read("identity/handles.md")
-    # These subprocess gates cannot call brain.write() without a runtime brain instance;
-    # migrating requires the gate-script API to accept pre-resolved file paths or a brain proxy.
-    ("Planning",  "channel-status-check",          lambda cf, _: {"campaign_file": cf, "channel_dir_file": str(pathlib.Path(CAREER_HOME) / "brain/social-distribution-engine/social-channel-directory.md")},                              30),
+    # Subprocess gates accept pre-resolved filesystem paths that map to brain paths.
+    ("Planning",  "channel-status-check",          lambda cf, _: {"campaign_file": cf, "channel_dir_file": str(pathlib.Path(CAREER_HOME) / "brain/brand-amplification/campaigns/social-channel-directory.md")},                              30),
     ("Planning",  "surface-coverage-check",        lambda cf, _: {"campaign_file": cf, "handles_file": str(pathlib.Path(CAREER_HOME) / "brain/identity/handles.md")},                                                                     30),
     ("Content",   "content-url-resolution-check",  lambda cf, _: {"campaign_file": cf},                                                                                                                                                        30),
     ("Pre-Dist",  "flywheel-sequence-guard",        lambda cf, t: {"campaign_file": cf, "target": t or ""},                                                                                                                                    30),
@@ -124,7 +120,7 @@ def main():
     campaign_id = campaign.get("meta", {}).get("id", campaign_path.parent.name)
 
     print("=" * 60)
-    print(f"SDE Pre-Flight: {campaign_id}")
+    print(f"BAE Pre-Flight: {campaign_id}")
     print("=" * 60)
 
     results = []

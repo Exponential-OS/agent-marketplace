@@ -21,7 +21,7 @@
   ],
   "applies_to": [
     "Any HTML template about to be rendered to PNG via Chrome headless",
-    "SDE campaign asset generation — run before each platform PNG is finalized",
+    "BAE campaign asset generation — run before each platform PNG is finalized",
     "Instagram carousel slides (overflow_risk: HIGH per image-spec.json)"
   ],
   "litmus": "Run HOW.py with html_file + dims — exit 0=clean, exit 1=overflow confirmed, exit 2=warn (static analysis or Chrome unavailable)",

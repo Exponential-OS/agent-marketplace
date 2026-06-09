@@ -56,7 +56,7 @@
       "license": "Proprietary",
       "source": "./engines/brand-amplification",
       "description": "Brand Amplification Engine (BAE) \u2014 outbound brand-building umbrella. Includes the social distribution engine (SDE master orchestrator), flywheel amplification module, hub-and-spoke surface coverage, 9-gate preflight CI for content campaigns, golden-hour scheduling, invisible signal CTAs (bookmark/save/DM-share), platform-native routing across LinkedIn / Substack / Reddit / X / Instagram / Facebook / Threads, and the confidence-ladder browser MCP defaults (browserbase for setup; chrome-devtools-mcp for posting per Irreversible-Action Invariant).",
-      "version": "0.53.0",
+      "version": "0.54.0",
       "category": "distribution",
       "homepage": "https://github.com/Exponential-OS/brand-amplification-engine"
     },

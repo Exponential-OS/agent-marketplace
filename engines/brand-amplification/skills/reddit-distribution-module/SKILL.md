@@ -19,7 +19,7 @@ This skill specializes in Reddit content distribution. Reddit is highly sensitiv
 
 Always start your response with:
 ```
-━━━ Career OS: Reddit Distribution Module ━━━
+━━━ Brand Amplification: Reddit Distribution Module ━━━
 ```
 
 ## Capabilities

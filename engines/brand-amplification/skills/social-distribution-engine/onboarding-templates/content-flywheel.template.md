@@ -1,5 +1,5 @@
 ---
-name: {{USER_NAME}} SDE Instance Config
+name: {{USER_NAME}} BAE Instance Config
 type: instance-config
 scope: xHumanOS — {{USER_NAME}}
 created: {{DATE}}
@@ -11,7 +11,7 @@ why: >
   which platforms are active spokes. Generic strategy lives in the plugin bundle.
   This file is the per-instance override and operating config.
 related:
-  - brain/social-distribution-engine/social-channel-directory.md
+  - brain/brand-amplification/campaigns/social-channel-directory.md
   - brain/identity/handles.md
   - brain/identity/professional-brand.md
 ---
@@ -51,7 +51,7 @@ See `brain/identity/handles.md` for current handle list across all platforms.
 
 - **Preferred timezone:** {{TIMEZONE}}
 - **Peak posting windows:** Mon–Thu, morning (7:30–9:00) or midday (11:30–13:00)
-- **Scheduling:** Add `scheduled_at` to each campaign component (ISO 8601) to activate Gate 9 validation.
+- **Scheduling:** Add `scheduled_at` to each campaign component (ISO 8601) to activate Gate 8 validation.
 
 ## Signal Sharing
 

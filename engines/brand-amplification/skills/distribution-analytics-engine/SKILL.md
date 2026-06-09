@@ -14,13 +14,13 @@ triggers:
 
 ## Purpose
 
-The feedback loop of the Social Distribution Engine. It collects engagement data from campaign trackers and updates the Global Channel Value Directory (`social-channel-directory.md`). It protects the human brand by aggressively pruning dead or toxic channels.
+The feedback loop of the Brand Amplification Engine. It collects engagement data from campaign trackers and updates the Global Channel Value Directory (`social-channel-directory.md`). It protects the human brand by aggressively pruning dead or toxic channels.
 
 ## Output Format
 
 Always start your response with:
 ```
-━━━ Career OS: Distribution Analytics Engine ━━━
+━━━ Brand Amplification: Distribution Analytics Engine ━━━
 ```
 
 ## Brain API (brain-kernel >= 1.0.0)

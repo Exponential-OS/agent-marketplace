@@ -8,7 +8,7 @@ updated: {{DATE}}
 
 # Professional Brand & Identity
 
-**Purpose:** Brand voice, tone, positioning, and narrative pillars. Auto-loaded by SDE before every draft to ensure on-voice content without re-explanation each session.
+**Purpose:** Brand voice, tone, positioning, and narrative pillars. Auto-loaded by BAE before every draft to ensure on-voice content without re-explanation each session.
 
 ---
 

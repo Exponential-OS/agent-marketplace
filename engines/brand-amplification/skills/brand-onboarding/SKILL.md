@@ -78,7 +78,7 @@ echo "${CAREER_HOME:-not set}"
 
 **If not set:** ask ONE question before starting the interview:
 
-> "Where should your SDE workspace live? This is the folder that stores your brand context, campaigns, and session memory.
+> "Where should your BAE workspace live? This is the folder that stores your brand context, campaigns, and session memory.
 >
 > Default: `~/career-os` (press Enter to accept, or type a different path)
 >
@@ -174,17 +174,17 @@ Files created:
 
 Cross-session memory: ACTIVE
   → Your brand voice, handles, and distribution topology are now git-versioned.
-  → Every future SDE session loads these automatically — you never re-explain who you are.
+  → Every future BAE session loads these automatically — you never re-explain who you are.
 
 What Claude Cowork can't do that you now have:
   → Cross-session memory (their #1 stated limitation — solved)
-  → 9-gate preflight CI on every campaign
+  → 10-gate preflight CI on every campaign
   → Invisible signal CTA enforcement (bookmark, save, DM-share, profile-click)
   → Golden hour scheduling validation
 
 Week 2 — Your First Campaign:
   1. Run: "create campaign [your topic]" to start the campaign engine
-  2. The 9-gate preflight CI will validate everything before distribution
+  2. The 10-gate preflight CI will validate everything before distribution
   3. Your context files are already loaded — no setup needed
 
 brain.write() auto-commits every file via brain-kernel. Your 4 context files

@@ -22,7 +22,7 @@
   "applies_to": [
     "Any LinkedIn Article about to be published",
     "LinkedIn Article drafts being handed to a human for manual publish",
-    "SDE campaigns that include a linkedin_article spoke"
+    "BAE campaigns that include a linkedin_article spoke"
   ],
   "env_flags": {
     "SKIP_LLM_JUDGES": "Set to '1' to bypass LLM quality judge — for CI environments without claude CLI"

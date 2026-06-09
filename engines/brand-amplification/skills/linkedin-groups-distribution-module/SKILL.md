@@ -7,8 +7,6 @@ description: >
 depends_on:
   - linkedin-distribution-module
   - chrome-devtools MCP (authenticated LinkedIn session, port 9222)
-  # SPEC-DRIFT-DETECTED: old path "brain/social-distribution-engine/social-channel-directory.md"
-  # Migration target: brain.read("brand-amplification/campaigns/social-channel-directory.md")
   - brand-amplification/campaigns/social-channel-directory.md
 triggers:
   - discover linkedin groups
@@ -26,7 +24,7 @@ ships_as: "v0.49.0"
 
 Always start your response with:
 ```
-━━━ Career OS: LinkedIn Groups Distribution Module ━━━
+━━━ Brand Amplification: LinkedIn Groups Distribution Module ━━━
 ```
 
 ## Why Groups

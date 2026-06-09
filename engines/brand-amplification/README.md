@@ -4,7 +4,7 @@
 **Platform:** xOS (shared primitive for xHumanOS + xTeamOS + xFamilyOS)
 **Status:** v0.47.0 — extracted from career-intelligence-engine v0.61.0 on 2026-05-17
 
-Content distribution orchestrator for human-cyborg partnerships. Implements the hub-and-spoke flywheel (P16 in the Cyborg Constitution), 9-gate preflight CI, and platform-native modules for the major surfaces.
+Content distribution orchestrator for human-cyborg partnerships. Implements the hub-and-spoke flywheel (P16 in the Cyborg Constitution), 10-gate preflight CI, and platform-native modules for the major surfaces.
 
 ## What's in the box
 

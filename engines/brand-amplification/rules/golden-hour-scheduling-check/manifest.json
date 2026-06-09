@@ -6,7 +6,7 @@
   "created": "2026-05-07",
   "updated": "2026-05-07",
   "product_home": "career-os-plugin",
-  "phase_in_preflight": "Pre-Dist (Gate 9)",
+  "phase_in_preflight": "Pre-Dist (Gate 8)",
   "description": "Validates that campaign components are scheduled during platform-specific golden-hour windows — the peak-velocity windows where early engagement carries maximum algorithmic weight. Golden hour = first 60 min after publish (LinkedIn/Substack) or 30 min (X/Instagram). Gate is advisory: all findings are WARNs (wrong timing degrades performance, does not invalidate the campaign).",
   "platforms": {
     "linkedin_article": {

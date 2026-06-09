@@ -1,6 +1,22 @@
 <!-- product-vs-solution: example -->
 # Changelog
 
+## [0.54.0] — 2026-06-09 — cleanup: dead handlers, brand rename, schema fix (XOS-9)
+
+### Removed — 19 dead handler.ts files (P4 / signal-pollution)
+All 19 rules/*/handler.ts were dead code — nothing referenced them (HOW.py is the canonical tier). Deleted (~4500 lines).
+
+### Fixed — campaign-engine producer/consumer schema mismatch
+campaign-engine now writes the canonical machine-readable campaign.json to brand-amplification/campaigns/initiatives/<initiative>/campaigns/<campaign>/campaign.json — the exact nested path campaign-dashboard reads. Previously it wrote a flat master.md the dashboard never read.
+
+### Changed — brand rename SDE/"Career OS" → Brand Amplification / BAE
+Status-line headers, abbreviations, and gate namespace references updated from the pre-2026-05-17 "social-distribution-engine"/"SDE" branding to BAE. Preserved: the literal social-distribution-engine skill/dir identifiers, and legitimate cross-plugin references to career-intelligence (e.g. the social-content-readiness-check gate). De-hardcoded golden-hour's gate-position comment.
+
+### Note
+The full brain/→flat path migration (~25 files still using brain/-prefixed paths) is tracked as a separate ticket — out of scope here. Those gates are advisory-WARN; no behavior regression.
+
+<!-- Note: 0.48.0–0.51.0 entries were not recorded at ship time (XOS-9). See git log for those commits. -->
+
 ## [0.53.0] — 2026-06-09 — gate coverage for IG/Threads/FB + fix post-publish tracker path (XOS-8)
 
 ### Fixed — Instagram / Threads / Facebook had ZERO gate coverage

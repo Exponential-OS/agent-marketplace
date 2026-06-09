@@ -37,6 +37,6 @@
   "callers": [
     "skills/social-distribution-engine/validate-campaign-preflight.py"
   ],
-  "phase_in_preflight": "Semantic (Gate 8)",
+  "phase_in_preflight": "Semantic (Gate 10)",
   "dispatch_slug": "flywheel-cta-quality-check"
 }
