@@ -10,7 +10,7 @@ Usage:
 
 Input JSON:
   campaign_file    - path to campaign JSON (required)
-  signals_file     - override output file (default: $CAREER_HOME/brain/social-distribution-engine/signals/local-signals.jsonl)
+  signals_file     - override output file (default: $CAREER_HOME/brand-amplification/signals/local-signals.jsonl)
 
 Invoked automatically by distribution-analytics-engine after analytics collection.
 Local write only — no network calls in v1.0.
@@ -30,7 +30,15 @@ _CAREER_HOME = pathlib.Path(_CAREER_HOME_RAW).expanduser()
 if not _CAREER_HOME.is_dir():
     print(json.dumps({"verdict": "BLOCK", "reason": f"CAREER_HOME={_CAREER_HOME} does not exist or is not a directory."}), file=sys.stderr)
     sys.exit(1)
-DEFAULT_SIGNALS_FILE = _CAREER_HOME / "brain/social-distribution-engine/signals/local-signals.jsonl"
+# SPEC-DRIFT-DETECTED: "brain/social-distribution-engine/signals/" is NOT in owned_paths.
+# The engine manifest declares owned_paths: ["performance-history.md", "campaigns/**", etc.].
+# "social-distribution-engine/signals/" is a legacy path predating brain-kernel.
+# Migration target: brain.write("brand-amplification/performance-history.md", ...) or
+# brain.write("brand-amplification/campaigns/signals/local-signals.jsonl", ...).
+# This script continues to use direct FS writes as a subprocess gate — it cannot call
+# brain.write() without a runtime brain instance. The signal path should be declared
+# in owned_paths once the gate-script API supports brain-kernel injection.
+DEFAULT_SIGNALS_FILE = _CAREER_HOME / "brand-amplification/signals/local-signals.jsonl"
 SIGNAL_VERSION = "1.0"
 
 

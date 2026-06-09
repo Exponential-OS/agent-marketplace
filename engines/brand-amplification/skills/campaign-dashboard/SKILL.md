@@ -52,19 +52,25 @@ A user can have many initiatives running. Each initiative has many campaigns. Ea
 
 ## Storage Convention
 
+### Brain API (brain-kernel >= 1.0.0)
+
+All reads go through `brain.read(path)` / `brain.list(prefix)`. The new-initiative
+sub-flow writes via `brain.write()`. Direct filesystem writes are FORBIDDEN.
+
 Initiatives live at:
 ```
-$CAREER_HOME/brain/social-distribution-engine/initiatives/<initiative-slug>/initiative.json
+brain.read("brand-amplification/campaigns/initiatives/<initiative-slug>/initiative.json")
+brain.list("brand-amplification/campaigns/initiatives/")
 ```
 
 Each initiative.json conforms to the schema at:
 ```
-$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/skills/social-distribution-engine/campaign-schema/initiative.schema.json 2>/dev/null | tail -1)
+$(ls -v ~/.claude/plugins/cache/xos/brand-amplification/*/skills/social-distribution-engine/campaign-schema/initiative.schema.json 2>/dev/null | tail -1)
 ```
 
 Campaigns live under their initiative:
 ```
-$CAREER_HOME/brain/social-distribution-engine/initiatives/<initiative-slug>/campaigns/<campaign-slug>/campaign.json
+brain.read("brand-amplification/campaigns/initiatives/<initiative-slug>/campaigns/<campaign-slug>/campaign.json")
 ```
 
 (A campaign.json can reference its parent via `meta.initiative_id`.)
@@ -129,8 +135,8 @@ Show the 4-6 most common next moves based on dashboard state:
 
 When the user says "new initiative" or equivalent:
 
-1. Read `$CAREER_HOME/brain/identity/professional-brand.md` for audience defaults.
-2. Read `$CAREER_HOME/brain/social-distribution-engine/brand-spec.json` for channel defaults (hub, honey_pot, spokes).
+1. Read via `brain.read("brand-amplification/identity/professional-brand.md")` for audience defaults.
+2. Read via `brain.read("brand-amplification/strategy/brand-spec.json")` for channel defaults (hub, honey_pot, spokes).
 3. Ask the user (one at a time):
    - "What's the strategic theme of this initiative? (one phrase)"
    - "Who is it for? (primary audience)"
@@ -139,15 +145,22 @@ When the user says "new initiative" or equivalent:
    - "Use your default channels (hub={brand.hub}, honey_pot={brand.honey_pot}), or override?"
 4. Generate the slug from the title (kebab-case, ≤ 40 chars).
 5. Show the proposed `initiative.json` and ask for confirmation.
-6. On confirm: write `$CAREER_HOME/brain/social-distribution-engine/initiatives/<slug>/initiative.json`, create the empty `campaigns/` dir.
+6. On confirm:
+   ```
+   brain.write("brand-amplification/campaigns/initiatives/<slug>/initiative.json", content, {
+     provenance: { who: "brand-amplification", why: "new initiative created", source: "campaign-dashboard" },
+     engine_id: "brand-amplification"
+   })
+   ```
+   brain.write() creates parent dirs automatically — no separate mkdir needed.
 7. Suggest the next move: "new campaign under this initiative".
 
 ## How to Implement (agent instructions)
 
 The agent rendering this dashboard:
 
-1. **Resolve `$CAREER_HOME`** from env. If unset, BLOCK with the onboarding remediation.
-2. **Discover initiatives:** `ls $CAREER_HOME/brain/social-distribution-engine/initiatives/*/initiative.json` (skip if dir missing — render empty state with "no initiatives yet" + offer "new initiative").
+1. **Resolve workspace root** — brain-kernel resolves this automatically; no `$CAREER_HOME` env dependency.
+2. **Discover initiatives:** `brain.list("brand-amplification/campaigns/initiatives/")` and filter to paths ending in `initiative.json` (skip if list returns empty — render empty state with "no initiatives yet" + offer "new initiative").
 3. **Parse each `initiative.json`** with `jq`. Validate against schema (warn on missing fields; do not block).
 4. **For each initiative, scan `campaigns/*.json`** under it. Build the rollup counts.
 5. **Render the four sections** above (active initiatives, recent campaigns, stale, quick actions).

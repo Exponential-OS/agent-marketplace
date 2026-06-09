@@ -19,10 +19,15 @@ The Campaign Engine is the upstream planner. Rather than acting as a monolithic 
 
 ## Capabilities
 
+### Brain API (brain-kernel >= 1.0.0)
+
+All reads go through `brain.read(path)` / `brain.list(prefix)`. Campaign master
+files are written via `brain.write()`. Direct filesystem writes are FORBIDDEN.
+
 ### 1. Campaign Initialization
 **Triggers:** "create campaign [topic/thesis]"
 - Defines the core thesis, the Honey Pot (source material), and the target audience.
-- Builds the **Surface Coverage Matrix** using `$CAREER_HOME/brain/identity/handles.md` to ensure no platforms are silently skipped.
+- Builds the **Surface Coverage Matrix** by reading `brain.read("identity/handles.md")` (primitive read — reads_from_primitives declared) to ensure no platforms are silently skipped.
 
 ### 2. Delegation (Drafting & Sequencing)
 The Campaign Engine does **NOT** draft the LinkedIn or X posts directly. 
@@ -32,7 +37,13 @@ Instead, it invokes the Platform Modules in "Drafting Mode":
 
 ### 3. Ledger Generation
 - Aggregates the drafts and execution plans from all modules.
-- Generates the canonical `campaign-master-<date>.md` file containing the unified sequence, the timing gaps, the approved drafts, and the status ledger.
+- Generates the canonical `campaign-master-<date>.md` file via:
+  ```
+  brain.write("brand-amplification/campaigns/<campaign-slug>/master.md", content, {
+    provenance: { who: "brand-amplification", why: "campaign ledger generated", source: "campaign-engine" },
+    engine_id: "brand-amplification"
+  })
+  ```
 
 ### 4. Ground Zero Verification
 - Enforces the **Visual-Asset Review Invariant**. It prevents the campaign from moving to the `social-distribution-engine` until a human or secondary reviewer has explicitly verified the visual assets for the generated drafts.

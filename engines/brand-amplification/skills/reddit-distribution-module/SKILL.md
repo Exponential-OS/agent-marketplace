@@ -33,7 +33,7 @@ When distributing to Reddit, this module operates completely independently:
 - **Asset Attachment:** Uses correct visual assets (typically a 1080x1080 square).
 
 ### 2. Subreddit Management
-- Check `brain/social-distribution-engine/social-channel-directory.md` BEFORE posting.
+- Check `brain.read("brand-amplification/campaigns/social-channel-directory.md")` BEFORE posting.
 - **NEVER** post to a Subreddit marked `⚠️ BANNED` or `Low ROI`.
 - If a post receives no engagement or gets deleted, escalate to the Analytics Engine for immediate logging to prevent repeat offenses.
 

@@ -45,7 +45,7 @@ Always start your response with:
 **Triggers:** "distribute campaign [name]", "post campaign"
 
 When a campaign is ready for distribution, the Engine acts as a Master Coordinator:
-1. **Load User Configuration:** Read the user's specific distribution configuration (e.g., `brain/social-distribution-engine/content-flywheel.md`) to understand *their* unique topology.
+1. **Load User Configuration:** Read `brain.read("brand-amplification/voice-strategies/content-flywheel.md")` to understand *their* unique topology.
    - Which platform is configured as their **Honey Pot** (source of truth/conversion)?
    - Which platform acts as **The Juice** (primary engagement hub)?
    - Which platforms are **The Spokes** (traffic drivers)?
@@ -59,7 +59,7 @@ When a campaign is ready for distribution, the Engine acts as a Master Coordinat
 5. **Update Ledger:** Maintain the campaign tracking ledger to record execution status.
 
 ### 2. Safeguarding Human Trust (Scraping Invariant)
-Before distributing to *any* channel, check the Global Channel Value Directory (`brain/social-distribution-engine/social-channel-directory.md`) via the Analytics Engine.
+Before distributing to *any* channel, check the Global Channel Value Directory via `brain.read("brand-amplification/campaigns/social-channel-directory.md")` (Analytics Engine owns writes to this file).
 - If a channel is marked ⚠️ BANNED or Low ROI, **skip it**.
 - If a post's quality is questionable or seems promotional for strict channels, escalate to the user before publishing.
 
@@ -67,14 +67,14 @@ Before distributing to *any* channel, check the Global Channel Value Directory (
 
 **Origin:** 2026-05-05 — users cold-open with content requests (e.g., "write a LinkedIn post about my AI Fund panel") without prior session context load. The agent drafts without brand voice, IP firewall, or campaign context. The draft is generic at best, violates IP constraints at worst.
 
-**Rule:** Before writing a single word of content, confirm the following files are loaded this session. If any are missing, read them silently NOW:
+**Rule:** Before writing a single word of content, confirm the following files are loaded this session. If any are missing, read them silently NOW via `brain.read()`:
 
-| File | What it provides | Fallback if missing |
-|---|---|---|
-| `brain/identity/professional-brand.md` | Brand voice, tone, positioning, narrative pillars | Emit `⚠️ brand context missing — draft may be off-voice` and proceed |
-| `brain/identity/handles.md` | Active platform handles, CTA destinations | Proceed, but omit handle-specific CTAs |
-| `$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/skills/social-distribution-engine/content-flywheel.md 2>/dev/null \| tail -1)` IP Firewall section | Terms that must NEVER appear in published content | **BLOCK** — cannot draft without IP firewall loaded |
-| Campaign master file (if distributing existing campaign) | Assets, platform copy, surface coverage matrix | Required for distribution mode; not required for fresh-draft mode |
+| File | brain.read() path | What it provides | Fallback if missing |
+|---|---|---|---|
+| `professional-brand.md` | `brain.read("brand-amplification/identity/professional-brand.md")` | Brand voice, tone, positioning, narrative pillars | Emit `⚠️ brand context missing — draft may be off-voice` and proceed |
+| `handles.md` | `brain.read("identity/handles.md")` | Active platform handles, CTA destinations | Proceed, but omit handle-specific CTAs |
+| `content-flywheel.md` | `brain.read("brand-amplification/voice-strategies/content-flywheel.md")` — IP Firewall section | Terms that must NEVER appear in published content | **BLOCK** — cannot draft without IP firewall loaded |
+| Campaign master file (if distributing existing campaign) | `brain.read("brand-amplification/campaigns/<slug>/master.md")` | Assets, platform copy, surface coverage matrix | Required for distribution mode; not required for fresh-draft mode |
 
 **Context load is silent** — do not narrate "loading brand context…" to the user. Just load, then draft.
 
@@ -88,7 +88,7 @@ Before distributing to *any* channel, check the Global Channel Value Directory (
 Exit 0 = ALL PASS. Exit 1 = BLOCK (fix and re-run). Exit 2 = WARN (review before distributing).
 
 ```bash
-python3 "$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/skills/social-distribution-engine/validate-campaign-preflight.py 2>/dev/null | tail -1)" \
+python3 "$(ls -v ~/.claude/plugins/cache/xos/brand-amplification/*/skills/social-distribution-engine/validate-campaign-preflight.py 2>/dev/null | tail -1)" \
   /path/to/campaign.json
 ```
 
@@ -122,7 +122,7 @@ Append selected hashtags at the **end** of the post body (never in the body). Pl
 Run `post_validator.py` against the draft. If result is `fail`: fix all violations, re-run, then present fixed copy. If result is `warn`: surface the warnings as a footnote under the copy so the user can make an informed decision — but present the copy anyway. Never silently skip this step.
 
 ```bash
-python3 "$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/skills/social-distribution-engine/post_validator.py 2>/dev/null | tail -1)" \
+python3 "$(ls -v ~/.claude/plugins/cache/xos/brand-amplification/*/skills/social-distribution-engine/post_validator.py 2>/dev/null | tail -1)" \
   --platform linkedin_post \
   --text "<post body including appended hashtags>"
 ```
@@ -185,7 +185,7 @@ Run order: Pre-Flight → (for each component) Per-Content Gate → Pre-Publicat
 **When:** Any Substack post that triggers an email send to subscribers. Also fires on republish/resend actions.
 
 ```bash
-GATE=$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/substack-publish-gate/HOW.py 2>/dev/null | tail -1)
+GATE=$(ls -v ~/.claude/plugins/cache/xos/brand-amplification/*/rules/substack-publish-gate/HOW.py 2>/dev/null | tail -1)
 python3 "$GATE" '{
   "platform": "substack",
   "action": "publish",
@@ -215,7 +215,7 @@ Exit 0 = PASS (safe to publish). Exit 1 = BLOCK.
 **When:** Before publishing or updating a LinkedIn Article (Pulse article).
 
 ```bash
-GATE=$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/linkedin-article-publish-gate/HOW.py 2>/dev/null | tail -1)
+GATE=$(ls -v ~/.claude/plugins/cache/xos/brand-amplification/*/rules/linkedin-article-publish-gate/HOW.py 2>/dev/null | tail -1)
 python3 "$GATE" '{
   "platform": "linkedin_article",
   "article_title": "<title>",
@@ -236,7 +236,7 @@ Exit 0 = PASS. Exit 1 = BLOCK.
 **When:** Before publishing the LinkedIn hub post that shares a LinkedIn Article URL. This is the spoke post in the hub-spoke flywheel (the "Post Hub").
 
 ```bash
-GATE=$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/linkedin-post-on-article-gate/HOW.py 2>/dev/null | tail -1)
+GATE=$(ls -v ~/.claude/plugins/cache/xos/brand-amplification/*/rules/linkedin-post-on-article-gate/HOW.py 2>/dev/null | tail -1)
 python3 "$GATE" '{
   "platform": "linkedin_post",
   "post_body": "<full post body>",
@@ -255,7 +255,7 @@ Exit 0 = PASS. Exit 1 = BLOCK. Exit 2 = WARN.
 **When:** Before publishing an X (Twitter) thread as part of a campaign. Validates that CTAs are in the reply tweet, not the thread body.
 
 ```bash
-GATE=$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/x-cta-resolution-gate/HOW.py 2>/dev/null | tail -1)
+GATE=$(ls -v ~/.claude/plugins/cache/xos/brand-amplification/*/rules/x-cta-resolution-gate/HOW.py 2>/dev/null | tail -1)
 python3 "$GATE" '{
   "platform": "x_thread",
   "thread_tweets": ["Tweet 1 text", "Tweet 2 text", "..."],

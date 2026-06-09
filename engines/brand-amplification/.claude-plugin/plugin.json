@@ -1,13 +1,46 @@
 {
   "name": "brand-amplification",
   "platform": "xOS",
-  "version": "0.50.0",
-  "description": "Brand Amplification Engine (xOS) v0.50.0 - The outbound brand-building engine for xOS. Coordinated content distribution across owned surfaces (LinkedIn, Substack, Reddit, X, Instagram, Facebook, Threads) with hub-and-spoke flywheel, surface coverage matrix, pre-publish quality gates, and confidence-ladder browser defaults (browserbase for setup; chrome-devtools-mcp for posting per Irreversible-Action Invariant). Graduates workflow-by-workflow to browserbase after ~10 successful runs. Future sibling engine: Relationship Intelligence Engine (RIE, inbound warm-network detection).",
+  "version": "0.52.0",
+  "depends_on_kernel": [
+    "brain-kernel >= 1.0.0"
+  ],
+  "brain": {
+    "namespace": "brand-amplification",
+    "owned_paths": [
+      "voice-strategies/**",
+      "campaigns/**",
+      "personas/**",
+      "performance-history.md",
+      "patterns/**",
+      "identity/**",
+      "strategy/**"
+    ],
+    "writes_to_primitives": [
+      "identity/handles.md"
+    ],
+    "reads_from_primitives": [
+      "identity/**",
+      "network/companies/**",
+      "network/people/**"
+    ],
+    "reads_from_engines": [
+      "co-dialectic/feedback/**",
+      "co-dialectic/personas/**",
+      "career-intelligence/stories/**"
+    ],
+    "linters": [
+      "campaign-completeness",
+      "surface-coverage",
+      "voice-drift"
+    ]
+  },
+  "description": "Brand Amplification Engine (xOS) v0.51.0 - The outbound brand-building engine for xOS. Coordinated content distribution across owned surfaces (LinkedIn, Substack, Reddit, X, Instagram, Facebook, Threads) with hub-and-spoke flywheel, surface coverage matrix, pre-publish quality gates, and confidence-ladder browser defaults (browserbase for setup; chrome-devtools-mcp for posting per Irreversible-Action Invariant). Graduates workflow-by-workflow to browserbase after ~10 successful runs. Brain-kernel integrated for primitive writes (identity/handles.md) and cross-engine reads. Future sibling engine: Relationship Intelligence Engine (RIE, inbound warm-network detection).",
   "author": {
     "name": "Anand Vallamsetla"
   },
-  "repository": "https://github.com/Exponential-OS/social-distribution-plugin",
-  "homepage": "https://github.com/Exponential-OS/social-distribution-plugin",
+  "repository": "https://github.com/Exponential-OS/brand-amplification-engine",
+  "homepage": "https://github.com/Exponential-OS/brand-amplification-engine",
   "license": "Proprietary",
   "keywords": [
     "social-distribution",

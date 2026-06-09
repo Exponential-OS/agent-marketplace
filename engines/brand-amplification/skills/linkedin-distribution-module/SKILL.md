@@ -30,7 +30,7 @@ Two gates fire before any hijack comment is posted.
 ### Gate A — Target scoring (run first, before writing the comment)
 
 ```bash
-python3 "$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/skills/social-distribution-engine/detect.py 2>/dev/null | tail -1)" '{
+python3 "$(ls -v ~/.claude/plugins/cache/xos/brand-amplification/*/skills/social-distribution-engine/detect.py 2>/dev/null | tail -1)" '{
   "platform": "linkedin",
   "author_followers": <int or omit if unknown>,
   "post_age_hours": <float>,
@@ -49,7 +49,7 @@ Exit 1 = SKIP (don't write — surface the score and reason to the user).
 ### Gate B — Comment quality + dedup (run before posting)
 
 ```bash
-python3 "$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/comment-hijack-gate/HOW.py 2>/dev/null | tail -1)" '{
+python3 "$(ls -v ~/.claude/plugins/cache/xos/brand-amplification/*/rules/comment-hijack-gate/HOW.py 2>/dev/null | tail -1)" '{
   "platform": "linkedin",
   "target_post_url": "<URL>",
   "target_post_age_hours": <float>,
@@ -63,7 +63,7 @@ Exit 0 = PASS (post the comment). Exit 1 = BLOCK (do not post — surface remedi
 
 Gate B checks: hub_url present in comment, freshness (≤72h for LinkedIn), dedup, and LLM standalone_value judge.
 
-**Playbook:** `$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/distribution-engine/hijack-playbook.md 2>/dev/null | tail -1)`
+**Playbook:** `$(ls -v ~/.claude/plugins/cache/xos/brand-amplification/*/skills/social-distribution-engine/hijack-playbook.md 2>/dev/null | tail -1)`
 
 ## Capabilities
 
@@ -79,13 +79,13 @@ When distributing to LinkedIn:
 For full LinkedIn Groups discovery + distribution, use the `linkedin-groups-distribution-module` skill.
 
 Summary of groups rules enforced by that skill:
-- Check `brain/social-distribution-engine/social-channel-directory.md` for approved LinkedIn Groups.
+- Check `brain.read("brand-amplification/campaigns/social-channel-directory.md")` for approved LinkedIn Groups.
 - 7-day cooldown per group (enforced by `linkedin-groups-dedup` gate).
 - Max 3 groups per campaign. Max 150 words per group post. Open with question — not declaration.
 - Dedup gate fires before every group post:
 
 ```bash
-python3 "$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/linkedin-groups-dedup/HOW.py 2>/dev/null | tail -1)" \
+python3 "$(ls -v ~/.claude/plugins/cache/xos/brand-amplification/*/rules/linkedin-groups-dedup/HOW.py 2>/dev/null | tail -1)" \
   '{"group_url": "<URL>"}'
 ```
 

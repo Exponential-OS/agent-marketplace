@@ -7,7 +7,9 @@ description: >
 depends_on:
   - linkedin-distribution-module
   - chrome-devtools MCP (authenticated LinkedIn session, port 9222)
-  - brain/social-distribution-engine/social-channel-directory.md
+  # SPEC-DRIFT-DETECTED: old path "brain/social-distribution-engine/social-channel-directory.md"
+  # Migration target: brain.read("brand-amplification/campaigns/social-channel-directory.md")
+  - brand-amplification/campaigns/social-channel-directory.md
 triggers:
   - discover linkedin groups
   - find groups for my content
@@ -41,8 +43,13 @@ trusts you more.
 ### Trigger
 "discover linkedin groups" | "find groups for my content" | "add groups to my distribution"
 
+### Brain API (brain-kernel >= 1.0.0)
+
+All reads go through `brain.read(path)`. Writes go through `brain.write()`.
+Direct filesystem access is FORBIDDEN.
+
 ### Step 0 — Pre-flight (mandatory)
-Read `$CAREER_HOME/brain/identity/professional-brand.md` → extract `content_pillars` (list of topics).
+Read `brain.read("brand-amplification/identity/professional-brand.md")` → extract `content_pillars` (list of topics).
 If not found → stop and ask user for 3–5 topic keywords.
 
 ### Step 1 — Search (chrome-devtools MCP)
@@ -83,8 +90,16 @@ Group: "LLM Engineering Community"  | 1,800 members | Active (15 posts/mo) | Sco
 Show list. User selects which to add (can select all or subset).
 
 ### Step 4 — Write to social-channel-directory.md
-For each approved group, append to `$CAREER_HOME/brain/social-distribution-engine/social-channel-directory.md`
-under a `## LinkedIn Groups` section:
+For each approved group, read the current file first (P15 multi-agent read-before-write),
+append under a `## LinkedIn Groups` section, then write back:
+```
+const current = brain.read("brand-amplification/campaigns/social-channel-directory.md") ?? ""
+brain.write("brand-amplification/campaigns/social-channel-directory.md", current + newRow, {
+  provenance: { who: "brand-amplification", why: "linkedin group added", source: "linkedin-groups-distribution-module" },
+  engine_id: "brand-amplification"
+})
+```
+New row format:
 
 ```markdown
 | linkedin_group | {Group Name} | {URL} | {member_count} | {activity_summary} | ✅ APPROVED | Added {DATE} |
@@ -119,14 +134,21 @@ Commit: `feat(sde): add N LinkedIn groups to distribution channels`
 #### Dedup gate (fires before every group post)
 
 ```bash
-python3 "$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/linkedin-groups-dedup/HOW.py 2>/dev/null | tail -1)" \
+python3 "$(ls -v ~/.claude/plugins/cache/xos/brand-amplification/*/rules/linkedin-groups-dedup/HOW.py 2>/dev/null | tail -1)" \
   '{"group_url": "<URL>", "lookback_days": 7}'
 ```
 
 Exit 0 = PASS. Exit 1 = BLOCK with last-post date and next available date.
 
 #### Post log schema
-After each group post, append to `$CAREER_HOME/brain/social-distribution-engine/groups-post-log.jsonl`:
+After each group post, read-append-write the groups post log:
+```
+brain.write("brand-amplification/campaigns/groups-post-log.jsonl", existingContent + newEntry + "\n", {
+  provenance: { who: "brand-amplification", why: "group post logged", source: "linkedin-groups-distribution-module" },
+  engine_id: "brand-amplification"
+})
+```
+Entry format:
 ```json
 {"group_url": "...", "group_name": "...", "posted_at": "2026-05-10T14:00:00Z", "campaign": "...", "post_url": "..."}
 ```

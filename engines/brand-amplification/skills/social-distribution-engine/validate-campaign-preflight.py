@@ -57,6 +57,11 @@ if not pathlib.Path(CAREER_HOME).is_dir():
 GATES = [
     # (phase, gate_slug, extra_args_fn, timeout_seconds)
     ("Planning",  "campaign-schema-validator",     lambda cf, _: {"campaign_file": cf},                                                                                                                                                        30),
+    # SPEC-DRIFT-DETECTED: these gate scripts read brain paths directly via $CAREER_HOME.
+    # Migration target: channel_dir_file → brain.read("brand-amplification/campaigns/social-channel-directory.md")
+    #                   handles_file     → brain.read("identity/handles.md")
+    # These subprocess gates cannot call brain.write() without a runtime brain instance;
+    # migrating requires the gate-script API to accept pre-resolved file paths or a brain proxy.
     ("Planning",  "channel-status-check",          lambda cf, _: {"campaign_file": cf, "channel_dir_file": str(pathlib.Path(CAREER_HOME) / "brain/social-distribution-engine/social-channel-directory.md")},                              30),
     ("Planning",  "surface-coverage-check",        lambda cf, _: {"campaign_file": cf, "handles_file": str(pathlib.Path(CAREER_HOME) / "brain/identity/handles.md")},                                                                     30),
     ("Content",   "content-url-resolution-check",  lambda cf, _: {"campaign_file": cf},                                                                                                                                                        30),

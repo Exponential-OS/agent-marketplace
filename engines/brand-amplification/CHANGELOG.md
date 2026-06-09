@@ -1,6 +1,34 @@
 <!-- product-vs-solution: example -->
 # Changelog
 
+## [0.52.0] — 2026-06-09 — fix stale post-extract gate globs (XOS-7, CRITICAL)
+
+### Fixed — every per-content gate was silently skipping (campaigns shipped UNVALIDATED)
+After the v0.47.0 extract from career-intelligence, BAE skills still globbed
+`~/.claude/plugins/cache/xos/career-intelligence/*/...` for gates and scripts that had
+MOVED into this plugin (`brand-amplification/*`). `ls -v … | tail -1` returned empty →
+`python3 ""` / empty `GATE=` → the gate **silently skipped**, while the skills claimed
+9–10 gates fire (CAMPAIGN-COMPLETENESS violation class). Net effect: campaigns shipped
+with ZERO structural gate validation.
+
+Repointed all stale globs `career-intelligence` → `brand-amplification` across
+social-distribution-engine, linkedin-distribution-module, linkedin-groups-distribution-module,
+substack-distribution-module, distribution-analytics-engine, campaign-dashboard,
+brand-onboarding. Verified every fixed `ls -v … | tail -1` resolves to a real file in the
+installed cache (13 gates/scripts).
+
+**Two refs intentionally preserved / specially handled:**
+- `social-content-readiness-check` (social-distribution-engine SKILL.md) stays at
+  `career-intelligence` — that gate legitimately lives there (cross-plugin call). Verified
+  it still resolves.
+- hijack-playbook was a double-error (wrong plugin AND wrong subdir) → corrected to
+  `brand-amplification/*/skills/social-distribution-engine/hijack-playbook.md`.
+
+### Note
+CHANGELOG has a gap (0.48–0.51 entries missing — tracked under XOS-9). This 0.52.0 ship
+also carries the previously-unshipped 0.51.0 (brain-kernel API migration + BAE rename),
+since marketplace/cache were still at 0.50.0.
+
 ## [0.47.0] — 2026-05-17 — initial extract from career-intelligence-engine v0.61.0
 
 ### Provenance

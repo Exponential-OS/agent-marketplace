@@ -33,12 +33,35 @@ Always start with:
 
 ## The 4 Files This Skill Generates
 
-| File | Path | What it does |
+### Brain API (brain-kernel >= 1.0.0)
+
+All writes go through `brain.write(path, content, opts)`. All reads go through
+`brain.read(path)`. Direct filesystem writes are FORBIDDEN — the kernel
+enforces ACL and provenance on every operation.
+
+| File | brain.write() path | What it does |
 |---|---|---|
-| `professional-brand.md` | `brain/identity/professional-brand.md` | Brand voice, tone, narrative pillars, IP firewall. Auto-loaded before every draft. |
-| `handles.md` | `brain/identity/handles.md` | All platform handles. Used by Gates 3, 6, and every distribution module. |
-| `content-flywheel.md` | `brain/social-distribution-engine/content-flywheel.md` | Per-user distribution topology — which platform is honey pot, juice hub, spokes. |
-| `social-channel-directory.md` | `brain/social-distribution-engine/social-channel-directory.md` | Channel quality ratings. Gate 2 reads this on every preflight to block banned channels. |
+| `professional-brand.md` | `brand-amplification/identity/professional-brand.md` | Brand voice, tone, narrative pillars, IP firewall. Auto-loaded before every draft. |
+| `handles.md` | `identity/handles.md` | All platform handles. Used by Gates 3, 6, and every distribution module. (primitive write — declared in writes_to_primitives) |
+| `content-flywheel.md` | `brand-amplification/voice-strategies/content-flywheel.md` | Per-user distribution topology — which platform is honey pot, juice hub, spokes. |
+| `social-channel-directory.md` | `brand-amplification/campaigns/social-channel-directory.md` | Channel quality ratings. Gate 2 reads this on every preflight to block banned channels. |
+
+**Write call pattern (owned namespace):**
+```
+brain.write("brand-amplification/identity/professional-brand.md", content, {
+  provenance: { who: "brand-amplification", why: "onboarding: brand identity initialized", source: "brand-onboarding" },
+  engine_id: "brand-amplification"
+})
+```
+
+**Write call pattern (primitive — handles.md):**
+```
+brain.write("identity/handles.md", content, {
+  provenance: { who: "brand-amplification", why: "onboarding: handles initialized", source: "brand-onboarding" },
+  engine_id: "brand-amplification"
+})
+```
+ACL allows this because `writes_to_primitives: ["identity/handles.md"]` is declared in the engine manifest.
 
 ## Execution Flow
 
@@ -62,12 +85,10 @@ echo "${CAREER_HOME:-not set}"
 > Recommended: a private folder you git-commit regularly — your brand context and campaigns are valuable artifacts."
 
 After they answer (or press Enter for default):
-1. Create the directory structure:
-   ```bash
-   mkdir -p "$CAREER_HOME/brain/identity"
-   mkdir -p "$CAREER_HOME/brain/social-distribution-engine"
-   ```
-2. Print: "Workspace created at `$CAREER_HOME`. Starting setup..."
+1. Workspace directories are created automatically by brain.write() — no manual mkdir needed.
+   brain.write() calls mkdirSync(dirname(abs), { recursive: true }) internally.
+   <!-- SPEC-DRIFT-DETECTED: old code used direct mkdir + CAREER_HOME; now brain-kernel handles path creation -->
+2. Print: "Workspace created. Starting setup..."
 3. **Persist the path** — add to shell profile so it survives sessions:
    ```bash
    echo 'export CAREER_HOME="<path>"' >> ~/.zshrc  # or ~/.bashrc if zsh not found
@@ -119,22 +140,22 @@ Ask the following questions ONE AT A TIME. Wait for each answer before asking th
 After all 9 answers are collected:
 
 1. Read the 4 template files from the plugin bundle:
-   - `$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/skills/social-distribution-engine/onboarding-templates/*.template.md 2>/dev/null)`
+   - `$(ls -v ~/.claude/plugins/cache/xos/brand-amplification/*/skills/social-distribution-engine/onboarding-templates/*.template.md 2>/dev/null)`
 
 2. Fill in all `{{PLACEHOLDER}}` tokens with the user's answers.
 
-3. Write the 4 files to the user's `$CAREER_HOME/brain/` directory:
+3. Write the 4 files via brain API:
    ```
-   brain/identity/professional-brand.md
-   brain/identity/handles.md
-   brain/social-distribution-engine/content-flywheel.md
-   brain/social-distribution-engine/social-channel-directory.md
+   brain.write("brand-amplification/identity/professional-brand.md", ...)
+   brain.write("identity/handles.md", ...)              ← primitive write (writes_to_primitives)
+   brain.write("brand-amplification/voice-strategies/content-flywheel.md", ...)
+   brain.write("brand-amplification/campaigns/social-channel-directory.md", ...)
    ```
-   **If files already exist: ask before overwriting.** Existing files may have evolved content that should be preserved.
+   **If files already exist: ask before overwriting.** Check via `brain.read(path)` — non-null result = file exists.
 
-4. Validate: confirm all 4 files exist and are non-empty.
+4. Validate: confirm all 4 writes returned `ok: true`.
 
-5. Run a quick smoke test — check that `brain/identity/handles.md` has at least one handle entry and `brain/social-distribution-engine/content-flywheel.md` has platform role assignments.
+5. Run a quick smoke test — check that `brain.read("identity/handles.md")` returns content with at least one handle entry and `brain.read("brand-amplification/voice-strategies/content-flywheel.md")` has platform role assignments.
 
 ---
 
@@ -146,10 +167,10 @@ Print this summary:
 ━━━ Brand Amplification · Onboarding Complete ━━━
 
 Files created:
-  ✅ brain/identity/professional-brand.md
-  ✅ brain/identity/handles.md
-  ✅ brain/social-distribution-engine/content-flywheel.md
-  ✅ brain/social-distribution-engine/social-channel-directory.md
+  ✅ brand-amplification/identity/professional-brand.md
+  ✅ identity/handles.md  (primitive — shared with Career OS)
+  ✅ brand-amplification/voice-strategies/content-flywheel.md
+  ✅ brand-amplification/campaigns/social-channel-directory.md
 
 Cross-session memory: ACTIVE
   → Your brand voice, handles, and distribution topology are now git-versioned.
@@ -166,10 +187,8 @@ Week 2 — Your First Campaign:
   2. The 9-gate preflight CI will validate everything before distribution
   3. Your context files are already loaded — no setup needed
 
-One optional step now: git commit your 4 new files so they're versioned:
-  git -C $CAREER_HOME init  # only if not already a git repo
-  git -C $CAREER_HOME add brain/identity/professional-brand.md brain/identity/handles.md brain/social-distribution-engine/content-flywheel.md brain/social-distribution-engine/social-channel-directory.md
-  git -C $CAREER_HOME commit -m "feat(sde): Week 1 onboarding — context files initialized"
+brain.write() auto-commits every file via brain-kernel. Your 4 context files
+are already versioned — no manual git commit needed.
 ```
 
 ---

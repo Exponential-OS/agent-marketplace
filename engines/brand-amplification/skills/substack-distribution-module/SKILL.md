@@ -21,9 +21,9 @@ Call `substack-publish-gate` before ANY action that publishes or sends email to 
 Exit 0 = PASS (proceed). Exit 1 = BLOCK (do not publish — surface the gate's remediation to the user).
 
 ```bash
-GATE=$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/substack-publish-gate/HOW.py 2>/dev/null | tail -1)
+GATE=$(ls -v ~/.claude/plugins/cache/xos/brand-amplification/*/rules/substack-publish-gate/HOW.py 2>/dev/null | tail -1)
 if [ -z "$GATE" ]; then
-  echo '{"verdict":"BLOCK","reason":"substack-publish-gate script not found — plugin may need reinstall","remediation":"Run: claude plugin update career-intelligence@xos --scope user"}'
+  echo '{"verdict":"BLOCK","reason":"substack-publish-gate script not found — plugin may need reinstall","remediation":"Run: claude plugin update brand-amplification@xos --scope user"}'
   exit 1
 fi
 python3 "$GATE" '{
