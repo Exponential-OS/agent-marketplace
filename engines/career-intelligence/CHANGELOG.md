@@ -2,6 +2,26 @@
 <!-- this file is the historical changelog. Entries reference the original author/user as provenance, not runtime data. -->
 # Changelog
 
+## [0.73.0] — 2026-06-09 — workspace-binding gate primitive (XOS-39)
+
+### Changed — single shared cwd-gate replaces 3 duplicated copies
+The hooks (`init-repo.sh`/`capture-prompt.sh`/`capture-response.sh`) each carried their own
+`is_career_os_workspace()` cwd-guard. That duplication is the bug class behind the
+408-stray-commits incident: v0.66 fixed two copies and forgot the third (`init-repo.sh`),
+so SessionStart scaffolded + committed in unrelated repos.
+
+- New `hooks/scripts/_workspace-gate.sh` — one shared, manifest-driven gate, sourced as the
+  first line of every mutating hook; `exit 0`s (silent no-op) when cwd is not a bound workspace.
+- New `workspace_binding` field in plugin.json (`mode: workspace-only`, `detect: [...]`) — the
+  binding is declared once, greppable across plugins, not re-implemented per hook.
+- The 3 inline `is_career_os_workspace()` copies are DELETED (net code reduction).
+- `tests/test_workspace_gate.py` (CI audit): fails the build if any mutating hook skips the
+  gate or reintroduces an inline copy — makes the v0.66 single-slot miss impossible to repeat.
+- Belt + suspenders with project-scope install: even a mistaken user-scope install no-ops
+  outside the workspace.
+
+Verified: hooks no-op in a non-workspace cwd (0 files, 0 commits); run inside; full CI green.
+
 ## [0.72.0] — 2026-06-09 — dedup gate JSON-aware + doc hygiene (XOS-29 pt2, XOS-32)
 
 ### Fixed — warm-contact-outreach-dedup gate was a no-op against live data (XOS-29 pt2, HIGH)

@@ -53,28 +53,12 @@ mkdir -p "$STATE_DIR"
 # Carve-out: the STATE_DIR creation above is plugin-state (global), not
 # workspace state. Safe to leave it before the gate.
 
-is_career_os_workspace() {
-    # Check 1: $CAREER_HOME env var match (canonical signal)
-    if [ -n "${CAREER_HOME:-}" ] && [ "$CAREER_HOME" = "$WORKSPACE_ROOT" ]; then
-        return 0
-    fi
-    # Check 2: brain/identity/ marker (durable workspace signature)
-    if [ -d "$WORKSPACE_ROOT/brain/identity" ]; then
-        return 0
-    fi
-    # Check 3: explicit sentinel file
-    if [ -f "$WORKSPACE_ROOT/.career-os-workspace" ]; then
-        return 0
-    fi
-    return 1
-}
-
-if ! is_career_os_workspace; then
-    # Silent no-op — this is NOT a Career OS workspace.
-    # NEVER scaffold brain/, NEVER write CLAUDE.md, NEVER create Resumes/,
-    # NEVER write ledger markers, NEVER git add/commit/push.
-    exit 0
-fi
+# WORKSPACE-BINDING GATE (XOS-39): single shared, manifest-driven gate. Sourcing
+# _workspace-gate.sh exit-0's HERE (silent no-op) when cwd is not a bound Career OS
+# workspace — never scaffold brain/, write CLAUDE.md, create Resumes/, write ledger
+# markers, or git add/commit/push outside it. Replaces the per-script
+# is_career_os_workspace() copy that was forgotten in THIS file in v0.66.
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/_workspace-gate.sh"
 
 # --- Version check + migration (P6: Zero-Data-Loss Upgrades) ---
 # Must run BEFORE any other logic. Migration scripts know old file locations.

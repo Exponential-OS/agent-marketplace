@@ -90,27 +90,13 @@ MAIN_BRANCH="main"
 # If none match → exit silently with {"decision":"approve"}. The hook MUST
 # never write to or commit in a non-Career-OS repo.
 
-is_career_os_workspace() {
-    # Check 1: $CAREER_HOME env var match
-    if [ -n "${CAREER_HOME:-}" ] && [ "$CAREER_HOME" = "$WORKSPACE_ROOT" ]; then
-        return 0
-    fi
-    # Check 2: brain/identity/ marker (durable workspace signature)
-    if [ -d "$WORKSPACE_ROOT/brain/identity" ]; then
-        return 0
-    fi
-    # Check 3: explicit sentinel file
-    if [ -f "$WORKSPACE_ROOT/.career-os-workspace" ]; then
-        return 0
-    fi
-    return 1
-}
-
-if ! is_career_os_workspace; then
-    # Silent no-op — this is NOT a Career OS workspace. Never log here.
-    echo '{"decision": "approve"}'
-    exit 0
-fi
+# WORKSPACE-BINDING GATE (XOS-39): single shared, manifest-driven gate. On a non-bound
+# cwd it emits the UserPromptSubmit no-op payload ({"decision":"approve"}) and exit-0's
+# HERE — never log/write/commit outside the workspace. Replaces the per-script
+# is_career_os_workspace() copy (one of three duplicates; init-repo's was forgotten in v0.66).
+WSG_SKIP_ECHO='{"decision": "approve"}'
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/_workspace-gate.sh"
+unset WSG_SKIP_ECHO
 
 cd "$WORKSPACE_ROOT"
 

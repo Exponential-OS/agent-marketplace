@@ -111,23 +111,10 @@ MAIN_BRANCH="main"
 # Refuse to write ledger / commit / push if this cwd is not a Career OS
 # workspace. See capture-prompt.sh for full detection logic.
 
-is_career_os_workspace() {
-    if [ -n "${CAREER_HOME:-}" ] && [ "$CAREER_HOME" = "$WORKSPACE_ROOT" ]; then
-        return 0
-    fi
-    if [ -d "$WORKSPACE_ROOT/brain/identity" ]; then
-        return 0
-    fi
-    if [ -f "$WORKSPACE_ROOT/.career-os-workspace" ]; then
-        return 0
-    fi
-    return 1
-}
-
-if ! is_career_os_workspace; then
-    # Silent no-op — this is NOT a Career OS workspace. Never log here.
-    exit 0
-fi
+# WORKSPACE-BINDING GATE (XOS-39): single shared, manifest-driven gate. Sourcing it
+# exit-0's HERE (silent no-op) when cwd is not a bound Career OS workspace — never write
+# ledger / commit / push outside it. Replaces the per-script is_career_os_workspace() copy.
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/_workspace-gate.sh"
 
 cd "$WORKSPACE_ROOT"
 
