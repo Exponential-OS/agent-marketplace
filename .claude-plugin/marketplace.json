@@ -24,7 +24,11 @@
       "name": "super-developer",
       "platform": "xHumanOS",
       "license": "Proprietary",
-      "source": "../super-developer-plugin",
+      "source": {
+        "source": "github",
+        "repo": "Exponential-OS/super-developer-plugin",
+        "sha": "ac5f640fb70bc6de2a09350ce0af81089809853c"
+      },
       "description": "Super Developer Engine - global agentic-SDLC ship-feature pipeline for every repo. v0.1.0 packages the canonical ship-feature skill and /ship-feature alias as a user-scope marketplace plugin with workspace_binding=global.",
       "version": "0.1.0",
       "category": "developer-tools",
