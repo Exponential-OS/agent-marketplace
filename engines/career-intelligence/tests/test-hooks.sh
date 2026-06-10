@@ -851,31 +851,39 @@ echo "-- Schema Coherence (ADR-002) --------------------"
 # catch it before the release ships. See schemas/shared-structures.md
 # for the registry.
 
-echo "[C1] tracker parser matches 10-col schema (v2.0)"
-# Regression for WO-048 class. Writes a synthetic 10-col tracker fixture
-# and asserts pipeline-query.py reads each column correctly. If someone
-# inserts another column or shifts indices, this fails with a specific
-# field mismatch — not a silent UNKNOWN.
+echo "[C1] tracker parser reads JSON schema (v3.0)"
+# Regression for WO-048 class. Writes a synthetic JSON tracker fixture at the
+# canonical path (career-intelligence/projects/job-search/job-pipeline-match-tracker.json)
+# and asserts pipeline-query.py returns correct field values via --format json.
+# If someone renames a key or changes the schema, this fails with a specific
+# field mismatch — not a silent wrong value.
 if command -v python3 >/dev/null 2>&1; then
     C1_DIR=$(mktemp -d)
-    mkdir -p "$C1_DIR/.career-os/memory"
-    # Minimum pipeline.md so the script doesn't error on missing file
-    : > "$C1_DIR/.career-os/memory/job-pipeline.md"
-    cat > "$C1_DIR/.career-os/memory/job-pipeline-match-tracker.md" <<'TRACKER_FIXTURE'
-<!-- schema: v2.0 -->
-# Job Match Tracker
-
-## Batch Scoring 2026-04-07
-
-| # | Company | Role | Score | Quality | Decision | Resume Track | Warm Path | JD Link | Outcome |
-|---|---------|------|-------|---------|----------|--------------|-----------|---------|---------|
-| 999 | Harvey AI | EM AI Quality | 80% | ✅ JD | ✅ APPLY | Eng Leader | Cold | https://jobs.ashbyhq.com/harvey/fixture | QUEUED |
+    mkdir -p "$C1_DIR/career-intelligence/projects/job-search"
+    cat > "$C1_DIR/career-intelligence/projects/job-search/job-pipeline-match-tracker.json" <<'TRACKER_FIXTURE'
+[
+  {
+    "id": 999,
+    "batch_date": "2026-04-07",
+    "batch_context": "fixture",
+    "company": "Harvey AI",
+    "role": "EM AI Quality",
+    "score": 80,
+    "score_quality": "JD",
+    "decision": "APPLY",
+    "resume_track": "Eng Leader",
+    "warm_path": "Cold",
+    "jd_url": "https://jobs.ashbyhq.com/harvey/fixture",
+    "status": "QUEUED",
+    "updated_at": "2026-04-07"
+  }
+]
 TRACKER_FIXTURE
-    C1_OUT=$(CAREER_HOME="$C1_DIR" python3 "$PLUGIN_ROOT/scripts/pipeline-query.py" --lookup 999 2>&1 || echo "PARSER_FAILED")
-    assert_contains "C1: parser reads Decision column at index 5" "$C1_OUT" "Decision:  APPLY"
-    assert_contains "C1: parser reads Resume Track column at index 6" "$C1_OUT" "Resume:    Eng Leader"
-    assert_contains "C1: parser reads Warm Path column at index 7" "$C1_OUT" "Warm Path: Cold"
-    assert_contains "C1: parser reads JD Link column at index 8" "$C1_OUT" "JD URL:    https://jobs.ashbyhq.com/harvey/fixture"
+    C1_OUT=$(CAREER_HOME="$C1_DIR" python3 "$PLUGIN_ROOT/scripts/pipeline-query.py" --lookup 999 --format json 2>&1 || echo "PARSER_FAILED")
+    assert_contains "C1: parser reads decision field" "$C1_OUT" '"decision": "APPLY"'
+    assert_contains "C1: parser reads resume_track field" "$C1_OUT" '"resume_track": "Eng Leader"'
+    assert_contains "C1: parser reads warm_path field" "$C1_OUT" '"warm_path": "Cold"'
+    assert_contains "C1: parser reads jd_url field" "$C1_OUT" '"jd_url": "https://jobs.ashbyhq.com/harvey/fixture"'
     rm -rf "$C1_DIR"
 else
     echo "  SKIP: python3 not available — [C1] tracker parser test skipped"
@@ -914,9 +922,9 @@ echo ""
 echo "[C3] shared-structures registry present and well-formed"
 REGISTRY="$PLUGIN_ROOT/schemas/shared-structures.md"
 assert_file_exists "C3: registry exists" "$REGISTRY"
-assert_file_contains "C3: registry lists tracker structure" "$REGISTRY" "job-pipeline-match-tracker.md"
+assert_file_contains "C3: registry lists tracker structure" "$REGISTRY" "job-pipeline-match-tracker.json"
 assert_file_contains "C3: registry lists stories/ layout" "$REGISTRY" "stories/"
-assert_file_contains "C3: registry lists pipeline" "$REGISTRY" "job-pipeline.md"
+assert_file_contains "C3: registry lists pipeline" "$REGISTRY" "job-pipeline.json"
 assert_file_contains "C3: registry lists people/ layout" "$REGISTRY" "people/"
 assert_file_contains "C3: registry lists Tasks.md" "$REGISTRY" "Tasks.md"
 assert_file_contains "C3: registry lists skills-matrix.md" "$REGISTRY" "skills-matrix.md"

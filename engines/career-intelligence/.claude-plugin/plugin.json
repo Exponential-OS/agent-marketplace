@@ -1,13 +1,17 @@
 {
   "name": "career-intelligence",
   "platform": "xHumanOS",
-  "version": "0.73.0",
+  "version": "0.73.1",
   "depends_on_kernel": [
     "brain-kernel >= 1.0.0"
   ],
   "workspace_binding": {
     "mode": "workspace-only",
-    "detect": ["$CAREER_HOME", "brain/identity/", ".career-os-workspace"],
+    "detect": [
+      "$CAREER_HOME",
+      "brain/identity/",
+      ".career-os-workspace"
+    ],
     "_comment": "XOS-39: hooks that scaffold/commit cwd-relative files run ONLY when cwd is a bound Career OS workspace. Enforced by hooks/scripts/_workspace-gate.sh (sourced by every mutating hook). Plugins that write fixed paths use mode:global."
   },
   "brain": {

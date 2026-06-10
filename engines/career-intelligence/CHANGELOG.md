@@ -2,6 +2,13 @@
 <!-- this file is the historical changelog. Entries reference the original author/user as provenance, not runtime data. -->
 # Changelog
 
+## [0.73.1] — 2026-06-09 — schema registry rebuild + C1 coherence test fix (XOS-31)
+
+### Fixed
+- schemas/shared-structures.md rewritten: replaced legacy .md / 10-col-table / Tasks.md / dead-parser references with the current JSON shapes at canonical XOS-26 paths; Writers + Consumers lists rebuilt from a live grep of skills/+scripts/ (match-tracker.json and people each have TWO writers, not one).
+- C1 coherence test fed a markdown fixture at a retired .career-os/memory/ path to the JSON-only pipeline-query.py (4 spurious FAILs every run). Rewritten as JSON at the canonical path with real-key assertions. HOOKS_BASELINE lowered 17→12.
+- scripts/pipeline-query.py: fallback tracker path corrected brain/projects/job-search/ → career-intelligence/projects/job-search/.
+
 ## [0.73.0] — 2026-06-09 — workspace-binding gate primitive (XOS-39)
 
 ### Changed — single shared cwd-gate replaces 3 duplicated copies

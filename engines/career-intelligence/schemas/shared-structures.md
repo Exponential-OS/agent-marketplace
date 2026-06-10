@@ -1,4 +1,4 @@
-<!-- schema: v1.0 -->
+<!-- schema: v3.0 -->
 # Career OS Shared Structures Registry
 
 **Per ADR-002 (Schema Evolution Protocol).** Single source of truth for which
@@ -22,26 +22,101 @@ value-asserting test per structure, minimum.
 
 ## Registry
 
-### `brain/job-pipeline-match-tracker.md`
+### `career-intelligence/projects/job-search/job-pipeline-match-tracker.json`
 
-- **Version:** v2.0
-- **Format:** 10-column markdown table, one per scoring batch
+- **Version:** v3.0 (JSON flat array — XOS-26 canonical path)
+- **Format:** JSON array of role objects. Each object carries:
+  ```json
+  {
+    "id":            <integer>,
+    "batch_date":    "<YYYY-MM-DD>",
+    "batch_context": "<string>",
+    "company":       "<string>",
+    "role":          "<string>",
+    "score":         <integer 0-100>,
+    "score_quality": "JD" | "partial" | "title-only",
+    "decision":      "FULL_INVEST" | "APPLY" | "CHECK_DELTA" | "SKIP",
+    "resume_track":  "<string> | null",
+    "warm_path":     "<string>",
+    "jd_url":        "<url> | null",
+    "status":        "QUEUED" | "APPLIED" | "INTERVIEWING" | "OFFERED" | "REJECTED" | "DEAD" | "SKIPPED",
+    "updated_at":    "<YYYY-MM-DD>"
+  }
   ```
-  | # | Company | Role | Score | Quality | Decision | Resume Track | Warm Path | JD Link | Outcome |
-  ```
-  v1.0 was 9 columns without Quality. Quality was inserted at index 4 between
-  Score and Decision.
-- **Sole writer:** `skills/job-match-scorer/SKILL.md`
+  v1.0–v2.0 were 9/10-column markdown tables (retired). v3.0 is JSON only.
+- **Writers (two):**
+  - `skills/job-match-scorer/SKILL.md` — appends new role objects (creates rows; full scoring fields)
+  - `skills/apply-tracker/SKILL.md` — updates `status` + `updated_at` on existing rows (lifecycle transitions after apply)
 - **Consumers (readers):**
-  - `scripts/pipeline-query.py` — `parse_standardized_summary`, `is_standardized_header`
-  - `skills/apply-dashboard/SKILL.md`
-  - `skills/pipeline-sync/SKILL.md`
-  - `skills/cruise-control/SKILL.md`
-- **Coherence test:** `tests/test-hooks.sh` [C1] — parses a 10-col fixture
-  row and asserts specific field values (Decision, Resume, Warm Path, JD URL).
-  This test would have caught WO-048 before it shipped.
+  - `scripts/pipeline-query.py` — `lookup_row`, `filter_rows`, `sort_rows` (JSON parse)
+  - `scripts/validate-tracker-json.py` — schema validation
+  - `scripts/pipeline-view.py` — combined pipeline + tracker view
+  - `skills/apply-dashboard/SKILL.md` — invokes `pipeline-query.py --tracker-path`
+  - `skills/pipeline-sync/SKILL.md` — source of truth for scoring history
+  - `skills/mission-control/SKILL.md` — counts by `status` for dashboard metrics
+  - `skills/application-qa/SKILL.md` — resolves role context via `pipeline-query.py --lookup`
+  - `skills/skills-update/SKILL.md` — reads active pipeline roles for gap flagging
+  - `skills/pipeline-view/SKILL.md` — reads all scored roles
+  - `skills/cruise-control/SKILL.md` — scores and recommendations
+- **Coherence test:** `tests/test-hooks.sh` [C1] — writes a JSON fixture at the
+  canonical path, runs `pipeline-query.py --lookup 999 --format json`, and asserts
+  specific field values (`decision`, `resume_track`, `warm_path`, `jd_url`).
 - **Incident history:** v1.0 → v2.0 drift caused WO-048 (parser read shifted
-  cells, returned Decision=UNKNOWN on all lookups).
+  cells, returned Decision=UNKNOWN on all lookups). v2.0 → v3.0 (XOS-26): migrated
+  from 10-col markdown table to JSON flat array; old path `.career-os/memory/` retired.
+
+### `career-intelligence/projects/job-search/job-pipeline.json`
+
+- **Version:** v1.0 (JSON — XOS-26 canonical path)
+- **Format:** JSON object with top-level arrays:
+  ```json
+  {
+    "stage_data": [
+      {
+        "company":      "<string>",
+        "role":         "<string>",
+        "stage":        "<string>",
+        "recruiter":    "<string> | null",
+        "hm":           "<string> | null",
+        "comp":         "<string> | null",
+        "next_action":  "<string> | null",
+        "stage_detail": "<string> | null",
+        "updated_at":   "<YYYY-MM-DD>"
+      }
+    ],
+    "pending_referrals": [
+      {
+        "company":          "<string>",
+        "contact":          "<string>",
+        "follow_up_date":   "<YYYY-MM-DD>",
+        "status":           "<string>"
+      }
+    ]
+  }
+  ```
+  Legacy format was a markdown file with Active / Warm Intros / Archived sections
+  (retired, replaced by JSON in XOS-26). Warm Intros table removed per ADR-001
+  (2026-04-06); warm path data now lives in `network/people/*.json`.
+- **Sole writer:** `skills/apply-tracker/SKILL.md` — updates `stage_data[]` entries
+- **Consumers (readers):**
+  - `scripts/pipeline-view.py` — combined pipeline + tracker view
+  - `skills/apply-tracker/SKILL.md` (read-then-write)
+  - `skills/story-capture/SKILL.md` — links companies to `related_companies`
+  - `skills/job-search-scheduler/SKILL.md` — dedup against Already Applied
+  - `skills/apply-dashboard/SKILL.md` — `stage_data` cross-reference
+  - `skills/outreach-composer/SKILL.md` — company context, hiring manager, stage
+  - `skills/interview-prep/SKILL.md` — stage, contacts, next steps
+  - `skills/interviewer-research/SKILL.md` — stage/role context
+  - `skills/resume-engine/SKILL.md` — role context, stage
+  - `skills/job-match-scorer/SKILL.md` — avoids re-scoring already-applied roles
+  - `skills/pipeline-sync/SKILL.md` — source of truth for stage detail
+  - `skills/skills-update/SKILL.md` — companies to check for gap closure
+  - `skills/mission-control/SKILL.md` — active/advancing entries, stale alerts
+  - `skills/pipeline-view/SKILL.md` — full pipeline render
+  - `skills/network-intelligence/SKILL.md` — target companies
+  - `skills/cruise-control/SKILL.md` — role details for execution
+- **Coherence test:** _(pending — add in next iteration)_
+- **Incident history:** Markdown → JSON migration in XOS-26.
 
 ### `brain/stories/` directory layout
 
@@ -62,6 +137,7 @@ value-asserting test per structure, minimum.
   nesting. Consumers must count recursively.
 - **Sole writers:** `skills/story-capture/SKILL.md` (create), `skills/organize/SKILL.md` (index)
 - **Consumers (readers):**
+  - `skills/session-logger/SKILL.md`
   - `skills/mission-control/SKILL.md` — story count for Career Brain section
   - `skills/interview-prep/SKILL.md`
   - `skills/job-match-scorer/SKILL.md`
@@ -74,38 +150,48 @@ value-asserting test per structure, minimum.
 - **Incident history:** v1.0 → v2.0 drift caused WO-049 (mission-control
   reported 7 stories when actual was 38 across 9 subdirectories).
 
-### `brain/job-pipeline.md`
+### `network/people/` directory layout
 
-- **Version:** v1.0
-- **Format:** Markdown with sections for Active / Warm Intros / Archived.
-  Writers track applied/status/date per entry.
-- **Sole writer:** `skills/apply-tracker/SKILL.md`
+- **Version:** v2.0 (flat JSON — XOS-26 canonical path)
+- **Format:** `network/people/<slug>.json` — flat directory, one JSON file per
+  contact. Each file carries:
+  ```json
+  {
+    "name":               "<string>",
+    "companies":          ["<string>"],
+    "role":               "<string>",
+    "relationship":       "<string>",
+    "warmth":             "<string>",
+    "connection_strength":"<string>",
+    "channel":            "<string>",
+    "last_contact":       "<YYYY-MM-DD> | null",
+    "referral_status":    "<string> | null",
+    "their_expertise":    ["<string>"],
+    "they_told_us":       {},
+    "commitments_made":   {},
+    "family_context":     {}
+  }
+  ```
+  v1.0 was `brain/people/<name>.md` with YAML frontmatter + markdown body (retired).
+  v2.0 is flat JSON at `network/people/` (bare kernel-relative path, 238+ files).
+- **Writers (two):**
+  - `skills/network-intelligence/SKILL.md` — contact ingestion + relationship/origin enrichment
+  - `skills/outreach-composer/SKILL.md` — creates/updates a contact's `network/people/{slug}.json` on outreach (last_contact, follow_up, interaction log)
 - **Consumers (readers):**
-  - `skills/mission-control/SKILL.md`
-  - `skills/apply-dashboard/SKILL.md`
-  - `skills/pipeline-sync/SKILL.md`
-  - `skills/cruise-control/SKILL.md`
-  - `skills/job-match-scorer/SKILL.md`
-  - `scripts/pipeline-query.py`
-- **Coherence test:** _(pending — add in next iteration)_
-- **Incident history:** None yet. Stable format since v0.3.0.
-
-### `brain/people/` directory layout
-
-- **Version:** v1.0 (flat)
-- **Format:** `brain/people/<name>.md` — YAML frontmatter
-  (name, company, role, relationship, warmth, connection_strength, channel,
-  last_contact, referral_status, context) + markdown body. Flat layout only —
-  no subdirectories.
-- **Sole writer:** `skills/network-intelligence/SKILL.md`
-- **Consumers (readers):**
-  - `skills/outreach-composer/SKILL.md`
-  - `skills/mission-control/SKILL.md`
+  - `scripts/people-followup-query.py`
   - `skills/apply-tracker/SKILL.md`
-  - `skills/interview-prep/SKILL.md`
-  - `skills/pipeline-sync/SKILL.md`
+  - `skills/story-capture/SKILL.md`
+  - `skills/job-search-scheduler/SKILL.md`
+  - `skills/organize/SKILL.md`
+  - `skills/interviewer-research/SKILL.md`
+  - `skills/job-match-scorer/SKILL.md`
+  - `skills/application-qa/SKILL.md`
+  - `skills/mission-control/SKILL.md`
+  - `skills/network-intelligence/SKILL.md` (read-then-write)
+  - `skills/cruise-control/SKILL.md`
+  - `skills/career-intelligence-onboarding/SKILL.md`
 - **Coherence test:** _(pending)_
-- **Incident history:** None.
+- **Incident history:** Markdown → JSON migration in XOS-26.
 
 ### `brain/tasks/Tasks.md`
 
@@ -115,21 +201,33 @@ value-asserting test per structure, minimum.
 - **Sole writers:** `skills/apply-tracker/SKILL.md`, `skills/pipeline-sync/SKILL.md`, `skills/cruise-control/SKILL.md`
 - **Consumers (readers):**
   - `skills/mission-control/SKILL.md`
-  - all three writers (read-then-append)
+  - `skills/apply-tracker/SKILL.md`
+  - `skills/job-search-scheduler/SKILL.md`
+  - `skills/outreach-composer/SKILL.md`
+  - `skills/pipeline-sync/SKILL.md`
+  - `skills/network-intelligence/SKILL.md`
+  - `skills/cruise-control/SKILL.md`
 - **Coherence test:** _(pending)_
 - **Incident history:** None since typed format landed.
 
-### `brain/skills-matrix.md`
+### `brain/identity/skills-matrix.md`
 
 - **Version:** v1.0
 - **Format:** Markdown table with proficiency scale and learnability flags.
 - **Sole writer:** `skills/skills-update/SKILL.md`
 - **Consumers (readers):**
+  - `skills/job-search-scheduler/SKILL.md` — technology gap detection
   - `skills/job-match-scorer/SKILL.md`
   - `skills/resume-engine/SKILL.md`
   - `skills/interview-prep/SKILL.md`
   - `skills/application-qa/SKILL.md`
   - `skills/mission-control/SKILL.md`
+  - `skills/skills-update/SKILL.md` (read-then-write)
+  - `skills/story-capture/SKILL.md`
+  - `skills/outreach-composer/SKILL.md`
+  - `skills/interviewer-research/SKILL.md`
+  - `skills/pipeline-view/SKILL.md`
+  - `skills/cruise-control/SKILL.md`
 - **Coherence test:** _(pending)_
 - **Incident history:** None.
 
@@ -168,7 +266,7 @@ value-asserting test per structure, minimum.
 
 - **Version:** v0.0 (scaffold only, not yet consumed — reserved per WO-054)
 - **Format:** TBD. Intended for human-readable pipeline status captures
-  separate from the live `job-pipeline.md` (periodic snapshots, handoff
+  separate from the live `job-pipeline.json` (periodic snapshots, handoff
   summaries, retro analysis).
 - **Sole writer:** _(none yet — skill assignment pending)_
 - **Consumers (readers):** _(none yet)_
@@ -217,3 +315,33 @@ defensive check at runtime.
 
 WO-053 backfills these headers onto existing user-workspace structures via a
 migration script.
+
+---
+
+## Blast-Radius Grep Procedure
+
+When any structure above changes format, run the following before committing:
+
+```bash
+# tracker
+grep -rl "job-pipeline-match-tracker.json" skills/ scripts/
+
+# pipeline
+grep -rl "job-pipeline.json" skills/ scripts/
+
+# people
+grep -rl "network/people" skills/ scripts/
+
+# stories
+grep -rl "stories/" skills/ scripts/
+
+# skills-matrix
+grep -rl "skills-matrix" skills/ scripts/
+
+# interview-prep
+grep -rl "interview-prep" skills/ scripts/
+```
+
+Every file returned must be reviewed and updated if its access pattern is
+affected by the schema change. Update the Consumers list in this registry
+to reflect reality after the sweep.

@@ -11,14 +11,13 @@ set -euo pipefail
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 # XOS-33: count the true `=== Results: N failed` number, not a raw `grep -c FAIL`
 # (which counted assertion-detail lines — 138 for ~68 real fails — masking the
-# real count and letting the gate be bypassed for two releases). Current 17
-# known failures = 5 genuine product findings (4× C1 schema-coherence → XOS-31;
-# social-distribution-engine phantom dir → XOS-30) + 12 deeper multi-step
-# harness-debt (migrate-chain version propagation + integration/upgrade capture
-# setup) under XOS-33 follow-on. The ws_mark workspace-identity repair restored
-# 51 spuriously-failing tests (68→17). Drive to 0 via XOS-30/31 + harness-debt;
-# lower this baseline as each lands.
-HOOKS_BASELINE=17
+# real count and letting the gate be bypassed for two releases). Current 12
+# known failures = 12 deeper multi-step harness-debt (migrate-chain version
+# propagation + integration/upgrade capture setup) under XOS-33 follow-on.
+# XOS-31 fixed 4× C1 schema-coherence failures (17→12). XOS-30 (social-
+# distribution-engine phantom dir) was previously in the count but cleared
+# before this baseline. Drive to 0 via XOS-33 harness-debt; lower as each lands.
+HOOKS_BASELINE=12
 PASS=0
 FAIL=1
 
