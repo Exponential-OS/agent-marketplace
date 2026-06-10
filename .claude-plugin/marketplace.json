@@ -21,6 +21,16 @@
       "homepage": "https://github.com/Exponential-OS/career-intelligence-engine"
     },
     {
+      "name": "super-developer",
+      "platform": "xHumanOS",
+      "license": "Proprietary",
+      "source": "../super-developer-plugin",
+      "description": "Super Developer Engine - global agentic-SDLC ship-feature pipeline for every repo. v0.1.0 packages the canonical ship-feature skill and /ship-feature alias as a user-scope marketplace plugin with workspace_binding=global.",
+      "version": "0.1.0",
+      "category": "developer-tools",
+      "homepage": "https://github.com/Exponential-OS/super-developer-plugin"
+    },
+    {
       "name": "co-dialectic",
       "platform": "xOS",
       "license": "Proprietary",
