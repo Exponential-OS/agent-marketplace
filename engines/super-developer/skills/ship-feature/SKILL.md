@@ -42,7 +42,7 @@ Pick the cheapest agent + smallest model that does the job WELL. **If you're uns
 | Media generation (image/video) | agy | gemini-3-pro-image / Veo |
 | UI / frontend / visual design / UX / styling / layout | **Claude (design persona — Jony Ive caliber)** | **Claude — UI is design judgment, NOT mechanical. Route UI/visual work to Claude, never Codex or agy.** |
 | FREQUENT structural/semantic gates (codification-verification, named-person, content/path gates — fire every Write/Edit; ambiguity/structure, not deep reasoning) | their handler's LLM judge | **Haiku** (`CYBORG_SEMANTIC_JUDGE_MODEL`, default `claude-haiku-4-5`) — cheap, high-frequency |
-| RARE high-stakes **reasoning validation** (plan-vs-ask, Gate A, one-way-door pre-check, human-judgment-primacy) | `infrastructure/scripts/fable5-reasoning-validate.ts` + judge-panel | **`claude-fable-5`** (`CYBORG_REASONING_JUDGE_MODEL`) — 2x Opus, so SELECTIVE only: fires a handful of times/session where a wrong call costs hours. NEVER on frequent gates or every turn. |
+| RARE high-stakes **reasoning validation** (plan-vs-ask, Gate A, one-way-door pre-check, human-judgment-primacy) | **`judge-panel`** (cross-family) | the panel's fish models — SELECTIVE only: a handful of times/session where a wrong call costs hours. NEVER on frequent gates or every turn. |
 | Brainstorm, spec, eval-design, gates, hallucination-catch, synthesis | Claude (whale, Opus) | the only Opus-justified work |
 
 Rule of thumb: there is almost always SOME orchestrator — the question is which size. Deterministic task (deploy, curl, git op) → **Haiku sub-agent**, never the Opus whale. Mechanical task (scroll a page, read a file, convert text) → **Flash**. Cross-family review → **reuse `judge-panel`**, don't re-derive. Only true judgment/gating/synthesis earns Opus tokens. Ambiguous class → **ask**.
@@ -162,15 +162,9 @@ repo: <repo-path>
 <how to undo safely>
 ```
 
-**Reasoning validation (fable-5) — BEFORE Gate A.** Before presenting the spec, validate that the plan actually serves what the human asked — especially their explicit method/constraint instructions. This is the seam where drift/override happens. Run:
+**Reasoning validation — BEFORE Gate A.** Before presenting the spec, sanity-check that the plan actually serves what the human asked — especially their explicit method/constraint instructions (this is the seam where drift/override happens). For high-stakes or ambiguous plans, run a quick **`judge-panel`** (cross-family) drift check on `{user_ask, agent_plan}`; if it returns drift, surface it to the human in ≤1 line and correct, or let them decide. For routine plans, the Gate A human review is the backstop.
 
-```bash
-echo '{"user_ask":"<verbatim what the human asked, incl. explicit method/tool instructions>","agent_plan":"<the spec/approach in 2-4 lines>"}' | bun run ~/cyborg/infrastructure/scripts/fable5-reasoning-validate.ts
-```
-
-If the verdict is `drift`, do NOT proceed — surface the drift to the human in ≤1 line and correct the plan, or let them decide. (Uses `claude-fable-5` — high-stakes, fires once per spec, never per turn. Fail-open: a validator error never blocks.)
-
-**GATE A — STOP:** present the spec path + the reasoning-validation verdict, and ask for human approval before proceeding.
+**GATE A — STOP:** present the spec path (and any drift-check verdict), and ask for human approval before proceeding.
 
 ---
 
