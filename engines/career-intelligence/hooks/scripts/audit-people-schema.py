@@ -105,8 +105,6 @@ def main() -> int:
     missing_active: list[Path] = []
 
     if not PEOPLE_DIR.exists():
-        print("=== People Schema Audit ===")
-        print(f"People directory not found: {PEOPLE_DIR}")
         return 0
 
     files = sorted(PEOPLE_DIR.glob("*.md"))
@@ -124,18 +122,17 @@ def main() -> int:
         if file_contains(file, "last_contact: 2026"):
             missing_active.append(file)
 
-    print("=== People Schema Audit ===")
-    print(f"Total files missing schema fields: {len(missing_any)}")
-    print(f"Recently-active (2026) missing schema: {len(missing_active)}")
-    print("")
-
     if missing_active:
+        print("=== People Schema Audit ===")
+        print(f"Total files missing schema fields: {len(missing_any)}")
+        print(f"Recently-active (2026) missing schema: {len(missing_active)}")
+        print("")
         print("=== Recently-Active (Action Required) ===")
         for f in missing_active:
             print(f.name)
         print("")
 
-    if fix_mode:
+    if fix_mode and missing_active:
         print("=== Injecting empty schema fields into recently-active files ===")
         for file in missing_active:
             inject_fields(file)
@@ -146,8 +143,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    try:
-        sys.exit(main())
-    except Exception:
-        # Fail-open per project convention; CLI utility, not a hook.
-        sys.exit(0)
+    sys.exit(main())

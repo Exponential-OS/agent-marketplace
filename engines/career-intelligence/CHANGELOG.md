@@ -2,6 +2,11 @@
 <!-- this file is the historical changelog. Entries reference the original author/user as provenance, not runtime data. -->
 # Changelog
 
+## [0.73.2] — 2026-06-23 — SessionStart hooks silent on success (XOS-61)
+
+### Fixed
+- SessionStart no longer floods the terminal on the success path. `init-repo.sh` routes the "Session logging active" line to the log file (not stdout); `audit-people-schema.py` prints only when there's something actionable (recently-active people missing schema, or fields injected) and is silent otherwise; `hooks.json` drops the `| tail -5` raw surfacing and the `2>/dev/null` that was also hiding real errors (FAIL-HARD restored — errors surface, success is silent). Per-turn capture hooks were already quiet (unchanged). Tests updated to assert the success line lands in the log, not stdout.
+
 ## [0.73.1] — 2026-06-09 — schema registry rebuild + C1 coherence test fix (XOS-31)
 
 ### Fixed

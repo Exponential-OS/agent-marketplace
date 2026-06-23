@@ -290,4 +290,4 @@ if git remote get-url origin &>/dev/null; then
     git push -q origin "$MAIN_BRANCH" 2>> "$LOG_FILE" || echo "[$(date)] git push failed" >> "$LOG_FILE"
 fi
 
-echo "Session logging active. New session: $TODAY $TIMESTAMP"
+echo "Session logging active. New session: $TODAY $TIMESTAMP" >> "$LOG_FILE"

@@ -75,11 +75,6 @@ perform the action yourself by directly editing files.
 | Save a career story | `story-capture` | "save this story", "capture this", "I want to remember" |
 | Find warm contacts | `network-intelligence` | "who do I know at [Co]", "warm intros for" |
 | Write outreach message | `outreach-composer` | "write outreach for [Name]", "follow up with" |
-| Write/draft content ⚡ | `social-distribution-engine` | "write a post", "LinkedIn post", "help me draft", "what should I post", "post about [X]", "content for [X]", "tweet about", "create content" |
-| Campaign dashboard / initiative status | `campaign-dashboard` | "campaigns", "campaign dashboard", "initiative status", "show initiatives", "social pulse", "what's live", "sde dashboard", "my campaigns" |
-| Create new initiative | `campaign-dashboard` (new-initiative sub-flow) | "new initiative", "start an initiative" |
-| Create new campaign | `campaign-engine` | "new campaign", "plan campaign for [topic]", "new campaign under [initiative]" |
-| Measure campaign KPIs | `distribution-analytics-engine` | "measure [campaign]", "kpis for [campaign]", "how did [campaign] perform" |
 | Sync/reconcile pipeline | `pipeline-sync` | "sync pipeline", "data health check" |
 | Batch-execute tasks | `cruise-control` | "cc", "go", "ship it", "execute" |
 | Update skills matrix | `skills-update` | "update my skills", "I learned [tech]" |
@@ -118,20 +113,6 @@ to use the resume-engine skill?" — just use it.
 | "any warm paths in today's scan?" | job-search-scheduler (enrich mode) |
 | "check linkedin for connections" | job-search-scheduler (enrich mode) |
 | "find intros" / "find 2nd degree" | job-search-scheduler (enrich mode) |
-| "write a post" / "LinkedIn post" / "help me draft" / "what should I post" | social-distribution-engine (with context pre-flight) |
-| "post about [topic]" / "create content for [X]" / "tweet about" | social-distribution-engine (with context pre-flight) |
-
-### Content Routing — Context Pre-Flight Mandate
-
-**⚡ Content requests are the one case where routing alone is insufficient.** The user may cold-open with "write me a post about my AI Fund panel" with zero prior context load. social-distribution-engine will draft without knowing brand voice, IP firewall, or active campaigns.
-
-**Before dispatching to social-distribution-engine, Mission Control MUST confirm context is loaded:**
-
-1. If this session already loaded `brain/identity/professional-brand.md` → proceed.
-2. If NOT loaded → Mission Control reads it NOW (silently, before routing). Also reads: `brain/identity/handles.md` + IP Firewall list from `$(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/distribution-engine/content-flywheel.md 2>/dev/null | tail -1)`.
-3. Then dispatch. social-distribution-engine's own Step 0 will validate what was loaded.
-
-**Rule:** Never route a content request to social-distribution-engine with an empty context. The draft will be generic at best, IP-violating at worst.
 
 ### Routing Disambiguation: job-search-scheduler vs network-intelligence
 
@@ -149,11 +130,10 @@ These two skills overlap on warm-path detection. The routing rule:
 
 ## BEHAVIOR: First Run (No Onboarding Complete)
 
-**Detection:** Check for both onboarding markers:
+**Detection:** Check the onboarding marker:
 - Career intelligence: `brain/identity/experience-history.md` does NOT exist
-- SDE: `brain/identity/professional-brand.md` does NOT exist
 
-If NEITHER file exists (completely fresh install), show the welcome and route to the correct onboarding wizard based on user's answer:
+If the file does not exist, show the welcome and route to the onboarding wizard:
 
 ```
 ━━━ Career OS: Mission Control ━━━
@@ -163,42 +143,11 @@ Welcome to Career Intelligence. I'm your career co-pilot with persistent memory.
 Before I can help, I need to learn a bit about you. This takes ~5 minutes
 and only happens once. Everything you share stays private on your machine.
 
-Which describes you better?
-
-  A) I'm actively job searching (or will be soon)
-     → Run: "onboard me to career intelligence"
-
-  B) I'm a founder or operator who wants to build an audience and distribute content
-     → Run: "onboard me to SDE"
-
-  C) Both
-     → Start with either — they're independent and complement each other
-
-Type A, B, or C, or just say what you're trying to do.
+Say "onboard me to career intelligence" to begin, or describe your job-search goal.
 ```
 
-**If user types A or describes job search:**
+**If onboarding is missing:**
 Invoke `career-intelligence-onboarding` immediately. Do not ask questions yourself — the onboarding wizard owns the interview.
-
-**If user types B or describes content/distribution:**
-Invoke `sde-onboarding` immediately.
-
-**If user types C:**
-Invoke `career-intelligence-onboarding` first (career context grounds the SDE voice), then `sde-onboarding`.
-
-**Partial onboarding detected** (one file exists, the other doesn't):
-- `experience-history.md` exists but `professional-brand.md` doesn't → offer `sde-onboarding` as "here's what's missing"
-- `professional-brand.md` exists but `experience-history.md` doesn't → offer `career-intelligence-onboarding`
-- Show the dashboard with a banner:
-
-```
-━━━ Setup Incomplete ━━━
-
-You're set up for [Career Intelligence / SDE] but not [SDE / Career Intelligence].
-Say "onboard me to SDE" or "onboard me to career intelligence" to complete setup.
-
-Showing dashboard with what's available now...
-```
 
 **Git setup:** After any onboarding completes, prompt:
 ```
@@ -226,9 +175,7 @@ Before rendering the dashboard, check for pending skill flags:
 
 ## BEHAVIOR: Returning User (Dashboard)
 
-When at least one of `brain/identity/experience-history.md` or `brain/identity/professional-brand.md` exists, show the dashboard. Show only sections relevant to what's been set up:
-- Job search sections (pipeline, scan, score queue) → only if `experience-history.md` exists
-- SDE sections (campaigns, channel status) → only if `professional-brand.md` exists
+When `brain/identity/experience-history.md` exists, show the dashboard.
 
 ### Pre-Dashboard Checks (silent)
 
@@ -280,13 +227,6 @@ PIPELINE
 WARM CONTACTS — ACTION NEEDED (only if any due)
   | Contact | Company | Status | Next Action |
 
-SOCIAL DISTRIBUTION (only if professional-brand.md exists)
-  📡 Active initiatives: {N}
-       🟢 {Initiative title} — {N} live, {N} drafting          → "campaigns"
-       🟢 {Initiative title 2} — {N} live                       → "campaigns"
-  Recent (14d): {N campaigns}, {N spokes live} · stale: {N}
-  Full view → "campaigns" / "campaign dashboard"
-
 COMING UP
   [Date] — [Event/deadline]
 
@@ -316,13 +256,6 @@ QUICK ACTIONS
   → "prep me for [Co]"           Interview prep
   → "follow up with [Name]"      Time-calibrated follow-up
   → "who do I know at [Co]"      Find warm intros
-
-  ━━ Social Distribution (only if professional-brand.md exists) ━━
-  → "campaigns"                  Initiative + campaign dashboard
-  → "new initiative"             Start a strategic theme
-  → "new campaign"               Plan a single ship event
-  → "what's live"                Recent live spokes across all platforms
-  → "measure [campaign]"         Pull KPIs + analytics
 
   ━━ Execute ━━
   → "cc" / "cruise control"      Batch-execute task list

@@ -10,7 +10,7 @@
           },
           {
             "type": "command",
-            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/audit-people-schema.py\" --fix 2>/dev/null | tail -5",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/audit-people-schema.py\" --fix",
             "statusMessage": "Auditing people schema..."
           }
         ]

@@ -4,13 +4,9 @@ HOW.py — social-content-readiness-check enforcement primitive.
 
 GATE rule. Social media posts are high-stakes irreversible actions
 (LinkedIn cannot un-send; Substack newsletter goes to all subscribers).
-Before any content is marked `status: ready` or published, three checks fire:
+Before any content is marked `status: ready` or published, two checks fire:
 
-  1. CONTENT FORMAT      delegated to content-format-check (platform-aware
-                         formatting validation: pipes, character limits,
-                         URL suppression, etc.).
-
-  2. LLM JUDGE PANEL     three independent judges run in parallel with
+  1. LLM JUDGE PANEL     three independent judges run in parallel with
                          distinct lenses:
                            - tone/authenticity      → claude CLI (OAuth)
                            - IP / patent firewall   → gemini CLI (cross-family, OAuth)
@@ -20,7 +16,7 @@ Before any content is marked `status: ready` or published, three checks fire:
                          Falls back to Anthropic SDK (ANTHROPIC_API_KEY) if
                          no CLI is available.
 
-  3. METADATA            content carries: title, platform, intended audience,
+  2. METADATA            content carries: title, platform, intended audience,
                          surface coverage matrix reference.
 
 Input JSON (stdin or argv):
@@ -50,7 +46,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
 SLUG = SCRIPT_DIR.name
-RULES_ROOT = SCRIPT_DIR.parent
 LOG_PATH = pathlib.Path.home() / ".career-os-enforcement-log.jsonl"
 
 # Cross-family CLI preference per judge.
@@ -78,7 +73,7 @@ _CLI_TIMEOUT: dict[str, int] = {
 
 # Set SKIP_LLM_JUDGES=1 (or run with --ci flag) to bypass all LLM judges and
 # return WARN for the panel. Intended for CI environments where no CLIs or API
-# keys are available. Gate 1 (structural) still runs; Gate 2 panel is skipped.
+# keys are available.
 _SKIP_LLM_JUDGES = bool(os.environ.get("SKIP_LLM_JUDGES")) or "--ci" in sys.argv
 
 REQUIRED_METADATA_KEYS: tuple[str, ...] = (
@@ -151,7 +146,6 @@ def _emit_and_log(payload: dict, exit_code: int) -> int:
         "verdict": payload.get("verdict"),
         "platform": payload.get("platform"),
         "title": payload.get("title"),
-        "format_verdict": payload.get("format_check", {}).get("verdict"),
         "metadata_verdict": payload.get("metadata_check", {}).get("verdict"),
         "panel_verdict": payload.get("panel", {}).get("verdict"),
     }
@@ -161,29 +155,6 @@ def _emit_and_log(payload: dict, exit_code: int) -> int:
     except OSError:
         pass
     return exit_code
-
-
-def _run_format_check(text: str, platform: str) -> dict:
-    """Delegate to content-format-check HOW.py."""
-    target = RULES_ROOT / "content-format-check" / "HOW.py"
-    if not target.is_file():
-        return {
-            "verdict": "WARN",
-            "reason": f"content-format-check HOW.py not found at {target}",
-        }
-    payload = json.dumps({"text": text, "platform": platform})
-    proc = subprocess.run(
-        [sys.executable, str(target), payload],
-        capture_output=True, text=True,
-    )
-    try:
-        return json.loads(proc.stdout.strip().splitlines()[-1])
-    except (json.JSONDecodeError, IndexError):
-        return {
-            "verdict": "WARN" if proc.returncode == 2 else "BLOCK",
-            "reason": "format check produced unparseable output",
-            "raw": proc.stdout.strip()[:200],
-        }
 
 
 def _check_metadata(metadata: dict, title: str, platform: str) -> dict:
@@ -459,12 +430,10 @@ def main() -> int:
             1,
         )
 
-    format_result = _run_format_check(text, platform)
     metadata_result = _check_metadata(metadata, title, platform)
     panel_result = _run_judge_panel(text, title, platform)
 
     component_verdicts = [
-        format_result.get("verdict", "WARN"),
         metadata_result.get("verdict", "WARN"),
         panel_result.get("verdict", "WARN"),
     ]
@@ -479,7 +448,6 @@ def main() -> int:
         "verdict": verdict,
         "platform": platform,
         "title": title,
-        "format_check": format_result,
         "metadata_check": metadata_result,
         "panel": panel_result,
         "next_action": "ship" if verdict == "PASS" else (

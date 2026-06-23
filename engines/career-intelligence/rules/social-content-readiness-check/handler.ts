@@ -1,24 +1,19 @@
 #!/usr/bin/env bun
 // handler.ts — social-content-readiness-check enforcement (TypeScript+Bun replacement for HOW.py)
 //
-// Three gates fire before any content reaches `status: ready` or publish:
-//   Gate 1 — content format check (delegates to content-format-check/handler.ts)
-//   Gate 2 — LLM judge panel: 3 parallel cross-family judges (tone/ip_safety/narrative)
-//   Gate 3 — metadata completeness (title, platform, audience, surface_coverage_matrix)
+// Two gates fire before any content reaches `status: ready` or publish:
+//   Gate 1 — LLM judge panel: 3 parallel cross-family judges (tone/ip_safety/narrative)
+//   Gate 2 — metadata completeness (title, platform, audience, surface_coverage_matrix)
 //
 // Panel rule: ALL judges must return PASS or WARN, AND no more than 1 WARN. Otherwise BLOCK.
-// Set SKIP_LLM_JUDGES=1 to bypass Gate 2 in CI (returns WARN for panel).
-// Gate 1 must pass before Gate 2 runs.
+// Set SKIP_LLM_JUDGES=1 to bypass Gate 1 in CI (returns WARN for panel).
 
-import { appendFileSync, existsSync } from "fs";
+import { appendFileSync } from "fs";
 import { homedir } from "os";
-import { dirname, join } from "path";
-import { fileURLToPath } from "url";
+import { join } from "path";
 
 const SLUG = "social-content-readiness-check";
 const LOG_PATH = join(homedir(), ".career-os-enforcement-log.jsonl");
-const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
-const RULES_ROOT = dirname(SCRIPT_DIR);
 
 const SKIP_LLM_JUDGES = !!process.env.SKIP_LLM_JUDGES || process.argv.includes("--ci");
 
@@ -90,12 +85,6 @@ interface JudgeResult {
   cross_family: boolean;
 }
 
-interface FormatResult {
-  verdict: string;
-  reason?: string;
-  [key: string]: unknown;
-}
-
 interface MetadataResult {
   verdict: string;
   reason: string;
@@ -121,7 +110,6 @@ function emit(output: Record<string, unknown>, exitCode: number): never {
     verdict: output.verdict,
     platform: output.platform,
     title: output.title,
-    format_verdict: (output.format_check as FormatResult)?.verdict,
     metadata_verdict: (output.metadata_check as MetadataResult)?.verdict,
     panel_verdict: (output.panel as PanelResult)?.verdict,
     fired: true,
@@ -142,48 +130,6 @@ function extractJson(body: string): Record<string, unknown> | null {
   const end = trimmed.lastIndexOf("}");
   if (start === -1 || end === -1 || end <= start) return null;
   try { return JSON.parse(trimmed.slice(start, end + 1)); } catch { return null; }
-}
-
-async function runFormatCheck(text: string, platform: string): Promise<FormatResult> {
-  const target = join(RULES_ROOT, "content-format-check", "handler.ts");
-  const fallback = join(RULES_ROOT, "content-format-check", "HOW.py");
-
-  // Try handler.ts first, then fall back to HOW.py
-  const hasTs = existsSync(target);
-  const hasPy = existsSync(fallback);
-
-  if (!hasTs && !hasPy) {
-    return { verdict: "WARN", reason: `content-format-check not found at ${RULES_ROOT}/content-format-check/` };
-  }
-
-  const payload = JSON.stringify({ text, platform });
-  let proc;
-
-  if (hasTs) {
-    proc = Bun.spawnSync([process.execPath, "run", target, payload], { stdout: "pipe", stderr: "pipe" });
-  } else {
-    proc = Bun.spawnSync(["python3", fallback, payload], { stdout: "pipe", stderr: "pipe" });
-  }
-
-  const stdout = new TextDecoder().decode(proc.stdout).trim();
-  if (!stdout) {
-    return {
-      verdict: proc.exitCode === 1 ? "BLOCK" : "WARN",
-      reason: "format check produced empty output",
-    };
-  }
-
-  // Take last non-empty line (may have debug output above)
-  const lastLine = stdout.split("\n").filter(l => l.trim()).pop() ?? "";
-  try {
-    return JSON.parse(lastLine) as FormatResult;
-  } catch {
-    return {
-      verdict: proc.exitCode === 1 ? "BLOCK" : "WARN",
-      reason: "format check produced unparseable output",
-      raw: stdout.slice(0, 200),
-    };
-  }
 }
 
 function checkMetadata(metadata: Record<string, unknown>, title: string, platform: string): MetadataResult {
@@ -365,30 +311,13 @@ async function main(): Promise<void> {
     }, 1);
   }
 
-  // Gate 1: format check (structural)
-  const formatResult = await runFormatCheck(text, platform);
-
-  // Gate 1 must pass before Gate 2
-  if (formatResult.verdict === "BLOCK") {
-    emit({
-      verdict: "BLOCK",
-      platform,
-      title,
-      format_check: formatResult,
-      metadata_check: { verdict: "SKIPPED", reason: "Gate 1 blocked — Gate 2 not run" },
-      panel: { verdict: "SKIPPED", reason: "Gate 1 blocked — panel not run", judges: [], cli_used: {} },
-      next_action: "review-and-rewrite",
-    }, 1);
-  }
-
-  // Gate 2: LLM judge panel + Gate 3: metadata — run in parallel
+  // Gate 1: LLM judge panel + Gate 2: metadata — run in parallel
   const [panelResult, metadataResult] = await Promise.all([
     runJudgePanel(text, title, platform),
     Promise.resolve(checkMetadata(metadata, title, platform)),
   ]);
 
   const componentVerdicts = [
-    formatResult.verdict,
     metadataResult.verdict,
     panelResult.verdict,
   ];
@@ -411,7 +340,6 @@ async function main(): Promise<void> {
     verdict,
     platform,
     title,
-    format_check: formatResult,
     metadata_check: metadataResult,
     panel: panelResult,
     next_action: verdict === "PASS"

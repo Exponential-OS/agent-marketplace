@@ -141,7 +141,7 @@ Read the output bundle. Key signals to extract:
 - Related projects and companies surfaced by edge traversal
 
 **Calibration rules:**
-- Contact with `championing → projects/sde-onboarding` → lead with SDE progress, not general product pitch
+- Contact with `championing → projects/interview-prep` → lead with that project progress, not a generic ask
 - Contact with `works_at → companies/ai-fund` → frame against xOS mission, not job search
 - Contact with `involved_in` on a blocked project → acknowledge the blocker, offer to help
 

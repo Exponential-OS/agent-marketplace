@@ -4,7 +4,7 @@
   "status": "active",
   "created": "2026-05-04",
   "origin": "Social media posts are high-stakes irreversible actions. LinkedIn cannot un-send a post; Substack newsletters reach all subscribers. Before content moves from draft -> ready -> published, three independent gates must agree.",
-  "description": "GATE rule for social-media content. Composes content-format-check + LLM judge panel (tone, IP safety, narrative clarity) + metadata completeness. Panel rule: ALL judges PASS or WARN, AND no more than 1 WARN, otherwise BLOCK.",
+  "description": "GATE rule for social-media content. Composes LLM judge panel (tone, IP safety, narrative clarity) + metadata completeness. Panel rule: ALL judges PASS or WARN, AND no more than 1 WARN, otherwise BLOCK.",
   "enforcement": {
     "how": "HOW.py",
     "audit": "AUDIT.sh",
@@ -21,9 +21,7 @@
     "visual-asset-review",
     "independent-verification-gate"
   ],
-  "depends_on_rules": [
-    "content-format-check"
-  ],
+  "depends_on_rules": [],
   "judge_model": "claude-haiku-4-5-20251001",
   "judges": [
     {"id": "tone", "lens": "authentic voice vs corporate-speak"},

@@ -228,7 +228,7 @@ git remote add origin "$REMOTE_DIR"
 git add -A && git commit -q -m "Initial setup"
 git push -q -u origin main &>/dev/null
 OUTPUT=$(bash "$PLUGIN_ROOT/hooks/scripts/init-repo.sh" 2>&1)
-assert_contains "outputs session active" "$OUTPUT" "Session logging active"
+assert_file_contains "logs session active to file (silent on stdout)" "$CLAUDE_PLUGIN_DATA/git-errors.log" "Session logging active"
 assert_eq "stays on main" "main" "$(git branch --show-current)"
 LEDGER_FILE="$TEST_DIR/brain/sessions/ledger/$(date +%Y-%m-%d).md"
 assert_file_exists "ledger file created" "$LEDGER_FILE"
@@ -242,7 +242,7 @@ BEFORE=$(git rev-parse HEAD)
 sleep 1
 OUTPUT=$(bash "$PLUGIN_ROOT/hooks/scripts/init-repo.sh" 2>&1)
 AFTER=$(git rev-parse HEAD)
-assert_contains "second session logged" "$OUTPUT" "Session logging active"
+assert_file_contains "second session logged to file" "$CLAUDE_PLUGIN_DATA/git-errors.log" "Session logging active"
 # Should have a new commit (session-start marker)
 if [ "$BEFORE" != "$AFTER" ]; then pass "new commit for second session"
 else fail "new commit for second session" "HEAD unchanged"; fi
@@ -255,7 +255,7 @@ echo ""
 echo "[E1] No remote configured (push should no-op)"
 git remote remove origin 2>/dev/null || true
 OUTPUT=$(bash "$PLUGIN_ROOT/hooks/scripts/init-repo.sh" 2>&1)
-assert_contains "still works without remote" "$OUTPUT" "Session logging active"
+assert_file_contains "still logs without remote" "$CLAUDE_PLUGIN_DATA/git-errors.log" "Session logging active"
 git remote add origin "$REMOTE_DIR"
 echo ""
 
@@ -722,7 +722,7 @@ git push -q -u origin main &>/dev/null
 OUTPUT=$(bash "$PLUGIN_ROOT/hooks/scripts/init-repo.sh" 2>&1)
 # v0.29.0: legacy version-file branch emits "Pre-v0.29.0 install detected"
 assert_contains "migration triggered on session start" "$OUTPUT" "Pre-v0.29.0 install detected"
-assert_contains "session proceeds after migration" "$OUTPUT" "Session logging active"
+assert_file_contains "session proceeds after migration (logged)" "$CLAUDE_PLUGIN_DATA/git-errors.log" "Session logging active"
 
 # Verify version updated (v0.29.0: lives in $STATE_DIR, not workspace)
 PLUGIN_VER=$(grep -o '"version"[[:space:]]*:[[:space:]]*"[^"]*"' "$PLUGIN_ROOT/.claude-plugin/plugin.json" | grep -o '[0-9][0-9.]*')

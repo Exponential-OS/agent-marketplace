@@ -143,19 +143,6 @@ One optional step: git commit your context files so they're versioned:
 
 ---
 
-## Integration with SDE Onboarding
-
-Career Intelligence Onboarding and SDE Onboarding are independent but complementary:
-
-- **SDE Onboarding** (`"onboard me to SDE"`) → generates brand + handles + flywheel + channel directory. Covers distribution.
-- **Career Intelligence Onboarding** (this skill) → generates experience history + job search config. Covers job search + outreach.
-
-Both can be run in any order. Running both gives the full xHumanOS experience.
-
-For users who are founders or operators (not actively job-searching): SDE Onboarding alone is sufficient for Week 1.
-
----
-
 ## Failure Modes
 
 - **User skips a question:** Ask again with context ("This becomes the ground truth for every outreach email — even a rough version catches fabrication errors before your emails go out.")

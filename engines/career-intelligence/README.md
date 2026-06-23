@@ -1,6 +1,6 @@
 # Career Intelligence Engine
 
-Your career co-pilot with persistent memory. Job search, resume customization, network outreach, LinkedIn content, and interview prep — all in one place, all remembering your background automatically.
+Your career co-pilot with persistent memory. Job search, resume customization, network outreach, and interview prep — all in one place, all remembering your background automatically.
 
 Built as a Claude Code plugin. Your data stays in your own workspace, versioned by git.
 
@@ -44,14 +44,6 @@ The wizard asks 8 short questions about your work history and job search prefere
 - `brain/projects/job-search/job-search-config.md` — your targeting criteria
 
 You explain your background once. Every future session — resumes, outreach, interview prep — reads these files automatically.
-
-**If you're a founder or operator** (using the Social Distribution Engine, not job searching):
-
-```
-onboard me to SDE
-```
-
-This creates your brand voice, platform handles, and distribution topology instead.
 
 ### Step 3 — Open Mission Control
 
@@ -152,17 +144,6 @@ Stories are what makes your resumes and outreach specific and credible. The resu
 
 ---
 
-### LinkedIn Content
-
-| Say | What happens |
-|---|---|
-| `write a LinkedIn post about [topic]` | Drafts in your brand voice. Structural + semantic QA runs automatically. |
-| `distribute campaign [name]` | Distributes a campaign across platforms per your hub-and-spoke config. |
-
-**Requires SDE onboarding** (`onboard me to SDE`) — creates your brand voice file and platform handles.
-
----
-
 ### Interview Prep
 
 | Say | What happens |
@@ -213,9 +194,7 @@ After onboarding, `$CAREER_HOME` looks like this:
 $CAREER_HOME/
 ├── brain/
 │   ├── identity/
-│   │   ├── experience-history.md     ← canonical background (onboarding creates)
-│   │   ├── professional-brand.md     ← brand voice (SDE onboarding creates)
-│   │   └── handles.md                ← platform handles
+│   │   └── experience-history.md     ← canonical background (onboarding creates)
 │   ├── network/
 │   │   └── people/                   ← one file per contact
 │   ├── projects/
@@ -238,9 +217,6 @@ $CAREER_HOME/
 
 **"⛔ experience-history.md not found"**
 → Run `onboard me to career intelligence`
-
-**"⛔ professional-brand.md not found"**
-→ Run `onboard me to SDE`
 
 **"⛔ [gate script] not found"**
 → Run `claude plugin update career-intelligence@xos --scope user`
