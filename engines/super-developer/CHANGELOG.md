@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.0 - 2026-06-23
+
+- Removed the fable-5 reasoning gate (claude-fable-5 unavailable; reintroduced by mistake in 0.2.0). Reasoning validation now via cross-family judge-panel. (XOS-59 / XOS-56 follow-up)
+
 ## 0.2.0 - 2026-06-10
 
 - Self-contained: bundled sdlc-work-claim, sdlc-worktree-isolation, ship-feature-gate rules + fable5-reasoning-validate script into the plugin; skill now invokes them via `${CLAUDE_PLUGIN_ROOT}` (portable on any machine, no `~/cyborg` dependency).
