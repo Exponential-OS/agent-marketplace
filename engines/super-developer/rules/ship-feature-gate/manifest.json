@@ -1,0 +1,71 @@
+{
+  "name": "ship-feature-gate",
+  "slug": "ship-feature-gate",
+  "version": "1.0.0",
+  "status": "active",
+  "created": "2026-06-09",
+  "type": "gate",
+  "canonical": "handler.ts",
+  "description": "PreToolUse Bash gate that blocks high-signal shipping commands outside a fresh /ship-feature run. A fresh active marker at ~/.ship-feature/active/<session>.json authorizes shipping-class operations after Stage 0 claims the Linear ticket.",
+  "enforcement": {
+    "how": "handler.ts",
+    "audit": "AUDIT.ts",
+    "watch": "WATCH.ts",
+    "log": "~/.cyborg-enforcement-log.jsonl",
+    "runtime": "bun",
+    "no_bash_in_load_bearing_paths": true,
+    "input": {
+      "command": "Bash command string",
+      "cwd": "absolute current working directory"
+    },
+    "output": {
+      "verdict": "PASS | BLOCK",
+      "target": "resolved command working directory",
+      "reason": "machine-readable rationale",
+      "message": "human-readable WHAT/HOW remediation"
+    },
+    "fail_hard": {
+      "block_exits_nonzero": true,
+      "block_message_requires": ["WHAT:", "HOW:"]
+    },
+    "fail_open": {
+      "on_handler_crash": true,
+      "environment_bypass": "SHIP_FEATURE_GATE_OFF=1"
+    }
+  },
+  "hook_type": "PreToolUse",
+  "hook_target_tools": ["Bash"],
+  "cadence": "per-bash-tool-call",
+  "last_update": "2026-06-09",
+  "last_watch_run": null,
+  "active_marker": {
+    "directory": "~/.ship-feature/active",
+    "freshness_seconds": 14400,
+    "schema": {
+      "ticket": "Linear issue id",
+      "session": "stable /ship-feature run id",
+      "branch": "feature branch",
+      "started": "ISO-8601 timestamp"
+    }
+  },
+  "shipping_class_commands": [
+    "gh pr create",
+    "git push <remote> main",
+    "git push <remote> HEAD:main",
+    "railway up",
+    "ship-* command names"
+  ],
+  "allowed_without_marker": [
+    "git push <remote> <non-main-branch>",
+    "read-only git commands",
+    "non-shipping commands"
+  ],
+  "known_limitations": [
+    "The classifier is intentionally high-signal and does not try to parse every possible shell obfuscation or deployment tool. It blocks the known shipping paths named in XOS-47 while avoiding false positives on feature branch pushes and ordinary development commands.",
+    "Settings activation is human-gated; scripts/preflight-ship-feature-gate.ts is present but this manifest does not imply it is wired into ~/.claude/settings.json."
+  ],
+  "related_invariant": "Agentic SDLC / ship-feature enforcement / SDLC WORK-CLAIM",
+  "litmus": "Before PR creation, main push, deploy, or ship-* command: is there a fresh ~/.ship-feature/active/<session>.json marker from Stage 0 of the ship-feature pipeline? If no — BLOCK and route through the skill.",
+  "dispatch_slug": "ship-feature-gate",
+  "origin": "XOS-47, 2026-06-09 — enforce Agentic SDLC by making /ship-feature the default path for code shipping and blocking ad-hoc PR/deploy commands outside a claimed run."
+}

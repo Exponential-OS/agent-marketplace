@@ -1,0 +1,32 @@
+{
+  "name": "sdlc-work-claim",
+  "slug": "sdlc-work-claim",
+  "version": "1.0.0",
+  "status": "active",
+  "created": "2026-06-09",
+  "type": "gate",
+  "canonical": "handler.ts",
+  "description": "Stage 0 of the SDLC agentic pipeline: claims a Linear work unit across machines before any pipeline work starts. Uses Linear as the single cross-machine source of truth — sets the issue In Progress and writes a claim marker carrying session, host, branch, worktree, started, and heartbeat. Actions: check (BLOCK if held by a different live session, heartbeat < 30 min), claim (atomic compare-and-set, BLOCK on live conflict, reclaim a stale/dead session), heartbeat (refresh on stage transition), release (free on Done/abandon). Prevents two agents on two machines from both building the same ticket (observed 2026-06-09: two sessions both shipped XOS-25).",
+  "enforcement": {
+    "how": "handler.ts",
+    "audit": "AUDIT.ts",
+    "watch": "WATCH.ts",
+    "log": "~/.cyborg-enforcement-log.jsonl",
+    "runtime": "bun",
+    "no_bash_in_load_bearing_paths": true,
+    "source_of_truth": "Linear (api.linear.app GraphQL)",
+    "required_env": "LINEAR_API_KEY"
+  },
+  "actions": ["check", "claim", "heartbeat", "release"],
+  "stale_minutes": 30,
+  "wired_into": [
+    "${CLAUDE_PLUGIN_ROOT}/skills/ship-feature/SKILL.md (Stage 0 + Gate B re-check)"
+  ],
+  "cadence": "per-pipeline-run (claim at Stage 0; heartbeat at each stage transition; check again at Gate B)",
+  "last_update": "2026-06-09",
+  "last_watch_run": null,
+  "related_invariant": "GIT-NATIVE COORDINATION (Ground Zero) — cross-machine extension",
+  "litmus": "Before pipeline work starts on a ticket: did Stage 0 CLAIM succeed (Linear issue set In Progress + claim marker written by this session)? Is the claim still held by this session (fresh heartbeat, not reclaimed) at Gate B before merge/push? If a different live session holds it — BLOCK. If unset LINEAR_API_KEY — FAIL-HARD (cross-machine coordination cannot work without it).",
+  "dispatch_slug": "sdlc-work-claim",
+  "origin": "2026-06-09 — two sessions (this + a thewhycyborg session) both shipped XOS-25; one shipped a CI-red build the other had already fixed. SDLC agentic flows will run on multiple machines against the same Linear board; a local ledger cannot coordinate across machines, so the board itself is the claim substrate."
+}

@@ -25,8 +25,8 @@
       "platform": "xHumanOS",
       "license": "Proprietary",
       "source": "./engines/super-developer",
-      "description": "Super Developer Engine - global agentic-SDLC ship-feature pipeline for every repo. v0.1.0 packages the canonical ship-feature skill and /ship-feature alias as a user-scope plugin with workspace_binding=global. Canonical source: Exponential-OS/xos monorepo plugins/cross/super-developer (this engines/ copy is a derived vendored mirror, overwritten on each sync).",
-      "version": "0.1.0",
+      "description": "Super Developer Engine - global agentic-SDLC ship-feature pipeline for every repo. v0.2.0 is SELF-CONTAINED: bundles the SDLC rules (sdlc-work-claim, sdlc-worktree-isolation, ship-feature-gate) + fable5-reasoning-validate script and invokes them via ${CLAUDE_PLUGIN_ROOT} — no ~/cyborg runtime dependency. User-scope, workspace_binding=global. Canonical source: Exponential-OS/xos monorepo plugins/cross/super-developer (this engines/ copy is a derived vendored mirror, overwritten on each sync).",
+      "version": "0.2.0",
       "category": "developer-tools",
       "homepage": "https://github.com/Exponential-OS/xos"
     },

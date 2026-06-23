@@ -1,0 +1,83 @@
+{
+  "name": "sdlc-worktree-isolation",
+  "slug": "sdlc-worktree-isolation",
+  "version": "1.0.0",
+  "status": "active",
+  "created": "2026-06-09",
+  "type": "gate",
+  "canonical": "handler.ts",
+  "description": "PreToolUse Bash gate that blocks mutating git operations against designated shared primary checkouts. Allows read-only git operations, non-designated repos, and linked per-session worktrees of the shared repo. Prevents concurrent sessions from colliding through one HEAD/index in a shared brain/infra checkout.",
+  "enforcement": {
+    "how": "handler.ts",
+    "audit": "AUDIT.ts",
+    "watch": "WATCH.ts",
+    "log": "~/.cyborg-enforcement-log.jsonl",
+    "runtime": "bun",
+    "no_bash_in_load_bearing_paths": true,
+    "input": {
+      "command": "Bash command string",
+      "cwd": "absolute current working directory"
+    },
+    "output": {
+      "verdict": "PASS | BLOCK",
+      "target": "resolved target git toplevel or working directory",
+      "reason": "machine-readable rationale",
+      "message": "human-readable WHAT/HOW remediation"
+    },
+    "fail_hard": {
+      "block_exits_nonzero": true,
+      "block_message_requires": ["WHAT:", "HOW:"]
+    }
+  },
+  "hook_type": "PreToolUse",
+  "hook_target_tools": ["Bash"],
+  "cadence": "per-bash-tool-call",
+  "last_update": "2026-06-09",
+  "last_watch_run": null,
+  "shared_repos": [],
+  "known_limitations": [
+    "git --git-dir=/--work-tree= redirection and deeply obfuscated invocations may bypass target resolution; XOS-44 removes the shared primary checkout and supersedes deep hardening of this interim gate."
+  ],
+  "mutating_git_subcommands": [
+    "commit",
+    "add",
+    "merge",
+    "rebase",
+    "reset",
+    "rm",
+    "mv",
+    "stash push",
+    "stash pop",
+    "stash apply",
+    "checkout -b",
+    "checkout branch-switch",
+    "switch",
+    "cherry-pick",
+    "apply",
+    "restore --staged",
+    "tag -d",
+    "push"
+  ],
+  "read_only_allowlist": [
+    "status",
+    "log",
+    "diff",
+    "show",
+    "fetch",
+    "pull --ff-only",
+    "branch",
+    "branch -a",
+    "worktree",
+    "rev-parse",
+    "ls-files",
+    "ls-tree",
+    "cat-file",
+    "blame",
+    "remote -v",
+    "config --get"
+  ],
+  "related_invariant": "SDLC WORK-CLAIM / GIT-NATIVE COORDINATION",
+  "litmus": "Before any mutating git operation against a configured shared repo: is the target the shared primary checkout, or a per-session linked worktree? If primary — BLOCK and instruct the agent to use git worktree add; if linked worktree, read-only operation, or non-designated repo — PASS.",
+  "dispatch_slug": "sdlc-worktree-isolation",
+  "origin": "XOS-43, 2026-06-09 — two concurrent sessions both ran mutating git operations against the same primary checkout, causing bilateral data loss and an index.lock race. sdlc-work-claim coordinates tickets; this rule coordinates filesystem isolation."
+}

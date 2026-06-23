@@ -8,7 +8,9 @@ Install it through the xOS marketplace once registered. The plugin declares `wor
 
 - `skills/ship-feature/SKILL.md` - canonical Agentic SDLC pipeline skill body.
 - `commands/ship-feature.md` - thin command alias that loads the skill.
+- `rules/` - bundled SDLC runtime gates invoked by the skill via `${CLAUDE_PLUGIN_ROOT}`.
+- `scripts/fable5-reasoning-validate.ts` - bundled reasoning validator invoked by the skill.
 
-## TODO
+## Runtime paths
 
-The SDLC rules invoked by this skill (`sdlc-work-claim`, `sdlc-worktree-isolation`, `ship-feature-gate`) currently live in `~/cyborg/rules/` and are invoked by absolute path from the skill, which works from any cwd. Bundling those rules into this plugin is Phase 2.
+The SDLC rules invoked by this skill (`sdlc-work-claim`, `sdlc-worktree-isolation`, `ship-feature-gate`) and the fable-5 reasoning validator are bundled into this plugin and invoked through `${CLAUDE_PLUGIN_ROOT}` so installs are portable across machines.

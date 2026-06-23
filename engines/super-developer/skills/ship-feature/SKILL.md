@@ -7,6 +7,8 @@ description: "Use this skill whenever the user asks to implement, build, fix, sh
 
 Use this skill whenever the user asks to implement, build, fix, ship, add, refactor, migrate, or change ANY code: features, bugs, plugins, skills, migrations, hooks, rules, configs, in any repo.
 
+Runtime gate paths are plugin-local via `${CLAUDE_PLUGIN_ROOT}`. Keep invoked `bun run` rule/script paths portable; do not restore `~/cyborg` runtime invocations.
+
 This also triggers on phrasing like "build X", "fix Y", "implement Z", "ship this to <plugin>", or a ticket id with code work. Do NOT hand-roll `codex exec` or ad-hoc git/PR shipping. Route the work through this pipeline. The only exception is a trivial single-file doc edit with no code, config, hook, rule, migration, skill, plugin, build, PR, or shipping impact.
 
 # /ship-feature — Cost-Routed Agentic SDLC Pipeline
@@ -25,7 +27,7 @@ Runs Stage 0 (claim) + the 9 core stages + Stage 10 (completion):
 
 - **Claude (whale, Opus):** brainstorm, spec, eval-design, gate decisions, synthesis, catch hallucinations. Reads conclusions, never re-executes. Delegates cheap orchestration (deploy/git/poll) to a **Haiku sub-agent**, and cross-family review to the **`judge-panel` skill** — Opus is the last resort, not the default.
 - **Codex teammates:** all implementation, tests, repo investigation. Run via `codex exec` from Bash. Parallel where independent. Codex writes ALL code.
-- **Gemini/agy:** browser, smoke tests, large-file review via `/Users/anandvallam/cyborg/infrastructure/scripts/gemini-delegate.ts`. 50x cheaper. NEVER handed secrets.
+- **Gemini/agy:** browser, smoke tests, large-file review via `agy`/Gemini. 50x cheaper. NEVER handed secrets.
 
 Note: `gemini-delegate.ts` now invokes `agy` (Antigravity, Ultra quota). Treat legacy `agly` references as migrated to `agy`.
 
@@ -42,7 +44,7 @@ Pick the cheapest agent + smallest model that does the job WELL. **If you're uns
 | Media generation (image/video) | agy | gemini-3-pro-image / Veo |
 | UI / frontend / visual design / UX / styling / layout | **Claude (design persona — Jony Ive caliber)** | **Claude — UI is design judgment, NOT mechanical. Route UI/visual work to Claude, never Codex or agy.** |
 | FREQUENT structural/semantic gates (codification-verification, named-person, content/path gates — fire every Write/Edit; ambiguity/structure, not deep reasoning) | their handler's LLM judge | **Haiku** (`CYBORG_SEMANTIC_JUDGE_MODEL`, default `claude-haiku-4-5`) — cheap, high-frequency |
-| RARE high-stakes **reasoning validation** (plan-vs-ask, Gate A, one-way-door pre-check, human-judgment-primacy) | **`judge-panel`** (cross-family) | the panel's fish models — SELECTIVE only: a handful of times/session where a wrong call costs hours. NEVER on frequent gates or every turn. |
+| RARE high-stakes **reasoning validation** (plan-vs-ask, Gate A, one-way-door pre-check, human-judgment-primacy) | `${CLAUDE_PLUGIN_ROOT}/scripts/fable5-reasoning-validate.ts` + judge-panel | **`claude-fable-5`** (`CYBORG_REASONING_JUDGE_MODEL`) — 2x Opus, so SELECTIVE only: fires a handful of times/session where a wrong call costs hours. NEVER on frequent gates or every turn. |
 | Brainstorm, spec, eval-design, gates, hallucination-catch, synthesis | Claude (whale, Opus) | the only Opus-justified work |
 
 Rule of thumb: there is almost always SOME orchestrator — the question is which size. Deterministic task (deploy, curl, git op) → **Haiku sub-agent**, never the Opus whale. Mechanical task (scroll a page, read a file, convert text) → **Flash**. Cross-family review → **reuse `judge-panel`**, don't re-derive. Only true judgment/gating/synthesis earns Opus tokens. Ambiguous class → **ask**.
@@ -104,12 +106,12 @@ Before Spec/Gate A, parse `$ARGUMENTS` enough to identify:
 Run the Linear claim gate and abort the whole pipeline on any non-zero exit:
 
 ```bash
-bun run ~/cyborg/rules/sdlc-work-claim/handler.ts '{"action":"claim","ticket":"<ticket>","session":"<session>","branch":"feat/<slug>","host":"<host>","worktree":"<worktree>"}'
+bun run ${CLAUDE_PLUGIN_ROOT}/rules/sdlc-work-claim/handler.ts '{"action":"claim","ticket":"<ticket>","session":"<session>","branch":"feat/<slug>","host":"<host>","worktree":"<worktree>"}'
 ```
 
 This is the cross-machine work-allocation lock. Do not continue if another live session owns the ticket. Refresh it with `action=heartbeat` at stage transitions and release it with `action=release` when abandoning the run.
 
-**Filesystem isolation (companion to the ticket lock).** The ticket lock prevents two sessions taking the same *ticket*; it does NOT prevent two sessions colliding in the same git working copy of a SHARED repo. When this run mutates a shared brain/infra repo (default `~/cyborg`), do it from a per-session worktree, never the shared primary checkout — `git -C ~/cyborg worktree add /tmp/cyborg-<slug> -b feat/<slug> origin/main`, commit there, `push origin HEAD:main`. This is enforced by the `sdlc-worktree-isolation` PreToolUse Bash gate (`~/cyborg/rules/sdlc-worktree-isolation/handler.ts`), which BLOCKS mutating git ops against the shared primary checkout. Root fix (eliminate the shared primary entirely) tracked in XOS-44.
+**Filesystem isolation (companion to the ticket lock).** The ticket lock prevents two sessions taking the same *ticket*; it does NOT prevent two sessions colliding in the same git working copy of a SHARED repo. When this run mutates a shared brain/infra repo (default `~/cyborg`), do it from a per-session worktree, never the shared primary checkout — `git -C ~/cyborg worktree add /tmp/cyborg-<slug> -b feat/<slug> origin/main`, commit there, `push origin HEAD:main`. This is enforced by the `sdlc-worktree-isolation` PreToolUse Bash gate (`${CLAUDE_PLUGIN_ROOT}/rules/sdlc-worktree-isolation/handler.ts`), which BLOCKS mutating git ops against the shared primary checkout. Root fix (eliminate the shared primary entirely) tracked in XOS-44.
 
 ---
 
@@ -162,9 +164,15 @@ repo: <repo-path>
 <how to undo safely>
 ```
 
-**Reasoning validation — BEFORE Gate A.** Before presenting the spec, sanity-check that the plan actually serves what the human asked — especially their explicit method/constraint instructions (this is the seam where drift/override happens). For high-stakes or ambiguous plans, run a quick **`judge-panel`** (cross-family) drift check on `{user_ask, agent_plan}`; if it returns drift, surface it to the human in ≤1 line and correct, or let them decide. For routine plans, the Gate A human review is the backstop.
+**Reasoning validation (fable-5) — BEFORE Gate A.** Before presenting the spec, validate that the plan actually serves what the human asked — especially their explicit method/constraint instructions. This is the seam where drift/override happens. Run:
 
-**GATE A — STOP:** present the spec path (and any drift-check verdict), and ask for human approval before proceeding.
+```bash
+echo '{"user_ask":"<verbatim what the human asked, incl. explicit method/tool instructions>","agent_plan":"<the spec/approach in 2-4 lines>"}' | bun run ${CLAUDE_PLUGIN_ROOT}/scripts/fable5-reasoning-validate.ts
+```
+
+If the verdict is `drift`, do NOT proceed — surface the drift to the human in ≤1 line and correct the plan, or let them decide. (Uses `claude-fable-5` — high-stakes, fires once per spec, never per turn. Fail-open: a validator error never blocks.)
+
+**GATE A — STOP:** present the spec path + the reasoning-validation verdict, and ask for human approval before proceeding.
 
 ---
 
@@ -243,7 +251,7 @@ Any failure returns to Stage 4 until green.
 
 Run cross-family review before PR.
 
-Use `/Users/anandvallam/cyborg/infrastructure/scripts/gemini-delegate.ts` for:
+Use `agy`/Gemini for:
 
 - large diffs
 - large files
@@ -284,7 +292,7 @@ Do not merge.
 Before merge or push, re-check the Linear claim:
 
 ```bash
-bun run ~/cyborg/rules/sdlc-work-claim/handler.ts '{"action":"check","ticket":"<ticket>","session":"<session>"}'
+bun run ${CLAUDE_PLUGIN_ROOT}/rules/sdlc-work-claim/handler.ts '{"action":"check","ticket":"<ticket>","session":"<session>"}'
 ```
 
 Abort unless the command exits 0 and the JSON still shows `owner_session` equal to this run's `session`, `reclaimable:false`, and a fresh heartbeat. A session that lost or released the claim must not merge, push, or deploy.
@@ -330,11 +338,7 @@ Haiku reports back the deploy id + SUCCESS/curl status. Record the deploy id.
 
 ## Stage 9 — Post-deploy smoke
 
-Run production smoke through Gemini/agy via:
-
-```bash
-/Users/anandvallam/cyborg/infrastructure/scripts/gemini-delegate.ts
-```
+Run production smoke through Gemini/agy.
 
 Smoke result must be:
 
@@ -353,7 +357,7 @@ After post-deploy smoke is `GREEN`, close the loop. Three artifacts — none opt
 2. **Post a COMMENT to the Linear ticket AND set it Done.** The `complete` action does BOTH — it does not just flip the status, it writes a structured completion comment so other sessions/humans see WHO did WHAT. The comment carries: *what was fixed · which session + host did it · findings discovered · the PR URL*:
 
 ```bash
-bun run ~/cyborg/rules/sdlc-work-claim/handler.ts '{"action":"complete","ticket":"<ticket>","session":"<session>","host":"<host>","summary":"<what fixed>","pr_url":"<pr-url>","findings":"<tests, judge verdict, smoke, rollback notes>"}'
+bun run ${CLAUDE_PLUGIN_ROOT}/rules/sdlc-work-claim/handler.ts '{"action":"complete","ticket":"<ticket>","session":"<session>","host":"<host>","summary":"<what fixed>","pr_url":"<pr-url>","findings":"<tests, judge verdict, smoke, rollback notes>"}'
 ```
 
 3. **Confirm** the ticket comment is posted and the state is `Done`.
