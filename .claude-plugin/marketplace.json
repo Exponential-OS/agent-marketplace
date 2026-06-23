@@ -25,7 +25,7 @@
       "platform": "xHumanOS",
       "license": "Proprietary",
       "source": "./engines/super-developer",
-      "description": "Super Developer Engine - global agentic-SDLC ship-feature pipeline for every repo. v0.3.0: SELF-CONTAINED — bundles the SDLC rules (sdlc-work-claim, sdlc-worktree-isolation, ship-feature-gate) invoked via ${CLAUDE_PLUGIN_ROOT}, no ~/cyborg runtime dependency. Reasoning validation is covered by the cross-family judge-panel (the standalone fable-5 gate was removed — claude-fable-5 unavailable). User-scope, workspace_binding=global. Canonical source: Exponential-OS/xos monorepo plugins/cross/super-developer (this engines/ copy is a derived vendored mirror, overwritten on each sync).",
+      "description": "Super Developer Engine - global agentic-SDLC ship-feature pipeline for every repo. v0.3.0: SELF-CONTAINED \u2014 bundles the SDLC rules (sdlc-work-claim, sdlc-worktree-isolation, ship-feature-gate) invoked via ${CLAUDE_PLUGIN_ROOT}, no ~/cyborg runtime dependency. Reasoning validation is covered by the cross-family judge-panel (the standalone fable-5 gate was removed \u2014 claude-fable-5 unavailable). User-scope, workspace_binding=global. Canonical source: Exponential-OS/xos monorepo plugins/cross/super-developer (this engines/ copy is a derived vendored mirror, overwritten on each sync).",
       "version": "0.3.0",
       "category": "developer-tools",
       "homepage": "https://github.com/Exponential-OS/xos"
@@ -36,7 +36,7 @@
       "license": "Proprietary",
       "source": "./engines/co-dialectic",
       "description": "Co-Dialectic v4.23.0 - FORAGE: Epistemic Foraging flywheel. New /forage skill codifies the Constitution's Epistemic Foraging principle as a weekly tool-discovery loop: FORAGE (marketplace diff + GitHub trending + claude-automation-recommender + P20 authority-weighted web sweep) -> SCORE against the week's WORKSPACE session-ledger friction (not novelty, never a shared brain's ledger) -> VERIFY in a throwaway worktree (never propose blind; FOUNDATION-FIRST) -> PROPOSE: install is HUMAN-GATED, no auto-install from any marketplace; each verify-passed keeper files its own approval ticket with evidence + one-command rollback, max 3 per run -> CODIFY (pending/keepers/rejects/deferred + memory entry + summary audit ticket). Substrate paths resolved via $CO_DIALECTIC_SESSION_LEDGER_DIR / $CO_DIALECTIC_TOOLS_REGISTRY workspace-adapter vars with graceful OSS fallback (Decision-2 compliant).",
-      "version": "4.24.2",
+      "version": "4.24.3",
       "category": "ai-runtime",
       "homepage": "https://github.com/Exponential-OS/prompt-engineering-in-action"
     },
