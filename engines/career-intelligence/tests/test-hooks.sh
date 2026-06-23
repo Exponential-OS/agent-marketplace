@@ -61,6 +61,12 @@ assert_file_contains() {
     else fail "$desc" "'$pattern' not found in $file"; fi
 }
 
+assert_file_contains_literal() {
+    local desc="$1" file="$2" text="$3"
+    if grep -Fq "$text" "$file" 2>/dev/null; then pass "$desc"
+    else fail "$desc" "'$text' not found in $file"; fi
+}
+
 assert_head_unchanged() {
     local desc="$1" before="$2" after="$3"
     if [ "$before" = "$after" ]; then pass "$desc"
@@ -181,6 +187,8 @@ echo "-- Migration coherence (P9 — version bump = blast radius) ----"
 PLUGIN_JSON_VER=$(grep -o '"version"[[:space:]]*:[[:space:]]*"[^"]*"' "$PLUGIN_ROOT/.claude-plugin/plugin.json" 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
 LATEST_MIGRATION_TARGET=$(ls "$PLUGIN_ROOT"/migrations/v*-to-v*.sh 2>/dev/null | sed -E 's/.*-to-v([0-9.]+)\.sh$/\1/' | sort -V | tail -1)
 assert_eq "plugin.json version has matching migration script" "$PLUGIN_JSON_VER" "$LATEST_MIGRATION_TARGET"
+LATEST_MIGRATION_SCRIPT=$(ls "$PLUGIN_ROOT"/migrations/v*-to-v"$PLUGIN_JSON_VER".sh 2>/dev/null | sort -V | tail -1)
+PREV_PLUGIN_VER=$(basename "$LATEST_MIGRATION_SCRIPT" 2>/dev/null | sed -E 's/^v([0-9.]+)-to-v[0-9.]+\.sh$/\1/')
 # Note: if you JUST bumped plugin.json, you also need a new
 # migrations/v<prev>-to-v<new>.sh script. See migrations/v0.23.0-to-v0.24.0.sh
 # for the minimal-shape template.
@@ -211,6 +219,9 @@ assert_eq "exits before git ops" "0" "$?"
 assert_dir_exists "scaffolds brain/sessions/ledger/" "$TEST_DIR/brain/sessions/ledger"
 assert_dir_exists "scaffolds brain/sessions/judgments/" "$TEST_DIR/brain/sessions/judgments"
 assert_dir_exists "scaffolds Resumes & Cover Letters/" "$TEST_DIR/Resumes & Cover Letters"
+# Git does not track empty directories. Seed the scaffold so later scoped
+# hook commits test ledger behavior instead of failing on an empty-dir pathspec.
+touch "$TEST_DIR/Resumes & Cover Letters/.gitkeep"
 
 # v0.29.0: .career-os/ MUST NOT be created — workspace stays clean
 if [ ! -d "$TEST_DIR/.career-os" ]; then pass ".career-os/ NOT created on first run"
@@ -262,28 +273,23 @@ echo ""
 # --- Mission Control first-run detection ---
 
 echo "[B2] Version mismatch triggers migration"
-# Simulate: data says 0.4.0, plugin says current — init-repo runs migrate.sh.
-# Pre-v0.29.0 the version file lived at <workspace>/.career-os/config/version.
-# After migration runs, v0.28.0→v0.29.0 step relocates it to $STATE_DIR/version
-# and removes .career-os/.
+# Simulate: STATE_DIR says the previous plugin version, plugin says current.
+# v0.29.0 made STATE_DIR/version canonical, so this covers the supported
+# upgrade path without depending on obsolete workspace-local version files.
 MIGRATE_DIR=$(mktemp -d)
 MIGRATE_STATE_DIR=$(mktemp -d)
 ws_mark "$MIGRATE_DIR"
 cd "$MIGRATE_DIR"
 git init -b main &>/dev/null
 git config user.email "test@test.com" && git config user.name "Test"
-mkdir -p .career-os/config
-echo "0.4.0" > .career-os/config/version
-git add -A && git commit -q -m "old version setup"
-git remote add origin "$REMOTE_DIR"
+echo "$PREV_PLUGIN_VER" > "$MIGRATE_STATE_DIR/version"
+git add -A && git commit -q -m "workspace setup"
 SAVED_STATE_DIR="$CLAUDE_PLUGIN_DATA"
 export CLAUDE_PLUGIN_DATA="$MIGRATE_STATE_DIR"
 OUTPUT=$(bash "$PLUGIN_ROOT/hooks/scripts/init-repo.sh" 2>&1)
-# Pre-v0.29.0 message was "Version mismatch"; init-repo.sh now uses
-# "Pre-v0.29.0 install detected" for the legacy-path branch. Either is acceptable.
-assert_contains "detects pre-v0.29.0 install" "$OUTPUT" "Pre-v0.29.0 install detected"
+assert_contains "detects STATE_DIR version mismatch" "$OUTPUT" "Version mismatch detected"
 NEW_VER=$(cat "$MIGRATE_STATE_DIR/version" 2>/dev/null | tr -d '[:space:]')
-EXPECTED_VER=$(grep -o '"version"[[:space:]]*:[[:space:]]*"[^"]*"' "$PLUGIN_ROOT/.claude-plugin/plugin.json" | grep -o '[0-9][0-9.]*')
+EXPECTED_VER="$PLUGIN_JSON_VER"
 assert_eq "version updated after migration" "$EXPECTED_VER" "$NEW_VER"
 export CLAUDE_PLUGIN_DATA="$SAVED_STATE_DIR"
 rm -rf "$MIGRATE_DIR" "$MIGRATE_STATE_DIR"
@@ -300,13 +306,17 @@ git config user.email "test@test.com" && git config user.name "Test"
 mkdir -p .career-os/memory
 touch .career-os/memory/job-pipeline.md
 git add -A && git commit -q -m "legacy setup"
-git remote add origin "$REMOTE_DIR"
 SAVED_STATE_DIR="$CLAUDE_PLUGIN_DATA"
 export CLAUDE_PLUGIN_DATA="$LEGACY_STATE_DIR"
 OUTPUT=$(bash "$PLUGIN_ROOT/hooks/scripts/init-repo.sh" 2>&1)
+RC=$?
 assert_contains "detects legacy install" "$OUTPUT" "Legacy install detected"
-# v0.29.0: version file landed in STATE_DIR (workspace .career-os/ removed by migration)
-assert_file_exists "version file created in STATE_DIR after legacy migration" "$LEGACY_STATE_DIR/version"
+# The repo intentionally has no complete v0.3.0→current chain after v0.29.0.
+# The hook must fail hard instead of stamping a false current version.
+assert_eq "legacy incomplete chain exits fail-hard" "1" "$RC"
+assert_contains "legacy missing migration path reported" "$OUTPUT" "Incomplete migration path"
+if [ ! -f "$LEGACY_STATE_DIR/version" ]; then pass "legacy failure does not stamp STATE_DIR"
+else fail "legacy failure does not stamp STATE_DIR" "unexpected version: $(cat "$LEGACY_STATE_DIR/version")"; fi
 export CLAUDE_PLUGIN_DATA="$SAVED_STATE_DIR"
 rm -rf "$LEGACY_DIR" "$LEGACY_STATE_DIR"
 cd "$TEST_DIR"
@@ -654,6 +664,26 @@ assert_eq "version still 0.9.0 after double run" "0.9.0" "$M15_VER"
 rm -rf "$M15_DIR"
 echo ""
 
+echo "[M16] v0.28.0-to-v0.29.0.sh relocates runtime state"
+M16_DIR=$(mktemp -d)
+M16_STATE_DIR=$(mktemp -d)
+mkdir -p "$M16_DIR/.career-os/config" "$M16_DIR/.career-os/ledger"
+echo "0.28.0" > "$M16_DIR/.career-os/config/version"
+echo "# old ledger" > "$M16_DIR/.career-os/ledger/2026-06-23.md"
+SAVED_STATE_DIR="$CLAUDE_PLUGIN_DATA"
+export CLAUDE_PLUGIN_DATA="$M16_STATE_DIR"
+OUTPUT=$(bash "$PLUGIN_ROOT/migrations/v0.28.0-to-v0.29.0.sh" "$M16_DIR" 2>&1)
+RC=$?
+assert_eq "v0.28.0→v0.29.0 exits 0" "0" "$RC"
+assert_contains "v0.28.0→v0.29.0 complete message" "$OUTPUT" "v0.28.0 → v0.29.0 complete"
+assert_eq "version moved to STATE_DIR" "0.29.0" "$(cat "$M16_STATE_DIR/version" | tr -d '[:space:]')"
+assert_file_exists "ledger moved to brain/sessions/ledger" "$M16_DIR/brain/sessions/ledger/2026-06-23.md"
+if [ ! -d "$M16_DIR/.career-os" ]; then pass ".career-os/ removed by v0.29.0 migration"
+else fail ".career-os/ removed by v0.29.0 migration" "directory still present"; fi
+export CLAUDE_PLUGIN_DATA="$SAVED_STATE_DIR"
+rm -rf "$M16_DIR" "$M16_STATE_DIR"
+echo ""
+
 # ============================================================
 echo "-- Integration ---------------------------------"
 # ============================================================
@@ -668,6 +698,7 @@ export CLAUDE_PLUGIN_DATA=$(mktemp -d)
 
 # First run
 bash "$PLUGIN_ROOT/hooks/scripts/init-repo.sh" &>/dev/null
+touch "$INTEGRATION_DIR/Resumes & Cover Letters/.gitkeep"
 git init -b main &>/dev/null
 git config user.email "test@test.com" && git config user.name "Test"
 git remote add origin "$INTEGRATION_REMOTE"
@@ -699,33 +730,32 @@ cd "$TEST_DIR"
 echo ""
 
 echo "[I3] Post-upgrade lifecycle: old data -> session start -> auto-migrate -> prompt -> response"
-# Simulates: user was on v0.4.0, plugin updated to current version,
-# first session start should auto-migrate then proceed normally.
+# Simulates: user was on the previous plugin version with canonical
+# STATE_DIR/version, plugin updated to current version, first session start
+# should auto-migrate then proceed normally.
 UPGRADE_DIR=$(mktemp -d)
 UPGRADE_REMOTE=$(mktemp -d)
 ws_mark "$UPGRADE_DIR"
 cd "$UPGRADE_REMOTE" && git init --bare -b main &>/dev/null
 cd "$UPGRADE_DIR"
 export CLAUDE_PLUGIN_DATA=$(mktemp -d)
+echo "$PREV_PLUGIN_VER" > "$CLAUDE_PLUGIN_DATA/version"
 
-# Set up a v0.4.0 workspace (as if user was running old plugin)
+# Set up a workspace under the previous plugin version.
 git init -b main &>/dev/null
 git config user.email "test@test.com" && git config user.name "Test"
-mkdir -p .career-os/config .career-os/ledger .career-os/memory
-echo "0.4.0" > .career-os/config/version
-echo "old data" > .career-os/memory/job-pipeline.md
-git add -A && git commit -q -m "v0.4.0 workspace"
+mkdir -p brain/sessions
+git add -A && git commit -q -m "previous version workspace"
 git remote add origin "$UPGRADE_REMOTE"
 git push -q -u origin main &>/dev/null
 
 # Session start with NEW plugin — should auto-migrate then write session marker
 OUTPUT=$(bash "$PLUGIN_ROOT/hooks/scripts/init-repo.sh" 2>&1)
-# v0.29.0: legacy version-file branch emits "Pre-v0.29.0 install detected"
-assert_contains "migration triggered on session start" "$OUTPUT" "Pre-v0.29.0 install detected"
+assert_contains "migration triggered on session start" "$OUTPUT" "Version mismatch detected"
 assert_file_contains "session proceeds after migration (logged)" "$CLAUDE_PLUGIN_DATA/git-errors.log" "Session logging active"
 
 # Verify version updated (v0.29.0: lives in $STATE_DIR, not workspace)
-PLUGIN_VER=$(grep -o '"version"[[:space:]]*:[[:space:]]*"[^"]*"' "$PLUGIN_ROOT/.claude-plugin/plugin.json" | grep -o '[0-9][0-9.]*')
+PLUGIN_VER="$PLUGIN_JSON_VER"
 UPGRADED_VER=$(cat "$CLAUDE_PLUGIN_DATA/version" | tr -d '[:space:]')
 assert_eq "version matches plugin after migrate" "$PLUGIN_VER" "$UPGRADED_VER"
 
@@ -735,9 +765,9 @@ UPGRADE_LEDGER="$UPGRADE_DIR/brain/sessions/ledger/$(date +%Y-%m-%d).md"
 assert_file_exists "ledger created after upgrade" "$UPGRADE_LEDGER"
 assert_contains "session start after upgrade" "$(cat "$UPGRADE_LEDGER")" "Session Start"
 
-# Verify .career-os/ was removed by v0.28.0→v0.29.0 migration
-if [ ! -d "$UPGRADE_DIR/.career-os" ]; then pass ".career-os/ removed after v0.29.0 migration"
-else fail ".career-os/ removed after v0.29.0 migration" "directory still present"; fi
+# Modern upgrades should not recreate the retired workspace-local runtime dir.
+if [ ! -d "$UPGRADE_DIR/.career-os" ]; then pass ".career-os/ not recreated after migration"
+else fail ".career-os/ not recreated after migration" "directory present"; fi
 
 # Full exchange works post-migration
 echo '{"prompt": "Post-upgrade prompt"}' | bash "$PLUGIN_ROOT/hooks/scripts/capture-prompt.sh" &>/dev/null
@@ -1076,7 +1106,7 @@ echo ""
 
 echo "[V5] DEBUG line logged to git-errors.log on hook fire"
 # The debug line should be present after any hook fire
-assert_file_contains "V5: DEBUG line in log" "${CLAUDE_PLUGIN_DATA}/git-errors.log" "[DEBUG"
+assert_file_contains_literal "V5: DEBUG line in log" "${CLAUDE_PLUGIN_DATA}/git-errors.log" "[DEBUG"
 assert_file_contains "V5: hook name in debug line" "${CLAUDE_PLUGIN_DATA}/git-errors.log" "hook=capture-prompt"
 echo ""
 
