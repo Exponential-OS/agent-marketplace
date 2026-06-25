@@ -93,6 +93,14 @@ export CLAUDE_PLUGIN_DATA="$STATE_DIR"
 ws_mark() { touch "$1/.career-os-workspace"; }
 ws_mark "$TEST_DIR"
 
+run_git_sync_push() {
+    local repo_dir="$1"
+    local branch="$2"
+    local log_file="$3"
+    bash -c 'source "$1"; git_sync_push "$2" "$3" "$4"' _ \
+        "$PLUGIN_ROOT/hooks/scripts/_git-sync-push.sh" "$repo_dir" "$branch" "$log_file"
+}
+
 cleanup() {
     rm -rf "$TEST_DIR" "$REMOTE_DIR" "$STATE_DIR"
 }
@@ -114,6 +122,7 @@ assert_dir_exists "hooks/scripts/ directory exists" "$PLUGIN_ROOT/hooks/scripts"
 assert_file_exists "init-repo.sh exists" "$PLUGIN_ROOT/hooks/scripts/init-repo.sh"
 assert_file_exists "capture-prompt.sh exists" "$PLUGIN_ROOT/hooks/scripts/capture-prompt.sh"
 assert_file_exists "capture-response.sh exists" "$PLUGIN_ROOT/hooks/scripts/capture-response.sh"
+assert_file_exists "_git-sync-push.sh exists" "$PLUGIN_ROOT/hooks/scripts/_git-sync-push.sh"
 echo ""
 
 # ============================================================
@@ -793,6 +802,115 @@ COMMITS_AFTER=$(git rev-list --count "$BEFORE"..HEAD)
 assert_eq "two commits from concurrent prompts" "2" "$COMMITS_AFTER"
 assert_contains "session A in ledger" "$(cat "$LEDGER_FILE")" "Session A: resume work"
 assert_contains "session B in ledger" "$(cat "$LEDGER_FILE")" "Session B: outreach email"
+echo ""
+
+echo "[XOS-64a] git_sync_push rebases ledger-only non-ff divergence"
+SYNC_REMOTE=$(mktemp -d)
+SYNC_A=$(mktemp -d)
+SYNC_B=$(mktemp -d)
+SYNC_LOG=$(mktemp)
+SYNC_DAY=$(date +%Y-%m-%d)
+cd "$SYNC_REMOTE" && git init --bare -b main &>/dev/null
+cd "$SYNC_A"
+git init -b main &>/dev/null
+git config user.email "test@test.com" && git config user.name "Test"
+git remote add origin "$SYNC_REMOTE"
+mkdir -p "brain/sessions/ledger"
+printf '%s\n' 'brain/sessions/ledger/** merge=union' > .gitattributes
+{
+    echo "# Session Ledger — $SYNC_DAY"
+    echo ""
+} > "brain/sessions/ledger/$SYNC_DAY.md"
+git add -A && git commit -q -m "base ledger"
+git push -q -u origin main &>/dev/null
+git clone -q "$SYNC_REMOTE" "$SYNC_B"
+git -C "$SYNC_B" config user.email "test@test.com"
+git -C "$SYNC_B" config user.name "Test"
+{
+    echo "remote ledger append"
+    echo "---"
+} >> "$SYNC_B/brain/sessions/ledger/$SYNC_DAY.md"
+git -C "$SYNC_B" add -A && git -C "$SYNC_B" commit -q -m "remote ledger append"
+git -C "$SYNC_B" push -q origin main
+{
+    echo "local ledger append"
+    echo "---"
+} >> "$SYNC_A/brain/sessions/ledger/$SYNC_DAY.md"
+git -C "$SYNC_A" add -A && git -C "$SYNC_A" commit -q -m "local ledger append"
+run_git_sync_push "$SYNC_A" "main" "$SYNC_LOG"
+SYNC_RC=$?
+assert_eq "XOS-64a: sync push exits 0" "0" "$SYNC_RC"
+REMOTE_LEDGER=$(git --git-dir="$SYNC_REMOTE" show "main:brain/sessions/ledger/$SYNC_DAY.md" 2>/dev/null || echo "")
+assert_contains "XOS-64a: remote keeps local ledger line" "$REMOTE_LEDGER" "local ledger append"
+assert_contains "XOS-64a: remote keeps other checkout ledger line" "$REMOTE_LEDGER" "remote ledger append"
+rm -rf "$SYNC_REMOTE" "$SYNC_A" "$SYNC_B" "$SYNC_LOG"
+cd "$TEST_DIR"
+echo ""
+
+echo "[XOS-64b] git_sync_push aborts unresolved content conflicts without branches"
+CONFLICT_REMOTE=$(mktemp -d)
+CONFLICT_A=$(mktemp -d)
+CONFLICT_B=$(mktemp -d)
+CONFLICT_LOG=$(mktemp)
+cd "$CONFLICT_REMOTE" && git init --bare -b main &>/dev/null
+cd "$CONFLICT_A"
+git init -b main &>/dev/null
+git config user.email "test@test.com" && git config user.name "Test"
+git remote add origin "$CONFLICT_REMOTE"
+printf '%s\n' 'brain/sessions/ledger/** merge=union' > .gitattributes
+printf '# Handoff\n\nstatus: base\n' > NEXT_SESSION_HANDOFF.md
+git add -A && git commit -q -m "base handoff"
+git push -q -u origin main &>/dev/null
+git clone -q "$CONFLICT_REMOTE" "$CONFLICT_B"
+git -C "$CONFLICT_B" config user.email "test@test.com"
+git -C "$CONFLICT_B" config user.name "Test"
+printf '# Handoff\n\nstatus: remote rewrite\n' > "$CONFLICT_B/NEXT_SESSION_HANDOFF.md"
+git -C "$CONFLICT_B" add -A && git -C "$CONFLICT_B" commit -q -m "remote handoff rewrite"
+git -C "$CONFLICT_B" push -q origin main
+printf '# Handoff\n\nstatus: local rewrite\n' > "$CONFLICT_A/NEXT_SESSION_HANDOFF.md"
+git -C "$CONFLICT_A" add -A && git -C "$CONFLICT_A" commit -q -m "local handoff rewrite"
+CONFLICT_HEAD_BEFORE=$(git -C "$CONFLICT_A" rev-parse HEAD)
+CONFLICT_BRANCHES_BEFORE=$(git -C "$CONFLICT_A" branch --format='%(refname:short)' | wc -l | tr -d '[:space:]')
+run_git_sync_push "$CONFLICT_A" "main" "$CONFLICT_LOG"
+CONFLICT_RC=$?
+CONFLICT_HEAD_AFTER=$(git -C "$CONFLICT_A" rev-parse HEAD)
+CONFLICT_BRANCHES_AFTER=$(git -C "$CONFLICT_A" branch --format='%(refname:short)' | wc -l | tr -d '[:space:]')
+assert_eq "XOS-64b: sync push returns non-zero on conflict" "1" "$CONFLICT_RC"
+assert_eq "XOS-64b: local HEAD restored after abort" "$CONFLICT_HEAD_BEFORE" "$CONFLICT_HEAD_AFTER"
+assert_eq "XOS-64b: no branch created" "$CONFLICT_BRANCHES_BEFORE" "$CONFLICT_BRANCHES_AFTER"
+assert_eq "XOS-64b: local commit still unpushed" "1" "$(git -C "$CONFLICT_A" rev-list --count origin/main..main)"
+assert_contains "XOS-64b: local file restored" "$(cat "$CONFLICT_A/NEXT_SESSION_HANDOFF.md")" "local rewrite"
+REMOTE_HANDOFF=$(git --git-dir="$CONFLICT_REMOTE" show "main:NEXT_SESSION_HANDOFF.md" 2>/dev/null || echo "")
+assert_not_contains "XOS-64b: remote does not receive conflicted local rewrite" "$REMOTE_HANDOFF" "local rewrite"
+assert_file_contains_literal "XOS-64b: manual reconcile logged" "$CONFLICT_LOG" "manual reconcile needed"
+if [ ! -d "$CONFLICT_A/.git/rebase-merge" ] && [ ! -d "$CONFLICT_A/.git/rebase-apply" ]; then
+    pass "XOS-64b: repo not left mid-rebase"
+else
+    fail "XOS-64b: repo not left mid-rebase" "rebase state directory remains"
+fi
+rm -rf "$CONFLICT_REMOTE" "$CONFLICT_A" "$CONFLICT_B" "$CONFLICT_LOG"
+cd "$TEST_DIR"
+echo ""
+
+echo "[XOS-64c] SessionStart writes ledger union attribute once"
+ATTR_DIR=$(mktemp -d)
+ATTR_STATE_DIR=$(mktemp -d)
+ws_mark "$ATTR_DIR"
+cd "$ATTR_DIR"
+git init -b main &>/dev/null
+git config user.email "test@test.com" && git config user.name "Test"
+echo "$PLUGIN_JSON_VER" > "$ATTR_STATE_DIR/version"
+SAVED_STATE_DIR="$CLAUDE_PLUGIN_DATA"
+export CLAUDE_PLUGIN_DATA="$ATTR_STATE_DIR"
+bash "$PLUGIN_ROOT/hooks/scripts/init-repo.sh" &>/dev/null
+ATTR_COUNT_1=$(grep -Fxc 'brain/sessions/ledger/** merge=union' "$ATTR_DIR/.gitattributes" 2>/dev/null || echo "0")
+bash "$PLUGIN_ROOT/hooks/scripts/init-repo.sh" &>/dev/null
+ATTR_COUNT_2=$(grep -Fxc 'brain/sessions/ledger/** merge=union' "$ATTR_DIR/.gitattributes" 2>/dev/null || echo "0")
+assert_eq "XOS-64c: union attribute created" "1" "$ATTR_COUNT_1"
+assert_eq "XOS-64c: union attribute not duplicated" "1" "$ATTR_COUNT_2"
+export CLAUDE_PLUGIN_DATA="$SAVED_STATE_DIR"
+rm -rf "$ATTR_DIR" "$ATTR_STATE_DIR"
+cd "$TEST_DIR"
 echo ""
 
 # ============================================================

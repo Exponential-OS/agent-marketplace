@@ -78,6 +78,7 @@ fi
 WORKSPACE_ROOT="$(pwd)"
 STATE_DIR="${CLAUDE_PLUGIN_DATA:-$HOME/.career-os-state}"
 MAIN_BRANCH="main"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # WORKSPACE-IDENTITY GATE (v0.66.0)
@@ -95,8 +96,9 @@ MAIN_BRANCH="main"
 # HERE — never log/write/commit outside the workspace. Replaces the per-script
 # is_career_os_workspace() copy (one of three duplicates; init-repo's was forgotten in v0.66).
 WSG_SKIP_ECHO='{"decision": "approve"}'
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/_workspace-gate.sh"
+source "$SCRIPT_DIR/_workspace-gate.sh"
 unset WSG_SKIP_ECHO
+source "$SCRIPT_DIR/_git-sync-push.sh"
 
 cd "$WORKSPACE_ROOT"
 
@@ -179,7 +181,7 @@ git commit -q -m "session-log: prompt $TODAY $TIMESTAMP — $STAGED_FILES_COUNT 
 
 # WO-046: Push prompt commits to remote (eliminates push asymmetry between prompt/response hooks)
 if git remote get-url origin &>/dev/null; then
-    git push -q origin "$MAIN_BRANCH" 2>> "$LOG_FILE" || echo "[$(date)] git push (prompt) failed" >> "$LOG_FILE"
+    git_sync_push "$WORKSPACE_ROOT" "$MAIN_BRANCH" "$LOG_FILE" || echo "[$(date)] git push (prompt) failed" >> "$LOG_FILE"
 fi
 
 echo '{"decision": "approve"}'

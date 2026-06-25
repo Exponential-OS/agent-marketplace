@@ -26,6 +26,7 @@ WORKSPACE_ROOT="$(pwd)"
 STATE_DIR="${CLAUDE_PLUGIN_DATA:-$HOME/.career-os-state}"
 MAIN_BRANCH="main"
 LOG_FILE="$STATE_DIR/git-errors.log"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 
 mkdir -p "$STATE_DIR"
 
@@ -58,11 +59,12 @@ mkdir -p "$STATE_DIR"
 # workspace — never scaffold brain/, write CLAUDE.md, create Resumes/, write ledger
 # markers, or git add/commit/push outside it. Replaces the per-script
 # is_career_os_workspace() copy that was forgotten in THIS file in v0.66.
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/_workspace-gate.sh"
+source "$SCRIPT_DIR/_workspace-gate.sh"
+source "$SCRIPT_DIR/_git-sync-push.sh"
 
 # --- Version check + migration (P6: Zero-Data-Loss Upgrades) ---
 # Must run BEFORE any other logic. Migration scripts know old file locations.
-PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 PLUGIN_VERSION=$(grep -o '"version"[[:space:]]*:[[:space:]]*"[^"]*"' "$PLUGIN_ROOT/.claude-plugin/plugin.json" 2>/dev/null | head -1 | grep -o '[0-9][0-9.]*' || echo "0.4.0")
 VERSION_FILE="$STATE_DIR/version"
 LEGACY_VERSION_FILE="$WORKSPACE_ROOT/.career-os/config/version"
@@ -114,6 +116,19 @@ elif [ -d "$WORKSPACE_ROOT/.career-os" ]; then
         # No migration runner — just set the version
         echo "$PLUGIN_VERSION" > "$VERSION_FILE"
     fi
+fi
+
+# Git's built-in union merge driver makes concurrent session ledger appends
+# auto-resolve during the push rebase path.
+GITATTRIBUTES_FILE="$WORKSPACE_ROOT/.gitattributes"
+LEDGER_UNION_ATTR='brain/sessions/ledger/** merge=union'
+if [ ! -f "$GITATTRIBUTES_FILE" ]; then
+    printf '%s\n' "$LEDGER_UNION_ATTR" > "$GITATTRIBUTES_FILE"
+elif ! grep -Fqx "$LEDGER_UNION_ATTR" "$GITATTRIBUTES_FILE" 2>/dev/null; then
+    if [ -s "$GITATTRIBUTES_FILE" ] && [ -n "$(tail -c 1 "$GITATTRIBUTES_FILE" 2>/dev/null || true)" ]; then
+        printf '\n' >> "$GITATTRIBUTES_FILE"
+    fi
+    printf '%s\n' "$LEDGER_UNION_ATTR" >> "$GITATTRIBUTES_FILE"
 fi
 
 # --- First-run detection (v0.29.0) ---
@@ -224,7 +239,7 @@ if git remote get-url origin &>/dev/null; then
     if [ "$UNPUSHED" -gt 0 ]; then
         echo "⚠️ Career OS: ${UNPUSHED} session commits not pushed to remote. Running catch-up push..."
         mkdir -p "$(dirname "$LOG_FILE")"
-        if git push -q origin "$MAIN_BRANCH" 2>> "$LOG_FILE"; then
+        if git_sync_push "$WORKSPACE_ROOT" "$MAIN_BRANCH" "$LOG_FILE"; then
             echo "✅ Career OS: Catch-up push complete (${UNPUSHED} commits)."
         else
             echo "[$(date)] catch-up push failed" >> "$LOG_FILE"
@@ -274,6 +289,7 @@ mkdir -p "$(dirname "$LOG_FILE")"
 COMMIT_PATHS=()
 [ -d "brain/sessions" ] && COMMIT_PATHS+=("brain/sessions")
 [ -f "CLAUDE.md" ] && COMMIT_PATHS+=("CLAUDE.md")
+[ -f ".gitattributes" ] && COMMIT_PATHS+=(".gitattributes")
 [ -f "NEXT_SESSION_HANDOFF.md" ] && COMMIT_PATHS+=("NEXT_SESSION_HANDOFF.md")
 [ -d "Resumes & Cover Letters" ] && COMMIT_PATHS+=("Resumes & Cover Letters")
 [ -d "WIP" ] && COMMIT_PATHS+=("WIP")
@@ -287,7 +303,7 @@ fi
 
 # Serial push (Fix 4: blocking push replaces fire-and-forget background push)
 if git remote get-url origin &>/dev/null; then
-    git push -q origin "$MAIN_BRANCH" 2>> "$LOG_FILE" || echo "[$(date)] git push failed" >> "$LOG_FILE"
+    git_sync_push "$WORKSPACE_ROOT" "$MAIN_BRANCH" "$LOG_FILE" || echo "[$(date)] git push failed" >> "$LOG_FILE"
 fi
 
 echo "Session logging active. New session: $TODAY $TIMESTAMP" >> "$LOG_FILE"

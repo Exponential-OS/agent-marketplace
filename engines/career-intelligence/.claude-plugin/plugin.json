@@ -1,7 +1,7 @@
 {
   "name": "career-intelligence",
   "platform": "xHumanOS",
-  "version": "0.73.2",
+  "version": "0.73.3",
   "depends_on_kernel": [
     "brain-kernel >= 1.0.0"
   ],

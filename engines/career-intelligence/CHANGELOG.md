@@ -2,6 +2,11 @@
 <!-- this file is the historical changelog. Entries reference the original author/user as provenance, not runtime data. -->
 # Changelog
 
+## [0.73.3] — 2026-06-24 — session-logger push resilient to non-fast-forward (XOS-64)
+
+### Fixed
+- The session-logger pushed `main` with no pull-first, so when another checkout pushed first this one could never fast-forward and commits piled up unpushed (observed: 53 stuck, backup degraded). New shared `hooks/scripts/_git-sync-push.sh` (`git_sync_push`): push → on non-ff, `fetch` + `rebase --autostash origin/<branch>` → retry; on an un-auto-resolvable conflict, `rebase --abort` + log "manual reconcile needed" with local commits left intact. Never creates a branch, never leaves a mid-rebase tree. Wired into all four push sites (capture-prompt, capture-response, init-repo ×2). init-repo also idempotently writes `brain/sessions/ledger/** merge=union` to the workspace `.gitattributes` so concurrent session ledger appends auto-resolve during the rebase. FAIL-HARD/error-logging preserved; hooks stay silent on success.
+
 ## [0.73.2] — 2026-06-23 — SessionStart hooks silent on success (XOS-61)
 
 ### Fixed

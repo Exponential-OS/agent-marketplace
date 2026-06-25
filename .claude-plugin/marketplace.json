@@ -16,7 +16,7 @@
       "license": "Proprietary",
       "source": "./engines/career-intelligence",
       "description": "Career Intelligence Engine \u2014 xHumanOS engine for job search, network, pipeline, sessions. v0.73.0: workspace-binding gate primitive \u2014 the 3 duplicated hook cwd-guards (the v0.66 single-slot miss behind the 408-stray-commits incident) replaced by one shared manifest-driven gate + CI audit, so hooks never scaffold/commit outside a bound workspace. Carries v0.72 dedup-gate JSON fix + v0.71 claim-grounding gate (resume-engine no longer fabricates metrics) + job-match-scorer off-rubric risk scan.",
-      "version": "0.73.2",
+      "version": "0.73.3",
       "category": "career",
       "homepage": "https://github.com/Exponential-OS/career-intelligence-engine"
     },

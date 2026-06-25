@@ -104,6 +104,7 @@ fi
 WORKSPACE_ROOT="$(pwd)"
 STATE_DIR="${CLAUDE_PLUGIN_DATA:-$HOME/.career-os-state}"
 MAIN_BRANCH="main"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # WORKSPACE-IDENTITY GATE (v0.66.0)
@@ -114,7 +115,8 @@ MAIN_BRANCH="main"
 # WORKSPACE-BINDING GATE (XOS-39): single shared, manifest-driven gate. Sourcing it
 # exit-0's HERE (silent no-op) when cwd is not a bound Career OS workspace — never write
 # ledger / commit / push outside it. Replaces the per-script is_career_os_workspace() copy.
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/_workspace-gate.sh"
+source "$SCRIPT_DIR/_workspace-gate.sh"
+source "$SCRIPT_DIR/_git-sync-push.sh"
 
 cd "$WORKSPACE_ROOT"
 
@@ -194,5 +196,5 @@ git commit -q -m "session-log: response $TODAY $TIMESTAMP — $STAGED_FILES_COUN
 
 # Serial push (Fix 4: blocking push replaces fire-and-forget background push)
 if git remote get-url origin &>/dev/null; then
-    git push -q origin "$MAIN_BRANCH" 2>> "$LOG_FILE" || echo "[$(date)] git push failed" >> "$LOG_FILE"
+    git_sync_push "$WORKSPACE_ROOT" "$MAIN_BRANCH" "$LOG_FILE" || echo "[$(date)] git push failed" >> "$LOG_FILE"
 fi
