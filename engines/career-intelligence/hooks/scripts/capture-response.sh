@@ -119,6 +119,7 @@ source "$SCRIPT_DIR/_workspace-gate.sh"
 source "$SCRIPT_DIR/_git-sync-push.sh"
 
 cd "$WORKSPACE_ROOT"
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 TODAY=$(date +%Y-%m-%d)
 TIMESTAMP=$(date +%H:%M:%S)
@@ -145,6 +146,14 @@ fi
 # Advisory only — failures are logged but never block session capture.
 LOG_FILE="$STATE_DIR/git-errors.log"
 mkdir -p "$(dirname "$LOG_FILE")"
+
+# Gate matches isXos98TelemetryEnabled (src/telemetry/events.ts): only 1|true|yes|on.
+# XOS_98_TELEMETRY=0/false/off (or unset) → OFF: no Bun spawn, no git-errors.log noise.
+case "$(printf '%s' "${XOS_98_TELEMETRY:-}" | tr '[:upper:]' '[:lower:]')" in 1|true|yes|on) XOS98_ON=1 ;; *) XOS98_ON= ;; esac
+if [ -n "${XOS98_ON}" ] && command -v bun >/dev/null 2>&1; then
+    bun "$PLUGIN_ROOT/src/telemetry/nsm.ts" session-stop '{}' >> "$LOG_FILE" 2>&1 \
+        || echo "[$(date)] XOS-98 active_user_time emission failed" >> "$LOG_FILE"
+fi
 
 JUDGE_SCRIPT="$(dirname "$0")/judge-session.py"
 if [ -f "$JUDGE_SCRIPT" ] && command -v python3 &>/dev/null; then

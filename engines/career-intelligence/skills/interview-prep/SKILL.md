@@ -65,7 +65,7 @@ All writes go through `brain.write()`. `interview-prep/` maps to the engine's
 
 ### Legacy Read Tolerance
 
-Canonical write path: `brain/interview-prep/prep-{slug}.md`.
+Canonical write path: `career-intelligence/projects/interview-prep/prep-{company}.md`.
 
 The skill may encounter files that pre-date this convention or were
 written outside the skill (user-initiated notes, legacy installs). On

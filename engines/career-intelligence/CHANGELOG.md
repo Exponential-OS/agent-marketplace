@@ -2,6 +2,17 @@
 <!-- this file is the historical changelog. Entries reference the original author/user as provenance, not runtime data. -->
 # Changelog
 
+## [0.73.4] — 2026-06-28 — XOS-98 local beta funnel + NSM telemetry
+
+### Added
+- XOS-98 LOCAL slice: shared gated JSONL telemetry primitive plus beta-funnel and NSM event helpers. Events append only to the local events log when `XOS_98_TELEMETRY` is enabled; default is no write and no file creation.
+- Local funnel/NSM detection wires for onboarding start/completion, first artifact + activation, apply-tracker/browser-submit VOW, D7 return at SessionStart, and coarse active user time at Stop.
+- Tests for default-off gating, no network tokens in `src/telemetry/**`, PII-safe event shapes, first-artifact activation without VOW, active-time buckets, and unchanged cover-letter behavior.
+- `package.json` `test:all` now ignores `tests/_archive`, matching the live CI boundary in `tests/run-all.sh`.
+
+### Not included
+- No outbound transport, opt-in product decision, or README privacy-language change.
+
 ## [0.73.3] — 2026-06-24 — session-logger push resilient to non-fast-forward (XOS-64)
 
 ### Fixed

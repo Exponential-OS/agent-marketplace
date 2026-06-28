@@ -100,6 +100,16 @@ xOS primitives — permitted via `writes_to_primitives` declaration.
 | Message draft | `career-intelligence/projects/outreach-{contact}-{date}.md` | Every outreach |
 | New contact profile | `network/people/{slug}.md` | When new contact ingested |
 
+### Local Artifact Event
+
+After any successful message-draft write, emit the local-only beta-funnel
+artifact signal. The helper no-ops unless `XOS_98_TELEMETRY` is enabled:
+
+```bash
+bun "$CLAUDE_PLUGIN_ROOT/src/telemetry/beta-funnel.ts" artifact-created \
+  '{"artifact_type":"outreach"}'
+```
+
 ---
 
 ## STEP 0: Dedup Pre-Flight (MANDATORY — fires before every trigger, no exceptions)

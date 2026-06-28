@@ -69,6 +69,17 @@ def score_stars(score):
     return ""
 
 
+def extract_intro_badge(warm_path_str):
+    if isinstance(warm_path_str, list):
+        warm_path_str = warm_path_str[0] if warm_path_str else ""
+    if not warm_path_str:
+        return ""
+    badge = str(warm_path_str).strip().splitlines()[0].strip()
+    return "" if badge == "—" else badge
+
+
+# CLI output cannot track intro_badge_clicked; gate any future interactive UI telemetry behind XOS-98.
+
 # ── section renderers ─────────────────────────────────────────────────────────
 
 def render_header(pipeline):
@@ -140,6 +151,7 @@ def render_active(pipeline, tracker_data):
         recruiter = s.get("recruiter") or s.get("hiring_manager") or "—"
         comp_note = s.get("comp_note", "")
         warm = s.get("warm_path", "")
+        intro_badge = extract_intro_badge(warm)
         next_action = s.get("next_action", "")
         detail = s.get("stage_detail", "")
 
@@ -157,8 +169,8 @@ def render_active(pipeline, tracker_data):
             print(f"     Recruiter/HM: {recruiter}")
         if comp_note:
             print(f"     Comp: {comp_note}")
-        if warm:
-            print(f"     Warm path: {warm}")
+        if intro_badge and intro_badge.lower() != "cold":
+            print(f"     Intro: {intro_badge}")
         if next_action:
             print(f"     → {next_action}")
 
@@ -189,7 +201,7 @@ def render_applied(pipeline, tracker_data):
         tid = s.get("tracker_id")
         company = s.get("company", "—")[:19]
         role = s.get("role", "—")[:39]
-        warm = s.get("warm_path", "—")
+        warm = extract_intro_badge(s.get("warm_path", "—")) or "—"
         stage = s.get("stage", "")
 
         score_str = ""
@@ -236,9 +248,7 @@ def render_queue(tracker_data):
         score = r.get("score")
         score_str = f"{score}% {score_stars(score)}" if score else "—"
         warm = r.get("warm_path") or r.get("warm_path_note") or "—"
-        if isinstance(warm, list):
-            warm = warm[0] if warm else "—"
-        warm = str(warm)[:30]
+        warm = (extract_intro_badge(warm) or "—")[:30]
         print(f"#{tid:<5} {company:<22} {role:<42} {score_str:<8} {warm}")
 
     if len(queue) > 20:

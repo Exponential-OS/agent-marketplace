@@ -118,6 +118,22 @@ Scan → Score → Ready to Apply → Applied → [Waiting] → Screen → Inter
                                  Rejected              Rejected  Declined
 ```
 
+### Local NSM Event
+
+After any successful outward status advance to Applied, Screen, Interview, or
+Offer, emit the local-only VOW signal. The payload is a coarse enum only; do
+not include company, role, notes, recruiter names, or prompt text. The helper
+no-ops unless `XOS_98_TELEMETRY` is enabled:
+
+```bash
+bun "$CLAUDE_PLUGIN_ROOT/src/telemetry/nsm.ts" vow '{"kind":"applied"}'
+```
+
+Use `kind:"applied"` for Ready to Apply → Applied, `kind:"screen"` for
+Applied → Screen Scheduled, `kind:"interview"` for Screen → Interview, and
+`kind:"offer"` for Interview → Offer. Do not emit a VOW for resume, cover
+letter, or outreach artifact creation alone.
+
 ### Transition Actions
 
 Each transition triggers specific file updates:
@@ -174,7 +190,18 @@ Each transition triggers specific file updates:
   prep GitHub Issues (`kind:prep`) remain — `interviewer-research` is the
   research substrate behind them; per-round talking-points generation
   stays with the `interview-prep` skill.
-- Suggest: "Say 'prep me for [Company]' to generate interview prep"
+- **NEW (XOS-105):** ALSO auto-surface the `interview-prep` skill when the
+  tracker status is now `INTERVIEWING` and the pipeline stage is
+  `panel_interview`. Use canonical prep path
+  `career-intelligence/projects/interview-prep/prep-{company}.md`.
+  If that file already exists, skip silently. If it does not exist, invoke
+  `interview-prep` with `{company, role, stage:"panel_interview", interviewers,
+  date, jd_path}` using the same payload shape as `interviewer-research`.
+  Use dedupe key `tracker_id:company:role:status_updated_at`. When
+  `XOS_98_TELEMETRY` is set, append the local-only `interview_prep_surfaced`
+  event through `rules/interview-prep-autosurface/handler.ts`; default is
+  no event. Then show exactly one confirmation line:
+  `Interview prep surfaced: career-intelligence/projects/interview-prep/prep-{company}.md`.
 
 **Screen → Rejected**
 - Match Tracker: set `status` = `"REJECTED"`, `updated_at` = today

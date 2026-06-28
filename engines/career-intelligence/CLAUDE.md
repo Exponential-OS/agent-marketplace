@@ -172,7 +172,8 @@ skills/
   pipeline-sync/        Reconcile pipeline, tracker, and tasks
   apply-tracker/        Post-application status lifecycle
   cruise-control/       Autonomous execution engine
-  resume-engine/        JD-specific resume + cover letter generation
+  resume-engine/        JD-specific resume customization
+  cover-letter/         Standalone cover-letter generation
   interview-prep/       Story-to-round mapping and mock interviews
   network-intelligence/ Warm intro discovery and contact mapping
   outreach-composer/    Calibrated outreach messages

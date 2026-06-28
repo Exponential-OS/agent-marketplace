@@ -297,7 +297,7 @@ that touch every shared file. Safety rules:
 
 APPLY work items generate a **resume only** by default. Cover letters are
 NEVER auto-generated as part of an APPLY item — they are a separate, opt-in
-deliverable (see `resume-engine/SKILL.md` Opt-In Gate). A cover letter is
+deliverable (see `cover-letter/SKILL.md`). A cover letter is
 produced only if the work item text explicitly says "cover letter", e.g.:
 
 - `T-47: Apply to Harvey Director — include cover letter` → generate both

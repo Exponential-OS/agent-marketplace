@@ -2,17 +2,14 @@
 name: resume-engine
 description: >
   JD-specific resume customization with ATS optimization, multi-track support
-  (Engineering Leader, Innovator, Executive), cover letter generation, and
-  automated QA gates. Writes to Resumes & Cover Letters/. Say "customize
-  resume for [Company]" or "cover letter for [Company]".
+  (Engineering Leader, Innovator, Executive), and automated QA gates. Writes
+  to Resumes & Cover Letters/. Say "customize resume for [Company]".
 triggers:
   - customize resume for
   - re
   - build resume
   - resume for
   - tailor resume for
-  - cover letter for
-  - write cover letter
   - list resume tracks
   - generate my base resume from experience history
 ---
@@ -41,7 +38,7 @@ Your tracks are inferred from `Resumes & Cover Letters/` filenames by default. T
 
 ## Purpose
 
-Generates and customizes resumes targeted at specific roles. Supports multiple resume tracks, optimizes for ATS keyword matching against stored JDs, generates cover letters, and enforces QA gates before output.
+Generates and customizes resumes targeted at specific roles. Supports multiple resume tracks, optimizes for ATS keyword matching against stored JDs, and enforces QA gates before output.
 
 ## Output Format
 
@@ -78,7 +75,7 @@ If `Resumes & Cover Letters/` is empty → WARN (proceed to generate base resume
 - `resume for #68` — by match tracker number (auto-resolves track + JD)
 - `resume for Harvey Director` — fuzzy name resolution
 - `generate my base resume from experience history` — draft initial resume from onboarding data
-- `cover letter for [Company]` — generate a targeted cover letter
+- `cover letter for [Company]` — handled by the standalone `cover-letter` skill
 - `list resume tracks` — show available tracks and their targets
 
 ---
@@ -87,8 +84,8 @@ If `Resumes & Cover Letters/` is empty → WARN (proceed to generate base resume
 
 Resume-engine accepts role references in three forms:
 
-1. **Company name:** "cover letter for Harvey AI" — search pipeline/tracker by name
-2. **`#N` reference:** "cover letter for #68" — look up by match tracker entry number
+1. **Company name:** "resume for Harvey AI" — search pipeline/tracker by name
+2. **`#N` reference:** "resume for #68" — look up by match tracker entry number
 3. **Fuzzy name:** "resume for Harvey Director" — fuzzy match on company + role
 
 ### Resolution Flow
@@ -106,11 +103,11 @@ When the user provides `#N` or a fuzzy name:
 When routed from apply-dashboard with pre-loaded context, skip the resolution
 step and use the provided context directly.
 
-**Auto-resolved context** (when invoked via `cover letter for #68`):
+**Auto-resolved context** (when invoked via `resume for #68`):
 - Resume track: Exec (from match tracker)
 - JD URL: resolved from match tracker (auto-fetched)
-- Score + rationale: for cover letter framing
-- Warm path: affects cover letter tone (referral mention vs cold)
+- Score + rationale: for resume framing
+- Warm path: available for downstream apply-flow context
 
 This eliminates the back-and-forth where the engine asks "which track?"
 or "can you paste the JD?"
@@ -137,16 +134,15 @@ existing behavior (accept company name, ask for track selection).
 
 ### Brain API (brain-kernel >= 1.0.0)
 
-Resumes and cover letters are owned paths. All writes go through `brain.write()`
-with `engine_id: "career-intelligence"`.
+Resumes are owned paths. All writes go through `brain.write()` with
+`engine_id: "career-intelligence"`. Cover-letter artifacts are owned by the
+standalone `cover-letter` skill.
 
 ### Outputs
 
 | Output | brain.write() path | When Created |
 |--------|-------------------|-------------|
 | Customized resume | `career-intelligence/resumes/{company}-{track}-{date}.md` | Every customize |
-| Cover letter (DOCX) | `career-intelligence/cover-letters/{company}-cover-{date}.docx` | Every cover letter (editable source) |
-| Cover letter (PDF) | `career-intelligence/cover-letters/{company}-cover-{date}.pdf` | Every cover letter (final for upload) |
 
 ---
 
@@ -235,6 +231,14 @@ Fix the 2 quantification warnings? I can suggest metrics from your stories.
 
 Write via `brain.write("career-intelligence/resumes/{company}-{track}-{date}.md", ...)` with engine_id "career-intelligence"
 
+After the write succeeds, emit the local-only beta-funnel artifact signal. The
+helper no-ops unless `XOS_98_TELEMETRY` is enabled:
+
+```bash
+bun "$CLAUDE_PLUGIN_ROOT/src/telemetry/beta-funnel.ts" artifact-created \
+  '{"artifact_type":"resume"}'
+```
+
 Present summary:
 ```
 ━━━ Resume Ready ━━━
@@ -250,105 +254,26 @@ File: Resumes & Cover Letters/{company}-engineering-leader-{date}.md
 
 ---
 
-## BEHAVIOR: Cover Letter (`cover letter for [Company]`)
+## BEHAVIOR: Cover Letter Requests (`cover letter for [Company]`)
 
-### Opt-In Gate (WO-044, REQ-002)
+Cover-letter generation is owned by the standalone `cover-letter` skill. This
+resume-engine section exists only as a legacy/delegation path so older routing
+does not regress.
 
-**Cover letters are NEVER generated unless the user explicitly asks.** They
-are a separate deliverable with different intent — some roles don't need one,
-some portals don't accept one, and some users prefer to write their own.
+If a cover-letter request reaches resume-engine:
 
-**Explicit triggers (generate cover letter):**
-- `cover letter for [Company]`
-- `cover letter for #N`
-- `write cover letter for [Company]`
-
-**NOT triggers (do NOT generate a cover letter):**
-- `customize resume for [Company]` — resume only
-- `resume for #N` — resume only
-- `apply-dashboard` routing `resume for #N` — resume only
-- `cruise-control` batch processing — resume only unless the work item text
-  explicitly says "cover letter"
-
-### Step 1: Gather Context
-1. Read JD + pipeline entry
-2. Select 2-3 most relevant stories (by competency match to JD)
-
-### Step 2: Generate
-
-Structure:
-- **Hook:** Company-specific opening — reference their product, recent news, mission, or a specific problem they're solving. Never generic.
-- **Match:** 2-3 paragraphs mapping your experience to their top 3 requirements. Each paragraph: claim → evidence (story with metric) → relevance to them.
-- **Value:** What you uniquely bring — not "passionate about AI" but a specific capability they can't easily find elsewhere.
-- **Close:** Specific next step tied to their process. Never "I look forward to hearing from you."
-
-### Step 3: QA Gates
-
-| Gate | Check |
-|------|-------|
-| Length | < 400 words |
-| Generic filler | No "I am writing to express my interest", "passionate about", "unique opportunity" |
-| Company specificity | Company name mentioned ≥3 times with specific context |
-| Metrics | At least 1 metric from user's stories |
-| Tone | Confident but not arrogant. Human voice, not AI voice. |
-
-### Step 4: Output (DOCX + PDF, WO-044)
-
-Portals (Greenhouse, Ashby, Lever, Workday) require uploadable document
-formats. Markdown cover letters cannot be uploaded anywhere. Output both
-formats using the same toolchain as resumes:
-
-1. **Generate DOCX** using the cover letter template at
-   `Resumes & Cover Letters/templates/cover-letter-template.docx`.
-   - If the template does not exist, create a minimal professional template
-     on first use: single-column, standard 1" margins, contact info header,
-     no footer. Commit the template so future generations reuse it.
-   - Populate: recipient (hiring manager if known, else "Hiring Team"),
-     date, company, role, and the body paragraphs from Step 2.
-   - DOCX generation approach: use the same XML-surgery pattern (unzip,
-     edit `word/document.xml`, rezip) that the resume customization flow
-     uses, OR use `python-docx` if no template-surgery path exists yet.
-     Either way, match the user's resume track visual style (font family,
-     margins, header format) for brand consistency.
-
-2. **Generate PDF** via LibreOffice headless conversion:
-   ```bash
-   libreoffice --headless --convert-to pdf --outdir "{output_dir}" "{output_dir}/{company}-cover-{date}.docx"
-   ```
-   Where `{output_dir}` is the absolute path to `$CAREER_HOME/career-intelligence/cover-letters/`.
-   The `--outdir` flag ensures the PDF lands in a known location regardless of the current working
-   directory, so `brain.write()` can reliably read from `{output_dir}/{company}-cover-{date}.pdf`.
-
-3. **Output paths (via brain.write()):**
-   ```
-   career-intelligence/cover-letters/{company}-cover-{date}.docx  (editable)
-   career-intelligence/cover-letters/{company}-cover-{date}.pdf   (final)
-   ```
-
-4. **Summary output:**
-   ```
-   ━━━ Career OS: Resume Engine ━━━
-
-   Cover letter for {Company} {Role}:
-
-   Stories used: {story1}, {story2}
-   Company hooks: {specific references}
-   QA: All gates passed ✅
-
-   Files:
-     DOCX (edit): Resumes & Cover Letters/{company}-cover-{date}.docx
-     PDF (final): Resumes & Cover Letters/{company}-cover-{date}.pdf
-
-   Next: review the DOCX, make edits, then re-export PDF if changed.
-   ```
-
-5. **LibreOffice not installed:** DOCX still generates; PDF conversion
-   fails with an actionable message:
-   `"PDF conversion requires LibreOffice. Install with 'brew install --cask libreoffice' then re-run."`
-
-6. **No markdown fallback.** The `.md` cover letter output path is removed
-   entirely (P2 Minimize Code — markdown cover letters can't be uploaded
-   to any ATS, so the code path eliminates a class of unusable output).
+1. Confirm the request explicitly asks for a cover letter. Never generate one
+   from `customize resume for`, `resume for #N`, or batch apply work unless the
+   work item text says "cover letter".
+2. Resolve `#N`, company, or fuzzy role references using the same Role
+   Resolution flow above when useful.
+3. Invoke `skills/cover-letter/SKILL.md` with the resolved context:
+   company, role, JD or JD URL/content, score/rationale, resume track, and
+   warm path if present.
+4. Set the cover-letter event context to `standalone: false`.
+5. Do not draft, QA, format, or emit cover-letter files inside resume-engine.
+   `skills/cover-letter/SKILL.md` is the single source of truth for cover
+   letter generation, grounding, DOCX/PDF output, and local event emission.
 
 ---
 

@@ -280,6 +280,17 @@ fi
     echo ""
 } >> "$LEDGER_FILE"
 
+# Gate matches isXos98TelemetryEnabled (src/telemetry/events.ts): only 1|true|yes|on.
+# XOS_98_TELEMETRY=0/false/off (or unset) → OFF: no Bun spawn, no git-errors.log noise.
+case "$(printf '%s' "${XOS_98_TELEMETRY:-}" | tr '[:upper:]' '[:lower:]')" in 1|true|yes|on) XOS98_ON=1 ;; *) XOS98_ON= ;; esac
+if [ -n "${XOS98_ON}" ] && command -v bun >/dev/null 2>&1; then
+    D7_PAYLOAD=$(LEDGER_DIR="$LEDGER_DIR" python3 -c 'import json, os; print(json.dumps({"ledgerDir": os.environ["LEDGER_DIR"]}))' 2>/dev/null || echo '{}')
+    bun "$PLUGIN_ROOT/src/telemetry/beta-funnel.ts" d7-return "$D7_PAYLOAD" >> "$LOG_FILE" 2>&1 \
+        || echo "[$(date)] XOS-98 d7_return emission failed" >> "$LOG_FILE"
+    bun "$PLUGIN_ROOT/src/telemetry/nsm.ts" session-start '{}' >> "$LOG_FILE" 2>&1 \
+        || echo "[$(date)] XOS-98 session-start marker failed" >> "$LOG_FILE"
+fi
+
 # Commit session start marker (Fix 2: error logging, Fix 5: WIP/ scope)
 # XOS-28 (2026-06-06): SCOPED COMMIT — back-port the v0.66 sister-script fix that
 # was missed on this third sister twice. Build a pathspec of only paths that

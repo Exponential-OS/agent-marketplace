@@ -66,7 +66,8 @@ perform the action yourself by directly editing files.
 | Enrich warm paths on scan results | `job-search-scheduler` | "enrich warm paths", "warm paths", "find connections", "check my network", "find referrals", "network scan" |
 | Score/evaluate roles | `job-match-scorer` | "score these", "match score", "rate this role", "score the latest scan" |
 | Rescore title-only roles | `job-match-scorer` | "rescore queue", "rescore JD-fetched", "rescore title-only" |
-| Customize resume or cover letter | `resume-engine` | "customize resume for [Co]", "cover letter for [Co]" |
+| Customize resume | `resume-engine` | "customize resume for [Co]", "resume for [Co]" |
+| Write cover letter | `cover-letter` | "cover letter for [Co]", "write a cover letter for [Co]" |
 | Answer portal questions | `application-qa` | "answer questions for [Co]", "portal questions" |
 | Record application or status change | `apply-tracker` | "I applied to [Co]", "got rejected from", "heard back" |
 | View active pipeline (interviews, referrals, stage detail) | `pipeline-view` | "pipeline", "show pipeline", "referrals", "who's advancing", "apply queue", "pipeline summary" |
@@ -90,7 +91,8 @@ perform the action yourself by directly editing files.
 - Never edit story files — that's story-capture or organize
 - Never edit people files — that's network-intelligence
 - Never edit `skills-matrix.md` — that's skills-update
-- Never generate resumes/cover letters — that's resume-engine
+- Never generate resumes — that's resume-engine
+- Never generate cover letters — that's cover-letter
 - Never write outreach messages — that's outreach-composer
 - Never score roles — that's job-match-scorer
 
@@ -244,7 +246,8 @@ QUICK ACTIONS
   → "score the latest scan"      Score new roles (Opus)
 
   ━━ Apply ━━
-  → "customize resume for [Co]"  Tailor resume + cover letter
+  → "customize resume for [Co]"  Tailor resume
+  → "cover letter for [Co]"      Generate cover letter
   → "answer questions for #N"    Portal question answers
   → "I applied to [Co]"          Record application
 

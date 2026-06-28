@@ -231,31 +231,30 @@ value-asserting test per structure, minimum.
 - **Coherence test:** _(pending)_
 - **Incident history:** None.
 
-### `brain/interview-prep/` directory layout
+### `career-intelligence/projects/interview-prep/` directory layout
 
-- **Version:** v1.0 (prep-{slug}.md convention, per WO-054)
+- **Version:** v2.0 (engine-owned `prep-{company}.md` convention, per XOS-105)
 - **Format:** Flat directory. Three filename prefixes:
   ```
-  brain/interview-prep/
-  ├── prep-<slug>.md          # round prep docs (canonical)
-  ├── intel-<slug>.md         # insider-intel notes (role context, interviewer background)
+  career-intelligence/projects/interview-prep/
+  ├── prep-<company>.md       # round prep docs (canonical)
+  ├── intel-<company>.md      # insider-intel notes (role context, interviewer background)
   └── _archive/
-      └── prep-<slug>-ARCHIVED.md  # retired prep docs
+      └── prep-<company>-ARCHIVED.md  # retired prep docs
   ```
-  `<slug>` is the lowercased company name (hyphen-separated) with optional
-  role/stage suffix when disambiguation is needed
-  (e.g. `prep-amazon-aws-core-networking.md`, `prep-scale-ai-mihir.md`).
+  `<company>` is the company token used by the prep skill, with optional
+  role/stage suffix when disambiguation is needed.
 - **Sole writer (canonical path):** `skills/interview-prep/SKILL.md` — writes
-  to `prep-{slug}.md` only. Does NOT write `intel-*.md` (manual/user-initiated
-  class).
+  to `career-intelligence/projects/interview-prep/prep-{company}.md` only.
+  Does NOT write `intel-*.md` (manual/user-initiated class).
 - **Consumers (readers):**
   - `skills/interview-prep/SKILL.md` (legacy-read tolerant — accepts any
     `*.md` match; prefers `prep-*.md`; ignores `_archive/` unless asked)
   - `skills/mission-control/SKILL.md` (prep availability check)
   - `skills/cruise-control/SKILL.md` (round-prep orchestration)
 - **Coherence test:** `tests/test-hooks.sh` [B-interview-prep-convention]
-  — asserts every non-archived file in `brain/interview-prep/` matches
-  `prep-*.md` or `intel-*.md` after migration.
+  — legacy migration regression that asserts every non-archived prep file
+  matches `prep-*.md` or `intel-*.md` after migration.
 - **Incident history:** v0.0 → v1.0 drift surfaced 2026-04-23 when cleanup
   of loose WIP-root prep files exposed a gap between SKILL.md's canonical
   `prep-{company}.md` spec and on-disk legacy `{company}-*-prep.md` files

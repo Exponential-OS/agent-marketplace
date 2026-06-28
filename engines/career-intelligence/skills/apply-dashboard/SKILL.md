@@ -28,9 +28,9 @@ to the right downstream skill — so you never need to remember which skill
 handles what.
 
 Think of it as a thin dispatcher: it owns the view (via `pipeline-query.py`)
-and the routing (to apply-tracker, resume-engine, application-qa). It does
-NOT contain business logic for resume generation, question answering, or
-file updates.
+and the routing (to apply-tracker, cover-letter, resume-engine, and
+application-qa). It does NOT contain business logic for resume generation,
+question answering, or file updates.
 
 ## Output Format
 
@@ -50,7 +50,7 @@ Always start your response with:
 - `dashboard applied` — show what's been applied to (tracking)
 
 ### Action Commands (routed to downstream skills)
-- `cover letter for #68` or `cover letter for Harvey Director` → resume-engine
+- `cover letter for #68` or `cover letter for Harvey Director` → cover-letter
 - `resume for #75` or `resume for Kadence` → resume-engine
 - `answer questions for #68` or `answer #68` → application-qa
 - `applied to #75` or `applied to Kadence` → apply-tracker
@@ -156,7 +156,7 @@ When the user's command includes an action:
 
 | Action | Downstream Skill | Context Passed |
 |--------|-----------------|----------------|
-| `cover letter for #N` | resume-engine | Company, role, JD URL, resume track, score |
+| `cover letter for #N` | cover-letter | Company, role, JD URL, resume track, score |
 | `resume for #N` | resume-engine | Company, role, JD URL, resume track |
 | `answer questions for #N` | application-qa | Company, role, JD URL, score, match rationale |
 | `applied to #N` | apply-tracker | Company, role, date (today), score |
@@ -174,7 +174,7 @@ The user wants a cover letter for:
 - JD URL: https://jobs.ashbyhq.com/harvey/3d3aaf03-...
 - Warm Path: Cold
 
-Please generate a cover letter following the resume-engine workflow.
+Please generate a cover letter following the cover-letter workflow.
 ```
 
 ---
@@ -245,7 +245,8 @@ show a `✓ verified` suffix after the indicator.
 |-------|-------------|
 | job-match-scorer | Upstream — job-match-scorer writes data that dashboard reads |
 | apply-tracker | Downstream — dashboard routes status updates here |
-| resume-engine | Downstream — dashboard routes cover letter/resume requests here |
+| cover-letter | Downstream — dashboard routes cover letter requests here |
+| resume-engine | Downstream — dashboard routes resume requests here |
 | application-qa | Downstream — dashboard routes portal question requests here |
 | cruise-control | Peer — CC reads the same data for batch execution |
 | pipeline-sync | Peer — sync validates the files that dashboard reads |

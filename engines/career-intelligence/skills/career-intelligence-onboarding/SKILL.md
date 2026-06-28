@@ -56,8 +56,14 @@ After they answer:
 1. Create: `mkdir -p "$CAREER_HOME/identity" "$CAREER_HOME/network/people" "$CAREER_HOME/career-intelligence"`
 2. Persist: `echo 'export CAREER_HOME="<path>"' >> ~/.zshrc && export CAREER_HOME="<path>"`
 3. Print: "Workspace ready at `$CAREER_HOME`. Let's capture your background."
+4. Emit the local-only onboarding start signal. The helper no-ops unless
+   `XOS_98_TELEMETRY` is enabled:
+   ```bash
+   bun "$CLAUDE_PLUGIN_ROOT/src/telemetry/beta-funnel.ts" onboarding-started '{}'
+   ```
 
-If already set: confirm directory is writable and proceed.
+If already set: confirm directory is writable, emit the same onboarding start
+signal, and proceed.
 
 ---
 
@@ -112,6 +118,11 @@ After all 8 answers:
 4. Validate: confirm both files exist and are non-empty.
 
 5. Smoke test: confirm `experience-history.md` has at least one role entry and `job-search-config.md` has a `target_roles` field.
+
+6. Emit the local-only onboarding completion signal:
+   ```bash
+   bun "$CLAUDE_PLUGIN_ROOT/src/telemetry/beta-funnel.ts" onboarding-completed '{}'
+   ```
 
 ---
 

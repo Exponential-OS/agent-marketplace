@@ -72,6 +72,17 @@ type BrowserSubmitResult = {
 };
 ```
 
+After a submit-mode run returns `submitted: true` with a non-empty
+`confirmation_id`, emit the local-only VOW signal. Do not emit this for dry-run
+results, failed submits, or submits without confirmation:
+
+```bash
+bun "$CLAUDE_PLUGIN_ROOT/src/telemetry/nsm.ts" browser-submit "$(jq -nc \
+  --argjson submitted true \
+  --arg confirmation_id "{confirmation_id}" \
+  '{submitted:$submitted,confirmation_id:$confirmation_id}')"
+```
+
 ## Persistent profile bootstrap
 
 First-time setup (human, one-time per ATS):

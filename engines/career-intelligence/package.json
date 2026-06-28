@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "bun test tests/test_brain_kernel_bootstrap.ts",
-    "test:all": "bun test tests/ && pytest tests/ -x -q"
+    "test:all": "bun test tests/ && pytest tests/ -x -q --ignore=tests/_archive"
   },
   "devDependencies": {
     "@types/bun": "latest"

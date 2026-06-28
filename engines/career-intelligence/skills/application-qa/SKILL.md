@@ -210,7 +210,7 @@ When the user pastes specific portal questions:
 ## Scope Boundary (WO-044)
 
 This skill answers portal application questions (text fields). It does
-**NOT** generate cover letters — that is `resume-engine`'s job. If a portal
+**NOT** generate cover letters — that is `cover-letter`'s job. If a portal
 question field asks "paste your cover letter" or "why are you interested,"
 redirect:
 
@@ -219,7 +219,7 @@ redirect:
 
 Do not generate the cover letter inline in an answer field. Cover letters
 are a separate deliverable with their own QA gates, file format, and opt-in
-gate (see `resume-engine/SKILL.md` BEHAVIOR: Cover Letter).
+gate (see `cover-letter/SKILL.md`).
 
 ## INTERACTION WITH OTHER SKILLS
 
@@ -227,6 +227,7 @@ gate (see `resume-engine/SKILL.md` BEHAVIOR: Cover Letter).
 |-------|-------------|
 | apply-dashboard | Upstream — routes "answer questions for #N" here with pre-resolved context |
 | job-match-scorer | Upstream — scoring rationale informs answer framing |
-| resume-engine | Peer — answers complement the resume (don't contradict resume framing). Cover letters are resume-engine's exclusive territory. |
+| cover-letter | Peer — owns cover-letter generation and QA gates |
+| resume-engine | Peer — answers complement the resume (don't contradict resume framing) |
 | apply-tracker | Downstream — "applied to #N" after submitting answers |
 | story-capture | Upstream — stories are the evidence base for all answers |
