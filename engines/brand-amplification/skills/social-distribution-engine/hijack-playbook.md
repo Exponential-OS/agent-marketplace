@@ -5,7 +5,7 @@ scope: distribution-engine
 created: 2026-05-07
 updated: 2026-05-17
 status: active
-customer-config: "$CAREER_HOME/brain/social-distribution-engine/hijack-examples.md"
+customer-config: "$CAREER_HOME/brand-amplification/identity/hijack-examples.md"
 related: content-flywheel.md
 ---
 
@@ -106,7 +106,7 @@ Shorter comment (2-3 sentences) is fine here — signal/effort ratio matters mor
 
 ## Logged Hijacks
 
-Customer-specific logged hijacks live in `$CAREER_HOME/brain/social-distribution-engine/hijack-examples.md`.
+Customer-specific logged hijacks live in `$CAREER_HOME/brand-amplification/identity/hijack-examples.md`.
 
 Template for each row:
 

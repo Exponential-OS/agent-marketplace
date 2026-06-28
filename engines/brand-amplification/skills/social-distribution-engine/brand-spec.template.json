@@ -1,5 +1,5 @@
 {
-  "_comment": "Template — do NOT edit here. Customer config lives at $CAREER_HOME/brain/social-distribution-engine/brand-spec.json. Copy this template during onboarding and fill in your values.",
+  "_comment": "Template — do NOT edit here. Customer config lives at $CAREER_HOME/brand-amplification/identity/brand-spec.json. Copy this template during onboarding and fill in your values.",
   "handles": {
     "social_handle": "{{SOCIAL_HANDLE}}",
     "personal_name": "{{PERSONAL_NAME}}",

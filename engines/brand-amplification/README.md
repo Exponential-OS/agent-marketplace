@@ -35,10 +35,10 @@ Content distribution orchestrator for human-cyborg partnerships. Implements the 
 ## Required environment
 
 - `$CAREER_HOME` — customer's workspace root. Plugin reads:
-  - `$CAREER_HOME/brain/identity/professional-brand.md` — brand voice
-  - `$CAREER_HOME/brain/identity/handles.md` — platform handles
-  - `$CAREER_HOME/brain/social-distribution-engine/brand-spec.json` — brand schema (created by `sde-onboarding`)
-  - `$CAREER_HOME/brain/social-distribution-engine/initiatives/` — initiative + campaign storage
+  - `$CAREER_HOME/identity/professional-brand.md` — brand voice
+  - `$CAREER_HOME/identity/handles.md` — platform handles
+  - `$CAREER_HOME/brand-amplification/identity/brand-spec.json` — brand schema (created by `sde-onboarding`)
+  - `$CAREER_HOME/brand-amplification/campaigns/` — initiative + campaign storage
 
 ## Install
 

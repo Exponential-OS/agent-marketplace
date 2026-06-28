@@ -29,7 +29,8 @@ const ENGINE_ID = "brand-amplification";
  * Mirrors the `brain` section in plugin.json:
  *   namespace:             brand-amplification
  *   owned_paths:           voice-strategies/**, campaigns/**, personas/**,
- *                          performance-history.md, patterns/**, identity/**, strategy/**
+ *                          performance-history.md, patterns/**, identity/**,
+ *                          strategy/**, telemetry/**
  *   writes_to_primitives:  identity/handles.md
  *   reads_from_primitives: identity/**, network/companies/**, network/people/**
  *   reads_from_engines:    co-dialectic/feedback/**, co-dialectic/personas/**,
@@ -53,6 +54,7 @@ function registerAcl(brain: Brain): void {
       "patterns/**",
       "identity/**",
       "strategy/**",
+      "telemetry/**",
     ],
     writes_to_primitives: [
       "identity/handles.md",

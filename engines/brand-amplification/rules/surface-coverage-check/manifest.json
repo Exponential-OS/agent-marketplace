@@ -5,7 +5,7 @@
   "created": "2026-05-07",
   "updated": "2026-05-07",
   "product_home": "career-os-plugin",
-  "description": "Pre-distribution gate implementing the CAMPAIGN-COMPLETENESS Ground Zero invariant. Reads brain/identity/handles.md to derive canonical distribution surfaces, then verifies campaign.json accounts for every surface \u2014 either with a spoke or an explicit skip reason in meta.skip_surfaces. BLOCKs on silent omissions.",
+  "description": "Pre-distribution gate implementing the CAMPAIGN-COMPLETENESS Ground Zero invariant. Reads identity/handles.md to derive canonical distribution surfaces, then verifies campaign.json accounts for every surface \u2014 either with a spoke or an explicit skip reason in meta.skip_surfaces. BLOCKs on silent omissions.",
   "litmus": "Run HOW.py with campaign_file \u2014 exit 0=all surfaces accounted for, exit 1=BLOCK (silent omission), exit 2=WARN (handles.md missing).",
   "files": {
     "HOW.py": "Surface coverage gate \u2014 derive surfaces from handles.md, check campaign accounts for all",
@@ -15,7 +15,7 @@
   "callers": [
     "skills/social-distribution-engine/validate-campaign.py"
   ],
-  "handles_file": "$CAREER_OS_HOME/brain/identity/handles.md",
+  "handles_file": "$CAREER_HOME/identity/handles.md",
   "skip_surfaces_convention": "Document intentional skips in campaign.json: meta.skip_surfaces = {\"reddit\": \"no image asset ready\"}",
   "origin_incident": "2026-04-23 jury-beats-judge Part-2: Instagram and Facebook entirely missed \u2014 no spoke, no skip reason, no documentation. Gate built to enforce CAMPAIGN-COMPLETENESS invariant.",
   "dispatch_slug": "surface-coverage-check",

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 surface-coverage-check/HOW.py — Verifies campaign surface coverage matrix was
-built from brain/identity/handles.md (not from memory).
+built from identity/handles.md (not from memory).
 
 Ground Zero CAMPAIGN-COMPLETENESS INVARIANT: before any multi-surface campaign ships,
 enumerate the complete surface set against handles.md. Every omitted surface must
@@ -20,10 +20,10 @@ Usage:
 Input JSON:
     {
       "campaign_file": "/abs/path/to/campaign.json",
-      "handles_file": "/abs/path/to/brain/identity/handles.md"
+      "handles_file": "/abs/path/to/identity/handles.md"
     }
 
-    handles_file defaults to $CAREER_HOME/brain/identity/handles.md
+    handles_file defaults to $CAREER_HOME/identity/handles.md
 
 Exit:
     0 = PASS  (all surfaces accounted for — either present or skip-reasoned)
@@ -101,10 +101,10 @@ def main():
 
     handles_file = ctx.get("handles_file", "")
     if not handles_file:
-        career_home_raw = os.environ.get("CAREER_HOME") or os.environ.get("CAREER_OS_HOME")
+        career_home_raw = os.environ.get("CAREER_HOME")
         if not career_home_raw:
             out(2, "warn", [], [], "handles_file not provided and CAREER_HOME env var not set.")
-        handles_file = str(pathlib.Path(career_home_raw).expanduser() / "brain/identity/handles.md")
+        handles_file = str(pathlib.Path(career_home_raw).expanduser() / "identity/handles.md")
 
     handles_path = pathlib.Path(handles_file)
     if not handles_path.exists():

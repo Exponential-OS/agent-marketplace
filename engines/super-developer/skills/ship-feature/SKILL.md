@@ -1,6 +1,6 @@
 ---
 name: ship-feature
-description: "Use this skill whenever the user asks to implement, build, fix, ship, add, refactor, migrate, or change ANY code — features, bugs, plugins, skills, migrations, hooks, rules, configs, in any repo. Triggers on 'build X', 'fix Y', 'implement Z', 'ship this to <plugin>', a ticket id with code work. This is the Agentic SDLC pipeline; do NOT hand-roll `codex exec` or ad-hoc git/PR shipping — route through Stage 0 (claim), the 9 core stages, and Stage 10 (completion)."
+description: "Use this skill whenever the user asks to implement, build, fix, ship, add, refactor, migrate, or change ANY code — features, bugs, plugins, skills, migrations, hooks, rules, configs, in any repo. Triggers on 'build X', 'fix Y', 'implement Z', 'ship this to <plugin>', a ticket id with code work. This is the Agentic SDLC pipeline; do NOT hand-roll `codex exec` or ad-hoc git/PR shipping — route through Stage 0 (claim), the 9 core stages, Stage 5.5/5.6/5.7 quality gates, and Stage 10 (completion)."
 ---
 
 ## MANDATORY SCOPE
@@ -18,8 +18,8 @@ Trigger: `/ship-feature $ARGUMENTS`
 `$ARGUMENTS` = required Linear ticket id plus feature/bug slug and repo context.
 Examples: `THE-10 regen-bug`, `THE-10 regen-bug in ~/aiprojects/Adapt.ai`.
 
-Runs Stage 0 (claim) + the 9 core stages + Stage 10 (completion):
-**work claim → brainstorm → spec → evals → worktree implementation → tests → cross-family review → PR → merge/deploy → prod smoke → completion**
+Runs Stage 0 (claim) + the 9 core stages, including Stage 5.5/5.6/5.7 quality gates, + Stage 10 (completion):
+**work claim → brainstorm → spec → evals → worktree implementation → tests → E2E/VISUAL verification → simplify → targeted verification rerun → cross-family review → PR → merge/deploy → prod smoke → completion**
 
 ---
 
@@ -40,7 +40,9 @@ Pick the cheapest agent + smallest model that does the job WELL. **If you're uns
 | Deploy (railway up, push, poll, curl), file moves, git plumbing — needs an orchestrator to run + watch, but ZERO Opus judgment | **Haiku sub-agent** (`claude --model haiku -p` or Agent `model: haiku`) | **Haiku — ~20x cheaper than whale.** Whale NEVER babysits deploy/poll loops |
 | Code implementation / tests / repo investigation | Codex (`codex exec`) | default; raise reasoning only for genuinely hard logic |
 | Browser-driving, prod smoke, large-file reads, media review | agy/Gemini | **Flash (Low/Medium)** — cheap, mechanical |
+| E2E + VISUAL verification (Stage 5.5 screenshots, console, flows) | **Claude + agy/Gemini-vision** | **Claude owns UI/visual design-lane judgment; agy reviews the ACTUAL rendered screenshots, not diffs.** Use Playwright/dev-server; use `chrome-devtools-mcp` when authenticated state matters |
 | Cross-family review / adjudication | **co-dialectic `judge-panel` skill** (fish cascade → 1 tiebreaker) | Flash/nano fish first; whale only if panel escalates AND stays conflicted |
+| Behavior-preserving simplify pass (Stage 5.6) | Codex / existing Claude Code **`/simplify`** skill | Quality-only: reuse/simplification/efficiency/altitude cleanups. Fall back to Codex-routed simplify only if `/simplify` is not invokable in-pipeline |
 | Media generation (image/video) | agy | gemini-3-pro-image / Veo |
 | UI / frontend / visual design / UX / styling / layout | **Claude (design persona — Jony Ive caliber)** | **Claude — UI is design judgment, NOT mechanical. Route UI/visual work to Claude, never Codex or agy.** |
 | FREQUENT structural/semantic gates (codification-verification, named-person, content/path gates — fire every Write/Edit; ambiguity/structure, not deep reasoning) | their handler's LLM judge | **Haiku** (`CYBORG_SEMANTIC_JUDGE_MODEL`, default `claude-haiku-4-5`) — cheap, high-frequency |
@@ -67,6 +69,9 @@ Per stage, the team shape:
 | 3 Eval design | one teammate per eval dimension (happy/boundary/environmental) drafting assertions in parallel. |
 | 3.5 Plugin/skill eval loop | a teammate per (prompt × {with-skill, baseline}) pair — the with-skill-vs-baseline runs ARE the team. |
 | 4 Implement | decompose into INDEPENDENT workstreams; **one teammate per workstream, each in its OWN git worktree** (isolation guard), each delegating code to Codex; merge when all green. Dependent edits stay serialized within a teammate. |
+| 5.5 E2E + VISUAL verification | split by route/flow/viewport when useful; Claude owns the UI/visual verdict and routes actual rendered screenshots to agy/Gemini-vision. |
+| 5.6 Simplify | invoke the existing `/simplify` skill over the changed code; if unavailable, use a Codex-routed quality-only pass. Keep it behavior-preserving and discard on regression. |
+| 5.7 Targeted verification rerun | Codex reruns impacted tests/lint/typecheck/build; rerun 5.5 too when simplify touched UI files. |
 | 6 Cross-family review | the `judge-panel` cascade already IS a parallel team (≥2 cross-family fish + tiebreaker) — reuse it, don't re-derive. |
 
 Each teammate: owns its piece, works in an isolated worktree (never the shared primary checkout), reports back via SendMessage. Team-lead synthesizes. **A stage that decomposes and is run serially is a routing failure** — the parallelism is the point.
@@ -80,7 +85,7 @@ Run autonomously through reversible work. Gate A is always a human stop; Gate B 
 - **GATE A:** human approves `docs/plans/<slug>.md` spec — STOP.
 - **GATE B:** locked merge gate, not a mandatory human stop. DEFAULT = auto-merge on CI green (`gh pr merge --auto --squash`). STOP at PR for a human only when the session or ticket carries the single brake, or risk auto-applies it: **"human merge needed"** / `human-merge`. See Stage 8 for the exact locked model.
 
-Never gate reversible work. Brainstorm/spec before Gate A, and implementation/test/review/PR between Gate A and Gate B, should run without extra interrupts unless user intent is ambiguous or data integrity is at risk.
+Never gate reversible work. Brainstorm/spec before Gate A, and implementation/test/E2E-visual/simplify/rerun/review/PR between Gate A and Gate B, should run without extra interrupts unless user intent is ambiguous or data integrity is at risk.
 
 ---
 
@@ -101,6 +106,8 @@ Before Spec/Gate A, parse `$ARGUMENTS` enough to identify:
 - `branch`: `feat/<slug>`.
 - `worktree`: planned worktree path for Stage 4.
 - `host`: current machine hostname.
+
+**Freshness preflight (XOS-112 coupling, light only).** Before claiming work, check the installed runtime's broadcast state if it is exposed. If a broadcast says a newer REQUIRED `/ship-feature` version exists and this loaded skill/plugin version is stale, refuse to start and tell the user to reload/update before continuing. Do not build XOS-112 broadcast infrastructure here; this skill only consumes that signal when present. When shipping a new REQUIRED `/ship-feature` version, the release path should emit a `requires_reload` broadcast so old loaded agents stop cleanly.
 
 Run the Linear claim gate and abort the whole pipeline on any non-zero exit:
 
@@ -240,9 +247,81 @@ Any failure returns to Stage 4 until green.
 
 ---
 
+## Stage 5.5 — E2E + VISUAL verification — CONDITIONAL
+
+Run this after Stage 5 is green and before Stage 6 review.
+
+Trigger:
+
+- **Required** when the change touches frontend, UI, styles, routes, visual assets, browser-visible behavior, or UI/manual-smoke acceptance criteria.
+- **Backend-only** changes skip as `not_applicable`, with evidence: files touched plus why no browser-visible behavior or UI acceptance criteria were affected.
+- **Plugin/CLI products with no web UI** degrade to CLI-output/render verification: run representative commands at narrow and standard terminal widths, then assert no stack traces, broken tables, clipped output, or missing/incorrect help text.
+
+Tools:
+
+- **Web UI:** run the branch on a LOCAL dev/preview server in the worktree (`npm run dev` -> localhost, or equivalent); never verify local changes on prod. Use Playwright against local dev, authenticating in-process with `E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD` from `.env.local`; NEVER echo/log the password. Use the skill-creator eval/benchmark + Playwright harness to drive critical flows and screenshots at desktop width `1440` and mobile width `375`; use `chrome-devtools-mcp` / authenticated Chrome on port `9222` when browser state matters. Do not pass secrets to external reviewers.
+- **Web UI visual verdict:** send ACTUAL rendered screenshots to the cross-family `judge-panel` with domain personas (`--persona "Steve Jobs" --persona "Jony Ive"` for UX/visual; XOS-124), plus `agy`/Gemini-vision when useful. Claude owns the final visual verdict.
+- **Plugin/CLI (no web UI):** run representative commands/flows at narrow and standard terminal widths; capture stdout/stderr; optionally capture a terminal screenshot for `agy`/Gemini-vision if visual review is useful. Do not pass secrets.
+- **Sensorium routing:** visual/UI e2e is a sensorium faculty headless agents lack; route it to an organ-with-eyes (authenticated browser session, `chrome-devtools-mcp` on port `9222`, or the human). Do not ask a headless agent to "verify visually"; it will fake it. The CLI path can stay with the running session.
+
+Web UI process:
+
+- Dogfood the real customer path: real UI + real flow + real auth (E2E user) + real data. Verification via direct-DB / `tsx` / service-role scripts, component-isolation render, or standalone demo harness does not count.
+- Capture the local Playwright run: assertions, console state, screenshots, and skill-creator eval/benchmark result.
+- Attach screenshots the proven-reliable way for a PRIVATE repo: commit the PNGs to the tracked `docs/verify/<ticket>/*.png` path (desktop ~1280 + mobile ~390) and push to the PR branch — committed PNGs RENDER in the PR's "Files changed" tab, which is the guaranteed proof a viewer can see in one click. (Repo `.gitignore` typically ignores loose screenshots but ALLOWS `docs/verify/` — commit to that tracked path.) Then add a PR comment listing each committed screenshot and what it shows. Do NOT rely on `raw.githubusercontent...` / release-download asset URLs (they 404 for a viewer on a private repo) or on inline-in-description `github.com/user-attachments/...` assets (those need a GitHub web-UI drag-drop or an undocumented upload API — not reliably scriptable by a cell).
+
+Pass/fail:
+
+- **Web UI `PASS`:** ran on LOCAL dev/preview, not prod; authenticated local dev through Playwright with E2E creds; dogfooded the real customer path through real UI/auth/data, not a bypass or demo harness; desktop and mobile screenshots are non-blank; no overflow, clipping, incoherent overlap, or broken responsive layout; no critical console errors; critical Playwright eval/benchmark flows pass; persona `judge-panel` returns `GREEN`; screenshots are committed to `docs/verify/<ticket>/` and pushed so they render in the PR's "Files changed" tab for the reviewer (NOT raw/release/user-attachments URLs that 404 on a private repo).
+- **Plugin/CLI `PASS`:** commands exit cleanly with no stack traces or errors; stdout/stderr is well-formed at both widths with no broken tables, clipped/overflowing output, or garbled layout; help/usage text is present and correct; optional terminal-screenshot vision review returns `GREEN` if used.
+- **Backend-only `not_applicable`:** unchanged: include evidence with files touched plus why no browser-visible behavior or UI acceptance criteria were affected.
+- **`FAIL` (either mode):** any required check fails. Loop to Stage 4/5, fix, rerun automated tests, then rerun Stage 5.5.
+
+---
+
+## Stage 5.6 — Real `/simplify`
+
+Run this after Stage 5.5 is `PASS` or `not_applicable`, before Stage 6 review.
+
+Invoke the existing Claude Code built-in `/simplify` skill over the changed code. Its lane is: review changed code for reuse, simplification, efficiency, and altitude cleanups; apply fixes; quality-only. **Do not build a new simplify skill.**
+
+If `/simplify` is not invokable from the pipeline context, fall back to a Codex-routed simplification pass with the same behavior-preserving constraint.
+
+Allowed changes:
+
+- dedupe obvious repeated logic
+- remove dead code, stale comments, and unused dependencies introduced or exposed by the change
+- simplify over-abstraction
+- improve names when the diff becomes clearer
+- keep public behavior, APIs, schemas, UI, and acceptance semantics unchanged
+
+Forbidden changes:
+
+- broad refactors unrelated to the ticket
+- feature or UX changes
+- API/schema/migration behavior changes
+- acceptance-criteria changes
+
+Discard the simplify patch on any behavior change, acceptance drift, or test failure.
+
+---
+
+## Stage 5.7 — Targeted verification rerun
+
+After Stage 5.6, rerun the impacted verification set before Stage 6:
+
+- tests/evals affected by the changed files
+- lint, typecheck, and build when present and relevant
+- any Stage 3/5 checks that cover code touched by simplify
+- Stage 5.5 again if simplify touched UI, styles, routes, visual assets, browser-visible behavior, or CLI rendering
+
+If the rerun fails because of the simplify patch, discard the simplify patch and rerun Stage 5. If the failure persists without the simplify patch, return to Stage 4/5 and fix the underlying issue.
+
+---
+
 ## Stage 6 — Cross-family review
 
-Run cross-family review before PR.
+Run cross-family review after Stage 5.7 is green and before PR.
 
 Use `agy`/Gemini for:
 
@@ -257,7 +336,7 @@ Do not pass secrets to Gemini/agy.
 
 Required verdict: `GREEN` or `RED`.
 
-If `RED`, Codex fixes and returns to Stage 5.
+If `RED`, Codex fixes and returns to Stage 5, then repeats Stage 5.5/5.6/5.7 as applicable before review runs again.
 
 ---
 
@@ -273,6 +352,8 @@ PR must include:
 
 - spec link: `docs/plans/<slug>.md`
 - tests/evals run
+- Stage 5.5 visual/CLI verification status
+- Stage 5.6 simplify summary and Stage 5.7 rerun status
 - cross-family review verdict
 - known risks / rollback
 

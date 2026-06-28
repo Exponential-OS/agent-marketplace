@@ -16,7 +16,7 @@ Usage:
 Input JSON:
     {
       "campaign_file": "/abs/path/to/campaign.json",
-      "career_os_home": "/abs/path/to/career-os"
+      "career_home": "/abs/path/to/career-os"
     }
 
 Exit:
@@ -63,7 +63,7 @@ def main():
         out(1, "block", [], f"Invalid JSON: {e}")
 
     campaign_file = ctx.get("campaign_file", "")
-    career_os_home = ctx.get("career_os_home", "")
+    career_home = ctx.get("career_home", "")
 
     if not campaign_file:
         out(2, "warn", [], "campaign_file is required.")
@@ -78,8 +78,8 @@ def main():
         out(2, "warn", [], f"Cannot parse campaign.json: {e}")
 
     campaign_dir = campaign_path.parent
-    if career_os_home:
-        base = pathlib.Path(career_os_home)
+    if career_home:
+        base = pathlib.Path(career_home)
     else:
         base = campaign_dir
 

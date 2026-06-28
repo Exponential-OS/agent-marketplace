@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.1 - 2026-06-28
+
+- Fix Stage 5.5 screenshot-attach mechanism: commit PNGs to the tracked `docs/verify/<ticket>/` path so they render in the PR "Files changed" tab (the proven-reliable method for a PRIVATE repo). Replaces the prior `github.com/user-attachments` 200-gate, which the bus proved is not reliably scriptable by a cell (raw/release URLs 404 for a private-repo viewer; inline user-attachments needs web-UI drag-drop). (XOS-118 follow-up)
+
+## 0.4.0 - 2026-06-28
+
+- Add Stage 5.5 E2E + VISUAL verification, Stage 5.6 real `/simplify`, and Stage 5.7 targeted verification rerun to `/ship-feature`. (XOS-118)
+- Document the light XOS-112 reload-on-upgrade preflight coupling for required `/ship-feature` upgrades.
+
 ## 0.3.0 - 2026-06-23
 
 - Removed the fable-5 reasoning gate (claude-fable-5 unavailable; reintroduced by mistake in 0.2.0). Reasoning validation now via cross-family judge-panel. (XOS-59 / XOS-56 follow-up)

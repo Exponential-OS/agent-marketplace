@@ -11,9 +11,9 @@ why: >
   which platforms are active spokes. Generic strategy lives in the plugin bundle.
   This file is the per-instance override and operating config.
 related:
-  - brain/brand-amplification/campaigns/social-channel-directory.md
-  - brain/identity/handles.md
-  - brain/identity/professional-brand.md
+  - brand-amplification/campaigns/social-channel-directory.md
+  - identity/handles.md
+  - identity/professional-brand.md
 ---
 
 # {{USER_NAME}} Distribution Topology
@@ -45,7 +45,7 @@ External links go in COMMENTS only (body links = algorithm suppression).
 
 ## Active Handles
 
-See `brain/identity/handles.md` for current handle list across all platforms.
+See `identity/handles.md` for current handle list across all platforms.
 
 ## Golden Hour Settings
 
@@ -67,4 +67,4 @@ signal_sharing:
 - No handles, names, post text, or identifiable info ever leaves the device.
 - Sync requires explicit user command: `"sde sync signals"` — never auto-syncs.
 - To inspect what would be sent: `"sde show my signal data"`
-- To opt out: set `enabled: false` and delete `brain/social-distribution-engine/signals/local-signals.jsonl`
+- To opt out: set `enabled: false` and delete `brand-amplification/signals/local-signals.jsonl`

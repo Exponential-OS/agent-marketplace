@@ -22,7 +22,7 @@ import pathlib
 import sys
 import uuid
 
-_CAREER_HOME_RAW = os.environ.get("CAREER_HOME") or os.environ.get("CAREER_OS_HOME")
+_CAREER_HOME_RAW = os.environ.get("CAREER_HOME")
 if not _CAREER_HOME_RAW:
     print(json.dumps({"verdict": "BLOCK", "reason": "CAREER_HOME env var not set. Run career-intelligence-onboarding first."}), file=sys.stderr)
     sys.exit(1)
@@ -30,9 +30,9 @@ _CAREER_HOME = pathlib.Path(_CAREER_HOME_RAW).expanduser()
 if not _CAREER_HOME.is_dir():
     print(json.dumps({"verdict": "BLOCK", "reason": f"CAREER_HOME={_CAREER_HOME} does not exist or is not a directory."}), file=sys.stderr)
     sys.exit(1)
-# SPEC-DRIFT-DETECTED: "brain/social-distribution-engine/signals/" is NOT in owned_paths.
+# SPEC-DRIFT-DETECTED: "brand-amplification/signals/" is NOT in owned_paths.
 # The engine manifest declares owned_paths: ["performance-history.md", "campaigns/**", etc.].
-# "social-distribution-engine/signals/" is a legacy path predating brain-kernel.
+# The old social-distribution-engine signals namespace predates brain-kernel.
 # Migration target: brain.write("brand-amplification/performance-history.md", ...) or
 # brain.write("brand-amplification/campaigns/signals/local-signals.jsonl", ...).
 # This script continues to use direct FS writes as a subprocess gate — it cannot call

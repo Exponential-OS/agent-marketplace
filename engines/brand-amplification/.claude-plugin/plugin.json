@@ -1,7 +1,7 @@
 {
   "name": "brand-amplification",
   "platform": "xOS",
-  "version": "0.54.0",
+  "version": "0.55.0",
   "depends_on_kernel": [
     "brain-kernel >= 1.0.0"
   ],
@@ -14,7 +14,8 @@
       "performance-history.md",
       "patterns/**",
       "identity/**",
-      "strategy/**"
+      "strategy/**",
+      "telemetry/**"
     ],
     "writes_to_primitives": [
       "identity/handles.md"
@@ -35,7 +36,7 @@
       "voice-drift"
     ]
   },
-  "description": "Brand Amplification Engine (xOS) v0.51.0 - The outbound brand-building engine for xOS. Coordinated content distribution across owned surfaces (LinkedIn, Substack, Reddit, X, Instagram, Facebook, Threads) with hub-and-spoke flywheel, surface coverage matrix, pre-publish quality gates, and confidence-ladder browser defaults (browserbase for setup; chrome-devtools-mcp for posting per Irreversible-Action Invariant). Graduates workflow-by-workflow to browserbase after ~10 successful runs. Brain-kernel integrated for primitive writes (identity/handles.md) and cross-engine reads. Future sibling engine: Relationship Intelligence Engine (RIE, inbound warm-network detection).",
+  "description": "Brand Amplification Engine (xOS) v0.55.0 - The outbound brand-building engine for xOS. Coordinated content distribution across owned surfaces (LinkedIn, Substack, Reddit, X, Instagram, Facebook, Threads) with hub-and-spoke flywheel, surface coverage matrix, pre-publish quality gates, relevance-gated campaign strategy, and confidence-ladder browser defaults (browserbase for setup; chrome-devtools-mcp for posting per Irreversible-Action Invariant). Graduates workflow-by-workflow to browserbase after ~10 successful runs. Brain-kernel integrated for primitive writes (identity/handles.md), local telemetry writes, and cross-engine reads. Future sibling engine: Relationship Intelligence Engine (RIE, inbound warm-network detection).",
   "author": {
     "name": "Anand Vallamsetla"
   },

@@ -6,7 +6,7 @@ to the same group within the last 7 days (configurable).
 Input JSON via $1:
   group_url      - LinkedIn group URL (required)
   log_file       - absolute path to groups-post-log.jsonl
-                   (default: $CAREER_HOME/brain/social-distribution-engine/groups-post-log.jsonl)
+                   (default: $CAREER_HOME/brand-amplification/groups-post-log.jsonl)
   lookback_days  - cooldown window in days (default: 7)
 
 Output: JSON {"verdict": "PASS"} or {"verdict": "BLOCK", "reason": "...", "last_posted": "...", "next_available": "..."}
@@ -21,9 +21,9 @@ import sys
 RULE_SLUG = "linkedin-groups-dedup"
 LOG_FILE = pathlib.Path.home() / ".cyborg-enforcement-log.jsonl"
 
-_CAREER_HOME_RAW = os.environ.get("CAREER_HOME") or os.environ.get("CAREER_OS_HOME")
+_CAREER_HOME_RAW = os.environ.get("CAREER_HOME")
 _CAREER_HOME = pathlib.Path(_CAREER_HOME_RAW).expanduser() if _CAREER_HOME_RAW else None
-DEFAULT_LOG = _CAREER_HOME / "brain/social-distribution-engine/groups-post-log.jsonl" if _CAREER_HOME else pathlib.Path("/nonexistent/career-home-not-set")
+DEFAULT_LOG = _CAREER_HOME / "brand-amplification/groups-post-log.jsonl" if _CAREER_HOME else pathlib.Path("/nonexistent/career-home-not-set")
 DEFAULT_LOOKBACK_DAYS = 7
 
 

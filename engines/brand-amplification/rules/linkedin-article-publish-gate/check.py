@@ -39,13 +39,13 @@ PROMPT_PATH = SCRIPT_DIR / "PROMPT.md"
 
 
 def _load_honey_pot_domain() -> str:
-    """Load the customer-configured honey-pot domain from $CAREER_HOME/brain/social-distribution-engine/brand-spec.json.
+    """Load the customer-configured honey-pot domain from $CAREER_HOME/brand-amplification/identity/brand-spec.json.
     Falls back to 'substack.com' (the generic platform) if not set."""
-    career_home = os.environ.get("CAREER_HOME") or os.environ.get("CAREER_OS_HOME")
+    career_home = os.environ.get("CAREER_HOME")
     if not career_home:
         return "substack.com"
     try:
-        brand_spec_path = pathlib.Path(career_home).expanduser() / "brain" / "social-distribution-engine" / "brand-spec.json"
+        brand_spec_path = pathlib.Path(career_home).expanduser() / "brand-amplification" / "identity" / "brand-spec.json"
         if brand_spec_path.is_file():
             with open(brand_spec_path) as f:
                 spec = json.load(f)
@@ -72,7 +72,7 @@ BACKLINK_PATTERNS = [
 
 CTA_PATTERNS = [
     r"substack\.com",
-    HONEY_POT_PATTERN,  # customer-configured honey-pot domain (from $CAREER_HOME/brain/social-distribution-engine/brand-spec.json)
+    HONEY_POT_PATTERN,  # customer-configured honey-pot domain (from $CAREER_HOME/brand-amplification/identity/brand-spec.json)
     r"github\.com/Exponential-OS",
 ]
 
@@ -84,7 +84,7 @@ SOURCE_ATTRIBUTION_PATTERNS = [
     r"cross.?posted from",
     r"first published on",
     r"this is an adaptation",
-    HONEY_POT_PATTERN,  # customer-configured honey-pot domain (from $CAREER_HOME/brain/social-distribution-engine/brand-spec.json)    # any link to the source counts
+    HONEY_POT_PATTERN,  # customer-configured honey-pot domain (from $CAREER_HOME/brand-amplification/identity/brand-spec.json)    # any link to the source counts
     r"substack\.com",
 ]
 

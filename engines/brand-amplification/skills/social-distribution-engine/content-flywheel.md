@@ -3,13 +3,13 @@ status: canonical
 source: "Codified from Co-Dialectic campaign learnings (Phase 1 + Phase 2) + 2026-04-20 content sprint learnings + 2026-04-23 Part 2 (jury-beats-judge) campaign status-ledger rule + 2026-04-23 Part 2 Substack-resend-to-subscribers incident (irreversible-action invariant). Generic principles in Constitution P16."
 created: 2026-04-13
 updated: 2026-05-17
-customer-config: "$CAREER_HOME/brain/social-distribution-engine/content-flywheel.md"
+customer-config: "$CAREER_HOME/brand-amplification/voice-strategies/content-flywheel.md"
 ---
 
 
 # Content Distribution Flywheel — Generic Strategy
 
-**Purpose:** Platform-agnostic content distribution strategy for the social-distribution-engine. Customer-specific platform topology (which platform is the hub, honey pot, spokes) lives in `$CAREER_HOME/brain/social-distribution-engine/content-flywheel.md`. This file is the canonical strategy reference — loaded by the skill; the customer config is the instance overlay.
+**Purpose:** Platform-agnostic content distribution strategy for the social-distribution-engine. Customer-specific platform topology (which platform is the hub, honey pot, spokes) lives in `$CAREER_HOME/brand-amplification/voice-strategies/content-flywheel.md`. This file is the canonical strategy reference — loaded by the skill; the customer config is the instance overlay.
 **Used by:** Any agent executing marketing campaigns, social posts, or content distribution. **Before drafting any content campaign, load this file AND the customer config.**
 
 ---
@@ -86,6 +86,22 @@ YOUR ESTATE (your full brand — all platforms, all products, all content)
 
 ---
 
+## Post-Algorithm Reset (March 2026): Relevance > Volume
+
+Posting more now appears directionally worse than publishing fewer, higher-relevance crops: this Estate is optimized for target employers, warm contacts, and named opportunity paths, not mass reach from strangers.
+
+The strategy signals replacing volume or velocity-as-goal:
+
+1. **Topic-audience fit** — the post's topic matches what the named target segment cares about.
+2. **Audience specificity** — the post is written for a named segment, such as a company's hiring managers or a warm-contact cohort, not broadcast to everyone.
+3. **Engagement quality over velocity** — a substantive reply or DM from a target person is worth more than 100 likes from strangers. Likes are vanity; DMs and meaningful comments from the target audience are signal. Track `engagement quality ratio = DMs / likes`.
+
+**Fewer, sharper cadence:** quality-gated posting beats volume. A post that does not clear the campaign-engine Relevance Gate is not published; sharpen the audience, topic, or response intent first.
+
+**Velocity qualifier:** velocity still helps within the right audience; it is one input to distribution, not the objective.
+
+---
+
 ## LinkedIn Two-Tier Strategy — Full Reasoning (Why Post Hub + Article SEO Hub)
 
 **Keywords:** Post Hub · Article SEO Hub · two-tier LinkedIn · LinkedIn Article · LinkedIn Post · hub naming · why two layers · SEO compounds · juice accumulates · external link penalty
@@ -96,7 +112,9 @@ This is the single most important naming decision in the campaign system. Get it
 
 LinkedIn has two completely different content surfaces with different algorithmic behaviors:
 
-**Posts** are feed-native. LinkedIn's algorithm scores them on engagement *velocity* — likes, comments, shares in the first 60 minutes. Social proof is publicly visible (50 comments signals authority to both the algorithm AND human readers). The algorithm pushes high-velocity posts to extended network. Posts live for 24–72 hours algorithmically, then decay to near-zero organic reach.
+**Posts** are feed-native. LinkedIn's algorithm appears to score them on engagement *velocity* — likes, comments, shares in the first 60 minutes (directional, from observed behavior, not platform-documented). Social proof is publicly visible (50 comments signals authority to both the algorithm AND human readers). High-velocity posts appear to get pushed to the extended network. Posts live for ~24–72 hours algorithmically, then decay to near-zero organic reach.
+
+**Post-algorithm qualifier:** velocity still helps within the right audience; it is one input to distribution, not the objective.
 
 **Articles (LinkedIn Pulse)** are indexed by Google. They appear in search results for technical queries. They trigger a *follower notification* on publish — free amplification to your entire follower base, separate from the feed algorithm. Articles are evergreen — a Post disappears in 48h; an Article shows up in a Google search two years later. Articles allow Subscribe + Share buttons (direct conversion to Substack subscriber without leaving LinkedIn).
 
@@ -166,7 +184,7 @@ Three reasons, all load-bearing:
 
 **Customer platform configuration (derived from above criteria — re-evaluate quarterly or when ICP or platform changes):**
 
-Read the customer's current platform assignments from `$CAREER_HOME/brain/social-distribution-engine/content-flywheel.md`. That file declares:
+Read the customer's current platform assignments from `$CAREER_HOME/brand-amplification/voice-strategies/content-flywheel.md`. That file declares:
 - Which platform is the Honey Pot (owned, email-backed)
 - Which platform is the Article SEO Hub (Google-indexed long-form)
 - Which platform is the Post Hub (campaign juice hub)
@@ -224,7 +242,7 @@ Reddit communities must be evaluated PER CAMPAIGN against these criteria:
 - If banned: file modmail appeal with engineering-first framing. Wait for resolution before re-posting same content.
 - If uncertain: start with a comment in an existing thread before a standalone post
 
-**Community observations** are customer-specific and tracked in `$CAREER_HOME/brain/brand-amplification/campaigns/social-channel-directory.md`. Read that file before every campaign — never rely on memory or hardcoded subreddit lists. Community standing is volatile; the channel directory is the live reference.
+**Community observations** are customer-specific and tracked in `$CAREER_HOME/brand-amplification/campaigns/social-channel-directory.md`. Read that file before every campaign — never rely on memory or hardcoded subreddit lists. Community standing is volatile; the channel directory is the live reference.
 
 *Run the criteria check above before every campaign. A subreddit that worked last month may have changed moderation policy.*
 
@@ -347,7 +365,7 @@ Both payoffs compound. Neither is optional. A strategy optimizing ONLY for seeds
 
 ### The Grove, Its Rows, and Gardeners (owned channel — direct-to-inbox, owned land)
 
-**What it is:** The Grove is the customer's owned newsletter/subscription channel — one publication, one email list, owned land. It has Rows (Sections or Tags), each growing a different tree type for a different audience segment. The customer's specific Grove URL, platform, and Row names are declared in `$CAREER_HOME/brain/social-distribution-engine/content-flywheel.md`.
+**What it is:** The Grove is the customer's owned newsletter/subscription channel — one publication, one email list, owned land. It has Rows (Sections or Tags), each growing a different tree type for a different audience segment. The customer's specific Grove URL, platform, and Row names are declared in `$CAREER_HOME/brand-amplification/voice-strategies/content-flywheel.md`.
 
 **Why The Grove is fundamentally different from every other distribution surface:**
 
@@ -718,7 +736,7 @@ After each new post, go back and comment on ALL previous hub/spoke posts:
 
 Campaign-specific URLs (hub post, article, thread, owned-channel post) belong in the **campaign-master doc** for that campaign, NOT in this flywheel. This file is a canonical strategy reference — hardcoding specific URLs makes it stale on every new campaign.
 
-**Persistent handles (not campaign-specific):** declared in the customer's instance config (`$CAREER_HOME/brain/social-distribution-engine/content-flywheel.md`) and `$CAREER_HOME/brain/identity/handles.md`. Read from there at campaign time.
+**Persistent handles (not campaign-specific):** declared in the customer's instance config (`$CAREER_HOME/brand-amplification/voice-strategies/content-flywheel.md`) and `$CAREER_HOME/identity/handles.md`. Read from there at campaign time.
 
 **To find campaign-specific URLs:** `grep -rl "type: campaign-status-ledger" $CAMPAIGN_HOME` — the campaign-master doc has the live status ledger with every spoke's URL, updated at publish time.
 
@@ -743,7 +761,7 @@ If a platform erroneously bans a post, leverage the other spokes to build a narr
 
 ## Surface Coverage Matrix (REQUIRED before every campaign ships — Campaign-Completeness Invariant)
 
-Every campaign-master MUST include this matrix, filled in against the customer's `$CAREER_HOME/brain/identity/handles.md` (source of truth for which platforms exist) — not against the author's memory of "the usual suspects." A platform marked `out-of-scope` requires an explicit reason; silent omission is a Ground Zero violation. **This matrix is reviewed at the boundary (a second perspective — reviewer model, different agent, or human with explicit eyes-on) before the campaign fires.**
+Every campaign-master MUST include this matrix, filled in against the customer's `$CAREER_HOME/identity/handles.md` (source of truth for which platforms exist) — not against the author's memory of "the usual suspects." A platform marked `out-of-scope` requires an explicit reason; silent omission is a Ground Zero violation. **This matrix is reviewed at the boundary (a second perspective — reviewer model, different agent, or human with explicit eyes-on) before the campaign fires.**
 
 Template — fill in handles from the customer's handles.md:
 
@@ -770,7 +788,7 @@ Template — fill in handles from the customer's handles.md:
 | Podcast cross-mention (if relevant) | — | | | | | | |
 
 **Rules for the matrix:**
-1. Rows come from the customer's `$CAREER_HOME/brain/identity/handles.md` + this flywheel — not from memory. Add a row for every handle that has a distribution surface.
+1. Rows come from the customer's `$CAREER_HOME/identity/handles.md` + this flywheel — not from memory. Add a row for every handle that has a distribution surface.
 2. `In-scope? = no` requires an explicit reason in the cell: `no — no image asset for IG this cycle` / `no — not a video campaign` / `no — platform deprecated`. Silent "no" is forbidden.
 3. Handles added in the current session are NOT auto-in-scope; the matrix must actively list them with a deliberate in-scope decision.
 4. `Asset ready?` requires the Visual-Asset Review Invariant to be satisfied for any image-bearing surface — a `yes` in this column implies the image was opened and reviewed at full resolution.
@@ -874,7 +892,7 @@ Never maintain a static list of handles. Relevant authors change per topic, per 
 
 **Handle verification rule:** Always confirm the handle resolves to the right person on that platform before including in a post. Handles change. People create impersonators. One wrong tag wastes the notification pull entirely.
 
-**Accumulate discovered handles in `$CAREER_HOME/brain/distribution/tag-targets.md`** — not here. Campaign-specific discoveries compound into a queryable brain asset, not a static flywheel entry.
+**Accumulate discovered handles in `$CAREER_HOME/brand-amplification/campaigns/tag-targets.md`** — not here. Campaign-specific discoveries compound into a queryable brain asset, not a static flywheel entry.
 
 **Amplifier selection — thesis extension over follower count (codified 2026-05-05):**
 
@@ -984,7 +1002,7 @@ When shipping a new product version, update content in this order:
 | **Highway tags** (join existing flow) | Tap an established audience already searching this topic. Drives discovery NOW. | Discover per campaign via detector protocol (see below). |
 | **Niche tags** (community-specific) | Reach a specific technical or interest community. Lower volume but higher signal-to-noise. | Discover per campaign per platform via search and community exploration. |
 
-**Customer brand tags** — declared in `$CAREER_HOME/brain/social-distribution-engine/content-flywheel.md`. Read from there at campaign time; never hardcode here. The instance config should list brand tags in priority order (P1 = always, P2 = profile-building posts, etc.) and any retired tags with reasons.
+**Customer brand tags** — declared in `$CAREER_HOME/brand-amplification/voice-strategies/content-flywheel.md`. Read from there at campaign time; never hardcode here. The instance config should list brand tags in priority order (P1 = always, P2 = profile-building posts, etc.) and any retired tags with reasons.
 
 **Slot-fill order (apply every time, in this sequence):**
 1. Brand tags — pick in priority order from instance config until brand slots filled
@@ -1073,7 +1091,9 @@ When shipping a new product version, update content in this order:
 
 *Empirical observation applied to LinkedIn hub posts. The specific time windows (5 min, 15 min, 30 min, 60 min) reflect observed behavior — not platform-documented guarantees. Algorithm behavior evolves; adjust cadence based on your own post analytics.*
 
-LinkedIn's algorithm samples a post's engagement rate on a small subset of your network (~10%, empirically) within the first 60-90 minutes. High engagement in this window expands distribution; low engagement suppresses it. The protocol below is designed to maximize signal quality during this window.
+LinkedIn's algorithm appears to sample a post's engagement rate on a small subset of your network (~10%, directionally — observed, not platform-documented) within roughly the first 60-90 minutes. High engagement in this window appears to expand distribution; low engagement appears to suppress it. The protocol below is designed to maximize signal quality during this window.
+
+**Post-algorithm qualifier:** first-hour velocity helps only after the post clears relevance for the named audience; it is a distribution input, not the goal.
 
 1. **T+0 min:** publish. Immediately post first comment with tag list and external link (so the post body stays link-free).
 2. **T+5 min:** share post URL into 1-2 high-signal direct chats or groups where warm contacts are likely to engage genuinely. Authenticity matters — one real comment beats five hollow likes.

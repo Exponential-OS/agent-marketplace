@@ -7,9 +7,9 @@
     {
       "id": "brand_signature",
       "verdict_on_fail": "BLOCK",
-      "tokens_required": "loaded from $CAREER_HOME/brain/social-distribution-engine/brand-spec.json (image_requirements.required_in_all)",
-      "tokens_warned": "loaded from $CAREER_HOME/brain/social-distribution-engine/brand-spec.json (image_requirements.required_in_cta + required_in_company_context)",
-      "reads_from": "$CAREER_HOME/brain/social-distribution-engine/brand-spec.json"
+      "tokens_required": "loaded from $CAREER_HOME/brand-amplification/identity/brand-spec.json (image_requirements.required_in_all)",
+      "tokens_warned": "loaded from $CAREER_HOME/brand-amplification/identity/brand-spec.json (image_requirements.required_in_cta + required_in_company_context)",
+      "reads_from": "$CAREER_HOME/brand-amplification/identity/brand-spec.json"
     },
     {
       "id": "visual_content",
@@ -27,7 +27,7 @@
     "html_file": "string (required) — absolute path to HTML template",
     "brand_spec": "string (optional) — absolute path to brand-spec.json override"
   },
-  "brand_spec_default": "$CAREER_HOME/brain/social-distribution-engine/brand-spec.json",
+  "brand_spec_default": "$CAREER_HOME/brand-amplification/identity/brand-spec.json",
   "integration_points": [
     "campaign-asset-matrix-gate (pre-campaign preflight)",
     "campaign-preflight (ship-readiness check)"

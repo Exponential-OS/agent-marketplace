@@ -25,8 +25,8 @@
       "platform": "xHumanOS",
       "license": "Proprietary",
       "source": "./engines/super-developer",
-      "description": "Super Developer Engine - global agentic-SDLC ship-feature pipeline for every repo. v0.3.0: SELF-CONTAINED \u2014 bundles the SDLC rules (sdlc-work-claim, sdlc-worktree-isolation, ship-feature-gate) invoked via ${CLAUDE_PLUGIN_ROOT}, no ~/cyborg runtime dependency. Reasoning validation is covered by the cross-family judge-panel (the standalone fable-5 gate was removed \u2014 claude-fable-5 unavailable). User-scope, workspace_binding=global. Canonical source: Exponential-OS/xos monorepo plugins/cross/super-developer (this engines/ copy is a derived vendored mirror, overwritten on each sync).",
-      "version": "0.3.0",
+      "description": "Super Developer Engine - global agentic-SDLC ship-feature pipeline for every repo. v0.4.1: adds Stage 5.5 (E2E + VISUAL verification \u2014 local-dev-not-prod, E2E-cred dogfood of the real customer path, persona judges Jobs+Ive, screenshots committed to docs/verify/ so they render in the PR Files-changed tab on a private repo, sensorium-routing for headless agents), Stage 5.6 (real /simplify), Stage 5.7 (targeted rerun). v0.3.0: SELF-CONTAINED \u2014 bundles the SDLC rules (sdlc-work-claim, sdlc-worktree-isolation, ship-feature-gate) invoked via ${CLAUDE_PLUGIN_ROOT}, no ~/cyborg runtime dependency. Reasoning validation via cross-family judge-panel. User-scope, workspace_binding=global. Canonical source: Exponential-OS/xos monorepo plugins/cross/super-developer (this engines/ copy is a derived vendored mirror, overwritten on each sync).",
+      "version": "0.4.1",
       "category": "developer-tools",
       "homepage": "https://github.com/Exponential-OS/xos"
     },
@@ -69,8 +69,8 @@
       "platform": "xOS",
       "license": "Proprietary",
       "source": "./engines/brand-amplification",
-      "description": "Brand Amplification Engine (BAE) \u2014 outbound brand-building umbrella. Includes the social distribution engine (SDE master orchestrator), flywheel amplification module, hub-and-spoke surface coverage, 9-gate preflight CI for content campaigns, golden-hour scheduling, invisible signal CTAs (bookmark/save/DM-share), platform-native routing across LinkedIn / Substack / Reddit / X / Instagram / Facebook / Threads, and the confidence-ladder browser MCP defaults (browserbase for setup; chrome-devtools-mcp for posting per Irreversible-Action Invariant).",
-      "version": "0.54.0",
+      "description": "Brand Amplification Engine (BAE) \u2014 outbound brand-building umbrella. v0.55.0: post-algorithm content-strategy reset (relevance > volume) \u2014 content-flywheel Reset section (topic-audience fit, audience specificity, engagement-quality-over-velocity) + campaign-engine Relevance Gate (relevance_score \u2265 70 to proceed, else gap + sharpening) + local-only XOS_98_TELEMETRY-gated content_strategy_applied event (no phone-home). Includes the social distribution engine (SDE master orchestrator), flywheel amplification module, hub-and-spoke surface coverage, 9-gate preflight CI for content campaigns, golden-hour scheduling, invisible signal CTAs (bookmark/save/DM-share), platform-native routing across LinkedIn / Substack / Reddit / X / Instagram / Facebook / Threads, and the confidence-ladder browser MCP defaults (browserbase for setup; chrome-devtools-mcp for posting per Irreversible-Action Invariant).",
+      "version": "0.55.0",
       "category": "distribution",
       "homepage": "https://github.com/Exponential-OS/brand-amplification-engine"
     },

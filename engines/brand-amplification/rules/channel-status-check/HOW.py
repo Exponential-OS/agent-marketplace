@@ -2,7 +2,7 @@
 """
 channel-status-check/HOW.py — Blocks distribution to BANNED or Low ROI channels.
 
-Reads brain/brand-amplification/campaigns/social-channel-directory.md (the
+Reads brand-amplification/campaigns/social-channel-directory.md (the
 Global Channel Value Directory) and checks every spoke in campaign.json against it.
 
 A spoke targeting a BANNED subreddit, community, or group → BLOCK.
@@ -15,10 +15,10 @@ Usage:
 Input JSON:
     {
       "campaign_file": "/abs/path/to/campaign.json",
-      "channel_dir_file": "/abs/path/to/brain/brand-amplification/campaigns/social-channel-directory.md"
+      "channel_dir_file": "/abs/path/to/brand-amplification/campaigns/social-channel-directory.md"
     }
 
-    channel_dir_file defaults to $CAREER_HOME/brain/brand-amplification/campaigns/social-channel-directory.md
+    channel_dir_file defaults to $CAREER_HOME/brand-amplification/campaigns/social-channel-directory.md
     CAREER_HOME must be set via environment variable
 
 Exit:
@@ -103,11 +103,11 @@ def main():
     # Resolve channel directory path
     channel_dir_file = ctx.get("channel_dir_file", "")
     if not channel_dir_file:
-        career_home_raw = os.environ.get("CAREER_HOME") or os.environ.get("CAREER_OS_HOME")
+        career_home_raw = os.environ.get("CAREER_HOME")
         if not career_home_raw:
             out(2, "warn", [], [], "channel_dir_file not provided and CAREER_HOME env var not set.")
         channel_dir_file = str(pathlib.Path(career_home_raw).expanduser() /
-                                "brain/brand-amplification/campaigns/social-channel-directory.md")
+                                "brand-amplification/campaigns/social-channel-directory.md")
 
     channel_dir_path = pathlib.Path(channel_dir_file)
     if not channel_dir_path.exists():

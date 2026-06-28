@@ -3,7 +3,7 @@
 AUDIT.py — analytics-sync-watch compliance audit.
 Surfaces all published campaigns without analytics data, regardless of age.
 
-Input:  $1 or stdin JSON (optional): {"career_os_home": "...", "campaigns_dirs": [...]}
+Input:  $1 or stdin JSON (optional): {"career_home": "...", "campaigns_dirs": [...]}
 Output: JSON {verdict, status, published_without_analytics, schema_gap_found, reasons}
 Exit:   0=PASS  1=BLOCK (published campaigns missing analytics)  2=WARN (no data)
 """
@@ -14,7 +14,7 @@ import sys
 from datetime import date
 
 LIVE_STATUSES = {"published", "live", "sent"}
-CAREER_HOME_DEFAULT = os.environ.get("CAREER_HOME") or os.environ.get("CAREER_OS_HOME") or ""
+CAREER_HOME_DEFAULT = os.environ.get("CAREER_HOME") or ""
 
 
 def is_published(campaign):
@@ -42,9 +42,9 @@ def main() -> int:
     except Exception:
         ctx = {}
 
-    career_home = ctx.get("career_home", os.environ.get("CAREER_HOME", os.environ.get("CAREER_OS_HOME", CAREER_HOME_DEFAULT)))
+    career_home = ctx.get("career_home", os.environ.get("CAREER_HOME", CAREER_HOME_DEFAULT))
     default_dirs = [
-        str(pathlib.Path(career_home) / "brain/social-distribution-engine/campaigns"),
+        str(pathlib.Path(career_home) / "brand-amplification/campaigns"),
         str(pathlib.Path(career_home) / "WIP/branding-product/articles"),
     ]
     scan_dirs = ctx.get("campaigns_dirs", default_dirs)

@@ -32,10 +32,10 @@ SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
 
 def _career_home_brand_spec() -> pathlib.Path | None:
     """Resolve brand-spec path from $CAREER_HOME. Returns None if env var not set."""
-    raw = os.environ.get("CAREER_HOME") or os.environ.get("CAREER_OS_HOME")
+    raw = os.environ.get("CAREER_HOME")
     if not raw:
         return None
-    return pathlib.Path(raw).expanduser() / "brain" / "social-distribution-engine" / "brand-spec.json"
+    return pathlib.Path(raw).expanduser() / "brand-amplification" / "identity" / "brand-spec.json"
 
 
 def _load_brand_spec(override: Optional[str]) -> dict:

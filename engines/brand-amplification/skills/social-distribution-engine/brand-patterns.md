@@ -10,7 +10,7 @@ why: >
   ("here are 5 plugins to install") actively anti-signals for investor/operator tracks
   because it positions the author as a student, not a peer. Every article must be
   calibrated to its target track before the first paragraph is written.
-customer-config: "$CAREER_HOME/brain/social-distribution-engine/brand-patterns.md"
+customer-config: "$CAREER_HOME/brand-amplification/identity/brand-patterns.md"
 related:
   - content-flywheel.md
   - CONSTITUTION.md slugs: learning-velocity, signal-curation, zero-flattery, learning-flywheel, signal-amplification, feedback-loop, complementary-composition
@@ -23,7 +23,7 @@ related:
 
 This framework operates inside the **EMERGENT CYBORG INVARIANT** umbrella (Constitution Ground Zero). All six co-equal frameworks apply when drafting external artifacts: `learning-flywheel` (codify lessons across sessions); `signal-amplification` (separate signal from noise — see anti-move list below); `feedback-loop` (cross-family judges before ship); `complementary-composition` (multi-LLM review); `ship-fast-ship-small-learn-faster-cadence` (small drafts, fast cycles, decaying value); `context-understanding` (read shared state before any cross-thread action).
 
-The customer's specific track targets (Track 1 / Track 2 / Track 3 audiences), biographical shape, and worked examples are declared in `$CAREER_HOME/brain/social-distribution-engine/brand-patterns.md`. This file contains the generic framework only.
+The customer's specific track targets (Track 1 / Track 2 / Track 3 audiences), biographical shape, and worked examples are declared in `$CAREER_HOME/brand-amplification/identity/brand-patterns.md`. This file contains the generic framework only.
 
 ## Why this exists
 
@@ -37,7 +37,7 @@ Articles under a personal brand are branding and signaling artifacts. Every one 
 
 Same topic, three different articles. Track 3 ≠ Track 1 ≠ Track 2. Never write a Track 2 article and hope it pulls Track 3 readers — the calibration is legible to the reader within the first paragraph.
 
-The customer's specific Track 3 target companies, Track 1 target companies, and biographical shape are declared in `$CAREER_HOME/brain/social-distribution-engine/brand-patterns.md`.
+The customer's specific Track 3 target companies, Track 1 target companies, and biographical shape are declared in `$CAREER_HOME/brand-amplification/identity/brand-patterns.md`.
 
 ---
 
@@ -52,7 +52,7 @@ Do not write "I tried X and it's great." Write "I shipped X six months
 ago; the market's leading implementation just shipped the same X — here's
 what the convergence tells us about where the category is going."
 
-*Pattern:* A leading open-source tool ships a feature set whose roles match 2/3 of the customer's custom architecture, which has been running for months with a documented governance layer. "I independently converged on the same architecture, but with the governance layer the leading tool still hasn't added" is the Track-3 headline. "Here are 5 [tools]" is the Track-2 floor. The customer's specific worked examples are in their `$CAREER_HOME/brain/social-distribution-engine/brand-patterns.md`.
+*Pattern:* A leading open-source tool ships a feature set whose roles match 2/3 of the customer's custom architecture, which has been running for months with a documented governance layer. "I independently converged on the same architecture, but with the governance layer the leading tool still hasn't added" is the Track-3 headline. "Here are 5 [tools]" is the Track-2 floor. The customer's specific worked examples are in their `$CAREER_HOME/brand-amplification/identity/brand-patterns.md`.
 
 ### 2. Audit, don't recite
 
@@ -70,7 +70,7 @@ Pick a side on every claim. "[Tool X] is brilliant for parallel orchestration bu
 
 Every article reinforces the biographical core specific to the customer — their years of experience at their most distinctive employer, their shipped systems, their open-source or published work. Not as credential spam — as *the shape the audience selects for*. An article that positions the author as "a developer who uses [tool]" actively erodes this shape. Every article must RE-establish it in the opening paragraphs. This is what Reid Hoffman calls "small plates, same table" — same biography served differently every time.
 
-The customer's biographical shape is declared in `$CAREER_HOME/brain/social-distribution-engine/brand-patterns.md` and `$CAREER_HOME/brain/identity/experience-history.md`. Read those before drafting any article — never from memory.
+The customer's biographical shape is declared in `$CAREER_HOME/brand-amplification/identity/brand-patterns.md` and `$CAREER_HOME/identity/experience-history.md`. Read those before drafting any article — never from memory.
 
 ### 6. Receipts from real shipped systems
 
@@ -172,7 +172,7 @@ Track-3 angle ≠ Track-1 angle for the same evidence:
 
 Same evidence. Different framing. Pick the track, then write.
 
-The customer's specific worked examples (their actual articles and scoring) are in `$CAREER_HOME/brain/social-distribution-engine/brand-patterns.md`.
+The customer's specific worked examples (their actual articles and scoring) are in `$CAREER_HOME/brand-amplification/identity/brand-patterns.md`.
 
 ---
 
@@ -180,11 +180,11 @@ The customer's specific worked examples (their actual articles and scoring) are 
 
 - CONSTITUTION.md: P17 (learning velocity), P20 (signal curation), P22
   (boundary-first qualification), Zero Flattery invariant.
-- Customer's `$CAREER_HOME/brain/social-distribution-engine/brand-patterns.md`:
+- Customer's `$CAREER_HOME/brand-amplification/identity/brand-patterns.md`:
   specific track targets, biographical shape, and worked examples for this customer.
-- Customer's `$CAREER_HOME/brain/identity/experience-history.md`:
+- Customer's `$CAREER_HOME/identity/experience-history.md`:
   Biographical shape source — read before drafting any article or outreach.
 - `content-flywheel.md`: Campaign-completeness + visual-review invariants
   that govern the ship surface.
-- Customer's `$CAREER_HOME/brain/identity/professional-brand.md`:
+- Customer's `$CAREER_HOME/identity/professional-brand.md`:
   Related positioning artifact — cross-reference before any Track-3 article is published.

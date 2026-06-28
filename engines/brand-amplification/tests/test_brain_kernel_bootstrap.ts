@@ -184,6 +184,45 @@ describe("brand-amplification brain-kernel bootstrap", () => {
     expect(written).toContain("hub: linkedin");
   });
 
+  test("(a) BAE can write local content strategy telemetry through brain.write", async () => {
+    const { createBrain } = await import(BRAIN_KERNEL_PATH);
+    const { registerEngine } = await import(BOOTSTRAP_PATH);
+
+    const brain = createBrain(tmpDir);
+    registerEngine(brain);
+
+    const event = {
+      event: "content_strategy_applied",
+      relevance_score: 82,
+      audience: "Acme hiring managers",
+      passed: true,
+      ts: "2026-06-28T00:00:00.000Z",
+    };
+
+    const result = await brain.write(
+      "brand-amplification/telemetry/events.jsonl",
+      `${JSON.stringify(event)}\n`,
+      {
+        provenance: {
+          who: "brand-amplification",
+          why: "test: local relevance telemetry write",
+          source: "test_brain_kernel_bootstrap",
+        },
+        engine_id: "brand-amplification",
+      },
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.path).toBe("brand-amplification/telemetry/events.jsonl");
+    const written = readFileSync(
+      join(tmpDir, "brand-amplification", "telemetry", "events.jsonl"),
+      "utf8",
+    );
+    const lines = written.trim().split("\n");
+    expect(lines.length).toBe(1);
+    expect(JSON.parse(lines[0])).toEqual(event);
+  });
+
   // ── (b) BAE writes to identity/handles.md via writes_to_primitives ─────────
   //
   // This test verifies that the ACL Gap Fix (brain-kernel commit d665f01) is

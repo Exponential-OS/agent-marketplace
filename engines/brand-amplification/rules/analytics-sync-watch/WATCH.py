@@ -14,8 +14,8 @@ without any analytics data.
 
 Input:  $1 or stdin JSON (optional):
     {
-      "campaigns_dirs": ["/abs/path/to/brain/sde/campaigns", "/abs/path/to/WIP/..."],
-      "career_os_home": "/abs/path/...",
+      "campaigns_dirs": ["/abs/path/to/brand-amplification/campaigns", "/abs/path/to/WIP/..."],
+      "career_home": "/abs/path/...",
       "stale_days": 7
     }
 Output: JSON {verdict, signal, reason, stale_campaigns, schema_gap_found}
@@ -30,7 +30,7 @@ from datetime import date, timedelta
 
 LIVE_STATUSES = {"published", "live", "sent"}
 DEFAULT_STALE_DAYS = 7
-CAREER_HOME_DEFAULT = os.environ.get("CAREER_HOME") or os.environ.get("CAREER_OS_HOME") or ""
+CAREER_HOME_DEFAULT = os.environ.get("CAREER_HOME") or ""
 
 
 def is_published(campaign):
@@ -89,13 +89,13 @@ def main() -> int:
     except Exception:
         ctx = {}
 
-    career_home = ctx.get("career_home", os.environ.get("CAREER_HOME", os.environ.get("CAREER_OS_HOME", CAREER_HOME_DEFAULT)))
+    career_home = ctx.get("career_home", os.environ.get("CAREER_HOME", CAREER_HOME_DEFAULT))
     stale_days = int(ctx.get("stale_days", DEFAULT_STALE_DAYS))
     today = date.today()
 
-    # Default scan dirs: brain/sde/campaigns + WIP/branding-product/articles
+    # Default scan dirs: brand-amplification/campaigns + WIP/branding-product/articles
     default_dirs = [
-        str(pathlib.Path(career_home) / "brain/social-distribution-engine/campaigns"),
+        str(pathlib.Path(career_home) / "brand-amplification/campaigns"),
         str(pathlib.Path(career_home) / "WIP/branding-product/articles"),
     ]
     scan_dirs = ctx.get("campaigns_dirs", default_dirs)

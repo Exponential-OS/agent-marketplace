@@ -13,7 +13,7 @@ if [[ -z "${CAREER_HOME:-}" ]]; then
   echo "WARN — CAREER_HOME env var not set. Run career-intelligence-onboarding first."
   exit 2
 fi
-CAMPAIGNS_DIR="$CAREER_HOME/brain/social-distribution-engine/campaigns"
+CAMPAIGNS_DIR="$CAREER_HOME/brand-amplification/campaigns"
 
 if [[ ! -f "$LOG" ]]; then
   echo "WARN — no enforcement log found at $LOG (no runs recorded)"

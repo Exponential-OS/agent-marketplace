@@ -44,7 +44,7 @@ import subprocess
 import sys
 
 RULES_DIR = pathlib.Path(__file__).parent.parent.parent / "rules"
-_CAREER_HOME_RAW = os.environ.get("CAREER_HOME") or os.environ.get("CAREER_OS_HOME")
+_CAREER_HOME_RAW = os.environ.get("CAREER_HOME")
 if not _CAREER_HOME_RAW:
     print(json.dumps({"verdict": "BLOCK", "reason": "CAREER_HOME env var not set. Run career-intelligence-onboarding first."}), file=sys.stderr)
     sys.exit(1)
@@ -58,8 +58,8 @@ GATES = [
     # (phase, gate_slug, extra_args_fn, timeout_seconds)
     ("Planning",  "campaign-schema-validator",     lambda cf, _: {"campaign_file": cf},                                                                                                                                                        30),
     # Subprocess gates accept pre-resolved filesystem paths that map to brain paths.
-    ("Planning",  "channel-status-check",          lambda cf, _: {"campaign_file": cf, "channel_dir_file": str(pathlib.Path(CAREER_HOME) / "brain/brand-amplification/campaigns/social-channel-directory.md")},                              30),
-    ("Planning",  "surface-coverage-check",        lambda cf, _: {"campaign_file": cf, "handles_file": str(pathlib.Path(CAREER_HOME) / "brain/identity/handles.md")},                                                                     30),
+    ("Planning",  "channel-status-check",          lambda cf, _: {"campaign_file": cf, "channel_dir_file": str(pathlib.Path(CAREER_HOME) / "brand-amplification/campaigns/social-channel-directory.md")},                              30),
+    ("Planning",  "surface-coverage-check",        lambda cf, _: {"campaign_file": cf, "handles_file": str(pathlib.Path(CAREER_HOME) / "identity/handles.md")},                                                                     30),
     ("Content",   "content-url-resolution-check",  lambda cf, _: {"campaign_file": cf},                                                                                                                                                        30),
     ("Pre-Dist",  "flywheel-sequence-guard",        lambda cf, t: {"campaign_file": cf, "target": t or ""},                                                                                                                                    30),
     ("Pre-Dist",  "visual-asset-review-check",        lambda cf, _: {"campaign_file": cf},                                                                                                                                                        30),

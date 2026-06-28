@@ -1,6 +1,17 @@
 <!-- product-vs-solution: example -->
 # Changelog
 
+## [0.55.0] — 2026-06-28 — post-algorithm relevance reset (XOS-99)
+
+### Added — Relevance Gate for campaign strategy
+campaign-engine now gates campaigns on `relevance_score >= 70` before drafting/distribution, using the content-flywheel Post-Algorithm Reset rubric: topic-audience fit, audience specificity, and signal-over-vanity intent. Below-threshold campaigns return the largest gap plus a sharpening suggestion and do not advance.
+
+### Added — local-only content strategy event
+The Relevance Gate records `content_strategy_applied` JSONL only through `brain.write("brand-amplification/telemetry/events.jsonl", ...)`, and only when `XOS_98_TELEMETRY` is enabled. The telemetry namespace is declared in plugin metadata and brain-kernel bootstrap ACL.
+
+### Changed — relevance over volume in the content flywheel
+Added the March 2026 Post-Algorithm Reset section: fewer, sharper posts for named audiences beat volume, with engagement quality tracked as `DMs / likes`. Existing velocity guidance is preserved but reframed as a distribution input inside the right audience.
+
 ## [0.54.0] — 2026-06-09 — cleanup: dead handlers, brand rename, schema fix (XOS-9)
 
 ### Removed — 19 dead handler.ts files (P4 / signal-pollution)
@@ -13,7 +24,7 @@ campaign-engine now writes the canonical machine-readable campaign.json to brand
 Status-line headers, abbreviations, and gate namespace references updated from the pre-2026-05-17 "social-distribution-engine"/"SDE" branding to BAE. Preserved: the literal social-distribution-engine skill/dir identifiers, and legitimate cross-plugin references to career-intelligence (e.g. the social-content-readiness-check gate). De-hardcoded golden-hour's gate-position comment.
 
 ### Note
-The full brain/→flat path migration (~25 files still using brain/-prefixed paths) is tracked as a separate ticket — out of scope here. Those gates are advisory-WARN; no behavior regression.
+The full flat workspace path migration (~25 files still using legacy-prefixed paths) is tracked as a separate ticket — out of scope here. Those gates are advisory-WARN; no behavior regression.
 
 <!-- Note: 0.48.0–0.51.0 entries were not recorded at ship time (XOS-9). See git log for those commits. -->
 
