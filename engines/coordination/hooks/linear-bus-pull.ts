@@ -27,6 +27,7 @@ type Env = Record<string, string | undefined>;
 
 export interface LinearBusHookInput {
   session_id: string;
+  cwd?: string;
 }
 
 export interface LinearBusMarker {
@@ -122,7 +123,7 @@ async function runLinearBusPullUnsafe(
   const input = parseHookInput(rawInput);
   const markerPath = resolveLinearBusMarkerPath(input.session_id, env, options.dataRoot);
   const since = resolveLastSeenAt(markerPath, env, now);
-  const config = resolveLinearConfig(env);
+  const config = resolveLinearConfig(env, input.cwd ?? process.cwd(), markerPath);
   const fetchDelta = options.fetchDelta ?? queryLinearBusDelta;
   const result = await withTimeout(fetchDelta(since, config), HOOK_TIMEOUT_MS);
 
@@ -151,7 +152,10 @@ function parseHookInput(rawInput: string): LinearBusHookInput {
     throw new Error("session_id missing");
   }
   validateSessionId(parsed.session_id);
-  return { session_id: parsed.session_id };
+  return {
+    session_id: parsed.session_id,
+    cwd: typeof parsed.cwd === "string" && parsed.cwd.trim() ? parsed.cwd : undefined,
+  };
 }
 
 function validateSessionId(sessionId: string): void {
@@ -161,8 +165,12 @@ function validateSessionId(sessionId: string): void {
 }
 
 function resolveLastSeenAt(markerPath: string, env: Env, now: () => Date): string {
-  if (!existsSync(markerPath)) return resolveColdStartSince(env, now());
-  return readLastSeenAt(markerPath);
+  try {
+    if (!existsSync(markerPath)) return resolveColdStartSince(env, now());
+    return readLastSeenAt(markerPath) ?? resolveColdStartSince(env, now());
+  } catch {
+    return resolveColdStartSince(env, now());
+  }
 }
 
 function resolveColdStartSince(env: Env, now: Date): string {
@@ -186,20 +194,34 @@ function parseWindowMs(value: string | undefined): number {
   return amount * 24 * 60 * 60 * 1000;
 }
 
-function readLastSeenAt(markerPath: string): string {
+function readLastSeenAt(markerPath: string): string | null {
   const parsed: unknown = JSON.parse(readFileSync(markerPath, "utf8"));
   if (!isRecord(parsed) || typeof parsed.last_seen_at !== "string") {
-    throw new Error("invalid marker");
+    return null;
   }
   if (Number.isNaN(Date.parse(parsed.last_seen_at))) {
-    throw new Error("invalid marker timestamp");
+    return null;
   }
   return parsed.last_seen_at;
 }
 
 function writeMarker(markerPath: string, marker: LinearBusMarker): void {
   mkdirSync(dirname(markerPath), { recursive: true });
-  writeFileSync(markerPath, JSON.stringify(marker, null, 2) + "\n", "utf8");
+  writeFileSync(
+    markerPath,
+    JSON.stringify({ ...readMarkerRecord(markerPath), ...marker }, null, 2) + "\n",
+    "utf8",
+  );
+}
+
+function readMarkerRecord(markerPath: string): Record<string, unknown> {
+  try {
+    if (!existsSync(markerPath)) return {};
+    const parsed = JSON.parse(readFileSync(markerPath, "utf8"));
+    return isRecord(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
 }
 
 async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {

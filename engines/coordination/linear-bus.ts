@@ -6,15 +6,23 @@
  * result and do not throw, preserving hook prompt safety.
  */
 
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { dirname, join, normalize, resolve as resolvePath, sep } from "node:path";
+
 const WARN_PREFIX = "[work-kernel][linear] WARN";
 const LINEAR_GRAPHQL_ENDPOINT = "https://api.linear.app/graphql";
 const DEFAULT_LINEAR_TEAM = "";
+const DEFAULT_LINEAR_PROJECT: string | null = null;
+const CONFIG_CACHE_KEY = "linear_config_cache";
+const CONFIG_CACHE_VERSION = 1;
 
 type Env = Record<string, string | undefined>;
 
 export interface LinearConfig {
   apiKey: string | null;
   teamName: string;
+  projectName: string | null;
   endpoint?: string;
 }
 
@@ -67,6 +75,7 @@ export interface LinearBusDelta {
   since: string;
   queriedAt: string;
   teamName: string;
+  projectName?: string | null;
   viewer?: LinearUser;
   assignedIssues: LinearIssue[];
   recentComments: LinearComment[];
@@ -140,6 +149,34 @@ interface LinearBusGraphqlData {
     ownedCommentIssues?: LinearConnection<RawLinearIssue>;
   };
   urgentIssues?: LinearConnection<RawLinearIssue>;
+}
+
+interface LinearWipGoalTarget {
+  teamName: string;
+  projectName: string | null;
+}
+
+interface LinearWipGoalRoute extends LinearWipGoalTarget {
+  wip: string;
+}
+
+interface LinearWipGoalMap {
+  default: LinearWipGoalTarget;
+  routes: LinearWipGoalRoute[];
+}
+
+interface LinearWipGoalMapRead {
+  map: LinearWipGoalMap;
+  manifestPath: string;
+}
+
+interface LinearConfigCache {
+  version: number;
+  cwd: string;
+  resolved: LinearWipGoalTarget;
+  map?: LinearWipGoalMap;
+  manifestPath?: string;
+  cachedAt: string;
 }
 
 const ISSUE_FIELDS = `
@@ -251,10 +288,90 @@ query LinearBusDelta($since: DateTimeOrDuration!, $teamName: String!) {
 ${ISSUE_FIELDS}
 ${COMMENT_ISSUE_FIELDS}`;
 
+const LINEAR_BUS_QUERY_WITH_PROJECT = `
+query LinearBusDelta($since: DateTimeOrDuration!, $teamName: String!, $project: String!) {
+  viewer {
+    id
+    name
+    email
+    assignedIssues(
+      filter: {
+        updatedAt: { gt: $since }
+        project: { name: { eq: $project } }
+      }
+      first: 25
+      orderBy: updatedAt
+    ) {
+      nodes {
+        ...LinearBusIssueFields
+      }
+    }
+    assignedCommentIssues: assignedIssues(
+      filter: {
+        comments: { updatedAt: { gt: $since } }
+        project: { name: { eq: $project } }
+      }
+      first: 25
+      orderBy: updatedAt
+    ) {
+      nodes {
+        ...LinearBusCommentIssueFields
+      }
+    }
+    ownedCommentIssues: createdIssues(
+      filter: {
+        comments: { updatedAt: { gt: $since } }
+        project: { name: { eq: $project } }
+      }
+      first: 25
+      orderBy: updatedAt
+    ) {
+      nodes {
+        ...LinearBusCommentIssueFields
+      }
+    }
+  }
+  urgentIssues: issues(
+    filter: {
+      createdAt: { gt: $since }
+      priority: { eq: 1 }
+      team: { name: { eq: $teamName } }
+      project: { name: { eq: $project } }
+    }
+    first: 25
+    orderBy: createdAt
+  ) {
+    nodes {
+      ...LinearBusIssueFields
+    }
+  }
+}
+${ISSUE_FIELDS}
+${COMMENT_ISSUE_FIELDS}`;
+
 const LINEAR_ASSIGNED_ISSUES_QUERY = `
 query LinearViewerAssignedIssues($since: DateTimeOrDuration!) {
   viewer {
     assignedIssues(filter: { updatedAt: { gt: $since } }, first: 25, orderBy: updatedAt) {
+      nodes {
+        ...LinearBusIssueFields
+      }
+    }
+  }
+}
+${ISSUE_FIELDS}`;
+
+const LINEAR_ASSIGNED_ISSUES_QUERY_WITH_PROJECT = `
+query LinearViewerAssignedIssues($since: DateTimeOrDuration!, $project: String!) {
+  viewer {
+    assignedIssues(
+      filter: {
+        updatedAt: { gt: $since }
+        project: { name: { eq: $project } }
+      }
+      first: 25
+      orderBy: updatedAt
+    ) {
       nodes {
         ...LinearBusIssueFields
       }
@@ -288,6 +405,37 @@ query LinearRecentComments($since: DateTimeOrDuration!) {
 }
 ${COMMENT_ISSUE_FIELDS}`;
 
+const LINEAR_RECENT_COMMENTS_QUERY_WITH_PROJECT = `
+query LinearRecentComments($since: DateTimeOrDuration!, $project: String!) {
+  viewer {
+    assignedCommentIssues: assignedIssues(
+      filter: {
+        comments: { updatedAt: { gt: $since } }
+        project: { name: { eq: $project } }
+      }
+      first: 25
+      orderBy: updatedAt
+    ) {
+      nodes {
+        ...LinearBusCommentIssueFields
+      }
+    }
+    ownedCommentIssues: createdIssues(
+      filter: {
+        comments: { updatedAt: { gt: $since } }
+        project: { name: { eq: $project } }
+      }
+      first: 25
+      orderBy: updatedAt
+    ) {
+      nodes {
+        ...LinearBusCommentIssueFields
+      }
+    }
+  }
+}
+${COMMENT_ISSUE_FIELDS}`;
+
 const LINEAR_URGENT_ISSUES_QUERY = `
 query LinearUrgentIssues($since: DateTimeOrDuration!, $teamName: String!) {
   urgentIssues: issues(
@@ -306,14 +454,317 @@ query LinearUrgentIssues($since: DateTimeOrDuration!, $teamName: String!) {
 }
 ${ISSUE_FIELDS}`;
 
+const LINEAR_URGENT_ISSUES_QUERY_WITH_PROJECT = `
+query LinearUrgentIssues($since: DateTimeOrDuration!, $teamName: String!, $project: String!) {
+  urgentIssues: issues(
+    filter: {
+      createdAt: { gt: $since }
+      priority: { eq: 1 }
+      team: { name: { eq: $teamName } }
+      project: { name: { eq: $project } }
+    }
+    first: 25
+    orderBy: createdAt
+  ) {
+    nodes {
+      ...LinearBusIssueFields
+    }
+  }
+}
+${ISSUE_FIELDS}`;
+
 /**
- * resolveLinearConfig - resolves Linear auth and filters from env.
- * LINEAR_TEAM is optional; unset instances skip team-scoped urgent issue pulls.
+ * resolveLinearConfig - resolves Linear auth and filters from env or workspace WIP map.
+ * LINEAR_TEAM/LINEAR_PROJECT are explicit overrides. Without them, the resolver
+ * reads ~/.codialectic/context.json -> workspace_root -> workspace.manifest.yaml.
  */
-export function resolveLinearConfig(env: Env = process.env): LinearConfig {
+export function resolveLinearConfig(
+  env: Env = process.env,
+  cwd: string = process.cwd(),
+  statePath?: string,
+): LinearConfig {
   const apiKey = env.LINEAR_API_KEY?.trim() || null;
-  const teamName = env.LINEAR_TEAM?.trim() || DEFAULT_LINEAR_TEAM;
-  return { apiKey, teamName };
+  const envTeam = env.LINEAR_TEAM?.trim();
+  const envProject = env.LINEAR_PROJECT?.trim();
+
+  if (envTeam || envProject) {
+    return {
+      apiKey,
+      teamName: envTeam || DEFAULT_LINEAR_TEAM,
+      projectName: envProject || DEFAULT_LINEAR_PROJECT,
+    };
+  }
+
+  const normalizedCwd = normalizePathForMatch(cwd, env);
+  const cached = readLinearConfigCache(statePath);
+  if (cached?.map) {
+    const resolved = resolveWipGoalTarget(cached.map, normalizedCwd, env);
+    if (
+      cached.cwd !== normalizedCwd ||
+      cached.resolved.teamName !== resolved.teamName ||
+      cached.resolved.projectName !== resolved.projectName
+    ) {
+      writeLinearConfigCache(statePath, {
+        ...cached,
+        cwd: normalizedCwd,
+        resolved,
+        cachedAt: new Date().toISOString(),
+      });
+    }
+    return { apiKey, ...resolved };
+  }
+  if (cached && cached.cwd === normalizedCwd) {
+    return { apiKey, ...cached.resolved };
+  }
+
+  const readMap = readWorkspaceWipGoalMap(env);
+  if (!readMap) {
+    const resolved = genericLinearTarget();
+    writeLinearConfigCache(statePath, {
+      version: CONFIG_CACHE_VERSION,
+      cwd: normalizedCwd,
+      resolved,
+      cachedAt: new Date().toISOString(),
+    });
+    return { apiKey, ...resolved };
+  }
+
+  const resolved = resolveWipGoalTarget(readMap.map, normalizedCwd, env);
+  writeLinearConfigCache(statePath, {
+    version: CONFIG_CACHE_VERSION,
+    cwd: normalizedCwd,
+    resolved,
+    map: readMap.map,
+    manifestPath: readMap.manifestPath,
+    cachedAt: new Date().toISOString(),
+  });
+  return { apiKey, ...resolved };
+}
+
+function genericLinearTarget(): LinearWipGoalTarget {
+  return { teamName: DEFAULT_LINEAR_TEAM, projectName: DEFAULT_LINEAR_PROJECT };
+}
+
+function readWorkspaceWipGoalMap(env: Env): LinearWipGoalMapRead | null {
+  try {
+    const contextPath = join(env.HOME || homedir(), ".codialectic", "context.json");
+    const context = JSON.parse(readFileSync(contextPath, "utf8"));
+    if (!isRecord(context) || typeof context.workspace_root !== "string") return null;
+
+    const workspaceRoot = expandHomePath(context.workspace_root, env);
+    const manifestPath = join(workspaceRoot, "workspace.manifest.yaml");
+    const map = parseWipGoalMap(readFileSync(manifestPath, "utf8"));
+    return map ? { map, manifestPath } : null;
+  } catch {
+    return null;
+  }
+}
+
+function parseWipGoalMap(content: string): LinearWipGoalMap | null {
+  try {
+    const lines = content.split(/\r?\n/);
+    const startIndex = lines.findIndex((line) => /^\s*wip_goal_map\s*:/.test(line));
+    if (startIndex < 0) return null;
+
+    const baseIndent = leadingSpaces(lines[startIndex]);
+    let defaultTarget: LinearWipGoalTarget | null = null;
+    const routes: LinearWipGoalRoute[] = [];
+
+    for (let index = startIndex + 1; index < lines.length; index += 1) {
+      const line = lines[index];
+      if (!line.trim() || line.trimStart().startsWith("#")) continue;
+      if (leadingSpaces(line) <= baseIndent && /^\S/.test(line)) break;
+
+      if (/^\s*default\s*:/.test(line)) {
+        const parsed = parseFlowObject(line);
+        if (parsed) defaultTarget = flowTarget(parsed);
+        continue;
+      }
+
+      if (/^\s*-\s*\{/.test(line)) {
+        const parsed = parseFlowObject(line);
+        const wip = typeof parsed?.wip === "string" ? parsed.wip.trim() : "";
+        if (!parsed || !wip) continue;
+        routes.push({ wip, ...flowTarget(parsed) });
+      }
+    }
+
+    if (!defaultTarget) return null;
+    return { default: defaultTarget, routes };
+  } catch {
+    return null;
+  }
+}
+
+function parseFlowObject(line: string): Record<string, string | null> | null {
+  const match = line.match(/\{([^}]*)\}/);
+  if (!match) return null;
+
+  const result: Record<string, string | null> = {};
+  const pairRe = /([A-Za-z_][A-Za-z0-9_]*)\s*:\s*(null|"(?:\\.|[^"])*"|'(?:\\.|[^'])*'|[^,}]+)/g;
+  let pair: RegExpExecArray | null;
+  while ((pair = pairRe.exec(match[1])) !== null) {
+    const key = pair[1];
+    const rawValue = pair[2].trim();
+    if (rawValue === "null") {
+      result[key] = null;
+    } else if (rawValue.startsWith('"') && rawValue.endsWith('"')) {
+      result[key] = parseQuotedValue(rawValue);
+    } else if (rawValue.startsWith("'") && rawValue.endsWith("'")) {
+      result[key] = rawValue.slice(1, -1).replace(/\\'/g, "'");
+    } else {
+      result[key] = rawValue.trim();
+    }
+  }
+
+  return Object.keys(result).length > 0 ? result : null;
+}
+
+function parseQuotedValue(value: string): string {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value.slice(1, -1);
+  }
+}
+
+function flowTarget(values: Record<string, string | null>): LinearWipGoalTarget {
+  return {
+    teamName: flowString(values.team) || DEFAULT_LINEAR_TEAM,
+    projectName: flowProject(values.project),
+  };
+}
+
+function flowString(value: string | null | undefined): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function flowProject(value: string | null | undefined): string | null {
+  const project = flowString(value);
+  return project || null;
+}
+
+function resolveWipGoalTarget(
+  map: LinearWipGoalMap,
+  normalizedCwd: string,
+  env: Env,
+): LinearWipGoalTarget {
+  let bestRoute: LinearWipGoalRoute | null = null;
+  let bestLength = -1;
+
+  for (const route of map.routes) {
+    const routePath = normalizePathForMatch(route.wip, env);
+    if (isPathPrefix(routePath, normalizedCwd) && routePath.length > bestLength) {
+      bestRoute = route;
+      bestLength = routePath.length;
+    }
+  }
+
+  if (!bestRoute) return map.default;
+  return { teamName: bestRoute.teamName, projectName: bestRoute.projectName };
+}
+
+function isPathPrefix(prefix: string, value: string): boolean {
+  return value === prefix || value.startsWith(prefix + sep);
+}
+
+function normalizePathForMatch(value: string, env: Env): string {
+  try {
+    return stripTrailingSep(normalize(resolvePath(expandHomePath(value || process.cwd(), env))));
+  } catch {
+    return stripTrailingSep(normalize(resolvePath(process.cwd())));
+  }
+}
+
+function expandHomePath(value: string, env: Env): string {
+  const home = env.HOME || homedir();
+  if (value === "~") return home;
+  if (value.startsWith("~/")) return join(home, value.slice(2));
+  return value;
+}
+
+function stripTrailingSep(value: string): string {
+  let result = value;
+  while (result.length > 1 && result.endsWith(sep)) {
+    result = result.slice(0, -1);
+  }
+  return result;
+}
+
+function leadingSpaces(value: string): number {
+  return value.match(/^ */)?.[0].length ?? 0;
+}
+
+function readLinearConfigCache(statePath: string | undefined): LinearConfigCache | null {
+  if (!statePath) return null;
+  try {
+    if (!existsSync(statePath)) return null;
+    const state = JSON.parse(readFileSync(statePath, "utf8"));
+    if (!isRecord(state)) return null;
+    const cache = state[CONFIG_CACHE_KEY];
+    if (!isRecord(cache) || cache.version !== CONFIG_CACHE_VERSION) return null;
+    const resolved = parseCachedTarget(cache.resolved);
+    if (!resolved || typeof cache.cwd !== "string") return null;
+
+    return {
+      version: CONFIG_CACHE_VERSION,
+      cwd: cache.cwd,
+      resolved,
+      map: parseCachedMap(cache.map),
+      manifestPath: typeof cache.manifestPath === "string" ? cache.manifestPath : undefined,
+      cachedAt: typeof cache.cachedAt === "string" ? cache.cachedAt : "",
+    };
+  } catch {
+    return null;
+  }
+}
+
+function parseCachedTarget(value: unknown): LinearWipGoalTarget | null {
+  if (!isRecord(value)) return null;
+  const teamName = typeof value.teamName === "string" ? value.teamName : DEFAULT_LINEAR_TEAM;
+  const projectName =
+    typeof value.projectName === "string" && value.projectName.trim()
+      ? value.projectName
+      : null;
+  return { teamName, projectName };
+}
+
+function parseCachedMap(value: unknown): LinearWipGoalMap | undefined {
+  if (!isRecord(value)) return undefined;
+  const defaultTarget = parseCachedTarget(value.default);
+  if (!defaultTarget || !Array.isArray(value.routes)) return undefined;
+
+  const routes: LinearWipGoalRoute[] = [];
+  for (const route of value.routes) {
+    if (!isRecord(route) || typeof route.wip !== "string" || !route.wip.trim()) continue;
+    const target = parseCachedTarget(route);
+    if (!target) continue;
+    routes.push({ wip: route.wip, ...target });
+  }
+
+  return { default: defaultTarget, routes };
+}
+
+function writeLinearConfigCache(statePath: string | undefined, cache: LinearConfigCache): void {
+  if (!statePath) return;
+  try {
+    const state = readStateRecord(statePath);
+    state[CONFIG_CACHE_KEY] = cache;
+    mkdirSync(dirname(statePath), { recursive: true });
+    writeFileSync(statePath, JSON.stringify(state, null, 2) + "\n", "utf8");
+  } catch {
+    // Fail-safe: config cache persistence must never affect prompt execution.
+  }
+}
+
+function readStateRecord(statePath: string): Record<string, unknown> {
+  try {
+    if (!existsSync(statePath)) return {};
+    const parsed = JSON.parse(readFileSync(statePath, "utf8"));
+    return isRecord(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
 }
 
 export function hasLinearDelta(delta: LinearBusDelta): boolean {
@@ -362,16 +813,17 @@ export async function queryLinearBusDelta(
     return queryLinearBusDeltaWithoutTeam(since, config);
   }
 
+  const projectName = resolvedProjectName(config);
   const result = await linearGraphql<LinearBusGraphqlData>(
-    LINEAR_BUS_QUERY,
-    { since, teamName: config.teamName },
+    projectName ? LINEAR_BUS_QUERY_WITH_PROJECT : LINEAR_BUS_QUERY,
+    withProjectVariable({ since, teamName: config.teamName }, projectName),
     config,
   );
   if (!result.ok) return { ok: false, err: result.err, warn: result.warn };
 
   return {
     ok: true,
-    delta: normalizeBusDelta(result.data, since, config.teamName),
+    delta: normalizeBusDelta(result.data, since, config.teamName, projectName),
   };
 }
 
@@ -405,6 +857,7 @@ async function queryLinearBusDeltaWithoutTeam(
       since,
       queriedAt: new Date().toISOString(),
       teamName: config.teamName,
+      projectName: resolvedProjectName(config),
       assignedIssues: assignedResult.issues ?? [],
       recentComments: commentsResult.comments ?? [],
       urgentIssues: [],
@@ -423,9 +876,10 @@ export async function queryViewerAssignedIssues(
     return { ok: false, err: "Invalid since timestamp." };
   }
 
+  const projectName = resolvedProjectName(config);
   const result = await linearGraphql<{ viewer?: { assignedIssues?: LinearConnection<RawLinearIssue> } }>(
-    LINEAR_ASSIGNED_ISSUES_QUERY,
-    { since },
+    projectName ? LINEAR_ASSIGNED_ISSUES_QUERY_WITH_PROJECT : LINEAR_ASSIGNED_ISSUES_QUERY,
+    withProjectVariable({ since }, projectName),
     config,
   );
   if (!result.ok) return { ok: false, err: result.err, warn: result.warn };
@@ -447,12 +901,17 @@ export async function queryRecentComments(
     return { ok: false, err: "Invalid since timestamp." };
   }
 
+  const projectName = resolvedProjectName(config);
   const result = await linearGraphql<{
     viewer?: {
       assignedCommentIssues?: LinearConnection<RawLinearIssue>;
       ownedCommentIssues?: LinearConnection<RawLinearIssue>;
     };
-  }>(LINEAR_RECENT_COMMENTS_QUERY, { since }, config);
+  }>(
+    projectName ? LINEAR_RECENT_COMMENTS_QUERY_WITH_PROJECT : LINEAR_RECENT_COMMENTS_QUERY,
+    withProjectVariable({ since }, projectName),
+    config,
+  );
   if (!result.ok) return { ok: false, err: result.err, warn: result.warn };
 
   return {
@@ -481,9 +940,10 @@ export async function queryNewUrgentIssues(
     return { ok: true, issues: [] };
   }
 
+  const projectName = resolvedProjectName(config);
   const result = await linearGraphql<{ urgentIssues?: LinearConnection<RawLinearIssue> }>(
-    LINEAR_URGENT_ISSUES_QUERY,
-    { since, teamName: config.teamName },
+    projectName ? LINEAR_URGENT_ISSUES_QUERY_WITH_PROJECT : LINEAR_URGENT_ISSUES_QUERY,
+    withProjectVariable({ since, teamName: config.teamName }, projectName),
     config,
   );
   if (!result.ok) return { ok: false, err: result.err, warn: result.warn };
@@ -492,6 +952,17 @@ export async function queryNewUrgentIssues(
     ok: true,
     issues: sortIssues(nodes(result.data.urgentIssues).map(mapIssue)),
   };
+}
+
+function resolvedProjectName(config: LinearConfig): string | null {
+  return config.projectName?.trim() || null;
+}
+
+function withProjectVariable(
+  variables: Record<string, unknown>,
+  projectName: string | null,
+): Record<string, unknown> {
+  return projectName ? { ...variables, project: projectName } : variables;
 }
 
 async function linearGraphql<T>(
@@ -552,6 +1023,7 @@ function normalizeBusDelta(
   data: LinearBusGraphqlData,
   since: string,
   teamName: string,
+  projectName: string | null,
 ): LinearBusDelta {
   const assignedIssues = dedupeIssues(nodes(data.viewer?.assignedIssues).map(mapIssue));
   const recentComments = dedupeComments([
@@ -564,6 +1036,7 @@ function normalizeBusDelta(
     since,
     queriedAt: new Date().toISOString(),
     teamName,
+    projectName,
     viewer: mapUser(data.viewer),
     assignedIssues: sortIssues(assignedIssues),
     recentComments: sortComments(recentComments),

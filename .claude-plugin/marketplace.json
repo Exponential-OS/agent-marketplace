@@ -79,8 +79,8 @@
       "platform": "xOS",
       "license": "Proprietary",
       "source": "./engines/coordination",
-      "description": "xOS Coordination engine \u2014 brain-multi-session-sync skill. Git-backed session state sync across local Claude, cloud Claude, Cursor, Codex. Session-start hook pulls workspace state and surfaces it as Tier 1.5 context in co-dialectic waky-waky. Install once via setup.sh; workspace declares status format via AGENT_STATUS.yaml convention. Now also pulls the Linear work-bus per prompt.",
-      "version": "0.2.0",
+      "description": "xOS Coordination engine \u2014 brain-multi-session-sync skill. Git-backed session state sync across local Claude, cloud Claude, Cursor, Codex. Session-start hook pulls workspace state and surfaces it as Tier 1.5 context in co-dialectic waky-waky. Install once via setup.sh; workspace declares status format via AGENT_STATUS.yaml convention. v0.3.0: Linear work-bus pull resolves team/project from the workspace WIP\u2192goal map and scopes queries by project when configured.",
+      "version": "0.3.0",
       "category": "coordination",
       "homepage": "https://github.com/Exponential-OS/coordination-engine"
     },
