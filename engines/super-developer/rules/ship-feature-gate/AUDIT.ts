@@ -2,8 +2,9 @@
 /**
  * AUDIT.ts - compliance check for ship-feature-gate.
  *
- * Source-checks the high-signal shipping classifiers, active marker TTL,
- * emergency bypass, fail-hard BLOCK output, fail-open crash path, and mode bits.
+ * Source-checks the high-signal shipping classifiers, merge receipt gate,
+ * active marker TTL, emergency bypass, fail-hard BLOCK output,
+ * fail-open crash path, and mode bits.
  */
 
 import { existsSync, readFileSync, statSync } from "fs";
@@ -57,6 +58,11 @@ function checkSource(): boolean {
     { name: "active marker dir is ~/.ship-feature/active", ok: /\.ship-feature/.test(src) && /active/.test(src) && /hasFreshActiveMarker/.test(src) },
     { name: "BLOCK message contains WHAT and HOW route-through remediation", ok: /WHAT: shipping op outside a \/ship-feature run/.test(src) && /HOW: route through the ship-feature skill/.test(src) },
     { name: "classifies gh pr create", ok: /gh/.test(src) && /pr/.test(src) && /create/.test(src) },
+    { name: "classifies gh pr merge as receipt-gated merge", ok: /kind:\s*"merge"/.test(src) && /gh pr merge/.test(src) },
+    { name: "merge receipt marker is canonical", ok: /JUDGE_RECEIPT_MARKER/.test(src) && /ship-feature-judge-receipt:v1/.test(src) },
+    { name: "merge receipt fetch is injectable and uses Bun.spawnSync", ok: /fetchPrBody/.test(src) && /Bun\.spawnSync/.test(src) },
+    { name: "merge receipt BLOCK message contains XOS-138 WHAT and HOW", ok: /WHAT: merge blocked — PR carries no cross-family judge receipt/.test(src) && /XOS-138/.test(src) && /HOW: run \/ship-feature Stage 6/.test(src) },
+    { name: "merge receipt fetch failures fail open with WARNING", ok: /mergeReceiptWarning/.test(src) && /fail-open for XOS-138/.test(src) && /WARNING/.test(src) },
     { name: "classifies git push to main", ok: /git/.test(src) && /push/.test(src) && /isMainPush/.test(src) && /isMainRefspec/.test(src) && /refs\/heads\/main/.test(src) },
     { name: "classifies railway up", ok: /railway/.test(src) && /up/.test(src) },
     { name: "classifies ship-* commands", ok: /ship-\*/.test(src) && /isShipCommandName/.test(src) },

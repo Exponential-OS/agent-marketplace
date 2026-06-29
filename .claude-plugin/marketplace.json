@@ -25,8 +25,8 @@
       "platform": "xHumanOS",
       "license": "Proprietary",
       "source": "./engines/super-developer",
-      "description": "Super Developer Engine - global agentic-SDLC ship-feature pipeline for every repo. v0.4.1: adds Stage 5.5 (E2E + VISUAL verification \u2014 local-dev-not-prod, E2E-cred dogfood of the real customer path, persona judges Jobs+Ive, screenshots committed to docs/verify/ so they render in the PR Files-changed tab on a private repo, sensorium-routing for headless agents), Stage 5.6 (real /simplify), Stage 5.7 (targeted rerun). v0.3.0: SELF-CONTAINED \u2014 bundles the SDLC rules (sdlc-work-claim, sdlc-worktree-isolation, ship-feature-gate) invoked via ${CLAUDE_PLUGIN_ROOT}, no ~/cyborg runtime dependency. Reasoning validation via cross-family judge-panel. User-scope, workspace_binding=global. Canonical source: Exponential-OS/xos monorepo plugins/cross/super-developer (this engines/ copy is a derived vendored mirror, overwritten on each sync).",
-      "version": "0.4.1",
+      "description": "Super Developer Engine - global agentic-SDLC ship-feature pipeline for every repo. v0.5.0: the cross-family judge is now UNSKIPPABLE (XOS-138) \u2014 Stage 6 non-optional + FAIL-HARD if no fish, a canonical `ship-feature-judge-receipt:v1` block auto-embedded in every PR body, and the ship-feature-gate handler BLOCKS `gh pr merge` when the PR carries no judge receipt (the merge choke). v0.4.1: Stage 5.5 (E2E + VISUAL \u2014 local-dev-not-prod, E2E-cred dogfood, persona judges Jobs+Ive, screenshots committed to docs/verify/, sensorium-routing), 5.6 (real /simplify), 5.7 (rerun). v0.3.0: SELF-CONTAINED \u2014 bundles the SDLC rules (sdlc-work-claim, sdlc-worktree-isolation, ship-feature-gate) invoked via ${CLAUDE_PLUGIN_ROOT}, no ~/cyborg runtime dependency. User-scope, workspace_binding=global. Canonical source: Exponential-OS/xos monorepo plugins/cross/super-developer (this engines/ copy is a derived vendored mirror, overwritten on each sync).",
+      "version": "0.5.0",
       "category": "developer-tools",
       "homepage": "https://github.com/Exponential-OS/xos"
     },

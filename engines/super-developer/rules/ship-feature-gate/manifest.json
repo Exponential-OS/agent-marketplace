@@ -1,12 +1,12 @@
 {
   "name": "ship-feature-gate",
   "slug": "ship-feature-gate",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "status": "active",
   "created": "2026-06-09",
   "type": "gate",
   "canonical": "handler.ts",
-  "description": "PreToolUse Bash gate that blocks high-signal shipping commands outside a fresh /ship-feature run. A fresh active marker at ~/.ship-feature/active/<session>.json authorizes shipping-class operations after Stage 0 claims the Linear ticket.",
+  "description": "PreToolUse Bash gate that blocks high-signal shipping commands outside a fresh /ship-feature run and blocks gh pr merge when the target PR lacks the cross-family judge receipt. A fresh active marker at ~/.ship-feature/active/<session>.json authorizes PR creation, main pushes, deploys, and ship-* operations after Stage 0 claims the Linear ticket; merge is receipt-gated instead.",
   "enforcement": {
     "how": "handler.ts",
     "audit": "AUDIT.ts",
@@ -30,13 +30,14 @@
     },
     "fail_open": {
       "on_handler_crash": true,
+      "merge_receipt_fetch_failure": true,
       "environment_bypass": "SHIP_FEATURE_GATE_OFF=1"
     }
   },
   "hook_type": "PreToolUse",
   "hook_target_tools": ["Bash"],
   "cadence": "per-bash-tool-call",
-  "last_update": "2026-06-09",
+  "last_update": "2026-06-29",
   "last_watch_run": null,
   "active_marker": {
     "directory": "~/.ship-feature/active",
@@ -55,6 +56,15 @@
     "railway up",
     "ship-* command names"
   ],
+  "merge_receipt_gate": {
+    "command": "gh pr merge",
+    "active_marker_required": false,
+    "body_fetch": "gh pr view <arg-or-current> [--repo R] --json body -q .body",
+    "receipt_marker": "ship-feature-judge-receipt:v1",
+    "required_verdicts": ["GREEN", "RED"],
+    "missing_receipt": "BLOCK",
+    "fetch_failure": "PASS fail-open with loud WARNING log"
+  },
   "allowed_without_marker": [
     "git push <remote> <non-main-branch>",
     "read-only git commands",
@@ -65,7 +75,7 @@
     "Settings activation is human-gated; scripts/preflight-ship-feature-gate.ts is present but this manifest does not imply it is wired into ~/.claude/settings.json."
   ],
   "related_invariant": "Agentic SDLC / ship-feature enforcement / SDLC WORK-CLAIM",
-  "litmus": "Before PR creation, main push, deploy, or ship-* command: is there a fresh ~/.ship-feature/active/<session>.json marker from Stage 0 of the ship-feature pipeline? If no — BLOCK and route through the skill.",
+  "litmus": "Before PR creation, main push, deploy, or ship-* command: is there a fresh ~/.ship-feature/active/<session>.json marker from Stage 0 of the ship-feature pipeline? If no — BLOCK and route through the skill. Before gh pr merge: does the target PR body carry ship-feature-judge-receipt:v1 plus verdict GREEN/RED? If no — BLOCK and rerun Stage 6.",
   "dispatch_slug": "ship-feature-gate",
   "origin": "XOS-47, 2026-06-09 — enforce Agentic SDLC by making /ship-feature the default path for code shipping and blocking ad-hoc PR/deploy commands outside a claimed run."
 }

@@ -25,10 +25,35 @@ import { basename, join, resolve } from "path";
 
 export const SLUG = "ship-feature-gate";
 export const ACTIVE_TTL_MS = 4 * 60 * 60 * 1000;
+export const JUDGE_RECEIPT_MARKER = "ship-feature-judge-receipt:v1";
+export const JUDGE_RECEIPT_BLOCK_PATTERN = new RegExp(
+  `(?:^|\\r?\\n)<!-- ${JUDGE_RECEIPT_MARKER} -->\\r?\\n` +
+    `## 🧪 Cross-family judge receipt\\r?\\n` +
+    `- verdict: (GREEN|RED)\\r?\\n` +
+    `- families: .+\\r?\\n` +
+    `- flags: \\d+ — .+\\r?\\n` +
+    `- escalated: (yes|no)\\r?\\n` +
+    `- ts: \\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})(?:\\r?\\n|$)`,
+  "m"
+);
 
 const LOG_PATH = join(homedir(), ".cyborg-enforcement-log.jsonl");
 const BLOCK_MESSAGE =
   "WHAT: shipping op outside a /ship-feature run. HOW: route through the ship-feature skill (Stage 0 claims the ticket + writes the active marker), then build→judge→ship.";
+const MERGE_RECEIPT_BLOCK_MESSAGE =
+  "WHAT: merge blocked — PR carries no cross-family judge receipt (XOS-138; the judge gate was skipped). HOW: run /ship-feature Stage 6 (judge-panel) and embed the `ship-feature-judge-receipt:v1` block in the PR body, then merge.";
+const GH_FETCH_TIMEOUT_MS = 5_000;
+const GH_OPTIONS_WITH_VALUE = new Set(["--repo", "-R", "--hostname"]);
+const GH_PR_MERGE_OPTIONS_WITH_VALUE = new Set([
+  ...GH_OPTIONS_WITH_VALUE,
+  "--author-email",
+  "--body",
+  "-b",
+  "--match-head-commit",
+  "--subject",
+  "-t",
+]);
+const JUDGE_VERDICT_LINE_PATTERN = /^\s*-\s*verdict:\s*(GREEN|RED)\s*$/m;
 
 type Verdict = "PASS" | "BLOCK";
 
@@ -48,18 +73,30 @@ export interface HandlerOutput {
   message: string;
 }
 
+export interface FetchPrBodyArgs {
+  prArg: string | null;
+  repo: string | null;
+  cwd: string;
+}
+
 export interface ProcessOptions {
   homeDir?: string;
   activeDir?: string;
   logPath?: string;
   now?: Date;
   env?: Record<string, string | undefined>;
+  fetchPrBody?: (args: FetchPrBodyArgs) => string | null;
 }
 
+type CommandKind = "none" | "shipping" | "merge";
+
 interface ShippingMatch {
+  kind: CommandKind;
   shipping: boolean;
   reason: string;
   target: string;
+  prArg?: string | null;
+  repo?: string | null;
 }
 
 interface GitInvocation {
@@ -275,19 +312,57 @@ function isMainPush(args: string[]): boolean {
 }
 
 function ghCommandPair(args: string[]): [string | null, string | null] {
-  const optionsWithValue = new Set(["--repo", "-R", "--hostname"]);
+  const parsed = ghCommandTail(args);
+  return [parsed.group, parsed.subcommand];
+}
+
+function ghCommandTail(args: string[]): { group: string | null; subcommand: string | null; tail: string[] } {
   const commands: string[] = [];
   for (let i = 0; i < args.length; ) {
     const token = args[i];
     if (token.startsWith("-")) {
-      i = skipOption(args, i, optionsWithValue);
+      i = skipOption(args, i, GH_OPTIONS_WITH_VALUE);
       continue;
     }
     commands.push(token);
     i++;
-    if (commands.length === 2) break;
+    if (commands.length === 2) {
+      return { group: commands[0] ?? null, subcommand: commands[1] ?? null, tail: args.slice(i) };
+    }
   }
-  return [commands[0] ?? null, commands[1] ?? null];
+  return { group: commands[0] ?? null, subcommand: commands[1] ?? null, tail: [] };
+}
+
+function optionValue(args: string[], names: string[]): string | null {
+  for (let i = 0; i < args.length; i++) {
+    const token = args[i];
+    if (names.includes(token)) return args[i + 1] ?? null;
+    for (const name of names) {
+      if (token.startsWith(name + "=")) return token.slice(name.length + 1) || null;
+    }
+  }
+  return null;
+}
+
+function mergePrArg(tail: string[]): string | null {
+  for (let i = 0; i < tail.length; ) {
+    const token = tail[i];
+    if (token === "--") return tail[i + 1] ?? null;
+    if (token.startsWith("-")) {
+      i = skipOption(tail, i, GH_PR_MERGE_OPTIONS_WITH_VALUE);
+      continue;
+    }
+    return token;
+  }
+  return null;
+}
+
+function ghPrMergeTarget(args: string[]): { prArg: string | null; repo: string | null } {
+  const parsed = ghCommandTail(args);
+  return {
+    prArg: mergePrArg(parsed.tail),
+    repo: optionValue(args, ["--repo", "-R"]),
+  };
 }
 
 function firstNonFlag(args: string[]): string | null {
@@ -306,28 +381,32 @@ export function classifyShippingCommand(command: string, cwd: string): ShippingM
     const args = clause.slice(execIndex + 1);
 
     if (isShipCommandName(exec)) {
-      return { shipping: true, target: cwd, reason: "ship-* command " + exec };
+      return { kind: "shipping", shipping: true, target: cwd, reason: "ship-* command " + exec };
     }
     if (runnerShips(exec, args)) {
-      return { shipping: true, target: cwd, reason: exec + " run " + args[args.findIndex((arg) => arg === "run") + 1] };
+      return { kind: "shipping", shipping: true, target: cwd, reason: exec + " run " + args[args.findIndex((arg) => arg === "run") + 1] };
     }
     if (exec === "gh") {
       const [group, subcommand] = ghCommandPair(args);
       if (group === "pr" && subcommand === "create") {
-        return { shipping: true, target: cwd, reason: "gh pr create" };
+        return { kind: "shipping", shipping: true, target: cwd, reason: "gh pr create" };
+      }
+      if (group === "pr" && subcommand === "merge") {
+        const target = ghPrMergeTarget(args);
+        return { kind: "merge", shipping: true, target: cwd, reason: "gh pr merge", ...target };
       }
     }
     if (exec === "git") {
       const invocation = parseGitInvocation(args);
       if (invocation.subcommand === "push" && isMainPush(invocation.args)) {
-        return { shipping: true, target: cwd, reason: "git push to main" };
+        return { kind: "shipping", shipping: true, target: cwd, reason: "git push to main" };
       }
     }
     if (exec === "railway" && firstNonFlag(args) === "up") {
-      return { shipping: true, target: cwd, reason: "railway up" };
+      return { kind: "shipping", shipping: true, target: cwd, reason: "railway up" };
     }
   }
-  return { shipping: false, target: cwd, reason: "not a shipping-class command" };
+  return { kind: "none", shipping: false, target: cwd, reason: "not a shipping-class command" };
 }
 
 function activeMarkerDir(options: ProcessOptions): string {
@@ -374,6 +453,88 @@ function block(target: string, reason: string): HandlerOutput {
   return { verdict: "BLOCK", target, reason, message: BLOCK_MESSAGE };
 }
 
+function blockMerge(target: string, reason: string): HandlerOutput {
+  return { verdict: "BLOCK", target, reason, message: MERGE_RECEIPT_BLOCK_MESSAGE };
+}
+
+function decodePipe(pipe: Uint8Array | ArrayBuffer | undefined): string {
+  if (!pipe) return "";
+  return new TextDecoder().decode(pipe);
+}
+
+function defaultFetchPrBody(args: FetchPrBodyArgs): string | null {
+  const ghArgs = ["pr", "view"];
+  if (args.prArg) ghArgs.push(args.prArg);
+  if (args.repo) ghArgs.push("--repo", args.repo);
+  ghArgs.push("--json", "body", "-q", ".body");
+
+  const result = Bun.spawnSync(["gh", ...ghArgs], {
+    cwd: args.cwd,
+    stdout: "pipe",
+    stderr: "pipe",
+    timeout: GH_FETCH_TIMEOUT_MS,
+  });
+
+  if (result.exitCode !== 0) return null;
+  return decodePipe(result.stdout);
+}
+
+export function hasJudgeReceipt(body: string): boolean {
+  return body.includes(JUDGE_RECEIPT_MARKER) && JUDGE_VERDICT_LINE_PATTERN.test(body);
+}
+
+function mergeReceiptWarning(match: ShippingMatch, options: ProcessOptions, err?: unknown): HandlerOutput {
+  const output = pass(match.target, "WARNING: gh pr merge receipt fetch failed; fail-open for XOS-138: " + match.reason);
+  log(output, options, {
+    shipping_reason: match.reason,
+    merge_receipt_gate: true,
+    warning: "WARNING: XOS-138 gh pr view failed; merge allowed fail-open",
+    fail_open: true,
+    pr_arg: match.prArg ?? null,
+    repo: match.repo ?? null,
+    error: err === undefined ? undefined : String(err instanceof Error ? err.message : err),
+  });
+  return output;
+}
+
+function processMergeReceiptGate(match: ShippingMatch, options: ProcessOptions): HandlerOutput {
+  const fetchPrBody = options.fetchPrBody ?? defaultFetchPrBody;
+  let body: string | null;
+  try {
+    body = fetchPrBody({ prArg: match.prArg ?? null, repo: match.repo ?? null, cwd: match.target });
+  } catch (err) {
+    return mergeReceiptWarning(match, options, err);
+  }
+
+  if (body === null) return mergeReceiptWarning(match, options);
+
+  const markerPresent = body.includes(JUDGE_RECEIPT_MARKER);
+  const verdictPresent = JUDGE_VERDICT_LINE_PATTERN.test(body);
+  if (markerPresent && verdictPresent) {
+    const output = pass(match.target, "gh pr merge allowed by cross-family judge receipt");
+    log(output, options, {
+      shipping_reason: match.reason,
+      merge_receipt_gate: true,
+      receipt_marker: true,
+      receipt_verdict: true,
+      pr_arg: match.prArg ?? null,
+      repo: match.repo ?? null,
+    });
+    return output;
+  }
+
+  const output = blockMerge(match.target, "gh pr merge blocked by missing cross-family judge receipt");
+  log(output, options, {
+    shipping_reason: match.reason,
+    merge_receipt_gate: true,
+    receipt_marker: markerPresent,
+    receipt_verdict: verdictPresent,
+    pr_arg: match.prArg ?? null,
+    repo: match.repo ?? null,
+  });
+  return output;
+}
+
 function processInputUnsafe(raw: HandlerInput, options: ProcessOptions): HandlerOutput {
   const env = options.env ?? process.env;
   const { command, cwd } = normalizeInput(raw);
@@ -396,6 +557,10 @@ function processInputUnsafe(raw: HandlerInput, options: ProcessOptions): Handler
     const output = pass(match.target, match.reason);
     log(output, options);
     return output;
+  }
+
+  if (match.kind === "merge") {
+    return processMergeReceiptGate(match, options);
   }
 
   if (hasFreshActiveMarker(options)) {

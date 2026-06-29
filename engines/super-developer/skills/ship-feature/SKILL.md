@@ -321,6 +321,8 @@ If the rerun fails because of the simplify patch, discard the simplify patch and
 
 ## Stage 6 — Cross-family review
 
+This stage is NON-OPTIONAL. The pipeline runs the cross-family judge between green build and PR — there is no decision to skip, and (running on cheap fish: agy + codex, off the Opus wall) no cost reason to. A PR produced without this stage is a pipeline violation the merge gate (Stage 8) will refuse.
+
 Run cross-family review after Stage 5.7 is green and before PR.
 
 Use `agy`/Gemini for:
@@ -334,9 +336,29 @@ Do not pass secrets to Gemini/agy.
 
 **Use the co-dialectic `judge-panel` skill** for the verdict — it runs ≥2 cheap cross-family fish (Gemini-Flash + GPT-nano) first and escalates to ONE expensive tiebreaker only on disagreement. Do NOT make the Opus whale the default judge. The whale steps in only if `judge-panel` escalates AND the tiebreaker still can't resolve. Whale always does the final hallucination-catch (cheap: scan, don't re-execute).
 
+**FAIL-HARD if no fish are reachable:** if `judge-panel` cannot reach ≥1 cross-family fish, HALT the pipeline and surface this fish-remediation block. NEVER silently skip and proceed to PR. This mirrors the FAIL-HARD invariant and co-dialectic Protocol 8 T3 behavior.
+
+```text
+FISH REMEDIATION REQUIRED
+WHAT: Stage 6 cannot reach any cross-family judge fish, so the /ship-feature pipeline is halted before PR.
+HOW: restore at least one cross-family judge route (agy/Gemini or Codex/OpenAI), fix auth/network/tool installation, rerun judge-panel, and only continue once ≥1 fish returns a result.
+```
+
 Required verdict: `GREEN` or `RED`.
 
 If `RED`, Codex fixes and returns to Stage 5, then repeats Stage 5.5/5.6/5.7 as applicable before review runs again.
+
+At the END of Stage 6, emit the canonical receipt block below, populated from the `judge-panel` JSON: `final_verdict` → `verdict` (`GREEN`/`RED`), families that returned → `families`, `all_flags` count plus one-line summary → `flags`, `cascade.escalated` → `escalated`, and the current ISO8601 timestamp → `ts`.
+
+```markdown
+<!-- ship-feature-judge-receipt:v1 -->
+## 🧪 Cross-family judge receipt
+- verdict: GREEN | RED
+- families: <comma list of families that actually returned, e.g. google, openai>
+- flags: <count> — <one-line summary or "none">
+- escalated: yes | no
+- ts: <ISO8601>
+```
 
 ---
 
@@ -354,7 +376,7 @@ PR must include:
 - tests/evals run
 - Stage 5.5 visual/CLI verification status
 - Stage 5.6 simplify summary and Stage 5.7 rerun status
-- cross-family review verdict
+- the cross-family judge RECEIPT block (the `ship-feature-judge-receipt:v1` marker + verdict/families/flags/escalated/ts) — verbatim from Stage 6. The merge gate (Stage 8) BLOCKS any PR whose body lacks this receipt.
 - known risks / rollback
 
 Do not merge.
@@ -373,6 +395,8 @@ Abort unless the command exits 0 and the JSON still shows `owner_session` equal 
 
 **Merge gating (LOCKED 2026-06-09 — Gate B; NO GitHub branch protection):**
 ONE concept, ONE phrase to remember: **"human merge needed"** (matches the `human-merge` Linear label). Default is autonomous; this phrase is the only brake. No invented keywords (no "coffee"/"non-auto"), no files, no session-ids.
+
+**Cross-family receipt backstop (XOS-138):** `ship-feature-gate` now FAIL-HARD blocks `gh pr merge` when the target PR body lacks the `ship-feature-judge-receipt:v1` receipt from Stage 6. This is the structural backstop for the human-visible receipt in the PR body.
 
 ```text
 DEFAULT = auto-merge on CI green  (gh pr merge --auto --squash)
