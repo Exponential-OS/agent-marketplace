@@ -25,8 +25,8 @@
       "platform": "xHumanOS",
       "license": "Proprietary",
       "source": "./engines/super-developer",
-      "description": "Super Developer Engine - global agentic-SDLC ship-feature pipeline for every repo. v0.5.0: the cross-family judge is now UNSKIPPABLE (XOS-138) \u2014 Stage 6 non-optional + FAIL-HARD if no fish, a canonical `ship-feature-judge-receipt:v1` block auto-embedded in every PR body, and the ship-feature-gate handler BLOCKS `gh pr merge` when the PR carries no judge receipt (the merge choke). v0.4.1: Stage 5.5 (E2E + VISUAL \u2014 local-dev-not-prod, E2E-cred dogfood, persona judges Jobs+Ive, screenshots committed to docs/verify/, sensorium-routing), 5.6 (real /simplify), 5.7 (rerun). v0.3.0: SELF-CONTAINED \u2014 bundles the SDLC rules (sdlc-work-claim, sdlc-worktree-isolation, ship-feature-gate) invoked via ${CLAUDE_PLUGIN_ROOT}, no ~/cyborg runtime dependency. User-scope, workspace_binding=global. Canonical source: Exponential-OS/xos monorepo plugins/cross/super-developer (this engines/ copy is a derived vendored mirror, overwritten on each sync).",
-      "version": "0.5.0",
+      "description": "Super Developer Engine - global agentic-SDLC ship-feature pipeline for every repo. v0.6.0: Stage 9 PUBLISH+BROADCAST+ENSURE (XOS-142) \u2014 post-merge, artifact-class-routed (plugin\u2192marketplace+reload-bulletin; cyborg\u2192route-sync-to-cyborg-agent; workspace\u2192sync.sh; SaaS\u2192cache-bust+client-reload+flag+migration+verify-live) + ship-feature-publish-gate skew detector (installed<marketplace \u2192 BLOCK + loud reinstall line). 'Shipped' = activated across the running swarm, not merged. v0.5.0: cross-family judge UNSKIPPABLE (XOS-138) \u2014 Stage 6 non-optional + FAIL-HARD, canonical `ship-feature-judge-receipt:v1` in every PR body, merge-gate BLOCKs receiptless `gh pr merge`. v0.4.1: Stage 5.5 (E2E+VISUAL) + 5.6 (/simplify) + 5.7 (rerun). v0.3.0: SELF-CONTAINED SDLC rules via ${CLAUDE_PLUGIN_ROOT}. User-scope, workspace_binding=global. Canonical source: Exponential-OS/xos monorepo plugins/cross/super-developer (derived vendored mirror, overwritten on each sync).",
+      "version": "0.6.0",
       "category": "developer-tools",
       "homepage": "https://github.com/Exponential-OS/xos"
     },
@@ -39,8 +39,8 @@
         "cross-family-judge"
       ],
       "source": "./engines/co-dialectic",
-      "description": "Co-Dialectic v4.23.0 - FORAGE: Epistemic Foraging flywheel. New /forage skill codifies the Constitution's Epistemic Foraging principle as a weekly tool-discovery loop: FORAGE (marketplace diff + GitHub trending + claude-automation-recommender + P20 authority-weighted web sweep) -> SCORE against the week's WORKSPACE session-ledger friction (not novelty, never a shared brain's ledger) -> VERIFY in a throwaway worktree (never propose blind; FOUNDATION-FIRST) -> PROPOSE: install is HUMAN-GATED, no auto-install from any marketplace; each verify-passed keeper files its own approval ticket with evidence + one-command rollback, max 3 per run -> CODIFY (pending/keepers/rejects/deferred + memory entry + summary audit ticket). Substrate paths resolved via $CO_DIALECTIC_SESSION_LEDGER_DIR / $CO_DIALECTIC_TOOLS_REGISTRY workspace-adapter vars with graceful OSS fallback (Decision-2 compliant).",
-      "version": "4.25.0",
+      "description": "Co-Dialectic v4.26.0 - XOS-141 structural liveness. statusLine gates model-owned score fields behind a fresh Protocol 1 heartbeat, hook-owned installed_version/session-start fields refresh every SessionStart, stale/skew/inactive state fails loud as DEGRADED, and UserPromptSubmit injects a deterministic Protocol 0/1 self-resurrection nudge without faking last_protocol_ts.",
+      "version": "4.26.0",
       "category": "ai-runtime",
       "homepage": "https://github.com/Exponential-OS/prompt-engineering-in-action"
     },

@@ -19,7 +19,7 @@ Trigger: `/ship-feature $ARGUMENTS`
 Examples: `THE-10 regen-bug`, `THE-10 regen-bug in ~/aiprojects/Adapt.ai`.
 
 Runs Stage 0 (claim) + the 9 core stages, including Stage 5.5/5.6/5.7 quality gates, + Stage 10 (completion):
-**work claim → brainstorm → spec → evals → worktree implementation → tests → E2E/VISUAL verification → simplify → targeted verification rerun → cross-family review → PR → merge/deploy → prod smoke → completion**
+**work claim → brainstorm → spec → evals → worktree implementation → tests → E2E/VISUAL verification → simplify → targeted verification rerun → cross-family review → PR → merge/deploy → publish/broadcast/ensure → completion**
 
 ---
 
@@ -434,33 +434,36 @@ Haiku reports back the deploy id + SUCCESS/curl status. Record the deploy id.
 
 ---
 
-## Stage 9 — Post-deploy smoke
+## Stage 9 — PUBLISH + BROADCAST + ENSURE
 
-Run production smoke through Gemini/agy.
+Run only after Stage 8 merge/deploy is confirmed. For human-merge PRs, this fires on merge-detection once the PR reaches main. "Shipped" means activated across the running swarm/users, not merely merged.
 
-Smoke result must be:
+Detect the artifact class from the merged diff and run every matching recipe. Each recipe must include a LOUD skew check before PASS; stale activation is `RED`, not "done".
 
-- `GREEN` — feature works in prod; move to Done.
-- `RED` — report exact failure, logs/URL checked, and rollback/fix recommendation.
+- **plugin / skill / engine** (`plugins/**`, `skills/**`, `engines/**`, `.claude-plugin/**`) — PUBLISH: vendor the merged `origin/main` source into the marketplace (`git archive` merged main → `agent-marketplace/engines/<plugin>/`), bump `agent-marketplace/.claude-plugin/marketplace.json`, and push. BROADCAST: post the bus bulletin (Linear comment / AGENTS) with `<plugin>@<new-version>`, reinstall path, and what changed. ENSURE: carry `requires_reload: <plugin>@<new-version>` so sessions run `claude plugin install <plugin> && /reload-plugins`; run `bun run ${CLAUDE_PLUGIN_ROOT}/rules/ship-feature-publish-gate/handler.ts` for `<plugin>` or `all` and treat any `⚠ STALE` line as the loud reload block until remediated.
+- **cyborg substrate** (`constitution/**`, `.githooks/**`, `rules/**`) — PUBLISH: push `origin/main`. BROADCAST: file a bus delegation to the CYBORG AGENT with the merged SHA and changed substrate paths. ENSURE: the CYBORG AGENT runs the shared `~/cyborg` primary-sync (`stash` + `pull`) and reports the shared primary HEAD. The xos pipeline ROUTES this lane only; it never syncs the shared primary itself. Skew check: delegation stays loud until shared primary HEAD equals `origin/main`.
+- **workspace settings/config** (MCP, `workspace.manifest.yaml`) — PUBLISH: edit the manifest as the root of truth. BROADCAST: publish the manifest version/hash and impacted agents/tools. ENSURE: run `sync.sh` to compile and propagate to every agent + tool. Skew check: generated target hashes/versions must match the manifest or list each stale target loudly.
+- **SaaS / web product** — PUBLISH: the Stage-8 deploy. BROADCAST: deploy id, expected build/client-bundle version, flags, and migrations. ENSURE: cache/CDN bust, client bundle version-bump, client reload path (service-worker update / "new version" prompt), feature-flag flip, and migration applied. VERIFY a live user receives the new version, not a cached old bundle. Skew check: live build id/bundle version/flag/migration state must match expected or list the stale surface loudly.
+- **backend-only / non-distributable** — `not_applicable` with evidence: changed files, service boundary, and why no plugin cache, shared substrate, workspace manifest, client bundle, flag, migration, or distributable artifact needs activation.
 
-Declare done only after smoke `GREEN`.
+Stage 9 result must be `GREEN`, `RED`, or `not_applicable` with evidence. Declare done only after Stage 9 is `GREEN` or `not_applicable`.
 
 ---
 
 ## Stage 10 — Completion protocol
 
-After post-deploy smoke is `GREEN`, close the loop. Three artifacts — none optional:
+After Stage 9 PUBLISH+BROADCAST+ENSURE is `GREEN` or `not_applicable`, close the loop. Three artifacts — none optional:
 
-1. **Update the PR body** summary: what was fixed, tests/evals run, judge verdict, deploy/smoke status, known risks, rollback path.
+1. **Update the PR body** summary: what was fixed, tests/evals run, judge verdict, deploy/smoke status, Stage 9 publish/broadcast/ensure status, any `requires_reload`, known risks, rollback path.
 2. **Post a COMMENT to the Linear ticket AND set it Done.** The `complete` action does BOTH — it does not just flip the status, it writes a structured completion comment so other sessions/humans see WHO did WHAT. The comment carries: *what was fixed · which session + host did it · findings discovered · the PR URL*:
 
 ```bash
-bun run ${CLAUDE_PLUGIN_ROOT}/rules/sdlc-work-claim/handler.ts '{"action":"complete","ticket":"<ticket>","session":"<session>","host":"<host>","summary":"<what fixed>","pr_url":"<pr-url>","findings":"<tests, judge verdict, smoke, rollback notes>"}'
+bun run ${CLAUDE_PLUGIN_ROOT}/rules/sdlc-work-claim/handler.ts '{"action":"complete","ticket":"<ticket>","session":"<session>","host":"<host>","summary":"<what fixed>","pr_url":"<pr-url>","findings":"<tests, judge verdict, deploy/smoke, Stage 9 activation/ensure, rollback notes>"}'
 ```
 
 3. **Confirm** the ticket comment is posted and the state is `Done`.
 
-The ticket comment is the cross-session coordination wire — skip it and the next agent/human can't see who shipped what (GROW-AND-GROW-OTHERS). Do not declare the run complete until the `complete` action returns `PASS`, the completion comment is on the ticket, and the ticket is confirmed Done.
+The ticket comment is the cross-session coordination wire — skip it and the next agent/human can't see who shipped what (GROW-AND-GROW-OTHERS). Do not declare the run complete until Stage 9 evidence is recorded, the `complete` action returns `PASS`, the completion comment is on the ticket, and the ticket is confirmed Done.
 
 ---
 
@@ -476,8 +479,9 @@ Branch:       feat/<slug>
 PR:           <url>
 Review:       GREEN / RED
 Deploy:       <deploy-id-or-none>
-Smoke-test:   GREEN / RED
+Activation:   GREEN / RED / not_applicable
+Reload:       <requires_reload-or-none>
 Board:        Backlog→Design→Build→Review→Deploy→Done
 ```
 
-Loop closes at prod smoke, not at PR.
+Loop closes at Stage 9 activation/ensure, not at PR.

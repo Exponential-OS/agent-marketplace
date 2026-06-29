@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.0 - 2026-06-29
+
+- Add Stage 9 PUBLISH+BROADCAST+ENSURE to `/ship-feature` so shipped means activated across the running swarm/users, with artifact-class routing and loud version-skew checks. Add `ship-feature-publish-gate` to detect stale xos plugin cache installs against the marketplace catalog. (XOS-142)
+
 ## 0.5.0 - 2026-06-29
 
 - Make `/ship-feature` cross-family review unskippable at merge: Stage 6 now emits the canonical `ship-feature-judge-receipt:v1` receipt, Stage 7 requires it in the PR body, and `ship-feature-gate` blocks `gh pr merge` when the target PR lacks the receipt while failing open with a warning on PR-body fetch errors. (XOS-138)

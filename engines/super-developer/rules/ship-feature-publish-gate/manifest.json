@@ -1,0 +1,47 @@
+{
+  "name": "ship-feature-publish-gate",
+  "slug": "ship-feature-publish-gate",
+  "version": "1.0.0",
+  "status": "active",
+  "created": "2026-06-29",
+  "type": "gate",
+  "canonical": "handler.ts",
+  "description": "SessionStart/manual publish gate that compares installed xos plugin cache versions against the agent marketplace catalog and blocks loudly when a running session is stale.",
+  "enforcement": {
+    "how": "handler.ts",
+    "log": "~/.cyborg-enforcement-log.jsonl",
+    "runtime": "bun",
+    "no_bash_in_load_bearing_paths": true,
+    "input": {
+      "plugin": "xos plugin name, or all",
+      "plugins": "optional list of xos plugin names",
+      "cache_root": "optional fixture/override path for ~/.claude/plugins/cache/xos",
+      "marketplace_path": "optional fixture/override path for agent-marketplace/.claude-plugin/marketplace.json"
+    },
+    "output": {
+      "verdict": "PASS | BLOCK",
+      "target": "resolved marketplace catalog path",
+      "reason": "machine-readable rationale",
+      "message": "human-readable WHAT/HOW remediation plus loud stale plugin list",
+      "stale": "plugins requiring claude plugin install <p> && /reload-plugins"
+    },
+    "fail_hard": {
+      "installed_below_marketplace": true,
+      "missing_install": true,
+      "block_exits_nonzero": true,
+      "loud_message_prefix": "⚠ STALE:"
+    },
+    "fail_open": {
+      "on_handler_crash": true,
+      "missing_or_empty_marketplace_catalog": true,
+      "invalid_json_input": true
+    }
+  },
+  "hook_type": "SessionStart",
+  "hook_target_tools": [],
+  "cadence": "session-start and Stage-9 publish/ensure",
+  "last_update": "2026-06-29",
+  "catalog": "agent-marketplace/.claude-plugin/marketplace.json",
+  "installed_cache": "~/.claude/plugins/cache/xos/<plugin>/<version>",
+  "litmus": "If marketplace says <plugin>@Y but this session has installed cache <plugin>@X where X < Y (or missing), BLOCK loudly with the reinstall + /reload-plugins command."
+}
