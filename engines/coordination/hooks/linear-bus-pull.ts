@@ -1,12 +1,15 @@
 /**
- * UserPromptSubmit hook for Linear bus pull.
+ * UserPromptSubmit hook for Linear bus pull + session-role heartbeat.
  *
  * Fail-safe contract: every exported and CLI entry point catches errors and
  * emits nothing on failure. This hook must never block or deny a prompt.
+ *
+ * XOS-120: also writes a session liveness heartbeat on every prompt and
+ * appends role coverage to the additionalContext when roles are non-empty.
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { homedir } from "node:os";
+import { homedir, hostname } from "node:os";
 import { dirname, join } from "node:path";
 import {
   getLinearBusHighWatermark,
@@ -17,10 +20,16 @@ import {
   type LinearBusResult,
   type LinearConfig,
 } from "../linear-bus.ts";
+import {
+  resolveRoles,
+  resolveSessionDataRoot,
+  writeSessionHeartbeat,
+} from "../session-roles.ts";
 
 const SESSION_ID_RE = /^[A-Za-z0-9_-]+$/;
 const DEFAULT_COLD_START_WINDOW = "24h";
 const HOOK_TIMEOUT_MS = 4_000;
+const HEARTBEAT_BUDGET_MS = 500; // max time to spend on heartbeat write
 const SUMMARY_ITEM_LIMIT = 8;
 
 type Env = Record<string, string | undefined>;
@@ -40,6 +49,14 @@ export interface LinearBusHookOptions {
   dataRoot?: string;
   fetchDelta?: (since: string, config: LinearConfig) => Promise<LinearBusResult>;
   now?: () => Date;
+  /** Injectable for tests: override the heartbeat write. Defaults to writeSessionHeartbeat. */
+  writeHeartbeat?: (opts: {
+    sessionId: string;
+    host: string;
+    allRoles: string[];
+    env: Env;
+    dataRoot: string;
+  }) => Promise<void>;
 }
 
 export async function runLinearBusPull(
@@ -121,17 +138,53 @@ async function runLinearBusPullUnsafe(
   const env = options.env ?? process.env;
   const now = options.now ?? (() => new Date());
   const input = parseHookInput(rawInput);
-  const markerPath = resolveLinearBusMarkerPath(input.session_id, env, options.dataRoot);
+  const dataRoot = options.dataRoot ?? resolveLinearBusDataRoot(env);
+  const markerPath = resolveLinearBusMarkerPath(input.session_id, env, dataRoot);
   const since = resolveLastSeenAt(markerPath, env, now);
   const config = resolveLinearConfig(env, input.cwd ?? process.cwd(), markerPath);
   const fetchDelta = options.fetchDelta ?? queryLinearBusDelta;
+
+  // XOS-120: Write session liveness heartbeat (fire-and-forget with 500ms cap).
+  // Runs regardless of whether the bus delta has new items — the heartbeat is
+  // the liveness signal, not the delta.
+  const allRoles = resolveAllRoles(env);
+  const heartbeatFn = options.writeHeartbeat ?? defaultWriteHeartbeat;
+  // Start heartbeat — bounded by its internal 500ms timeout; don't let it
+  // block the overall HOOK_TIMEOUT_MS budget
+  const heartbeatPromise = heartbeatFn({
+    sessionId: input.session_id,
+    host: hostname(),
+    allRoles,
+    env,
+    dataRoot,
+  }).catch(() => undefined); // fail-open
+
   const result = await withTimeout(fetchDelta(since, config), HOOK_TIMEOUT_MS);
 
+  // Await heartbeat within its own budget (already capped internally, but ensure
+  // it doesn't leak past the overall hook window either)
+  await Promise.race([heartbeatPromise, delay(HEARTBEAT_BUDGET_MS)]);
+
   if (!result.ok || !result.delta || !hasLinearDelta(result.delta)) {
+    // Even with no delta, emit role context if this session has a non-trivial role set
+    const rolesSummary = buildRolesSummary(input.session_id, allRoles, dataRoot);
+    if (rolesSummary) {
+      return JSON.stringify({
+        hookSpecificOutput: {
+          hookEventName: "UserPromptSubmit",
+          additionalContext: rolesSummary,
+        },
+      });
+    }
     return null;
   }
 
-  const additionalContext = summarizeLinearBusDelta(result.delta);
+  const busSummary = summarizeLinearBusDelta(result.delta);
+  const rolesSummary = buildRolesSummary(input.session_id, allRoles, dataRoot);
+  const additionalContext = rolesSummary
+    ? `${busSummary} | ${rolesSummary}`
+    : busSummary;
+
   const lastSeenAt = maxTimestamp(since, getLinearBusHighWatermark(result.delta) ?? result.delta.queriedAt);
   writeMarker(markerPath, {
     last_seen_at: lastSeenAt,
@@ -144,6 +197,49 @@ async function runLinearBusPullUnsafe(
       additionalContext,
     },
   });
+}
+
+/** Resolve the configured role set from env or fall back to generalist ["*"]. */
+function resolveAllRoles(env: Env): string[] {
+  const raw = env.LINEAR_SESSION_ROLES?.trim();
+  if (!raw) return ["*"];
+  const roles = raw
+    .split(",")
+    .map((r) => r.trim())
+    .filter(Boolean);
+  return roles.length > 0 ? roles : ["*"];
+}
+
+/**
+ * Build a compact role-coverage summary for additionalContext.
+ * Returns null for solo sessions — implicit (all roles = all roles; no sibling coordination).
+ * Only emits when siblings are detected, to avoid noise in the default single-session case.
+ */
+function buildRolesSummary(sessionId: string, allRoles: string[], dataRoot: string): string | null {
+  try {
+    // Pass the known role universe (empty when generalist ["*"] — resolved inside resolveRoles)
+    const known = allRoles.filter((r) => r !== "*");
+    const resolved = resolveRoles(sessionId, known, dataRoot);
+    if (resolved.isSolo) return null; // solo: suppress, implicit
+    if (resolved.roles.length === 0) return "ROLES: none (all shed to dedicated sessions)";
+    return `ROLES: ${resolved.roles.join(",")}`;
+  } catch {
+    return null;
+  }
+}
+
+async function defaultWriteHeartbeat(opts: {
+  sessionId: string;
+  host: string;
+  allRoles: string[];
+  env: Env;
+  dataRoot: string;
+}): Promise<void> {
+  await writeSessionHeartbeat(opts);
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function parseHookInput(rawInput: string): LinearBusHookInput {
