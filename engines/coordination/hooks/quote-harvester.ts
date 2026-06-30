@@ -99,6 +99,9 @@ const HOLD_KEYWORDS: string[] = [
   "sdlc pipeline",
   "judge panel",
   "cross-family judge",
+  "exponential os",
+  "daovation",
+  "thewhynation",
 ];
 
 // ── Types ──────────────────────────────────────────────────────────────────────
