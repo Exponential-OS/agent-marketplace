@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+    "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  com.thewhyman.proactive-daemon.plist.template
+  =============================================
+  XOS-108 Phase-1 — launchd plist TEMPLATE for the proactive polling daemon.
+
+  THIS IS A TEMPLATE — NOT INSTALLED BY THIS PR.
+  ===============================================
+  This file is a build artifact delivered alongside proactive-daemon.ts.
+  A human must make three deploy decisions before activating:
+
+    DECISION 1 — HOST: mac-mini local vs cloud VM (~$5/mo) vs stay reactive.
+    DECISION 2 — COST MODEL: subscription quota-wall vs API ($256 lesson) vs hybrid.
+    DECISION 3 — SECURITY: accept always-on + LINEAR_API_KEY + --dangerously-skip-permissions blast-radius.
+
+  See docs/plans/xos-108-phase1-proactive-daemon.md for the full decision table.
+
+  Activation (human-only, after decisions are made)
+  --------------------------------------------------
+  1. Copy this file to ~/Library/LaunchAgents/ (user scope, runs as your user):
+       cp engines/coordination/com.thewhyman.proactive-daemon.plist.template \
+          ~/Library/LaunchAgents/com.thewhyman.proactive-daemon.plist
+
+  2. Edit the plist:
+     - Replace /Users/YOUR_USERNAME with your actual home path (or use $HOME if your launchd supports it).
+     - Set LINEAR_API_KEY to your Linear personal API key.
+     - Adjust DAEMON_POLL_INTERVAL_MS (default: 300000 = 5 min).
+     - Adjust DAEMON_SPAWN_RATE_CEILING (default: 3 per hour).
+     - Optionally set LINEAR_COORDINATION_ISSUE_ID to enable heartbeat Linear comments.
+
+  3. Load the agent:
+       launchctl load ~/Library/LaunchAgents/com.thewhyman.proactive-daemon.plist
+
+  4. Verify it started:
+       launchctl list | grep proactive-daemon
+       tail -f ~/.cyborg-state/daemon/daemon.log
+
+  5. Monitor liveness:
+       cat ~/.cyborg-state/daemon/liveness.json
+
+  Unload:
+       launchctl unload ~/Library/LaunchAgents/com.thewhyman.proactive-daemon.plist
+
+  Prerequisites (must be installed on the host machine before activation)
+  -----------------------------------------------------------------------
+  - Bun runtime: https://bun.sh/  (brew install bun OR curl -fsSL https://bun.sh/install | bash)
+  - Claude Code CLI: npm install -g @anthropic-ai/claude-code
+  - agent-marketplace repo cloned to the WorkingDirectory path below
+  - LINEAR_API_KEY set in EnvironmentVariables (never hardcode personal key)
+  - cyborg and anand-career-os repos available at ~/cyborg and ~/anand-career-os
+    (or override via CYBORG_REPO and CAREER_OS_REPO env vars)
+
+  macOS power settings required for always-on
+  --------------------------------------------
+  - System Settings → Energy → Prevent Mac from sleeping automatically
+  - System Settings → Energy → Wake for network access (enabled)
+  - Ethernet over Wi-Fi recommended for reliability
+-->
+<plist version="1.0">
+<dict>
+  <!-- Unique identifier for this LaunchAgent -->
+  <key>Label</key>
+  <string>com.thewhyman.proactive-daemon</string>
+
+  <!-- Run command: bun run proactive-daemon.ts -->
+  <key>ProgramArguments</key>
+  <array>
+    <!-- Replace with the actual bun path on your system: `which bun` -->
+    <string>/Users/YOUR_USERNAME/.bun/bin/bun</string>
+    <string>run</string>
+    <string>/Users/YOUR_USERNAME/aiprojects/agent-marketplace/engines/coordination/proactive-daemon.ts</string>
+  </array>
+
+  <!-- Working directory: the coordination engine (not ~/cyborg, which is shared primary) -->
+  <key>WorkingDirectory</key>
+  <string>/Users/YOUR_USERNAME/aiprojects/agent-marketplace/engines/coordination</string>
+
+  <!-- Environment variables — fill in actual values at deploy time; NEVER hardcode secrets in this template -->
+  <key>EnvironmentVariables</key>
+  <dict>
+    <!-- REQUIRED: Your Linear personal API key (Linear → Settings → API → Personal API keys) -->
+    <key>LINEAR_API_KEY</key>
+    <string>REPLACE_WITH_YOUR_LINEAR_API_KEY</string>
+
+    <!-- DECISION 2 (COST MODEL): Adjust poll interval and spawn ceiling based on your chosen cost model.
+         Subscription users: use defaults (300000ms / 3/hr) to stay inside quota wall.
+         API-key users: may use more frequent polling but monitor spend carefully. -->
+
+    <!-- Poll interval in milliseconds. Default: 300000 (5 minutes). Minimum: 60000 (1 minute). -->
+    <key>DAEMON_POLL_INTERVAL_MS</key>
+    <string>300000</string>
+
+    <!-- Maximum claude sessions spawned per hour. Default: 3 (conservative). -->
+    <key>DAEMON_SPAWN_RATE_CEILING</key>
+    <string>3</string>
+
+    <!-- Stable session identifier for this daemon -->
+    <key>DAEMON_SESSION_ID</key>
+    <string>proactive-daemon</string>
+
+    <!-- Agent role — matches the role column in AGENTS.md -->
+    <key>DAEMON_ROLE</key>
+    <string>cyborg</string>
+
+    <!-- Host label — shown in heartbeat markers. Replace with your mac-mini hostname. -->
+    <key>DAEMON_HOST</key>
+    <string>REPLACE_WITH_YOUR_HOSTNAME</string>
+
+    <!-- Log file path -->
+    <key>DAEMON_LOG_PATH</key>
+    <string>/Users/YOUR_USERNAME/.cyborg-state/daemon/daemon.log</string>
+
+    <!-- Log rotation limit in bytes. Default: 1000000 (1 MB). -->
+    <key>DAEMON_LOG_MAX_BYTES</key>
+    <string>1000000</string>
+
+    <!-- Path to the cyborg brain repo. Default: ~/cyborg. -->
+    <key>CYBORG_REPO</key>
+    <string>/Users/YOUR_USERNAME/cyborg</string>
+
+    <!-- Path to the workspace repo (for .agents/.cyborg-last-remote-sha). Default: ~/anand-career-os. -->
+    <key>CAREER_OS_REPO</key>
+    <string>/Users/YOUR_USERNAME/anand-career-os</string>
+
+    <!-- Optional: Linear issue ID to post heartbeat comments on (format: "ISSUE_ID_STRING").
+         Get from: linear.app/thewhyman/issue/XOS-???  -->
+    <!-- <key>LINEAR_COORDINATION_ISSUE_ID</key> -->
+    <!-- <string>REPLACE_WITH_COORDINATION_ISSUE_UUID</string> -->
+
+    <!-- HOME must be explicit inside launchd agents -->
+    <key>HOME</key>
+    <string>/Users/YOUR_USERNAME</string>
+
+    <!-- PATH: ensure bun and claude are discoverable -->
+    <key>PATH</key>
+    <string>/Users/YOUR_USERNAME/.bun/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
+
+  <!-- Keep the daemon alive after crashes -->
+  <key>KeepAlive</key>
+  <true/>
+
+  <!-- Start at login -->
+  <key>RunAtLoad</key>
+  <true/>
+
+  <!-- Throttle restart on crash: wait 30 seconds before restarting after failure -->
+  <key>ThrottleInterval</key>
+  <integer>30</integer>
+
+  <!-- Redirect stdout / stderr to log files for monitoring -->
+  <key>StandardOutPath</key>
+  <string>/Users/YOUR_USERNAME/.cyborg-state/daemon/daemon-stdout.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>/Users/YOUR_USERNAME/.cyborg-state/daemon/daemon-stderr.log</string>
+
+  <!-- Run as the current user (not root) — DECISION 3: scoped to user privilege level -->
+  <!-- This plist MUST live in ~/Library/LaunchAgents/ (not /Library/LaunchDaemons/)
+       so it runs as the user, not as root. -->
+</dict>
+</plist>
