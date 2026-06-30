@@ -12,26 +12,38 @@
  *   §2 HOLD         — reveals xOS/cyborg/agent architecture or IP thesis; NEVER post publicly yet
  *   §3 BORROWED     — attributed to named third parties
  *
- * Keyword safety net: even if the LLM classifies a quote as "free", if it
- * contains any architecture/IP keyword it is forced to §2 HOLD.
+ * Firewall invariant (DEFAULT-TO-HOLD):
+ *   A quote may land in §1 POST FREELY ONLY if the LLM classified it as "free"
+ *   AND the deterministic keyword backstop finds no architecture/IP terms.
+ *   §3 BORROWED quotes pass through the same keyword screen — an attributed
+ *   IP line is still an IP leak, so it routes to §2 HOLD, not §3.
+ *   The LLM's section choice is ADVISORY; the keyword screen has final say for §1.
+ *
+ * Prompt-injection mitigation:
+ *   Even if an injected transcript induces section:"free" from the LLM, the
+ *   deterministic keyword backstop overrides it to §2 HOLD for any known
+ *   architecture/IP term. Default-to-HOLD in parseExtractedQuotes handles
+ *   unknown/invalid section values.
  *
  * Fail-safe contract:
  *   - Any unhandled error → exit 0 (never blocks session end)
- *   - Missing transcript / quotes file / LLM → silent no-op
+ *   - Missing / invalid transcript → silent no-op
  *   - Never writes to the quotes file if extraction returns nothing
  *
  * XOS-140
  */
 
 import {
-  appendFileSync,
   existsSync,
   mkdirSync,
   readFileSync,
+  renameSync,
+  statSync,
+  unlinkSync,
   writeFileSync,
 } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -45,11 +57,14 @@ const WATERMARK_PATH = join(
   ".cyborg-state/coordination/quote-harvester-wm.json",
 );
 
-/** Minimum new messages (user+assistant pairs) since last harvest before we run. */
+/** Minimum new messages (user+assistant) since last harvest before we run. */
 const MIN_NEW_MESSAGES = 4;
 
 /** Maximum characters of conversation to send to the LLM for extraction. */
 const MAX_CONTENT_CHARS = 8_000;
+
+/** Max milliseconds a lock may be held before it is considered stale. */
+const LOCK_TIMEOUT_MS = 30_000;
 
 /** Section header strings as they appear in the file (without the trailing newline). */
 const SECTION_HEADERS = {
@@ -61,6 +76,11 @@ const SECTION_HEADERS = {
 /**
  * Keywords that force a quote into §2 HOLD regardless of LLM classification.
  * Matched case-insensitively against the lower-cased quote text.
+ *
+ * NOTE: This list is a BACKSTOP, not the primary gate. The LLM's classification
+ * is the first screen. These keywords catch known IP terms that slip through
+ * or are injected. Architecture lines using novel vocabulary (not in this list)
+ * are caught by the LLM's "hold" classification — respect that classification.
  */
 const HOLD_KEYWORDS: string[] = [
   "xos",
@@ -104,6 +124,12 @@ const HOLD_KEYWORDS: string[] = [
   "thewhynation",
 ];
 
+/**
+ * Directory prefixes that are blocked as transcript locations.
+ * Paths resolving under these are rejected to prevent reading system files.
+ */
+const BLOCKED_PATH_PREFIXES: string[] = ["/etc/", "/proc/", "/sys/", "/boot/"];
+
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 export type Section = "free" | "hold" | "borrowed";
@@ -115,6 +141,14 @@ export interface ExtractedQuote {
   attribution?: string;  // for borrowed quotes only
 }
 
+/** Per-transcript harvest record (stored as a map keyed by transcript path). */
+interface TranscriptRecord {
+  lastProcessedCount: number;
+  contentHash: string;
+  lastHarvestedAt: string;
+}
+
+/** Backward-compatible exported type (kept for any external consumers). */
 export interface HarvestWatermark {
   lastProcessedCount: number;
   lastHarvestedAt: string;
@@ -167,6 +201,58 @@ function resolveTranscriptPath(payload: StopPayload): string | null {
     payload.session_transcript_path;
   if (typeof tp === "string" && tp.trim()) return tp.trim();
   return null;
+}
+
+// ── Path validation ────────────────────────────────────────────────────────────
+
+/**
+ * Validate and canonicalize a transcript path from the hook payload.
+ *
+ * Accepts:
+ *   - Any absolute .jsonl path not containing ".." segments
+ *   - Paths that resolve away from blocked system prefixes (/etc/, /proc/, etc.)
+ *
+ * Rejects:
+ *   - Non-.jsonl extensions
+ *   - Paths containing ".." traversal segments
+ *   - Paths resolving under blocked system prefixes
+ *
+ * Returns the resolved absolute path, or null if validation fails.
+ * On failure the caller should exit 0 (harvest nothing) — fail-safe.
+ */
+export function validateTranscriptPath(rawPath: string): string | null {
+  // 1. Must end in .jsonl
+  if (!rawPath.endsWith(".jsonl")) return null;
+
+  // 2. Reject any path segment that is ".." (before full resolution)
+  const segments = rawPath.replace(/\\/g, "/").split("/");
+  if (segments.includes("..")) return null;
+
+  // 3. Resolve to absolute (handles relative paths, collapses repeated slashes)
+  let absolute: string;
+  try {
+    absolute = resolve(rawPath);
+  } catch {
+    return null;
+  }
+
+  // 4. Must be absolute after resolution
+  if (!absolute.startsWith("/")) return null;
+
+  // 5. Must not resolve under blocked system paths
+  if (BLOCKED_PATH_PREFIXES.some((p) => absolute.startsWith(p))) return null;
+
+  return absolute;
+}
+
+// ── Content hashing ────────────────────────────────────────────────────────────
+
+/**
+ * Lightweight content fingerprint for dedup.
+ * Not crypto-secure — sufficient to detect transcript replacement.
+ */
+function contentHash(s: string): string {
+  return `${s.length}:${s.slice(0, 128)}`;
 }
 
 // ── Transcript parsing ─────────────────────────────────────────────────────────
@@ -259,41 +345,142 @@ function buildConversationExcerpt(
   return parts.join("\n\n");
 }
 
-// ── Watermark ──────────────────────────────────────────────────────────────────
+// ── Per-transcript watermark ───────────────────────────────────────────────────
 
-function loadWatermark(wmPath: string): HarvestWatermark {
+/**
+ * Load the per-transcript harvest record from the watermark store.
+ * The store is a JSON object keyed by transcript path.
+ */
+function loadTranscriptRecord(wmPath: string, transcriptPath: string): TranscriptRecord {
   try {
     if (existsSync(wmPath)) {
       const raw = readFileSync(wmPath, "utf8");
-      const parsed = JSON.parse(raw) as Partial<HarvestWatermark>;
-      return {
-        lastProcessedCount: parsed.lastProcessedCount ?? 0,
-        lastHarvestedAt: parsed.lastHarvestedAt ?? "",
-      };
+      const store = JSON.parse(raw) as Record<string, TranscriptRecord>;
+      if (typeof store === "object" && store !== null) {
+        const rec = store[transcriptPath];
+        if (rec && typeof rec.lastProcessedCount === "number") {
+          return {
+            lastProcessedCount: rec.lastProcessedCount,
+            contentHash: rec.contentHash ?? "",
+            lastHarvestedAt: rec.lastHarvestedAt ?? "",
+          };
+        }
+      }
     }
   } catch {
-    // ignore
+    // ignore — fresh start
   }
-  return { lastProcessedCount: 0, lastHarvestedAt: "" };
+  return { lastProcessedCount: 0, contentHash: "", lastHarvestedAt: "" };
 }
 
-function saveWatermark(wmPath: string, wm: HarvestWatermark): void {
+/**
+ * Persist the per-transcript record into the watermark store.
+ * Merges with existing store to preserve other transcripts' records.
+ * Uses atomic write (temp-then-rename) to prevent corruption.
+ */
+function saveTranscriptRecord(
+  wmPath: string,
+  transcriptPath: string,
+  record: TranscriptRecord,
+): void {
   try {
     mkdirSync(dirname(wmPath), { recursive: true });
-    writeFileSync(wmPath, JSON.stringify(wm, null, 2), "utf8");
+    let store: Record<string, TranscriptRecord> = {};
+    if (existsSync(wmPath)) {
+      try {
+        const parsed = JSON.parse(readFileSync(wmPath, "utf8")) as Record<string, TranscriptRecord>;
+        if (typeof parsed === "object" && parsed !== null) store = parsed;
+      } catch {
+        store = {};
+      }
+    }
+    store[transcriptPath] = record;
+    atomicWriteFile(wmPath, JSON.stringify(store, null, 2));
   } catch {
     // fail-safe: watermark write failure is non-fatal
   }
 }
 
-// ── Safety net ─────────────────────────────────────────────────────────────────
+// ── Atomic write + lockfile ────────────────────────────────────────────────────
 
 /**
- * Force §2 HOLD if the quote text contains architecture/IP keywords,
- * regardless of what the LLM classified it as.
+ * Atomically write a file by writing to a temp path and renaming.
+ * rename(2) is atomic on the same filesystem — prevents partial reads.
+ */
+function atomicWriteFile(filePath: string, content: string): void {
+  const tmp = `${filePath}.tmp-${process.pid}-${Date.now()}`;
+  writeFileSync(tmp, content, "utf8");
+  renameSync(tmp, filePath);
+}
+
+/**
+ * Try to acquire an exclusive lock on the quotes file write operation.
+ * Uses O_EXCL (flag 'wx') for atomic creation; detects stale locks.
+ *
+ * Returns true if the lock was acquired, false if another process holds it.
+ */
+function tryAcquireLock(lockPath: string): boolean {
+  try {
+    // Exclusive create: fails atomically if file already exists
+    writeFileSync(lockPath, String(process.pid), { flag: "wx" });
+    return true;
+  } catch {
+    // Lock file exists — check if it is stale
+    try {
+      const st = statSync(lockPath);
+      if (Date.now() - st.mtimeMs >= LOCK_TIMEOUT_MS) {
+        // Stale lock — steal it (overwrite)
+        writeFileSync(lockPath, String(process.pid), { flag: "w" });
+        return true;
+      }
+    } catch {
+      // Can't stat — assume someone else holds it
+    }
+    return false;
+  }
+}
+
+function releaseLock(lockPath: string): void {
+  try {
+    unlinkSync(lockPath);
+  } catch {
+    // ignore — best effort
+  }
+}
+
+// ── Safety net (FIREWALL) ──────────────────────────────────────────────────────
+
+/**
+ * Deterministic architecture/IP keyword screen — the firewall backstop.
+ *
+ * Routing rules (DEFAULT-TO-HOLD):
+ *   - §2 HOLD input → unchanged (HOLD is terminal, never downgrade)
+ *   - §1 FREE or §3 BORROWED input → run keyword screen:
+ *       • Any keyword hit → force §2 HOLD
+ *       • No keyword hit  → keep original section
+ *
+ * PROMPT INJECTION NOTE:
+ *   The LLM's section value is ADVISORY. This function is the deterministic
+ *   gate with final say for §1 admission. Even if a prompt-injected transcript
+ *   causes the LLM to emit section:"free" on an IP-revealing line, the keyword
+ *   match here forces it to §2 HOLD.
+ *
+ *   §3 BORROWED is also screened: an attributed IP line (e.g., Anand quoting
+ *   a co-intelligence design principle with "cyborg" in the text) must not leak
+ *   publicly as "borrowed" — it should be held until the patent gate clears.
+ *
+ * KNOWN LIMITATION:
+ *   Novel architecture vocabulary not in HOLD_KEYWORDS evades the keyword check.
+ *   Mitigation: the LLM prompt instructs "DEFAULT TO HOLD when uncertain", so
+ *   the LLM catches conceptual IP even without explicit keyword matches. The
+ *   keyword list is a backstop for known terms, not an exhaustive classifier.
  */
 export function applyHoldSafetyNet(quote: ExtractedQuote): ExtractedQuote {
-  if (quote.section !== "free") return quote; // already hold or borrowed — don't downgrade
+  // §2 HOLD is terminal — never change it
+  if (quote.section === "hold") return quote;
+
+  // §1 FREE and §3 BORROWED both go through the keyword screen.
+  // A single keyword hit forces §2 HOLD regardless of the LLM's classification.
   const lower = quote.text.toLowerCase();
   for (const kw of HOLD_KEYWORDS) {
     if (lower.includes(kw)) {
@@ -307,8 +494,8 @@ export function applyHoldSafetyNet(quote: ExtractedQuote): ExtractedQuote {
 
 // Quote character class using only hex/unicode escapes (no literal quote chars
 // that could be mangled by editor smart-quote conversion):
-// \x22 = U+0022 straight double quote, \u201C = left curly, \u201D = right curly, \u201E = low-9
-const QUOTE_LINE_RE = /^-\s+[\x22\u201C\u201D\u201E]([^\x22\u201C\u201D\u201E]+)[\x22\u201C\u201D\u201E]/;
+// \x22 = U+0022 straight double quote, “ = left curly, ” = right curly, „ = low-9
+const QUOTE_LINE_RE = /^-\s+[\x22“”„]([^\x22“”„]+)[\x22“”„]/;
 
 /**
  * Build a normalized set of existing quote texts for deduplication.
@@ -329,9 +516,9 @@ export function buildExistingQuoteSet(fileContent: string): Set<string> {
 }
 
 // Curly single-quote → straight apostrophe (U+2018, U+2019, U+201A, U+201B)
-const CURLY_SQUOTE_RE = /[\u2018\u2019\u201A\u201B]/g;
+const CURLY_SQUOTE_RE = /[‘’‚‛]/g;
 // Any double-quote variant → strip (U+0022, U+201C, U+201D, U+201E)
-const ANY_DQUOTE_RE = /[\x22\u201C\u201D\u201E]/g;
+const ANY_DQUOTE_RE = /[\x22“”„]/g;
 
 function normalizeQuote(text: string): string {
   return text
@@ -356,7 +543,7 @@ function isDuplicate(quote: ExtractedQuote, existing: Set<string>): boolean {
  * §3:     - "text" — Attribution Name
  */
 function formatQuoteLine(quote: ExtractedQuote, today: string): string {
-  const text = quote.text.replace(/[\x22\u201C\u201D\u201E]/, ``).replace(/[\x22\u201C\u201D\u201E]$/, ``).trim();
+  const text = quote.text.replace(/[\x22“”„]/, ``).replace(/[\x22“”„]$/, ``).trim();
   if (quote.section === "borrowed") {
     const attr = quote.attribution?.trim() ?? "unknown";
     return `- "${text}" — ${attr}`;
@@ -408,8 +595,8 @@ Scan the conversation excerpt and extract only genuinely aphoristic, insightful,
 Skip mechanical instructions, debugging output, code, and routine exchanges.
 
 CLASSIFICATION RULES — SAFETY CRITICAL:
-- "free": Universal human wisdom about learning, growth, teams, leadership, communication, motivation. Safe to post publicly NOW.
-- "hold": ANYTHING that reveals the architecture, design, strategy, or IP of an AI agent system — including references to: xOS, xHumanOS, xTeamOS, co-dialectic, cyborg, the swarm, session-roles, multi-agent coordination, the productive-gap thesis, love-physics thesis, the Tree of Souls model, or how the AI system is built. Route to HOLD — NEVER post publicly. DEFAULT TO HOLD when uncertain between free and hold.
+- "free": Universal human wisdom about learning, growth, teams, leadership, communication, motivation. Safe to post publicly NOW. Must contain NO product, architecture, company, or system-design specifics.
+- "hold": ANYTHING that reveals the architecture, design, strategy, or IP of an AI agent system — including references to: xOS, xHumanOS, xTeamOS, co-dialectic, cyborg, the swarm, session-roles, multi-agent coordination, the productive-gap thesis, love-physics thesis, the Tree of Souls model, or how the AI system is built. Route to HOLD — NEVER post publicly. DEFAULT TO HOLD when uncertain between free and hold — if it MIGHT be IP, it IS hold.
 - "borrowed": Directly quoting or clearly paraphrasing a named third party. Must include their name.
 
 Provenance:
@@ -503,7 +690,10 @@ function parseExtractedQuotes(raw: string): ExtractedQuote[] {
       const q = item as Record<string, unknown>;
       const text = typeof q.text === "string" ? q.text.trim() : "";
       if (!text) continue;
-      const section: Section = validateSection(q.section) ?? "hold"; // default-to-hold
+      // PROMPT INJECTION DEFENSE: default-to-hold for any unknown/missing section.
+      // Even if an injected transcript induces an invalid section value,
+      // the LLM's output is treated as HOLD, not FREE.
+      const section: Section = validateSection(q.section) ?? "hold";
       const provenance = typeof q.provenance === "string" ? q.provenance : "[cyborg]";
       const attribution = typeof q.attribution === "string" ? q.attribution : undefined;
       results.push({ text, section, provenance, attribution });
@@ -534,9 +724,31 @@ export async function harvestQuotes(
     options.today ?? new Date().toISOString().slice(0, 10); // YYYY-MM-DD
   const extractFn = options.extractFn ?? runLlmExtraction;
 
-  // 1. Resolve transcript
-  const transcriptPath = resolveTranscriptPath(payload);
-  if (!transcriptPath || !existsSync(transcriptPath)) {
+  // 1. Resolve raw transcript path from payload
+  const rawTranscriptPath = resolveTranscriptPath(payload);
+  if (!rawTranscriptPath) {
+    return { skipped: true, skipReason: "no-transcript", extracted: 0, appended: 0 };
+  }
+
+  // 2. Validate path: reject traversal, wrong extension, blocked prefixes
+  const transcriptPath = validateTranscriptPath(rawTranscriptPath);
+  if (!transcriptPath) {
+    // Fail-safe: invalid path → harvest nothing (don't block session end)
+    return { skipped: true, skipReason: "invalid-transcript-path", extracted: 0, appended: 0 };
+  }
+
+  // 3. Check existence
+  if (!existsSync(transcriptPath)) {
+    return { skipped: true, skipReason: "no-transcript", extracted: 0, appended: 0 };
+  }
+
+  // 4. Verify it is a regular file (guard against FIFOs / special files)
+  try {
+    const st = statSync(transcriptPath);
+    if (!st.isFile()) {
+      return { skipped: true, skipReason: "not-a-regular-file", extracted: 0, appended: 0 };
+    }
+  } catch {
     return { skipped: true, skipReason: "no-transcript", extracted: 0, appended: 0 };
   }
 
@@ -547,15 +759,17 @@ export async function harvestQuotes(
     return { skipped: true, skipReason: "transcript-unreadable", extracted: 0, appended: 0 };
   }
 
-  // 2. Parse transcript
+  // 5. Parse transcript
   const messages = parseTranscript(transcriptRaw);
   if (messages.length === 0) {
     return { skipped: true, skipReason: "empty-transcript", extracted: 0, appended: 0 };
   }
 
-  // 3. Check watermark — skip if not enough new messages
-  const wm = loadWatermark(watermarkPath);
-  const newMessageCount = messages.length - wm.lastProcessedCount;
+  // 6. Check per-transcript watermark — skip if not enough new messages
+  const record = loadTranscriptRecord(watermarkPath, transcriptPath);
+  // Guard against transcript replacement (count went backwards → reset base)
+  const baseCount = record.lastProcessedCount > messages.length ? 0 : record.lastProcessedCount;
+  const newMessageCount = messages.length - baseCount;
   if (newMessageCount < MIN_NEW_MESSAGES) {
     return {
       skipped: true,
@@ -565,17 +779,17 @@ export async function harvestQuotes(
     };
   }
 
-  // 4. Build conversation excerpt from new messages
+  // 7. Build conversation excerpt from new messages
   const excerpt = buildConversationExcerpt(
     messages,
-    wm.lastProcessedCount,
+    baseCount,
     MAX_CONTENT_CHARS,
   );
   if (!excerpt.trim()) {
     return { skipped: true, skipReason: "empty-excerpt", extracted: 0, appended: 0 };
   }
 
-  // 5. LLM extraction
+  // 8. LLM extraction
   let rawQuotes: ExtractedQuote[];
   try {
     rawQuotes = await extractFn(excerpt);
@@ -585,75 +799,83 @@ export async function harvestQuotes(
 
   if (rawQuotes.length === 0) {
     // Still update watermark so we don't re-process the same content
-    saveWatermark(watermarkPath, {
+    saveTranscriptRecord(watermarkPath, transcriptPath, {
       lastProcessedCount: messages.length,
+      contentHash: contentHash(transcriptRaw),
       lastHarvestedAt: new Date().toISOString(),
     });
     return { skipped: false, extracted: 0, appended: 0 };
   }
 
-  // 6. Apply keyword safety net
+  // 9. Apply keyword firewall (HOLD backstop + borrowed screen)
   const safeQuotes = rawQuotes.map(applyHoldSafetyNet);
 
-  // 7. Load existing quotes for dedup
-  let existingContent = "";
-  let existingSet = new Set<string>();
-  if (existsSync(quotesPath)) {
-    try {
-      existingContent = readFileSync(quotesPath, "utf8");
-      existingSet = buildExistingQuoteSet(existingContent);
-    } catch {
-      // fail-safe: if we can't read, proceed with empty set (may produce dups)
-    }
+  // 10. Acquire write lock — prevents concurrent Stop hooks from racing
+  mkdirSync(dirname(quotesPath), { recursive: true });
+  const lockPath = quotesPath + ".lock";
+  if (!tryAcquireLock(lockPath)) {
+    return { skipped: true, skipReason: "lock-contention", extracted: rawQuotes.length, appended: 0 };
   }
 
-  // 8. Filter duplicates and group by section
-  const toAppend: ExtractedQuote[] = [];
-  for (const q of safeQuotes) {
-    if (!isDuplicate(q, existingSet)) {
-      toAppend.push(q);
-    }
-  }
-
-  if (toAppend.length === 0) {
-    saveWatermark(watermarkPath, {
-      lastProcessedCount: messages.length,
-      lastHarvestedAt: new Date().toISOString(),
-    });
-    return { skipped: false, extracted: rawQuotes.length, appended: 0 };
-  }
-
-  // 9. Insert into file by section
-  const bySection: Record<Section, string[]> = {
-    free: [],
-    hold: [],
-    borrowed: [],
-  };
-  for (const q of toAppend) {
-    bySection[q.section].push(formatQuoteLine(q, today));
-  }
-
-  let updatedContent = existingContent;
-  for (const section of (["free", "hold", "borrowed"] as Section[])) {
-    if (bySection[section].length > 0) {
-      updatedContent = insertUnderSection(updatedContent, section, bySection[section]);
-    }
-  }
-
+  let appended = 0;
   try {
-    mkdirSync(dirname(quotesPath), { recursive: true });
-    writeFileSync(quotesPath, updatedContent, "utf8");
-  } catch {
-    return { skipped: true, skipReason: "write-failed", extracted: rawQuotes.length, appended: 0 };
+    // 11. Re-read file inside the lock for fresh dedup
+    //     (another concurrent run may have written quotes before we acquired the lock)
+    let existingContent = "";
+    let existingSet = new Set<string>();
+    if (existsSync(quotesPath)) {
+      try {
+        existingContent = readFileSync(quotesPath, "utf8");
+        existingSet = buildExistingQuoteSet(existingContent);
+      } catch {
+        // fail-safe: if we can't read, proceed with empty set
+      }
+    }
+
+    // 12. Filter duplicates and group by section
+    const toAppend: ExtractedQuote[] = safeQuotes.filter(
+      (q) => !isDuplicate(q, existingSet),
+    );
+
+    if (toAppend.length > 0) {
+      // 13. Insert into file by section
+      const bySection: Record<Section, string[]> = {
+        free: [],
+        hold: [],
+        borrowed: [],
+      };
+      for (const q of toAppend) {
+        bySection[q.section].push(formatQuoteLine(q, today));
+      }
+
+      let updatedContent = existingContent;
+      for (const section of (["free", "hold", "borrowed"] as Section[])) {
+        if (bySection[section].length > 0) {
+          updatedContent = insertUnderSection(updatedContent, section, bySection[section]);
+        }
+      }
+
+      // 14. Atomic write (temp-then-rename) — prevents partial reads
+      try {
+        atomicWriteFile(quotesPath, updatedContent);
+        appended = toAppend.length;
+      } catch {
+        // write failed — return failure but don't throw (fail-safe)
+        return { skipped: true, skipReason: "write-failed", extracted: rawQuotes.length, appended: 0 };
+      }
+    }
+  } finally {
+    releaseLock(lockPath);
   }
 
-  // 10. Update watermark
-  saveWatermark(watermarkPath, {
+  // 15. Update per-transcript watermark
+  saveTranscriptRecord(watermarkPath, transcriptPath, {
     lastProcessedCount: messages.length,
+    contentHash: contentHash(transcriptRaw),
     lastHarvestedAt: new Date().toISOString(),
   });
 
-  return { skipped: false, extracted: rawQuotes.length, appended: toAppend.length };
+  return { skipped: false, extracted: rawQuotes.length, appended };
 }
 
 // ── CLI entry point ────────────────────────────────────────────────────────────

@@ -9,6 +9,11 @@
  *  5. Fail-safe — missing transcript → skipped, no throw
  *  6. Section insertion — correct placement in file content
  *  7. LLM parse — default-to-hold when section is missing/invalid
+ *  8. FIREWALL PROOF — IP-without-keyword routes to §2 HOLD
+ *  9. FIREWALL PROOF — borrowed IP line routes to §2 HOLD (not §3)
+ * 10. FIREWALL PROOF — LLM section:"free" on IP line overridden to HOLD
+ * 11. PATH TRAVERSAL — rejected transcript paths return skipped
+ * 12. CONCURRENT IDEMPOTENCY — concurrent runs produce no duplicates
  */
 
 import { describe, test, expect } from "bun:test";
@@ -21,6 +26,7 @@ import {
   buildExistingQuoteSet,
   harvestQuotes,
   insertUnderSection,
+  validateTranscriptPath,
   type ExtractedQuote,
   type Section,
 } from "../hooks/quote-harvester.ts";
@@ -56,9 +62,14 @@ function writeQuotesFile(dir: string, content: string): string {
   return p;
 }
 
-function writeWatermark(dir: string, count: number): string {
+/**
+ * Write an empty watermark store (per-transcript, keyed by path).
+ * Count 0 is the default when no entry exists; this is kept for API compat.
+ */
+function writeWatermark(dir: string, _count: number): string {
   const p = join(dir, "wm.json");
-  writeFileSync(p, JSON.stringify({ lastProcessedCount: count, lastHarvestedAt: "" }), "utf8");
+  // Empty store — loadTranscriptRecord returns lastProcessedCount:0 by default
+  writeFileSync(p, JSON.stringify({}), "utf8");
   return p;
 }
 
@@ -128,7 +139,42 @@ describe("applyHoldSafetyNet", () => {
     expect(applyHoldSafetyNet(q).section).toBe("free");
   });
 
-  test("does NOT change borrowed quotes (stays borrowed)", () => {
+  test("does NOT downgrade an existing hold to free", () => {
+    const q: ExtractedQuote = {
+      text: "Love is the engine of growth.",
+      section: "hold",
+      provenance: "[you]",
+    };
+    // No architecture keywords but section is already hold — must remain hold
+    expect(applyHoldSafetyNet(q).section).toBe("hold");
+  });
+
+  // ── FIREWALL PROOF #1: borrowed IP line routes to §2 HOLD ──────────────────
+
+  test("FIREWALL: borrowed quote containing architecture keyword forces §2 HOLD (not §3)", () => {
+    // A borrowed quote that mentions 'cyborg' architecture must not leak as §3 BORROWED.
+    // It contains IP so it must be held under §2, even though it is attributed.
+    const q: ExtractedQuote = {
+      text: "The cyborg runtime is the most important protocol layer of the next decade.",
+      section: "borrowed",
+      provenance: "[both]",
+      attribution: "Anand Vallamsetla",
+    };
+    const result = applyHoldSafetyNet(q);
+    expect(result.section).toBe("hold");
+  });
+
+  test("FIREWALL: borrowed quote with 'xos' keyword forces §2 HOLD", () => {
+    const q: ExtractedQuote = {
+      text: "xOS is the operating system for human potential.",
+      section: "borrowed",
+      provenance: "[you]",
+      attribution: "Anand Vallamsetla",
+    };
+    expect(applyHoldSafetyNet(q).section).toBe("hold");
+  });
+
+  test("FIREWALL: clean borrowed quote (no arch keywords) stays §3 BORROWED", () => {
     const q: ExtractedQuote = {
       text: "Only fools learn from their own mistakes; the wise learn from others'.",
       section: "borrowed",
@@ -139,14 +185,46 @@ describe("applyHoldSafetyNet", () => {
     expect(result.section).toBe("borrowed");
   });
 
-  test("does NOT downgrade an existing hold to free", () => {
+  // ── FIREWALL PROOF #2: LLM "free" on IP line overridden ────────────────────
+
+  test("FIREWALL: LLM section:'free' on IP line overridden to §2 HOLD by keyword screen", () => {
+    // Simulate prompt injection: LLM was induced to say "free" for an IP-revealing line.
+    // The keyword backstop must override this to HOLD.
     const q: ExtractedQuote = {
-      text: "Love is the engine of growth.",
-      section: "hold",
-      provenance: "[you]",
+      text: "The multi-agent coordination protocol is the core IP of xOS.",
+      section: "free",   // <-- injected / incorrect LLM output
+      provenance: "[cyborg]",
     };
-    // No architecture keywords but section is already hold — must remain hold
     expect(applyHoldSafetyNet(q).section).toBe("hold");
+  });
+});
+
+describe("validateTranscriptPath", () => {
+  // ── PATH TRAVERSAL tests ────────────────────────────────────────────────────
+
+  test("rejects path with '..' traversal segments", () => {
+    expect(validateTranscriptPath("../../etc/passwd.jsonl")).toBeNull();
+  });
+
+  test("rejects path with '..' in middle of path", () => {
+    expect(validateTranscriptPath("/tmp/foo/../bar/session.jsonl")).toBeNull();
+  });
+
+  test("rejects path without .jsonl extension", () => {
+    expect(validateTranscriptPath("/tmp/session.txt")).toBeNull();
+    expect(validateTranscriptPath("/tmp/session.json")).toBeNull();
+    expect(validateTranscriptPath("/tmp/session")).toBeNull();
+  });
+
+  test("rejects path resolving to /etc/", () => {
+    expect(validateTranscriptPath("/etc/secrets.jsonl")).toBeNull();
+  });
+
+  test("accepts a valid temp directory .jsonl path", () => {
+    // Create a real temp path (doesn't need to exist for validateTranscriptPath)
+    const valid = join(tmpdir(), "qh-test-12345", "session.jsonl");
+    expect(validateTranscriptPath(valid)).not.toBeNull();
+    expect(validateTranscriptPath(valid)).toContain("session.jsonl");
   });
 });
 
@@ -311,6 +389,132 @@ describe("harvestQuotes — section routing", () => {
     // Borrowed lines should NOT have a date (just attribution)
     expect(written).not.toMatch(/Variance is evil.*2026-06-30/);
   });
+
+  // ── FIREWALL PROOF #3: IP-without-keyword still routes to §2 ───────────────
+
+  test("FIREWALL: architecture-revealing quote without any of the 37 keywords routes to §2 HOLD", async () => {
+    // This quote describes architecture IP using novel vocabulary not in the keyword list.
+    // The LLM correctly classifies it as "hold" — we prove the system respects that.
+    // (The keyword backstop is a second line of defense; the LLM is the first.)
+    const dir = makeTmpDir();
+    const transcriptPath = writeTranscript(dir, Array.from({ length: 8 }, (_, i) => ({
+      role: (i % 2 === 0 ? "user" : "assistant") as "user" | "assistant",
+      text: `Turn ${i + 1}.`,
+    })));
+    const quotesPath = writeQuotesFile(dir, BARE_QUOTES_FILE);
+    const watermarkPath = join(dir, "wm.json");
+
+    // Quote has NO keywords from HOLD_KEYWORDS but describes IP architecture.
+    // The mock LLM correctly returns "hold" — we verify the system routes it to §2.
+    const archQuoteNoKeyword =
+      "A per-user operating layer with a persistent memory substrate enables agent orchestration protocols that scale across the full human lifecycle.";
+
+    const mockExtract = async (_: string): Promise<ExtractedQuote[]> => [
+      { text: archQuoteNoKeyword, section: "hold", provenance: "[cyborg]" },
+    ];
+
+    const result = await harvestQuotes(
+      { transcript_path: transcriptPath },
+      { extractFn: mockExtract, quotesPath, watermarkPath, today: "2026-06-30" },
+    );
+
+    expect(result.appended).toBe(1);
+
+    const written = readFileSync(quotesPath, "utf8");
+    const s1Idx = written.indexOf("§1");
+    const s2Idx = written.indexOf("§2");
+    const s3Idx = written.indexOf("§3");
+    const lineIdx = written.indexOf("per-user operating layer");
+
+    // Must be under §2, NOT under §1
+    expect(lineIdx).toBeGreaterThan(s2Idx);
+    expect(lineIdx).toBeLessThan(s3Idx);
+    // Explicitly NOT under §1
+    expect(lineIdx).not.toBeLessThan(s1Idx + 10);
+  });
+
+  // ── FIREWALL PROOF #4: borrowed IP line → §2 HOLD (full harvest path) ──────
+
+  test("FIREWALL: borrowed quote with architecture keyword routes to §2 HOLD (not §3)", async () => {
+    const dir = makeTmpDir();
+    const transcriptPath = writeTranscript(dir, Array.from({ length: 8 }, (_, i) => ({
+      role: (i % 2 === 0 ? "user" : "assistant") as "user" | "assistant",
+      text: `Turn ${i + 1}.`,
+    })));
+    const quotesPath = writeQuotesFile(dir, BARE_QUOTES_FILE);
+    const watermarkPath = join(dir, "wm.json");
+
+    // LLM correctly classified this as "borrowed" but it contains "cyborg" → must go to HOLD
+    const mockExtract = async (_: string): Promise<ExtractedQuote[]> => [
+      {
+        text: "The cyborg architecture is the most important platform decision of the next 20 years.",
+        section: "borrowed",
+        provenance: "[both]",
+        attribution: "Anand Vallamsetla",
+      },
+    ];
+
+    const result = await harvestQuotes(
+      { transcript_path: transcriptPath },
+      { extractFn: mockExtract, quotesPath, watermarkPath, today: "2026-06-30" },
+    );
+
+    expect(result.appended).toBe(1);
+
+    const written = readFileSync(quotesPath, "utf8");
+    const s2Idx = written.indexOf("§2");
+    const s3Idx = written.indexOf("§3");
+    const lineIdx = written.indexOf("cyborg architecture");
+
+    // Must be under §2 (firewall caught it), NOT under §3
+    expect(lineIdx).toBeGreaterThan(s2Idx);
+    expect(lineIdx).toBeLessThan(s3Idx);
+  });
+});
+
+describe("harvestQuotes — path traversal", () => {
+  test("path with '..' traversal returns skipped with invalid-transcript-path", async () => {
+    const dir = makeTmpDir();
+    const quotesPath = writeQuotesFile(dir, BARE_QUOTES_FILE);
+    const watermarkPath = join(dir, "wm.json");
+
+    const result = await harvestQuotes(
+      { transcript_path: "../../etc/passwd.jsonl" },
+      { quotesPath, watermarkPath, today: "2026-06-30" },
+    );
+    expect(result.skipped).toBe(true);
+    expect(result.skipReason).toBe("invalid-transcript-path");
+  });
+
+  test("path without .jsonl extension returns skipped with invalid-transcript-path", async () => {
+    const dir = makeTmpDir();
+    const quotesPath = writeQuotesFile(dir, BARE_QUOTES_FILE);
+    const watermarkPath = join(dir, "wm.json");
+
+    // Write a real file with wrong extension so it's not rejected for non-existence
+    const badPath = join(dir, "session.txt");
+    writeFileSync(badPath, "{}", "utf8");
+
+    const result = await harvestQuotes(
+      { transcript_path: badPath },
+      { quotesPath, watermarkPath, today: "2026-06-30" },
+    );
+    expect(result.skipped).toBe(true);
+    expect(result.skipReason).toBe("invalid-transcript-path");
+  });
+
+  test("path pointing to /etc/ is rejected", async () => {
+    const dir = makeTmpDir();
+    const quotesPath = writeQuotesFile(dir, BARE_QUOTES_FILE);
+    const watermarkPath = join(dir, "wm.json");
+
+    const result = await harvestQuotes(
+      { transcript_path: "/etc/malicious.jsonl" },
+      { quotesPath, watermarkPath, today: "2026-06-30" },
+    );
+    expect(result.skipped).toBe(true);
+    expect(result.skipReason).toBe("invalid-transcript-path");
+  });
 });
 
 describe("harvestQuotes — idempotency", () => {
@@ -339,7 +543,7 @@ describe("harvestQuotes — idempotency", () => {
       { extractFn: mockExtract, quotesPath, watermarkPath, today: "2026-06-30" },
     );
 
-    // Second run with same transcript — watermark should prevent re-processing
+    // Second run with same transcript — per-transcript watermark should prevent re-processing
     const result2 = await harvestQuotes(
       { transcript_path: transcriptPath },
       { extractFn: mockExtract, quotesPath, watermarkPath, today: "2026-06-30" },
@@ -351,6 +555,45 @@ describe("harvestQuotes — idempotency", () => {
     const written = readFileSync(quotesPath, "utf8");
     const occurrences = (written.match(/Filing is the first step/g) ?? []).length;
     expect(occurrences).toBe(1);
+  });
+
+  test("CONCURRENT IDEMPOTENCY: two simultaneous calls on same transcript produce no duplicate quotes", async () => {
+    // Simulates two Stop hooks firing concurrently (e.g., two Claude sessions ending
+    // simultaneously while sharing the same transcript path and quotes file).
+    const dir = makeTmpDir();
+    const transcriptPath = writeTranscript(dir, Array.from({ length: 8 }, (_, i) => ({
+      role: (i % 2 === 0 ? "user" : "assistant") as "user" | "assistant",
+      text: `Turn ${i + 1}.`,
+    })));
+    const quotesPath = writeQuotesFile(dir, BARE_QUOTES_FILE);
+    const watermarkPath = join(dir, "wm.json");
+
+    const mockExtract = async (_: string): Promise<ExtractedQuote[]> => [
+      { text: "Precision beats volume every time.", section: "free", provenance: "[cyborg]" },
+    ];
+
+    // Fire both calls concurrently — one acquires the lock; the other either
+    // loses the lock or re-dedupes against the first call's write
+    const [result1, result2] = await Promise.all([
+      harvestQuotes(
+        { transcript_path: transcriptPath },
+        { extractFn: mockExtract, quotesPath, watermarkPath, today: "2026-06-30" },
+      ),
+      harvestQuotes(
+        { transcript_path: transcriptPath },
+        { extractFn: mockExtract, quotesPath, watermarkPath, today: "2026-06-30" },
+      ),
+    ]);
+
+    const written = readFileSync(quotesPath, "utf8");
+    const occurrences = (written.match(/Precision beats volume/g) ?? []).length;
+
+    // The quote must appear EXACTLY once regardless of which call won
+    expect(occurrences).toBe(1);
+
+    // Combined appended must be 1 (one call appended, the other deduplicated or lock-contended)
+    const totalAppended = result1.appended + result2.appended;
+    expect(totalAppended).toBe(1);
   });
 });
 
@@ -374,7 +617,7 @@ describe("harvestQuotes — fail-safe", () => {
     const watermarkPath = join(dir, "wm.json");
 
     const result = await harvestQuotes(
-      { transcript_path: "/nonexistent/path/session.jsonl" },
+      { transcript_path: join(dir, "nonexistent.jsonl") },
       { quotesPath, watermarkPath, today: "2026-06-30" },
     );
     expect(result.skipped).toBe(true);
@@ -448,7 +691,7 @@ describe("harvestQuotes — mixed session", () => {
       { text: "Reward isn't a deposit at the end — it's a stream you're already standing in.", section: "free", provenance: "[cyborg]" },
       // Architecture — LLM says free but safety net should force hold
       { text: "The xOS kernel is the substrate; the cyborg is the runtime.", section: "free", provenance: "[both]" },
-      // Borrowed
+      // Borrowed (clean — no arch keywords)
       { text: "Only fools learn from their own mistakes; the wise learn from others'.", section: "borrowed", provenance: "[both]", attribution: "old maxim" },
     ];
 
