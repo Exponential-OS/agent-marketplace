@@ -1,3 +1,22 @@
+## 0.5.0 (XOS-140)
+
+- **Auto-harvest quotable insights:** Stop hook (`hooks/quote-harvester.ts`) scans
+  the session transcript (`transcript_path` from Stop payload) at end of every turn,
+  extracts aphoristic statements via Gemini Flash (claude fallback), and appends to
+  `~/anand-career-os/WIP/branding-product/cyborg-quotes.md`.
+- **Three safety-gated sections:**
+  - §1 POST FREELY — universal wisdom, safe to post now
+  - §2 HOLD — architecture/xOS/cyborg/co-dialectic/IP-revealing; keyword safety net
+    forces this classification even when the LLM misclassifies a line as "free"
+  - §3 BORROWED — attributed to named third parties
+- **Default-to-HOLD:** LLM JSON output with missing/invalid section defaults to §2 HOLD.
+- **Idempotent:** watermark tracks last-processed message count; text-based dedup
+  prevents duplicate entries in the deck.
+- **Fail-safe:** any error (missing transcript, LLM failure, write error) exits 0,
+  never blocks session end. Skips sessions with fewer than 4 new messages.
+- **Test suite** (23 tests): section routing, architecture→HOLD safety net, idempotency,
+  fail-safe for missing transcript / throwing extract function / small session.
+
 # Changelog
 
 ## 0.4.0 (XOS-120)

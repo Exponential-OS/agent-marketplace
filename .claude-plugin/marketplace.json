@@ -6,8 +6,8 @@
     "email": "thewhyman@users.noreply.github.com"
   },
   "metadata": {
-    "description": "xOS Marketplace — Platform for xOS engines. First-party primitives ship here; third-party contributors (60% revenue share) publish engines in any category. Engines are independently versioned repos. Dependency declarations enforce minimum compatible versions. Installed via Claude Code plugin system.",
-    "branding_note": "xOS brand term is 'engine' not 'plugin'. The plugin[] field and .claude-plugin/ convention are Claude Code technical infrastructure — not user-facing terminology."
+    "description": "xOS Marketplace \u2014 Platform for xOS engines. First-party primitives ship here; third-party contributors (60% revenue share) publish engines in any category. Engines are independently versioned repos. Dependency declarations enforce minimum compatible versions. Installed via Claude Code plugin system.",
+    "branding_note": "xOS brand term is 'engine' not 'plugin'. The plugin[] field and .claude-plugin/ convention are Claude Code technical infrastructure \u2014 not user-facing terminology."
   },
   "plugins": [
     {
@@ -15,7 +15,7 @@
       "platform": "xHumanOS",
       "license": "Proprietary",
       "source": "./engines/career-intelligence",
-      "description": "Career Intelligence Engine — xHumanOS engine for job search, network, pipeline, sessions. v0.73.4: XOS-98 LOCAL beta-funnel + NSM telemetry — shared src/telemetry/ primitive (onboarding/first-artifact/activation/d7 + VOW + active-time events), local-only JSONL, XOS_98_TELEMETRY-gated, ZERO network (honors the public no-phone-home promise; PostHog outbound transport stays human-gated). v0.73.3: warm-intro badge (XOS-85) + standalone cover-letter skill (XOS-103) + interview-prep auto-surface (XOS-105). v0.73.0: workspace-binding gate primitive replacing the 3 duplicated hook cwd-guards (the 408-stray-commits incident). Carries v0.72 dedup-gate JSON fix + v0.71 claim-grounding gate (resume-engine no longer fabricates metrics).",
+      "description": "Career Intelligence Engine \u2014 xHumanOS engine for job search, network, pipeline, sessions. v0.73.4: XOS-98 LOCAL beta-funnel + NSM telemetry \u2014 shared src/telemetry/ primitive (onboarding/first-artifact/activation/d7 + VOW + active-time events), local-only JSONL, XOS_98_TELEMETRY-gated, ZERO network (honors the public no-phone-home promise; PostHog outbound transport stays human-gated). v0.73.3: warm-intro badge (XOS-85) + standalone cover-letter skill (XOS-103) + interview-prep auto-surface (XOS-105). v0.73.0: workspace-binding gate primitive replacing the 3 duplicated hook cwd-guards (the 408-stray-commits incident). Carries v0.72 dedup-gate JSON fix + v0.71 claim-grounding gate (resume-engine no longer fabricates metrics).",
       "version": "0.73.4",
       "category": "career",
       "homepage": "https://github.com/Exponential-OS/career-intelligence-engine"
@@ -25,7 +25,7 @@
       "platform": "xHumanOS",
       "license": "Proprietary",
       "source": "./engines/super-developer",
-      "description": "Super Developer Engine - global agentic-SDLC ship-feature pipeline for every repo. v0.6.0: Stage 9 PUBLISH+BROADCAST+ENSURE (XOS-142) — post-merge, artifact-class-routed (plugin→marketplace+reload-bulletin; cyborg→route-sync-to-cyborg-agent; workspace→sync.sh; SaaS→cache-bust+client-reload+flag+migration+verify-live) + ship-feature-publish-gate skew detector (installed<marketplace → BLOCK + loud reinstall line). 'Shipped' = activated across the running swarm, not merged. v0.5.0: cross-family judge UNSKIPPABLE (XOS-138) — Stage 6 non-optional + FAIL-HARD, canonical `ship-feature-judge-receipt:v1` in every PR body, merge-gate BLOCKs receiptless `gh pr merge`. v0.4.1: Stage 5.5 (E2E+VISUAL) + 5.6 (/simplify) + 5.7 (rerun). v0.3.0: SELF-CONTAINED SDLC rules via ${CLAUDE_PLUGIN_ROOT}. User-scope, workspace_binding=global. Canonical source: Exponential-OS/xos monorepo plugins/cross/super-developer (derived vendored mirror, overwritten on each sync).",
+      "description": "Super Developer Engine - global agentic-SDLC ship-feature pipeline for every repo. v0.6.0: Stage 9 PUBLISH+BROADCAST+ENSURE (XOS-142) \u2014 post-merge, artifact-class-routed (plugin\u2192marketplace+reload-bulletin; cyborg\u2192route-sync-to-cyborg-agent; workspace\u2192sync.sh; SaaS\u2192cache-bust+client-reload+flag+migration+verify-live) + ship-feature-publish-gate skew detector (installed<marketplace \u2192 BLOCK + loud reinstall line). 'Shipped' = activated across the running swarm, not merged. v0.5.0: cross-family judge UNSKIPPABLE (XOS-138) \u2014 Stage 6 non-optional + FAIL-HARD, canonical `ship-feature-judge-receipt:v1` in every PR body, merge-gate BLOCKs receiptless `gh pr merge`. v0.4.1: Stage 5.5 (E2E+VISUAL) + 5.6 (/simplify) + 5.7 (rerun). v0.3.0: SELF-CONTAINED SDLC rules via ${CLAUDE_PLUGIN_ROOT}. User-scope, workspace_binding=global. Canonical source: Exponential-OS/xos monorepo plugins/cross/super-developer (derived vendored mirror, overwritten on each sync).",
       "version": "0.6.0",
       "category": "developer-tools",
       "homepage": "https://github.com/Exponential-OS/xos"
@@ -39,7 +39,7 @@
         "cross-family-judge"
       ],
       "source": "./engines/co-dialectic",
-      "description": "Co-Dialectic v4.27.0 - XOS-146 in-message status-header no-fabricate / no-silent-drop. New Stop hook status-liveness-check verifies the model-authored Protocol 1 header against ~/.codialectic/state.json using the SAME freshness rule as statusline.sh (one shared rule, so the in-message header and terminal status line can never disagree): a score may appear only when codi is LIVE; otherwise the header is forced to '⚠ Codi DEGRADED' with no numbers. Catches fabrication / inconsistent / silent-drop / missing-degraded-header; response-unreadable fails open silently while missing/corrupt state is treated as DEGRADED and still evaluated. Builds on v4.26.0 (XOS-141) structural terminal-statusLine liveness.",
+      "description": "Co-Dialectic v4.27.0 - XOS-146 in-message status-header no-fabricate / no-silent-drop. New Stop hook status-liveness-check verifies the model-authored Protocol 1 header against ~/.codialectic/state.json using the SAME freshness rule as statusline.sh (one shared rule, so the in-message header and terminal status line can never disagree): a score may appear only when codi is LIVE; otherwise the header is forced to '\u26a0 Codi DEGRADED' with no numbers. Catches fabrication / inconsistent / silent-drop / missing-degraded-header; response-unreadable fails open silently while missing/corrupt state is treated as DEGRADED and still evaluated. Builds on v4.26.0 (XOS-141) structural terminal-statusLine liveness.",
       "version": "4.27.0",
       "category": "ai-runtime",
       "homepage": "https://github.com/Exponential-OS/prompt-engineering-in-action"
@@ -49,7 +49,7 @@
       "platform": "xOS",
       "license": "Proprietary",
       "source": "./engines/brand-intelligence",
-      "description": "Brand Intelligence — Persona schema, extraction, and registry. N-voice support for individuals (xHumanOS, N=1) and orgs (xTeamOS, N≥3). Includes persona-onboarding interview, handles, channel directory. Foundational primitive — no dependencies.",
+      "description": "Brand Intelligence \u2014 Persona schema, extraction, and registry. N-voice support for individuals (xHumanOS, N=1) and orgs (xTeamOS, N\u22653). Includes persona-onboarding interview, handles, channel directory. Foundational primitive \u2014 no dependencies.",
       "version": "0.47.0",
       "category": "brand",
       "homepage": "https://github.com/Exponential-OS/brand-intelligence-engine"
@@ -59,7 +59,7 @@
       "platform": "xOS",
       "license": "Proprietary",
       "source": "./engines/knowledge-graph",
-      "description": "Knowledge Graph — Graph data layer for all xOS engines. Phase 1: JSON files. Phase 2: Neo4j substrate replacing all engine file stores. Foundational primitive — no dependencies.",
+      "description": "Knowledge Graph \u2014 Graph data layer for all xOS engines. Phase 1: JSON files. Phase 2: Neo4j substrate replacing all engine file stores. Foundational primitive \u2014 no dependencies.",
       "version": "0.1.0",
       "category": "knowledge",
       "homepage": "https://github.com/Exponential-OS/knowledge-graph-engine"
@@ -69,7 +69,7 @@
       "platform": "xOS",
       "license": "Proprietary",
       "source": "./engines/brand-amplification",
-      "description": "Brand Amplification Engine (BAE) — outbound brand-building umbrella. v0.55.0: post-algorithm content-strategy reset (relevance > volume) — content-flywheel Reset section (topic-audience fit, audience specificity, engagement-quality-over-velocity) + campaign-engine Relevance Gate (relevance_score ≥ 70 to proceed, else gap + sharpening) + local-only XOS_98_TELEMETRY-gated content_strategy_applied event (no phone-home). Includes the social distribution engine (SDE master orchestrator), flywheel amplification module, hub-and-spoke surface coverage, 9-gate preflight CI for content campaigns, golden-hour scheduling, invisible signal CTAs (bookmark/save/DM-share), platform-native routing across LinkedIn / Substack / Reddit / X / Instagram / Facebook / Threads, and the confidence-ladder browser MCP defaults (browserbase for setup; chrome-devtools-mcp for posting per Irreversible-Action Invariant).",
+      "description": "Brand Amplification Engine (BAE) \u2014 outbound brand-building umbrella. v0.55.0: post-algorithm content-strategy reset (relevance > volume) \u2014 content-flywheel Reset section (topic-audience fit, audience specificity, engagement-quality-over-velocity) + campaign-engine Relevance Gate (relevance_score \u2265 70 to proceed, else gap + sharpening) + local-only XOS_98_TELEMETRY-gated content_strategy_applied event (no phone-home). Includes the social distribution engine (SDE master orchestrator), flywheel amplification module, hub-and-spoke surface coverage, 9-gate preflight CI for content campaigns, golden-hour scheduling, invisible signal CTAs (bookmark/save/DM-share), platform-native routing across LinkedIn / Substack / Reddit / X / Instagram / Facebook / Threads, and the confidence-ladder browser MCP defaults (browserbase for setup; chrome-devtools-mcp for posting per Irreversible-Action Invariant).",
       "version": "0.55.0",
       "category": "distribution",
       "homepage": "https://github.com/Exponential-OS/brand-amplification-engine"
@@ -79,8 +79,8 @@
       "platform": "xOS",
       "license": "Proprietary",
       "source": "./engines/coordination",
-      "description": "xOS Coordination engine — brain-multi-session-sync skill. Git-backed session state sync across local Claude, cloud Claude, Cursor, Codex. Session-start hook pulls workspace state and surfaces it as Tier 1.5 context in co-dialectic waky-waky. Install once via setup.sh; workspace declares status format via AGENT_STATUS.yaml convention. v0.4.0: Solo-session roles (a session with no live siblings auto-covers all cyborg roles; roles auto-reclaim when a dedicated sibling goes stale) + heartbeat liveness (writeSessionHeartbeat writes per-session marker on every prompt; optionally broadcasts to a Linear issue, throttled ≥5 min, edit-not-spam) + role-coverage context in additionalContext ROLES: line. v0.3.0: Linear work-bus pull resolves team/project from the workspace WIP→goal map and scopes queries by project when configured.",
-      "version": "0.4.0",
+      "description": "xOS Coordination Engine v0.5.0 \u2014 XOS-140 auto-harvest quotable insights (Stop hook: transcript scan, Gemini Flash extraction, 3 safety-gated sections with keyword HOLD net, idempotent, fail-safe). v0.4.0: solo-session-roles + heartbeat liveness (XOS-120).",
+      "version": "0.5.0",
       "category": "coordination",
       "homepage": "https://github.com/Exponential-OS/coordination-engine"
     },
@@ -89,7 +89,7 @@
       "platform": "xOS",
       "license": "Proprietary",
       "source": "./engines/content-adapt",
-      "description": "Content Adapt — Transform engine. One idea → platform-native variants (xHumanOS) or audience-specific variants (xTeamOS). Reads Brand Intelligence personas; queries Knowledge Graph for source context.",
+      "description": "Content Adapt \u2014 Transform engine. One idea \u2192 platform-native variants (xHumanOS) or audience-specific variants (xTeamOS). Reads Brand Intelligence personas; queries Knowledge Graph for source context.",
       "version": "0.1.0",
       "category": "content",
       "homepage": "https://github.com/Exponential-OS/content-adapt-engine"
@@ -99,7 +99,7 @@
       "platform": "xOS",
       "license": "Proprietary",
       "source": "./engines/xos",
-      "description": "xOS platform meta-commands — cross-cutting commands for the whole swarm. /xos:swarm-sync = bidirectional swarm sync (publish this agent's state, then catch up to the latest cyborg brain + plugins). Canonical source: Exponential-OS/xos monorepo plugins/cross/xos (this engines/ copy is a derived vendored mirror).",
+      "description": "xOS platform meta-commands \u2014 cross-cutting commands for the whole swarm. /xos:swarm-sync = bidirectional swarm sync (publish this agent's state, then catch up to the latest cyborg brain + plugins). Canonical source: Exponential-OS/xos monorepo plugins/cross/xos (this engines/ copy is a derived vendored mirror).",
       "version": "0.1.0",
       "category": "developer-tools",
       "homepage": "https://github.com/Exponential-OS/xos"
