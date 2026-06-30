@@ -515,8 +515,16 @@ export async function runDaemon(opts: {
     const cycleStart = Date.now();
     const cycleTs = new Date(cycleStart).toISOString();
 
+    // Declared outside try so finally can access them regardless of errors.
+    let pollResult: PollResult | null = null;
+    // spawnOk tracks whether the cycle resolved cleanly enough to advance the
+    // substrate baseline. True when: no fires (nothing to spawn), spawn
+    // succeeded (spawned=true), or spawn was skipped by ceiling/no-fires.
+    // False when pollOnce throws OR spawnClaudeSession throws.
+    let spawnOk = false;
+
     try {
-      // 1. Write heartbeat (XOS-120) — always, even if poll fails
+      // 1. Write heartbeat (XOS-120) — always, before poll
       const hbResult = await impl.writeSessionHeartbeat({
         sessionId: config.sessionId,
         host: config.host,
@@ -527,7 +535,7 @@ export async function runDaemon(opts: {
       }
 
       // 2. Poll for fire conditions
-      const pollResult = await impl.pollOnce({
+      pollResult = await impl.pollOnce({
         since: state.linearSince,
         baselineSha: state.baselineSha,
         config,
@@ -535,29 +543,21 @@ export async function runDaemon(opts: {
 
       if (pollResult.warn) doLog("WARN", `poll: ${pollResult.warn}`);
 
-      // 3. Update substrate baseline
-      if (pollResult.newSubstrateSha) {
-        if (!state.baselineSha) {
-          // First run — store baseline, no fire
-          impl.writeBaselineSha(config.stateDir, pollResult.newSubstrateSha);
-          doLog("INFO", `substrate baseline initialized: ${pollResult.newSubstrateSha.slice(0, 7)}`);
-        }
-        state.baselineSha = pollResult.newSubstrateSha;
-        impl.writeBaselineSha(config.stateDir, pollResult.newSubstrateSha);
-      }
-
-      // 4. Update Linear high-watermark
+      // 3. Update Linear high-watermark (safe — just a timestamp, not fire-dependent)
       if (pollResult.newLinearWatermark) {
         state.linearSince = pollResult.newLinearWatermark;
       }
 
-      // 5. Spawn if fires detected
+      // 4. Spawn if fires detected
       const fires = pollResult.fires;
       if (fires.length > 0) {
         doLog("INFO", `fires: ${fires.map((f) => `${f.kind}:${f.description}`).join(" | ")}`);
 
         const prompt = buildPrompt(fires, state.linearSince);
         const spawnResult = await impl.spawnClaudeSession({ fires, prompt, config });
+        // Mark cycle resolved: spawn either ran (ok/dry-run) or was intentionally
+        // skipped (rate-limited/no-fires). Only an exception leaves spawnOk=false.
+        spawnOk = true;
 
         if (spawnResult.spawned) {
           const spawnAt = new Date().toISOString();
@@ -571,20 +571,43 @@ export async function runDaemon(opts: {
           doLog("INFO", `spawn skipped (${spawnResult.reason})`);
         }
       } else {
+        // No fires → cycle resolved successfully with nothing to do
+        spawnOk = true;
         doLog("INFO", `poll cycle: no fires`);
       }
-
-      // 6. Write liveness file
-      impl.writeLivenessFile(config.stateDir, {
-        lastPollAt: cycleTs,
-        lastSpawnAt: state.lastSpawnAt,
-        lastFireCondition: state.lastFireCondition,
-        spawnCount: recentSpawnCount(config.stateDir),
-        spawnCeiling: config.spawnCeiling,
-      });
     } catch (err) {
-      // Fail-safe: log + continue — never crash the loop
+      // Fail-safe: log + continue — never crash the loop.
+      // spawnOk remains false, so baseline is NOT advanced this cycle (retry next).
       doLog("ERROR", `cycle error (continuing): ${String(err)}`);
+    } finally {
+      // Always write liveness — even on error cycles — so external monitoring
+      // can detect a stalled daemon (liveness-not-per-cycle-on-error fix).
+      try {
+        impl.writeLivenessFile(config.stateDir, {
+          lastPollAt: cycleTs,
+          lastSpawnAt: state.lastSpawnAt,
+          lastFireCondition: state.lastFireCondition,
+          spawnCount: recentSpawnCount(config.stateDir),
+          spawnCeiling: config.spawnCeiling,
+        });
+      } catch { /* liveness write failure is non-fatal */ }
+
+      // Advance substrate baseline only after cycle resolved cleanly (baseline-before-
+      // spawn-risk fix). If spawnOk=false (poll or spawn threw), retain the old
+      // baseline so the same fire conditions retrigger on the next cycle — self-healing.
+      if (pollResult?.newSubstrateSha) {
+        if (!state.baselineSha) {
+          // First boot: always initialize baseline (no fire was generated for first-run SHA)
+          state.baselineSha = pollResult.newSubstrateSha;
+          impl.writeBaselineSha(config.stateDir, pollResult.newSubstrateSha);
+          doLog("INFO", `substrate baseline initialized: ${pollResult.newSubstrateSha.slice(0, 7)}`);
+        } else if (spawnOk) {
+          // Cycle resolved: advance baseline so we don't re-fire on same SHA
+          state.baselineSha = pollResult.newSubstrateSha;
+          impl.writeBaselineSha(config.stateDir, pollResult.newSubstrateSha);
+        }
+        // else: spawnOk=false → retain old baseline, substrate-change will retrigger
+      }
     }
 
     // Wait for next cycle (respect abort signal)
