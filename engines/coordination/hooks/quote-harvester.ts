@@ -449,8 +449,7 @@ async function runLlmExtraction(content: string): Promise<ExtractedQuote[]> {
     if (claudeResult !== null) return parseExtractedQuotes(claudeResult);
   } finally {
     try {
-      Bun.file(tmpPath).arrayBuffer().then(() => {}).catch(() => {});
-      // Best-effort cleanup
+      // Best-effort cleanup of temp prompt file
       await Bun.spawn(["rm", "-f", tmpPath]).exited.catch(() => {});
     } catch {
       // ignore cleanup errors
