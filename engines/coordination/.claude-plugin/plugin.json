@@ -1,8 +1,8 @@
 {
   "name": "coordination",
   "platform": "xOS",
-  "version": "0.4.0",
-  "description": "xOS Coordination engine — multi-session brain sync via git + Linear bus. Pulls the Linear work-bus per prompt. Solo sessions own all cyborg roles by default (dynamic computation); each session heartbeats its liveness on the bus; dedicated role-sessions cause the solo session to shed that role automatically. Works across local Claude, cloud Claude, Cursor, Codex — any session that shares a git-backed workspace.",
+  "version": "0.5.0",
+  "description": "xOS Coordination engine v0.5.0 \u2014 XOS-140 auto-harvest quotable insights. Stop hook scans session transcript via transcript_path, extracts aphoristic statements via Gemini Flash (or claude fallback), routes to safety-gated sections: \u00a71 POST FREELY (universal wisdom), \u00a72 HOLD (architecture/xOS/IP-revealing \u2014 keyword safety net enforces this even if LLM misclassifies), \u00a73 BORROWED (attributed). Idempotent (watermark + text-dedup). Fail-safe (never blocks session end). Appends to ~/anand-career-os/WIP/branding-product/cyborg-quotes.md. Prior: v0.4.0 solo-session-roles + heartbeat liveness (XOS-120).",
   "license": "Proprietary",
   "author": {
     "name": "Anand Vallamsetla"
