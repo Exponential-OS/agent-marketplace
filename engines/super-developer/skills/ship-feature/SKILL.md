@@ -130,7 +130,9 @@ Parse `$ARGUMENTS` into:
 - `ticket`: required Linear issue id.
 - `repo`: explicit repo path from args, else current repo.
 
-Claude brainstorms the smallest valuable feature slice, user impact, likely repo surfaces, risks, and rollback path.
+**Run this via `superpowers:brainstorming`** — not a lone ad-hoc brainstorm. Explore several DISTINCT approaches/angles in parallel, judge-panel them, and synthesize the winner (grafting the best ideas from runners-up). The brainstorm covers the smallest valuable feature slice, user impact, likely repo surfaces, risks, and rollback path.
+
+**Brainstorm AS the domain's 0.001%-caliber persona** (co-dialectic Protocol 11), not a generic voice: UX / visual / product-design → Claude **design persona (Jony Ive caliber)**; architecture / systems → **Jeff Dean**; positioning / naming / launch → **Steve Jobs**; data / metrics → **Nate Silver**; debugging → **Linus Torvalds**. Cross-domain features → fuse personas (e.g. Ive + Jobs for a UX launch). The right expert's brainstorm beats a generic one — the same routing the cost table already mandates for UI work, applied at brainstorm time.
 
 If the feature intent cannot be inferred from `$ARGUMENTS` + repo context, ask one clarifying question. Otherwise continue.
 
@@ -138,7 +140,7 @@ If the feature intent cannot be inferred from `$ARGUMENTS` + repo context, ask o
 
 ## Stage 2 — Spec
 
-Claude writes `docs/plans/<slug>.md` in the target repo.
+**Run this via `superpowers:writing-plans`.** Claude writes `docs/plans/<slug>.md` in the target repo using the writing-plans discipline.
 
 A Linear ticket is required for any non-trivial change because it is the cross-machine work-claim unit. The only exception is the trivial single-file doc edit carved out in MANDATORY SCOPE.
 
@@ -261,7 +263,7 @@ Claude reads Codex conclusions and diffs only; Claude never re-executes implemen
 
 ## Stage 5 — Tests + evals green
 
-Codex runs the Stage 3 test plan in the worktree.
+**Run this via `superpowers:test-driven-development`** (spec → tests → implementation → green). Codex runs the Stage 3 test plan in the worktree under TDD discipline.
 
 Required:
 
@@ -381,6 +383,8 @@ Use `agy`/Gemini for:
 Do not pass secrets to Gemini/agy.
 
 **Use the co-dialectic `judge-panel` skill** for the verdict — it runs ≥2 cheap cross-family fish (Gemini-Flash + GPT-nano) first and escalates to ONE expensive tiebreaker only on disagreement. Do NOT make the Opus whale the default judge. The whale steps in only if `judge-panel` escalates AND the tiebreaker still can't resolve. Whale always does the final hallucination-catch (cheap: scan, don't re-execute).
+
+**Apply domain-persona lenses, not only cross-family.** Cross-*family* (Gemini + GPT) catches training-distribution blind spots; cross-*persona* catches domain blind spots. For UX / visual artifacts, run the judge with `--persona "Steve Jobs" --persona "Jony Ive"` (as Stage 5.5 already does); for architecture use a systems-caliber lens, for data a statistical lens. Route the persona set by the artifact's domain.
 
 **FAIL-HARD if no fish are reachable:** if `judge-panel` cannot reach ≥1 cross-family fish, HALT the pipeline and surface this fish-remediation block. NEVER silently skip and proceed to PR. This mirrors the FAIL-HARD invariant and co-dialectic Protocol 8 T3 behavior.
 
