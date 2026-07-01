@@ -5,8 +5,10 @@ description: >
   scores connection strength (5-level scale), ingests new contacts from
   conversation, and recommends who to reach out to and how. Also detects
   relationship origin (where/when you met) and cohort clusters (people
-  from the same company/era). Say "who do I know at [Company]",
-  "how do I know [Name]", or "tell me about [Contact]".
+  from the same company/era). Records inbound recruiter DMs that came from
+  the user's public posts as brand-attributed pipeline opportunities. Say
+  "who do I know at [Company]", "how do I know [Name]", "tell me about
+  [Contact]", or "a recruiter DM'd me after seeing my post".
 triggers:
   - who do I know at
   - ni
@@ -21,6 +23,10 @@ triggers:
   - relationship depth
   - when did I meet
   - relationship origin
+  - recruiter DM
+  - inbound recruiter
+  - saw my post
+  - post generated
 ---
 
 # Network Intelligence — Career OS Skill
@@ -58,6 +64,7 @@ Always start with:
 - `warm intros for [Company]` — same as "who do I know at"
 - `how do I know [Name]` — relationship origin scan (where/when you met, message history, cohort)
 - `relationship scan for [Name]` — same as above
+- `a recruiter DM'd me after seeing my post` — record a brand-attributed inbound pipeline opportunity
 
 ---
 
@@ -183,6 +190,7 @@ Pull structured fields from the description:
 | Shared context | Thursday poker with Pravir |
 | Connection strength | 5 (Inner Circle — personal + professional) |
 | Channel preference | WhatsApp (inferred from "friend" — confirm with user) |
+| Inbound content attribution | `source: post`, `post_id: {post_id}` when the user attributes an inbound DM to a post |
 
 ### Step 3: Cross-Reference
 
@@ -208,10 +216,161 @@ channel: whatsapp
 companies: [Google, Glean, Aida]
 relationship: Close friend, Thursday poker group
 last_contact: {date if known}
+# Optional for inbound recruiter DMs attributed to content
+source: post
+post_id: {post_id}
 ---
 ```
 
 Update CLAUDE.md hot cache if this is a high-value contact (score ≥ 4 or connected to pipeline company).
+
+### Inbound recruiter DM attribution (XOS-102)
+
+When logging an inbound recruiter DM against `network/people/{slug}.md`, ask whether the user wants to attribute it to a post if they mention content, a LinkedIn/X post, newsletter post, or "that post drove this DM."
+
+If the user attributes the DM to a post:
+1. Update the people-file frontmatter via `brain.write()` with `source: post` and `post_id: {post_id}`. Keep existing contact fields intact. Record the inbound channel in `conversation_history.platform` when available, and update `conversation_history.last_message_received` as usual.
+2. Emit the local telemetry helper:
+   ```ts
+   emitContentToDmTracked({ post_id, dm_source, contact_slug: slug })
+   ```
+3. Use `attributed_by: "user"` by default. Only use `attributed_by: "inferred"` when the user explicitly asks to mark the attribution as inferred.
+
+Do not invent post IDs. If the user cannot identify the post, record the inbound DM without `source` or `post_id` and skip the telemetry event.
+
+### Conversation → post-worthy prompt (XOS-101)
+
+When logging a warm conversation that surfaces a shareable insight, prompt the user to turn it into a post. This applies to DM exchanges, meeting notes, and relationship-refresh interactions when there is a clear lesson, strong opinion, notable exchange, market observation, or repeatable career/network insight.
+
+Use a plain-text prompt:
+```
+This feels post-worthy — want me to open the campaign engine to draft it?
+```
+
+When you surface the prompt, emit the local telemetry helper:
+```ts
+emitPostPromptFromConversation({ conversation_source, contact_slug: slug, insight_summary })
+```
+
+Use `conversation_source: "dm"`, `"meeting"`, or `"relationship-refresh"` when the source is known. Include `contact_slug` when the conversation is tied to a saved person. Keep `insight_summary` brief and human-readable; skip it if the insight cannot be summarized safely.
+
+If the user accepts, route to the brand campaign-engine to draft the post. If the user declines, continue saving the conversation without opening the campaign engine. Do not emit this event for routine check-ins with no post-worthy insight.
+
+---
+
+## BEHAVIOR: Brand Inbound Recruiter DM
+
+Use this when a recruiter contacts the user after seeing one of the user's
+posts. This closes the brand-to-career loop by adding a pipeline entry with
+source attribution: the post generated a career opportunity.
+
+### Trigger examples
+
+- "A recruiter DM'd me after seeing my post"
+- "This post got a recruiter inbound"
+- "Record an inbound recruiter DM from my LinkedIn post"
+- "A recruiter from Acme reached out because of post-123"
+
+### Required confirmation
+
+Before writing anything, confirm the details in plain text:
+
+```text
+Confirm inbound pipeline entry:
+Company: {company}
+Role: {role}
+Recruiter: {recruiter or unknown}
+Recruiter title: {title or unknown}
+Source post: {post id/url or unknown}
+Note: {short context or none}
+
+Record this as a brand inbound pipeline opportunity? (yes/no)
+```
+
+If company or role is missing, ask for it. If `source_post` is missing, ask for
+the post id or URL; if the user does not have it, continue with `source_post:
+null` and still record the entry. Never infer a post id or URL.
+
+### Append-only write path
+
+The helper builds the entry only. Persist through the existing pipeline
+read/write path and append to `stage_data[]`; never mutate, remove, reorder, or
+rewrite existing entries as status changes.
+
+Local only: use details the user provides in the chat. Do not open LinkedIn,
+Gmail, a browser, or retrieve the post/message while recording this entry.
+
+```ts
+import {
+  appendInboundEntry,
+  buildInboundPipelineEntry,
+  emitBrandInboundPipelineCreated,
+} from "$CLAUDE_PLUGIN_ROOT/src/pipeline/inbound-pipeline";
+
+const pipeline = JSON.parse(await brain.read("career-intelligence/projects/job-search/job-pipeline.json"));
+
+// tracker_id is a GLOBAL #N id space — the match-tracker (job-pipeline-match-tracker.json)
+// is the authoritative registry (ids into the hundreds), and stage_data + pending_referrals
+// reference the SAME ids. Seed from the FULL id space, NOT stage_data alone, or a new entry
+// will reuse an existing role's #N (e.g. stage_data max 142 → 143, but match-tracker already
+// has #143). Pull every known id:
+const matchTracker = JSON.parse(await brain.read("career-intelligence/projects/job-search/job-pipeline-match-tracker.json"));
+const existingTrackerIds = [
+  ...(pipeline.stage_data ?? []).map((s) => s.tracker_id),
+  ...(pipeline.pending_referrals ?? []).map((r) => r.tracker_id),
+  ...(Array.isArray(matchTracker) ? matchTracker : matchTracker.roles ?? []).map((r) => r.id),
+];
+
+const entry = buildInboundPipelineEntry({
+  company,
+  role,
+  recruiter,
+  recruiter_title,
+  source_post,
+  note,
+}, { existingEntries: pipeline.stage_data ?? [], existingTrackerIds });
+
+const nextPipeline = appendInboundEntry(pipeline, entry);
+await brain.write("career-intelligence/projects/job-search/job-pipeline.json", JSON.stringify(nextPipeline, null, 2) + "\n", {
+  provenance: { who: "career-intelligence", why: "brand inbound recruiter DM recorded", source: "network-intelligence" },
+  engine_id: "career-intelligence",
+});
+
+emitBrandInboundPipelineCreated({ source_post: entry.source_post });
+```
+
+Entry semantics:
+- `stage: "recruiter_inbound"` means the recruiter reached out first.
+- `source: "brand_inbound"` marks the opportunity as generated by the user's
+  brand/content surface.
+- `source_post` stores the post id or URL when known.
+- `next_action` defaults to `Respond to recruiter`.
+- `tracker_id` is non-colliding across the GLOBAL id space: pass `existingTrackerIds`
+  (match-tracker `id` + stage_data + pending_referrals) and the helper picks
+  (global max) + 1. Passing only `stage_data` is unsafe — it collides with
+  higher match-tracker ids.
+
+Telemetry is local-only and gated by `XOS_98_TELEMETRY`. The event is
+`brand_inbound_pipeline_created` and includes only `has_source_post` plus a
+timestamp. Do not include company, role, recruiter name, post URL, message text,
+or compensation in telemetry.
+
+### Output
+
+After the append succeeds, show the ROI plainly:
+
+```text
+Brand -> career ROI recorded:
+{source_post or "A post"} generated a pipeline opportunity.
+
+Pipeline: #{tracker_id} {company} - {role}
+Stage: recruiter inbound
+Next action: Respond to recruiter
+```
+
+Do not draft or send a recruiter response unless the user explicitly asks.
+Route response drafting through `outreach-composer` and keep the Direct
+Outreach Gate intact.
 
 ---
 
@@ -419,6 +578,10 @@ warmth: 3
 channel: linkedin
 last_contact: 2019-06-19
 
+# Optional in v0.73.5 — inbound recruiter DM attributed to content
+source: post
+post_id: linkedin-post-2026-06-28
+
 # NEW in v0.30.0 — relationship origin detection
 relationship_origin:
   company: Texas Guaranteed
@@ -438,7 +601,7 @@ conversation_history:
 ---
 ```
 
-Fields `relationship_origin`, `cohort`, and `conversation_history` are populated by the relationship origin scan. Agents MUST NOT fabricate these fields — leave absent until the scan runs.
+Fields `relationship_origin`, `cohort`, and `conversation_history` are populated by the relationship origin scan. Fields `source` and `post_id` are optional and only present when an inbound recruiter DM is attributed to a post. Agents MUST NOT fabricate these fields — leave absent until the scan runs or the user provides the attribution.
 
 **Interaction with warm-contact-outreach-dedup:** `HOW.py` checks `last_contact` first. If absent, it falls back to `conversation_history.last_message_sent` as the recency signal. This means the dedup rule works even for contacts whose people file was created before `last_contact` was manually set.
 

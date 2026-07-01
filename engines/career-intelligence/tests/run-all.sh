@@ -3,6 +3,7 @@
 # Exit: 0 = all suites pass (within baseline), 1 = hard failure
 #
 # Suite 1 (hooks): baseline comparison — ~13 known pre-existing failures tolerated
+# Suite 1c (bun unit tests): HARD FAIL — TypeScript unit tests must pass
 # Suite 2 (outreach-dedup): HARD FAIL — 16/16 must pass
 # Suite 3 (mission-control): HARD FAIL — full suite must pass, no regressions
 
@@ -67,6 +68,17 @@ else
 fi
 echo ""
 
+# ── Suite 1c: bun unit tests (hard fail) ──────────────────────────────────────
+echo "Suite 1c: bun unit tests..."
+if bun test "$REPO_DIR/tests/" 2>&1; then
+  echo "  → bun unit tests: PASS ✓"
+  SUITE1C_STATUS="PASS"
+else
+  echo "  → bun unit tests: FAIL ✗  (hard fail — fix before shipping)"
+  exit $FAIL
+fi
+echo ""
+
 # ── Suite 2: outreach-dedup (pytest, hard fail) ───────────────────────────────
 echo "Suite 2: outreach-dedup (pytest)..."
 if pytest "$REPO_DIR/tests/test_outreach_dedup.py" -v 2>&1; then
@@ -91,6 +103,7 @@ echo ""
 
 echo "━━━ CI PASSED ━━━"
 echo "  hooks:          $SUITE1_STATUS"
+echo "  bun unit tests: $SUITE1C_STATUS"
 echo "  outreach-dedup: $SUITE2_STATUS"
 echo "  mission-control: $SUITE3_STATUS"
 exit $PASS

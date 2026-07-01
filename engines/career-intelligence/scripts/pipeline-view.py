@@ -134,7 +134,7 @@ def render_active(pipeline, tracker_data):
             if tid is not None:
                 tracker_by_id[tid] = role
 
-    active_stages = {"advancing", "panel_interview", "in_process"}
+    active_stages = {"advancing", "panel_interview", "in_process", "recruiter_inbound"}
     active = [s for s in stage_data if s.get("stage") in active_stages]
 
     if not active:
@@ -151,6 +151,8 @@ def render_active(pipeline, tracker_data):
         recruiter = s.get("recruiter") or s.get("hiring_manager") or "—"
         comp_note = s.get("comp_note", "")
         warm = s.get("warm_path", "")
+        source = s.get("source", "")
+        source_post = s.get("source_post", "")
         intro_badge = extract_intro_badge(warm)
         next_action = s.get("next_action", "")
         detail = s.get("stage_detail", "")
@@ -171,6 +173,11 @@ def render_active(pipeline, tracker_data):
             print(f"     Comp: {comp_note}")
         if intro_badge and intro_badge.lower() != "cold":
             print(f"     Intro: {intro_badge}")
+        if source == "brand_inbound":
+            source_label = "brand inbound"
+            if source_post:
+                source_label = f"{source_label} ({source_post})"
+            print(f"     Source: {source_label}")
         if next_action:
             print(f"     → {next_action}")
 
@@ -307,7 +314,7 @@ def main():
             out["pending_referrals"] = pipeline.get("pending_referrals", [])
         if args.section in ("all", "active"):
             out["stage_data_active"] = [s for s in pipeline.get("stage_data", [])
-                                         if s.get("stage") in {"advancing", "panel_interview", "in_process"}]
+                                         if s.get("stage") in {"advancing", "panel_interview", "in_process", "recruiter_inbound"}]
         if args.section in ("all", "applied"):
             out["stage_data_applied"] = [s for s in pipeline.get("stage_data", [])
                                           if s.get("stage") in {"applied", "deprioritized"}]

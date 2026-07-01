@@ -75,10 +75,39 @@ python3 ~/.career-os-state/scripts/pipeline-view.py \
 ### Step 3: Print the output verbatim
 
 Render the script's stdout directly — do not paraphrase, summarize, or
-reformat it. The script owns the display logic.
+reformat it. The script owns the display logic. If content-attributed
+inbounds exist, append the XOS-102 block below after the script output.
 
 If the script errors (file not found, JSON parse error), surface the
 error message and suggest `sync pipeline` to diagnose data health.
+
+### Step 4: Content-attributed inbound DMs (XOS-102)
+
+The DM count is per-DM, NOT per-contact — one recruiter can send multiple
+post-attributed DMs, so counting contacts under-counts. The per-DM unit of
+record is the `content_to_dm_tracked` telemetry event (one event = one
+attributed DM).
+
+Count = the number of `content_to_dm_tracked` events in the telemetry log
+(`$CAREER_OS_EVENTS_LOG` / `$XOS_EVENTS_LOG`, default `~/.career-os-events.jsonl`).
+Each event carries `post_id` + `dm_source` (+ `contact_slug`). List one line
+per event. Append a plain-text-friendly block:
+
+```
+━━━ Content → Inbound DMs ━━━
+{N} inbound DMs attributed to your posts.
+- inbound from {contact_slug} via post {post_id}
+  source: {dm_source}
+```
+
+Fallback when the telemetry log is absent (e.g. `XOS_98_TELEMETRY` was off):
+read `$CAREER_HOME/network/people/*.md` frontmatter, count contacts with
+`source: post` + non-empty `post_id`, and label the number a **lower bound**
+("≥{M} (contact-level; enable XOS_98_TELEMETRY for per-DM counts)") since it
+collapses multiple DMs per contact.
+
+If there are zero post-attributed inbounds (no events AND no flagged contacts),
+omit the block unless the user asked specifically for content attribution.
 
 ---
 

@@ -1,7 +1,7 @@
 {
   "name": "career-intelligence",
   "platform": "xHumanOS",
-  "version": "0.73.4",
+  "version": "0.77.0",
   "depends_on_kernel": [
     "brain-kernel >= 1.0.0"
   ],
@@ -39,7 +39,8 @@
     "reads_from_engines": [
       "co-dialectic/feedback/**",
       "co-dialectic/personas/**",
-      "brand-amplification/campaigns/**"
+      "brand-amplification/campaigns/**",
+      "brand-amplification/voice-strategies/**"
     ],
     "linters": [
       "story-completeness",
@@ -47,7 +48,7 @@
       "pipeline-job-staleness"
     ]
   },
-  "description": "Career Intelligence Engine (xHumanOS) v0.72.0 \u2014 job search, network, pipeline, resume, interview-prep, and outreach skills for Claude Code, backed by the brain-kernel. Recent: warm-contact-outreach-dedup gate made JSON-aware (it globbed .md only while live people files are 100% .json, so the double-outreach guard silently never fired \u2014 now reads .json people files for name/date/summary), claim-grounding + off-rubric risk gates, flat-path canonicalization onto career-intelligence/projects/job-search/, and a workspace-identity gate across all session hooks so the engine never scaffolds or commits outside its own workspace. Detection: $CAREER_HOME match OR brain/identity/ marker OR .career-os-workspace sentinel.",
+  "description": "Career Intelligence Engine (xHumanOS) v0.77.0 \u2014 job search, network, pipeline, resume, interview-prep, outreach, profile-brand alignment scoring, milestone brand prompts, follow-up nudges, inbound-pipeline tracking, and local beta-metrics skills for Claude Code, backed by the brain-kernel. Recent: XOS-93 advisory LinkedIn profile-to-brand-voice alignment scoring with prioritized gap ranking and PII-free local telemetry; XOS-133 local beta-metrics dashboard; unified Mission Control career+brand health dashboard + dashboard_viewed telemetry; profile-change inbound impact + weekly content-attributed inbound-DM insight + insight-card/conversation-to-post/content-to-DM telemetry; fail-closed opt-in milestone-to-brand suggestions; brand-attributed inbound recruiter-DM pipeline tracking; draft-only follow-up nudges; warm-contact-outreach-dedup JSON support; claim-grounding + off-rubric risk gates; flat-path canonicalization onto career-intelligence/projects/job-search/; and workspace-identity gates across all session hooks. Detection: $CAREER_HOME match OR brain/identity/ marker OR .career-os-workspace sentinel.",
   "author": {
     "name": "Anand Vallamsetla"
   },
