@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.0 - 2026-07-01
+
+- Wire superpowers skills into Stage 1/2/5 bodies (XOS-178): Stage 1 now runs via superpowers:brainstorming (N-angle explore → judge-panel → synthesize), Stage 2 via superpowers:writing-plans, Stage 5 via superpowers:test-driven-development. Previously these were only named in the top orchestration summary; the stage bodies (what an executing agent reads) invoked nothing, so they ran ad-hoc. Stage 4 already wired its superpowers; this brings 1/2/5 to the same standard. Body = execution truth.
+  - Also route Stage 1 brainstorm to the domain's 0.001% persona (UX→Ive, arch→Dean, positioning→Jobs) and apply domain-persona lenses in Stage 6 review (UX→Jobs+Ive), matching Stage 5.5. Personas were only wired at visual-verification (5.5) before.
+
 ## 0.8.0 - 2026-07-01
 
 - Stage 5.8 plugin/skill sandbox-install + turn-on verification (XOS-173): new CONDITIONAL stage between 5.7 and 6, fires by shipped-artifact-class (plugin/skill/engine or shared install.sh/marketplace/plugin.json/vendor changes). Installs the built plugin into an ISOLATED sandbox (temp HOME + CLAUDE_PLUGIN_DATA, never the live ~/.claude) and proves it ACTIVATES (skill triggers/loads, engine entrypoint runs non-error, hooks fire) — not merely name-resolves. Fail-hard: install-fail or no-turn-on ⇒ BLOCK back to Stage 4; sandbox-unavailable ⇒ BLOCK. Recovers the lost Stage-5.8 (XOS-170) and closes the "merged != activated" gap that killed codi (4.30 source vs 4.27 installed).
