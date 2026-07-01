@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.0 - 2026-07-01
+
+- Gate-A.5 Change-Manifest gate (XOS-164): new pipeline stage between Gate A (spec approved) and Stage 4 (build). Builder emits a file-level Change Manifest (+added/~modified/−removed/⚙migrated) + pseudocode before any code; a cross-family judge (Stage 6 harness) BLOCKs when the spec uses "replaces/supersedes/instead of/deprecates" about an existing surface but the −removed and ⚙migrated buckets don't account for it. Fail-hard; judge-unreachable ⇒ BLOCK. Catches the additive-bias "add-without-remove" defect class at plan-time (observed 3× in one session: Tune header, provenance chrome, Build page).
+
 ## 0.6.0 - 2026-06-29
 
 - Add Stage 9 PUBLISH+BROADCAST+ENSURE to `/ship-feature` so shipped means activated across the running swarm/users, with artifact-class routing and loud version-skew checks. Add `ship-feature-publish-gate` to detect stale xos plugin cache installs against the marketplace catalog. (XOS-142)
