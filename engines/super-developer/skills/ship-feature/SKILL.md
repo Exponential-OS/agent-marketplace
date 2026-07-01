@@ -1,6 +1,6 @@
 ---
 name: ship-feature
-description: "Use this skill whenever the user asks to implement, build, fix, ship, add, refactor, migrate, or change ANY code — features, bugs, plugins, skills, migrations, hooks, rules, configs, in any repo. Triggers on 'build X', 'fix Y', 'implement Z', 'ship this to <plugin>', a ticket id with code work. This is the Agentic SDLC pipeline; do NOT hand-roll `codex exec` or ad-hoc git/PR shipping — route through Stage 0 (claim), the 9 core stages, the Gate-A.5 change-manifest gate, Stage 5.5/5.6/5.7 quality gates, and Stage 10 (completion)."
+description: "Use this skill whenever the user asks to implement, build, fix, ship, add, refactor, migrate, or change ANY code — features, bugs, plugins, skills, migrations, hooks, rules, configs, in any repo. Triggers on 'build X', 'fix Y', 'implement Z', 'ship this to <plugin>', a ticket id with code work. This is the Agentic SDLC pipeline; do NOT hand-roll `codex exec` or ad-hoc git/PR shipping — route through Stage 0 (claim), the 9 core stages, the Gate-A.5 change-manifest gate, Stage 5.5/5.6/5.7/5.8 quality gates, and Stage 10 (completion)."
 ---
 
 ## MANDATORY SCOPE
@@ -18,8 +18,8 @@ Trigger: `/ship-feature $ARGUMENTS`
 `$ARGUMENTS` = required Linear ticket id plus feature/bug slug and repo context.
 Examples: `THE-10 regen-bug`, `THE-10 regen-bug in ~/aiprojects/Adapt.ai`.
 
-Runs Stage 0 (claim) + the 9 core stages, including the Gate-A.5 change-manifest gate and Stage 5.5/5.6/5.7 quality gates, + Stage 10 (completion):
-**work claim → brainstorm → spec → evals → change-manifest → worktree implementation → tests → E2E/VISUAL verification → simplify → targeted verification rerun → cross-family review → PR → merge/deploy → publish/broadcast/ensure → completion**
+Runs Stage 0 (claim) + the 9 core stages, including the Gate-A.5 change-manifest gate and Stage 5.5/5.6/5.7/5.8 quality gates, + Stage 10 (completion):
+**work claim → brainstorm → spec → evals → change-manifest → worktree implementation → tests → E2E/VISUAL verification → simplify → targeted verification rerun → sandbox-install verify → cross-family review → PR → merge/deploy → publish/broadcast/ensure → completion**
 
 ---
 
@@ -346,11 +346,30 @@ If the rerun fails because of the simplify patch, discard the simplify patch and
 
 ---
 
+## Stage 5.8 — Plugin / skill sandbox-install + turn-on verification — CONDITIONAL
+
+Run after Stage 5.7 is green and before Stage 6. **Fires by SHIPPED-ARTIFACT-CLASS, not path-glob:** any change whose shipped artifact is a plugin, skill, or engine, OR that touches a shared `install.sh`, `.claude-plugin/marketplace.json`, `.claude-plugin/plugin.json`, or a vendor path. Plain app/code/config work → skip to Stage 6.
+
+**Why:** "merged" ≠ "activated." A plugin can pass tests, merge, and even install, yet fail to actually TURN ON — the skill doesn't activate, the engine entrypoint throws, a hook doesn't fire, or the version-consistency gate rejects it at install. That failure is invisible until a user installs it — the exact defect that killed codi (source at 4.30.0, vendored/installed at 4.27.0, statusline stale; nobody caught it until a human saw codi dead). This stage moves that discovery left of the user.
+
+**Step 1 — sandbox install (ISOLATED, never the live env).** Install the just-built plugin into a throwaway sandbox: a temp `HOME` and temp `CLAUDE_PLUGIN_DATA` exported for the subprocess only. NEVER install into the live `~/.claude` from the pipeline. Confirm the install completes with zero errors (version-consistency, manifest parse, file layout).
+
+**Step 2 — turn-on verify INSIDE the sandbox.** Prove the artifact ACTIVATES, not merely name-resolves:
+- **skill:** it must ACTIVATE on its trigger (produce its behavior / load its body), not just appear in a registry listing.
+- **engine / plugin:** run a real entrypoint (a command or skill it provides) and confirm non-error output.
+- **hooks:** the hooks it registers must fire (e.g., a UserPromptSubmit / Stop hook emits its expected marker).
+
+**Step 3 — FAIL-HARD.** If the sandbox install fails OR the artifact does not turn on, BLOCK: return to Stage 4, fix, rerun Stage 5 → 5.5/5.6/5.7 as applicable, then rerun 5.8. Do NOT advance to Stage 6 on a plugin that installed but did not activate. Sandbox unavailable ⇒ BLOCK (no silent skip) — same contract as the other fail-hard gates.
+
+**Output:** a one-line turn-on receipt (artifact-class · sandbox path · activated=yes) carried into the Stage 6 review and the PR body.
+
+---
+
 ## Stage 6 — Cross-family review
 
 This stage is NON-OPTIONAL. The pipeline runs the cross-family judge between green build and PR — there is no decision to skip, and (running on cheap fish: agy + codex, off the Opus wall) no cost reason to. A PR produced without this stage is a pipeline violation the merge gate (Stage 8) will refuse.
 
-Run cross-family review after Stage 5.7 is green and before PR.
+Run cross-family review after Stage 5.8 is green and before PR.
 
 Use `agy`/Gemini for:
 
@@ -373,7 +392,7 @@ HOW: restore at least one cross-family judge route (agy/Gemini or Codex/OpenAI),
 
 Required verdict: `GREEN` or `RED`.
 
-If `RED`, Codex fixes and returns to Stage 5, then repeats Stage 5.5/5.6/5.7 as applicable before review runs again.
+If `RED`, Codex fixes and returns to Stage 5, then repeats Stage 5.5/5.6/5.7 and Stage 5.8 as applicable before review runs again.
 
 At the END of Stage 6, emit the canonical receipt block below, populated from the `judge-panel` JSON: `final_verdict` → `verdict` (`GREEN`/`RED`), families that returned → `families`, `all_flags` count plus one-line summary → `flags`, `cascade.escalated` → `escalated`, and the current ISO8601 timestamp → `ts`.
 

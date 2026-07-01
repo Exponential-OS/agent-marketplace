@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.0 - 2026-07-01
+
+- Stage 5.8 plugin/skill sandbox-install + turn-on verification (XOS-173): new CONDITIONAL stage between 5.7 and 6, fires by shipped-artifact-class (plugin/skill/engine or shared install.sh/marketplace/plugin.json/vendor changes). Installs the built plugin into an ISOLATED sandbox (temp HOME + CLAUDE_PLUGIN_DATA, never the live ~/.claude) and proves it ACTIVATES (skill triggers/loads, engine entrypoint runs non-error, hooks fire) — not merely name-resolves. Fail-hard: install-fail or no-turn-on ⇒ BLOCK back to Stage 4; sandbox-unavailable ⇒ BLOCK. Recovers the lost Stage-5.8 (XOS-170) and closes the "merged != activated" gap that killed codi (4.30 source vs 4.27 installed).
+
 ## 0.7.0 - 2026-07-01
 
 - Gate-A.5 Change-Manifest gate (XOS-164): new pipeline stage between Gate A (spec approved) and Stage 4 (build). Builder emits a file-level Change Manifest (+added/~modified/−removed/⚙migrated) + pseudocode before any code; a cross-family judge (Stage 6 harness) BLOCKs when the spec uses "replaces/supersedes/instead of/deprecates" about an existing surface but the −removed and ⚙migrated buckets don't account for it. Fail-hard; judge-unreachable ⇒ BLOCK. Catches the additive-bias "add-without-remove" defect class at plan-time (observed 3× in one session: Tune header, provenance chrome, Build page).
