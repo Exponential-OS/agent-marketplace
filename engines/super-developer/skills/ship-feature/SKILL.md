@@ -1,6 +1,6 @@
 ---
 name: ship-feature
-description: "Use this skill whenever the user asks to implement, build, fix, ship, add, refactor, migrate, or change ANY code — features, bugs, plugins, skills, migrations, hooks, rules, configs, in any repo. Triggers on 'build X', 'fix Y', 'implement Z', 'ship this to <plugin>', a ticket id with code work. This is the Agentic SDLC pipeline; do NOT hand-roll `codex exec` or ad-hoc git/PR shipping — route through Stage 0 (claim), the 9 core stages, Stage 5.5/5.6/5.7 quality gates, and Stage 10 (completion)."
+description: "Use this skill whenever the user asks to implement, build, fix, ship, add, refactor, migrate, or change ANY code — features, bugs, plugins, skills, migrations, hooks, rules, configs, in any repo. Triggers on 'build X', 'fix Y', 'implement Z', 'ship this to <plugin>', a ticket id with code work. This is the Agentic SDLC pipeline; do NOT hand-roll `codex exec` or ad-hoc git/PR shipping — route through Stage 0 (claim), the 9 core stages, the Gate-A.5 change-manifest gate, Stage 5.5/5.6/5.7 quality gates, and Stage 10 (completion)."
 ---
 
 ## MANDATORY SCOPE
@@ -18,8 +18,8 @@ Trigger: `/ship-feature $ARGUMENTS`
 `$ARGUMENTS` = required Linear ticket id plus feature/bug slug and repo context.
 Examples: `THE-10 regen-bug`, `THE-10 regen-bug in ~/aiprojects/Adapt.ai`.
 
-Runs Stage 0 (claim) + the 9 core stages, including Stage 5.5/5.6/5.7 quality gates, + Stage 10 (completion):
-**work claim → brainstorm → spec → evals → worktree implementation → tests → E2E/VISUAL verification → simplify → targeted verification rerun → cross-family review → PR → merge/deploy → publish/broadcast/ensure → completion**
+Runs Stage 0 (claim) + the 9 core stages, including the Gate-A.5 change-manifest gate and Stage 5.5/5.6/5.7 quality gates, + Stage 10 (completion):
+**work claim → brainstorm → spec → evals → change-manifest → worktree implementation → tests → E2E/VISUAL verification → simplify → targeted verification rerun → cross-family review → PR → merge/deploy → publish/broadcast/ensure → completion**
 
 ---
 
@@ -84,8 +84,9 @@ Run autonomously through reversible work. Gate A is always a human stop; Gate B 
 
 - **GATE A:** human approves `docs/plans/<slug>.md` spec — STOP.
 - **GATE B:** locked merge gate, not a mandatory human stop. DEFAULT = auto-merge on CI green (`gh pr merge --auto --squash`). STOP at PR for a human only when the session or ticket carries the single brake, or risk auto-applies it: **"human merge needed"** / `human-merge`. See Stage 8 for the exact locked model.
+- **GATE A.5 (Change-Manifest):** between Gate A and the build — a fail-hard cross-family check that the build's Change Manifest enumerates every removal/migration the spec implies. A "replaces"-language spec with an empty `− removed`/`⚙ migrated` is BLOCKED (names the missing removal + remediation). See **Gate-A.5**.
 
-Never gate reversible work. Brainstorm/spec before Gate A, and implementation/test/E2E-visual/simplify/rerun/review/PR between Gate A and Gate B, should run without extra interrupts unless user intent is ambiguous or data integrity is at risk.
+Never gate reversible work. Brainstorm/spec before Gate A, and change-manifest/implementation/test/E2E-visual/simplify/rerun/review/PR between Gate A and Gate B, should run without extra interrupts unless user intent is ambiguous or data integrity is at risk.
 
 ---
 
@@ -204,6 +205,32 @@ A skill that isn't proven to beat baseline is unshipped quality. Run the **skill
 5. Iterate the skill until it beats baseline on the discriminating evals. The loop closes when with-skill clearly wins, not at first draft.
 
 Gate: a plugin/skill does NOT proceed to PR/Gate B until the eval loop shows it beats baseline (or the human explicitly waives it). Reference: the skill-creator skill + `eval-viewer/generate_review.py`.
+
+---
+
+## Gate-A.5 — Change-Manifest gate (spec → build)
+
+Runs after Gate A (spec approved) and Stage 3.5, BEFORE Stage 4 (Codex build). FAIL-HARD.
+
+**Why:** LLM builders are structurally biased toward additive, visible output — an "add" is a rewarded diff; a "remove/migrate" is invisible work with no forcing function, so it silently drops. When a spec says "X **replaces / supersedes / instead of / deprecates** Y," the build ships X but omits the deletion/migration of Y; nothing fails, so duplicate/dead surfaces reach prod and are caught only by the human at review — the exact QA-tax this pipeline exists to remove. A required removal slot flips an omitted removal from an unknown-unknown into a checkable contradiction at the cheapest point (plan-time, pre-code) and collapses the interpretation variance of "replaces" to zero.
+
+**The manifest.** Before any code is written, Claude (team-lead, from the Stage 3 scope) emits a file-level **Change Manifest** — every intended change in four required buckets, plus pseudocode for non-trivial logic:
+
+```
++ added     <path>          — new file / symbol
+~ modified  <path>          — edited in place
+− removed   <path|symbol>   — deleted / stops rendering / dead-code excised
+⚙ migrated  <from> → <to>   — moved / renamed / replaced; old path retired
+```
+
+Every bucket MUST be present. An empty bucket is written explicitly as `− removed: (none)` so an omission is a stated claim, never a silent gap.
+
+**BLOCK contract (fail-hard).** A cross-family **judge-panel** (the Stage 6 harness, run early here) checks the manifest against the approved spec:
+
+- If the spec uses "replaces / supersedes / instead of / deprecates / retires / migrates" (or a clear synonym) about an EXISTING surface, AND both the `− removed` and `⚙ migrated` buckets fail to account for that surface → **BLOCK**. The error MUST name (a) the spec sentence implying a removal, (b) the unaccounted surface, and (c) the remediation ("add the `− removed` / `⚙ migrated` entry for <surface>, or amend the spec to state the old surface stays").
+- FAIL-HARD: on BLOCK the pipeline does not advance to Stage 4. Judge unreachable ⇒ treat as BLOCK (no silent skip), same contract as the Stage 6 fish-required gate.
+
+**Output.** The approved Change Manifest is appended to `docs/plans/<slug>.md` under `## Change manifest` and handed to Stage 4 as the authoritative build scope: Codex builds exactly the manifest; Stage 5.5/6 verify nothing outside it changed and every `− removed` surface is actually gone.
 
 ---
 
