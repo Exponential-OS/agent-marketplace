@@ -16,6 +16,10 @@ triggers:
   - what should I do today
   - home screen
   - dashboard
+  - beta metrics
+  - funnel
+  - nsm
+  - local telemetry
 ---
 
 # Mission Control — Career OS Home Screen & Router
@@ -77,6 +81,8 @@ perform the action yourself by directly editing files.
 | Find warm contacts | `network-intelligence` | "who do I know at [Co]", "warm intros for" |
 | Write outreach message | `outreach-composer` | "write outreach for [Name]", "follow up with" |
 | Sync/reconcile pipeline | `pipeline-sync` | "sync pipeline", "data health check" |
+| Score LinkedIn profile against brand voice | `profile-brand-alignment` | "profile brand alignment", "profile coherence", "brand voice fit" |
+| View local beta funnel / NSM metrics | `mission-control` present-only via `src/telemetry/report.ts` | "beta metrics", "funnel", "nsm", "local telemetry" |
 | Batch-execute tasks | `cruise-control` | "cc", "go", "ship it", "execute" |
 | Update skills matrix | `skills-update` | "update my skills", "I learned [tech]" |
 | Organize/index stories | `organize` | "organize", "index stories" |
@@ -179,6 +185,24 @@ Before rendering the dashboard, check for pending skill flags:
 
 When `brain/identity/experience-history.md` exists, show the dashboard.
 
+### Direct Local Metrics View (XOS-133)
+
+**Triggers:** "beta metrics", "funnel", "nsm", "local telemetry"
+
+Render the local XOS-98 telemetry dashboard by invoking the deterministic
+aggregator:
+
+```bash
+bun "$CLAUDE_PLUGIN_ROOT/src/telemetry/report.ts"
+```
+
+The aggregator reads the local events JSONL path resolved by `defaultEventsPath`
+(`CAREER_OS_EVENTS_LOG` → `XOS_EVENTS_LOG` → `~/.career-os-events.jsonl`), skips
+malformed rows, and prints the funnel, NSM, cohort, and recent-activity view.
+Mission Control must not parse the JSONL or compute conversion, drop-off, cohort,
+or NSM values itself. Treat the rendered NSM as an ESTIMATE because active time is
+bucketed.
+
 ### Pre-Dashboard Checks (silent)
 
 1. Read `NEXT_SESSION_HANDOFF.md` for previous session context
@@ -187,6 +211,9 @@ When `brain/identity/experience-history.md` exists, show the dashboard.
 3. Check story index health (exists? stale vs newest story?)
 4. Read open task issues (`gh issue list --repo $CAREER_GITHUB_REPO --state open --json number,title,labels`) and `job-pipeline.json` + `job-pipeline-match-tracker.json` for dashboard data
 5. **For every named contact in the Warm Contacts section:** apply the Contact Action Pre-Flight protocol (see below) before rendering any action suggestion for that contact.
+6. Read the weekly content-attributed inbound summary from the local telemetry JSONL (XOS-89). If attributed inbound DMs exist and this week's card has not already been viewed, render the weekly insight card in the dashboard header area.
+7. Read the latest local `profile_change_logged` event, if any. Summarize the 30d before/after inbound impact (XOS-94) and render a single plain-text profile-impact line in the dashboard header area.
+8. Render the unified career + brand health dashboard (XOS-90). After computing whether each side has data, emit `emitDashboardViewed({ has_career_data, has_brand_data })` through the existing XOS-98 gated local JSONL telemetry path.
 
 ### Stale Pipeline Detection
 
@@ -226,6 +253,10 @@ PIPELINE
                                      Interviews: N
                                      Active contacts: N
 
+LOCAL BETA METRICS
+  [Render compact output from `bun "$CLAUDE_PLUGIN_ROOT/src/telemetry/report.ts"`]
+  NSM line must retain the ESTIMATE label from the aggregator.
+
 WARM CONTACTS — ACTION NEEDED (only if any due)
   | Contact | Company | Status | Next Action |
 
@@ -240,6 +271,7 @@ QUICK ACTIONS
   → "pipeline"                   Active: interviews, referrals, apply queue
   → "referrals"                  Referral status + overdue alerts
   → "dashboard"                  Scored roles ready to apply (≥80%)
+  → "beta metrics"               Local funnel, estimated NSM, cohorts
 
   ━━ Search & Score ━━
   → "scan for jobs"              Find new roles with warm-path detection
@@ -277,6 +309,8 @@ QUICK ACTIONS
 | Coming Up | GitHub Issues + `job-pipeline.json` → `pending_referrals[].follow_up_date` | Extract due dates from issue body / `due:*` labels + referral follow-up dates |
 | Career Brain | `stories/**/*.md` (recursive), `people/*.json` | Count `.md` files recursively under `stories/` (stories are organized into category subdirs like `stories/google/`, `stories/independent/`). Exclude `STORY_INDEX.md` and `README.md`. For `people/`, count `*.json` files (migrated as of v0.37.0); fall back to `*.md` count if no JSON found. |
 | Stale Alerts | `job-pipeline.json` → `stage_data[]` | Compute days-in-stage from `stage_detail` date or tracker `updated_at` |
+| Local Beta Metrics | `src/telemetry/report.ts` reading the local events JSONL | Run `bun "$CLAUDE_PLUGIN_ROOT/src/telemetry/report.ts"` and render the output; do not duplicate math in this skill |
+| Profile Impact | Local telemetry JSONL | Latest `profile_change_logged` event + `src/telemetry/profile-inbound-impact.ts` summary over `content_to_dm_tracked` events |
 
 **Story count command (authoritative):**
 ```bash
@@ -311,6 +345,157 @@ SCAN STATUS
   or
   ⚠️ No scan today — say "scan for jobs"
 ```
+
+### Weekly insight — content → inbound (XOS-89)
+
+Mission Control makes the brand → career flywheel visible once per week using
+the same local attribution events surfaced by Pipeline View (XOS-102).
+
+Read the local telemetry log via the shared weekly summary helper
+`src/telemetry/weekly-inbound.ts`, which aggregates `content_to_dm_tracked`
+events from `$CAREER_OS_EVENTS_LOG` / `$XOS_EVENTS_LOG`, defaulting to
+`~/.career-os-events.jsonl`. One `content_to_dm_tracked` event equals one
+attributed inbound recruiter DM.
+
+Behavior:
+- Compute `week_of` as the Monday date for the current week, formatted
+  `YYYY-MM-DD`.
+- If the weekly summary total is `0`, omit the card.
+- If an `insight_card_viewed` event already exists for
+  `insight_kind: "weekly_inbound"` and this `week_of`, omit the card.
+- When the card renders, emit:
+  `emitInsightCardViewed({ insight_kind: "weekly_inbound", week_of })`.
+- When the user acts on the card, emit:
+  `emitInsightActedOn({ insight_kind: "weekly_inbound", action, week_of })`.
+- These helpers use the existing XOS-98 gated local JSONL emitter. They add no
+  transport and make no outbound calls.
+
+Plain-text card:
+
+```
+━━━ Weekly Insight ━━━
+📈 This week: {N} recruiter DMs attributed to your posts
+Top posts:
+- {post_id}: {count} DMs
+
+→ "campaign engine"          Turn the top post into your next content campaign
+→ "post more on {topic}"      Double down on the topic that drove inbound
+```
+
+If only one top post exists, show one bullet. If several posts tie, show up to
+three. Keep the output plain-text-friendly: no markdown tables, no pipe
+characters, no nested cards.
+
+Action telemetry:
+- Opening or routing to the campaign engine:
+  `action: "open_campaign_engine"`
+- Posting more on the flagged topic:
+  `action: "post_more_on_topic"`
+
+### Profile impact — profile change → inbound (XOS-94)
+
+Mission Control closes the feedback loop on profile optimization by tying a
+logged profile change to inbound recruiter DM volume over the surrounding 30d
+windows.
+
+When the user says they updated or rewrote a profile section, log the change
+with the local telemetry helper:
+
+```ts
+emitProfileChangeLogged({ section, note })
+```
+
+Use `section: "headline"`, `"summary"`, or `"experience"` when known. Keep
+`note` short and optional, such as `"operator-led headline rewrite"`. The helper
+uses the existing XOS-98 gated local JSONL emitter. It adds no transport and
+makes no outbound calls.
+
+To surface impact, read the latest `profile_change_logged` event from the local
+telemetry log, then call `summarizeProfileChangeImpact(change.ts)` from
+`src/telemetry/profile-inbound-impact.ts`. The helper counts
+`content_to_dm_tracked` events in the 30 days before the change and the 30 days
+after the change, then returns `inboundRateChange = afterCount - beforeCount`.
+
+Plain-text line:
+
+```
+Profile impact: inbound-rate-change {+/-N} recruiter DMs after your {section} change
+30d before: {beforeCount} DMs
+30d after: {afterCount} DMs
+```
+
+Omit this line when there is no logged profile change. If the after window is
+still in progress, show the count accumulated so far. Keep this as text in the
+dashboard header area; do not add a nested card or table.
+
+### Unified career + brand health dashboard (XOS-90)
+
+Mission Control must make the career + brand fusion loop visible in one
+6-second scan. Show both halves every time the returning-user dashboard renders:
+career execution on one side, brand/inbound compounding on the other. If one
+side has no data, keep the side visible and show a gentle no-data line instead
+of omitting it.
+
+Career data:
+- Read `career-intelligence/projects/job-search/job-pipeline.json` using the
+  existing Pipeline data-source pattern: `stage_data[]`.
+- `has_career_data` is true when `stage_data[]` has at least one entry.
+- Active applications: count non-terminal pipeline entries from `stage_data[]`
+  (exclude terminal states: rejected, dropped, archived, closed, dead, deprioritized).
+- Interviews: count `stage_data[]` entries whose stage/status/stage detail is
+  screening, recruiter screen, hiring manager screen, technical screen, onsite,
+  interview, references, or offer-process.
+- Warm intros available: use existing Mission Control read paths only:
+  `pending_referrals[]` from `job-pipeline.json` plus the existing
+  `people-followup-query.py --people-dir $CAREER_HOME/network/people --days 7 --format json`
+  pattern. Never hand-scan people files for this count.
+
+Brand/inbound data:
+- Weekly inbound DMs attributed to posts: call
+  `summarizeWeeklyContentInbound` from `src/telemetry/weekly-inbound.ts`.
+- Recent profile-change impact: when a latest local `profile_change_logged`
+  event exists, call `summarizeProfileChangeImpact(change.ts)` from
+  `src/telemetry/profile-inbound-impact.ts`.
+- Post -> DM attribution count: count local `content_to_dm_tracked` records in
+  the same telemetry JSONL used by the existing helpers. Do not recompute weekly
+  groupings; the weekly count and top posts come from
+  `summarizeWeeklyContentInbound`.
+- `has_brand_data` is true when at least one `content_to_dm_tracked` event
+  exists.
+
+Telemetry:
+- On every successful returning-user dashboard render, emit:
+  `emitDashboardViewed({ has_career_data, has_brand_data })`.
+- The helper writes only through the existing XOS-98 gated local JSONL emitter.
+  It does not add transport, PostHog, fetch, HTTP, or any network call.
+
+Plain-text dashboard block:
+
+```
+━━━ Career + Brand Health ━━━
+
+CAREER
+  Active applications: {active_applications}
+  Interviews: {interviews}
+  Warm intros available: {warm_intros_available}
+  Status: {if no career data, "no data yet - add an application or referral"}
+
+BRAND / INBOUND
+  Weekly inbound DMs from posts: {weekly_inbound_total}
+  Post -> DM attributions: {post_dm_attribution_count}
+  Profile impact: {+/-N} DMs after {section} change
+  Status: {if no brand data, "no data yet - track a post-attributed inbound DM"}
+```
+
+Rendering rules:
+- Keep the output plain-text-friendly: no markdown tables, no pipe characters,
+  no nested cards.
+- Use short labeled lines over prose. This is the P10 visual-first view of the
+  NSM: the user should see compounding wins across applications, interviews,
+  warm intros, posts, and inbound in one glance.
+- If there is no recent profile change, show
+  `Profile impact: no recent profile change logged` rather than omitting the
+  line.
 
 ### Post-Dashboard: Career Brain Enrichment (optional)
 

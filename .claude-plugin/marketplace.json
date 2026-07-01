@@ -15,8 +15,8 @@
       "platform": "xHumanOS",
       "license": "Proprietary",
       "source": "./engines/career-intelligence",
-      "description": "Career Intelligence Engine \u2014 xHumanOS engine for job search, network, pipeline, sessions. v0.73.4: XOS-98 LOCAL beta-funnel + NSM telemetry \u2014 shared src/telemetry/ primitive (onboarding/first-artifact/activation/d7 + VOW + active-time events), local-only JSONL, XOS_98_TELEMETRY-gated, ZERO network (honors the public no-phone-home promise; PostHog outbound transport stays human-gated). v0.73.3: warm-intro badge (XOS-85) + standalone cover-letter skill (XOS-103) + interview-prep auto-surface (XOS-105). v0.73.0: workspace-binding gate primitive replacing the 3 duplicated hook cwd-guards (the 408-stray-commits incident). Carries v0.72 dedup-gate JSON fix + v0.71 claim-grounding gate (resume-engine no longer fabricates metrics).",
-      "version": "0.73.4",
+      "description": "Career Intelligence Engine \u2014 xHumanOS engine for job search, network, pipeline, sessions. v0.77.0: profile\u2194brand-voice alignment score (XOS-93). v0.76.0: full telemetry + fusion suite \u2014 content\u2192DM attribution, conversation\u2192post prompt, weekly inbound insight, profile-change inbound impact, unified career+brand dashboard, follow-up nudge engine, brand\u2192career inbound-pipeline tracker, fail-closed milestone\u2192brand detector. v0.74.0: XOS-133 local beta-funnel + NSM dashboard. All local-only JSONL, XOS_98_TELEMETRY-gated, ZERO network (no-phone-home). Draft-first outreach + Company Action Gate + claim-grounding safety gates throughout.",
+      "version": "0.77.0",
       "category": "career",
       "homepage": "https://github.com/Exponential-OS/career-intelligence-engine"
     },

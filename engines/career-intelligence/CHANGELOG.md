@@ -2,6 +2,129 @@
 <!-- this file is the historical changelog. Entries reference the original author/user as provenance, not runtime data. -->
 # Changelog
 
+## [0.77.0] - 2026-06-30 - XOS-93 profile brand alignment score
+
+### Added
+- XOS-93 MVP profile-brand alignment scorer: pure `aggregateAlignment(sectionScores, opts)` helper clamps and weights per-section semantic scores, returns an overall score, normalized section scores, and severity-ranked gaps.
+- `formatAlignmentReport(result)` produces paste-safe plain text with no markdown tables or pipe characters, including overall score, per-section scores, and prioritized fixes.
+- New `profile-brand-alignment` skill documenting the local-only advisory workflow, brand voice/config fallback, semantic rubric, and helper handoff. The skill scores and flags gaps only; profile rewriting remains out of scope.
+- Local-only `profile_brand_alignment_scored` telemetry event recording only overall score bucket, section count, gap count, and timestamp through the existing `XOS_98_TELEMETRY`-gated JSONL helper. No profile text, brand text, names, roles, section names, or gap text.
+- Bun tests for weighted aggregation, gap ranking, malformed input tolerance, score clamping, pipe-free formatting, and gated PII-free telemetry.
+
+### Changed
+- Bumped plugin and package metadata to `0.77.0`; added forward migration `v0.76.0-to-v0.77.0.sh`.
+
+## [0.76.0] — 2026-06-30 — merge-repair: land ALL stranded career-intel work onto main
+
+### Fixed
+- Combines every stranded career-intel feature onto `main` after a stacked-PR merge landed PRs #15–19 (telemetry) and #20–22 (fusion) in their parent branches instead of `main` (only #14/XOS-133 reached main). Lands telemetry — content→DM attribution (102), conversation→post prompt (101), weekly inbound insight (89), profile-change inbound impact (94), unified career+brand dashboard (90); and fusion — follow-up nudge (106), brand→career inbound pipeline (88), fail-closed milestone-brand (87). No code change vs the originally cross-family-judged PRs; version/CHANGELOG/mission-control reconciled. Per-PR detail retained below.
+
+## [0.75.0] — 2026-06-30 — merge-repair: land stranded telemetry chain onto main (XOS-102/101/89/94/90)
+
+### Fixed
+- Re-lands the telemetry chain (content→DM attribution, conversation→post prompt, weekly inbound insight, profile-change inbound impact, unified career+brand dashboard — originally versioned 0.73.5–0.73.9) onto `main`. A stacked-PR merge landed those PRs in their parent branches, not `main`; this combines them onto `main` with no code change vs the originally cross-family-judged PRs.
+
+## [0.74.0] — 2026-06-29 — XOS-133 local beta metrics dashboard
+
+### Added
+- `src/telemetry/report.ts`: deterministic local JSONL report aggregator for the XOS-98 events log. It reports beta funnel counts/conversion/drop-off, estimated VOW per active user-hour from active-time buckets, cohort funnel splits, event totals, and recent activity.
+- Mission Control `beta metrics` / `funnel` / `nsm` / `local telemetry` triggers plus a dashboard panel that invokes the report formatter instead of duplicating math in `SKILL.md`.
+- Focused report tests for funnel math, bucketed NSM estimate, cohort split, empty-log behavior, malformed-line tolerance, formatter output, and disallowed transport tokens.
+
+### Changed
+- `tests/run-all.sh` now hard-fails the Bun unit test suite so the standard CI entrypoint covers TypeScript telemetry/report tests.
+
+### Privacy
+- The dashboard is local-only: it reads the same local events JSONL and does not add any outbound transport.
+## [0.73.9] — 2026-06-30 — unified career + brand dashboard (XOS-90)
+
+### Added
+- `dashboard_viewed` local telemetry event helper with `has_career_data`, `has_brand_data`, timestamp, and optional cohort, written only through the existing XOS-98 gated JSONL emitter.
+- Mission Control instructions for a plain-text unified career + brand health dashboard showing active applications, interviews, warm intros, weekly post-attributed inbound, profile-change impact, and post -> DM attribution count.
+- Mission Control spec coverage for the unified dashboard, no-data states, viewed telemetry, and reuse of the existing weekly inbound/profile impact aggregators.
+- Tests for gated-off/gated-on dashboard-viewed telemetry and explicit boolean data flags.
+
+### Not included
+- No outbound transport, PostHog, network calls, new aggregation transport, or automatic attribution inference.
+
+## [0.73.8] — 2026-06-30 — profile-change inbound impact (XOS-94)
+
+### Added
+- `profile_change_logged` local telemetry event helper for profile headline, summary, and experience changes. It captures `section`, optional `note`, timestamp, and optional cohort through the existing XOS-98 gated JSONL emitter.
+- Profile inbound impact summary helper that reads the local events JSONL and compares `content_to_dm_tracked` counts in the 30 days before vs. the 30 days after a profile change timestamp.
+- Mission Control instructions for logging profile changes and surfacing a plain-text `inbound-rate-change` line with 30d before/after inbound DM counts.
+- Tests for gated-off/gated-on profile-change telemetry and profile impact aggregation over before/after windows, boundaries, missing logs, and malformed JSONL lines.
+
+### Not included
+- No outbound transport, PostHog, network calls, profile scraping, or automatic attribution inference.
+
+## [0.73.7] — 2026-06-30 — weekly inbound insight card (XOS-89)
+
+### Added
+- `insight_card_viewed` and `insight_acted_on` local telemetry event helpers for weekly insight-card rendering and follow-up actions. Both use the existing XOS-98 gated JSONL emitter with `insight_kind`, optional `week_of`, optional action/cohort, and timestamp fields.
+- Weekly content-attributed inbound summary helper that reads the local events JSONL and aggregates `content_to_dm_tracked` events over the last 7 days by `post_id`.
+- Mission Control weekly insight instructions for rendering "This week: N recruiter DMs attributed to your posts" with top posts, omitting the card when there is no attributed inbound, and firing viewed/acted-on telemetry.
+- Tests for gated-off/gated-on insight telemetry and weekly aggregation over empty, grouped, and out-of-window event logs.
+
+### Not included
+- No outbound transport, PostHog, network calls, or non-local aggregation.
+
+## [0.73.6] — 2026-06-30 — conversation-to-post prompt telemetry (XOS-101)
+
+### Added
+- `post_prompt_from_conversation` local telemetry event helper for post-worthy insights surfaced from warm conversations. It captures `conversation_source`, optional `contact_slug`, optional `insight_summary`, timestamp, and optional cohort through the existing XOS-98 gated JSONL emitter.
+- Network-intelligence instructions for prompting on shareable insights from DM exchanges, meeting notes, and relationship-refresh interactions, then routing accepted prompts to the brand campaign-engine.
+- Tests for gated-off no-write behavior, gated-on local JSONL writes, required fields, and optional defaults.
+
+### Not included
+- No outbound transport, PostHog, network calls, or automatic campaign creation.
+
+## [0.73.5] — 2026-06-29 — content-to-DM attribution tracker (XOS-102)
+
+### Added
+- `content_to_dm_tracked` local telemetry event helper for content-attributed inbound recruiter DMs. It captures `post_id`, `dm_source`, optional `contact_slug`, default `attributed_by: user`, timestamp, and optional cohort through the existing XOS-98 gated JSONL emitter.
+- Network-intelligence instructions for recording inbound recruiter DMs attributed to posts with `source: post` and `post_id` on `network/people/{slug}.md` frontmatter.
+- Pipeline-view content-attribution surface: count post-attributed inbound DMs and list each inbound with contact, post ID, source channel, and last received date.
+- Tests for gated-off no-write behavior, gated-on local JSONL writes, required fields, and optional defaults.
+
+### Not included
+- No outbound transport, PostHog, network calls, or automatic attribution inference.
+## [0.76.0] - 2026-06-30 - XOS-87 fail-closed milestone brand prompts
+
+### Added
+- XOS-87 MVP milestone-to-brand detector: pure `detectShareableMilestones(pipeline, opts)` helper scans `stage_data[]` for positive, notable career milestones and returns only entries explicitly opted in with `shareable: true` or `brand_shareable: true` (including nested milestone objects). Missing shareability flags fail closed and surface nothing.
+- `buildBrandMomentPrompt(milestone)` returns a draft-only plain-text prompt to route through the campaign engine. Nothing posts, schedules, opens a browser, or bypasses the normal human-approved publishing gate.
+- New `milestone-brand` skill documenting the AI Fund EIR firewall rationale, opt-in-only design, Company Action Gate invocation before each prompt, and the deferred option B requirement for a stealth-exclusion list.
+- Local-only `milestone_brand_suggested` telemetry event recording only count, stage breakdown, and timestamp through the existing `XOS_98_TELEMETRY`-gated JSONL helper. No network transport and no company, role, ref, notes, post text, or recruiter data.
+- Bun tests for fail-closed detection, explicit shareability, non-notable stage exclusion, malformed pipeline tolerance, draft-only prompt text, and telemetry off/on PII safety.
+
+### Changed
+- Bumped plugin and package metadata to `0.76.0`; added forward migration `v0.75.0-to-v0.76.0.sh`.
+
+## [0.75.0] — 2026-06-30 — XOS-88 brand inbound pipeline tracker
+
+### Added
+- XOS-88 MVP brand inbound pipeline tracker: pure `buildInboundPipelineEntry(input, opts)` helper creates append-only `stage_data[]` entries with `source: "brand_inbound"`, `source_post`, and `stage: "recruiter_inbound"` for recruiter DMs generated by the user's posts.
+- Immutable `appendInboundEntry(pipeline, entry)` helper that returns a new pipeline object, appends to `stage_data[]`, and tolerates missing `stage_data` without mutating existing pipeline data.
+- Local-only `brand_inbound_pipeline_created` telemetry event recording only `has_source_post` and timestamp through the existing `XOS_98_TELEMETRY`-gated JSONL helper. No network transport and no company, role, recruiter, post URL, message text, or comp data.
+- Network Intelligence surface for confirming and recording an inbound recruiter DM attributed to a post, including brand-to-career ROI output.
+- Pipeline View treats `recruiter_inbound` as active and displays brand inbound source attribution.
+- Bun tests for tracker ID collision safety, source attribution fields, immutable append behavior, missing `stage_data`, and telemetry off/on PII safety.
+
+### Changed
+- Bumped plugin and package metadata to `0.75.0`; added forward migration `v0.74.0-to-v0.75.0.sh`.
+
+## [0.74.0] — 2026-06-30 — XOS-106 follow-up nudge engine
+
+### Added
+- XOS-106 MVP follow-up nudge engine: deterministic `computeFollowupNudges(pipeline, nowIso, opts)` over `career-intelligence/projects/job-search/job-pipeline.json` `stage_data[]`, surfacing 1-week and 2-week nudges for `applied` and `deprioritized` applications that are awaiting response.
+- New `follow-up-nudge` skill with plain-text, paste-safe drafted follow-up messages and an explicit Direct Outreach Gate: draft, show, wait for per-message human approval, never auto-send.
+- Local-only `followup_nudge_surfaced` telemetry event recording count and cadence breakdown through the existing `XOS_98_TELEMETRY`-gated JSONL helper. No network transport.
+- Bun tests for 1-week and 2-week boundaries, applied-awaiting-response detection, advanced/closed exclusion, malformed pipeline safety, logged-nudge dedupe, and telemetry off/on behavior.
+
+### Changed
+- Bumped plugin and package metadata to `0.74.0`; added forward migration `v0.73.4-to-v0.74.0.sh`.
+
 ## [0.73.4] — 2026-06-28 — XOS-98 local beta funnel + NSM telemetry
 
 ### Added

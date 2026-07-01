@@ -202,6 +202,21 @@ assert_file_contains "has pipeline-health.json reference" "$SKILL" "pipeline-hea
 assert_file_contains "has stale alerts format" "$SKILL" "STALE ALERTS"
 assert_file_contains "has first-run behavior" "$SKILL" "First Run"
 assert_file_contains "has returning-user behavior" "$SKILL" "Returning User"
+assert_file_contains "has beta metrics trigger" "$SKILL" "beta metrics"
+assert_file_contains "delegates beta metrics to report.ts" "$SKILL" "src/telemetry/report.ts"
+assert_file_contains "labels local NSM estimate" "$SKILL" "ESTIMATE"
+
+# XOS-90: Unified career + brand health dashboard
+echo "-- MC-009: Unified Career + Brand Dashboard -----"
+assert_file_contains "has unified dashboard section" "$SKILL" "Unified career"
+assert_file_contains "dashboard emits viewed telemetry" "$SKILL" "emitDashboardViewed"
+assert_file_contains "dashboard has career data flag" "$SKILL" "has_career_data"
+assert_file_contains "dashboard has brand data flag" "$SKILL" "has_brand_data"
+assert_file_contains "dashboard reuses weekly inbound helper" "$SKILL" "summarizeWeeklyContentInbound"
+assert_file_contains "dashboard reuses profile impact helper" "$SKILL" "summarizeProfileChangeImpact"
+assert_file_contains "dashboard shows no-data state" "$SKILL" "no data yet"
+assert_file_contains "dashboard keeps plain text output" "$SKILL" "no markdown tables"
+echo ""
 
 # MC-008: Contact Action Pre-Flight Protocol (v0.35.3)
 echo "-- MC-008: Contact Action Pre-Flight Protocol ----"
