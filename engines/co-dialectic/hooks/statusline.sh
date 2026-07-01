@@ -19,7 +19,19 @@
 
 set -u
 
-STATE_PATH="${HOME}/.codialectic/state.json"
+# XOS-167: unify the state source with the survival hook (user-prompt-submit.ts),
+# which reads the brain-kernel path FIRST (BRAIN_WORKSPACE_ROOT > CAREER_HOME > cwd)
+# and falls back to the legacy machine-local path. The statusline previously read
+# ONLY the legacy path, so a single heartbeat left one surface stale (split-brain).
+# Reading the same path the hook reads makes ONE heartbeat keep BOTH surfaces green.
+LEGACY_STATE_PATH="${HOME}/.codialectic/state.json"
+BRAIN_ROOT="${BRAIN_WORKSPACE_ROOT:-${CAREER_HOME:-$PWD}}"
+BRAIN_STATE_PATH="${BRAIN_ROOT}/co-dialectic/status-state.json"
+if [ -f "$BRAIN_STATE_PATH" ]; then
+  STATE_PATH="$BRAIN_STATE_PATH"
+else
+  STATE_PATH="$LEGACY_STATE_PATH"
+fi
 STALE_SECS="${CODI_STALE_SECS:-900}"
 
 if [ ! -f "$STATE_PATH" ]; then
@@ -142,14 +154,12 @@ elif [ $((NOW_EPOCH - PROTOCOL_EPOCH)) -gt "$STALE_SECS" ]; then
   STALE=true
 fi
 
-VERSION_SKEW=false
-if [ "$STATE_VERSION" != "$INSTALLED_VERSION" ]; then
-  VERSION_SKEW=true
-fi
-
+# XOS-149: version mismatch is NOT a DEGRADED trigger. `STATE_VERSION` (model-written)
+# vs `INSTALLED_VERSION` (hook-derived) are decoupled sources that falsely skew under
+# cache-sprawl / 'unknown' detection → permanent false DEGRADED. DEGRADED = real
+# liveness loss only: inactive OR stale protocol.
 if [ "$ACTIVE" != "true" ] && [ "$ACTIVE" != "True" ] || \
-   [ "$STALE" = "true" ] || \
-   [ "$VERSION_SKEW" = "true" ]; then
+   [ "$STALE" = "true" ]; then
   echo "⚠ Codi DEGRADED · v${INSTALLED_VERSION} · protocols stale — type 'codi on' to re-activate"
   exit 0
 fi
