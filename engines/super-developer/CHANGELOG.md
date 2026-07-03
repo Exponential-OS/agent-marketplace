@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.0 - 2026-07-03
+
+- Add Gate-A.7 Design-Reasoning Review (XOS-196): a FAIL-HARD pre-build stage between Gate-A.5 and Stage 4. The new `skills/ship-feature/design-review/run.ts` fresh-reviewer harness reads only the approved spec + Change Manifest, records structured GREEN/YELLOW/RED/UNREACHABLE/SKIPPED verdicts in `docs/plans/<slug>.design-review.json`, supports objective mechanical skips, Class-A/B adjustment handling, max-two-RED parking, and appends the PR-ready verdict block. The new `rules/design-review-gate` PreToolUse Bash gate blocks Stage-4 build spawns on missing/stale/RED/UNREACHABLE/Class-B-applied records.
+
 ## 0.9.0 - 2026-07-01
 
 - Wire superpowers skills into Stage 1/2/5 bodies (XOS-178): Stage 1 now runs via superpowers:brainstorming (N-angle explore → judge-panel → synthesize), Stage 2 via superpowers:writing-plans, Stage 5 via superpowers:test-driven-development. Previously these were only named in the top orchestration summary; the stage bodies (what an executing agent reads) invoked nothing, so they ran ad-hoc. Stage 4 already wired its superpowers; this brings 1/2/5 to the same standard. Body = execution truth.
