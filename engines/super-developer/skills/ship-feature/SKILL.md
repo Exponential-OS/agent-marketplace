@@ -1,6 +1,6 @@
 ---
 name: ship-feature
-description: "Use this skill whenever the user asks to implement, build, fix, ship, add, refactor, migrate, or change ANY code — features, bugs, plugins, skills, migrations, hooks, rules, configs, in any repo. Triggers on 'build X', 'fix Y', 'implement Z', 'ship this to <plugin>', a ticket id with code work. This is the Agentic SDLC pipeline; do NOT hand-roll `codex exec` or ad-hoc git/PR shipping — route through Stage 0 (claim), the 9 core stages, the Gate-A.5 change-manifest gate, Stage 5.5/5.6/5.7/5.8 quality gates, and Stage 10 (completion)."
+description: "Use this skill whenever the user asks to implement, build, fix, ship, add, refactor, migrate, or change ANY code — features, bugs, plugins, skills, migrations, hooks, rules, configs, in any repo. Triggers on 'build X', 'fix Y', 'implement Z', 'ship this to <plugin>', a ticket id with code work. This is the Agentic SDLC pipeline; do NOT hand-roll `codex exec` or ad-hoc git/PR shipping — route through Stage 0 (claim), the 9 core stages, the Gate-A.5 change-manifest gate, Gate-A.7 design-review gate, Stage 5.5/5.6/5.7/5.8 quality gates, and Stage 10 (completion)."
 ---
 
 ## MANDATORY SCOPE
@@ -18,8 +18,8 @@ Trigger: `/ship-feature $ARGUMENTS`
 `$ARGUMENTS` = required Linear ticket id plus feature/bug slug and repo context.
 Examples: `THE-10 regen-bug`, `THE-10 regen-bug in ~/aiprojects/Adapt.ai`.
 
-Runs Stage 0 (claim) + the 9 core stages, including the Gate-A.5 change-manifest gate and Stage 5.5/5.6/5.7/5.8 quality gates, + Stage 10 (completion):
-**work claim → brainstorm → spec → evals → change-manifest → worktree implementation → tests → E2E/VISUAL verification → simplify → targeted verification rerun → sandbox-install verify → cross-family review → PR → merge/deploy → publish/broadcast/ensure → completion**
+Runs Stage 0 (claim) + the 9 core stages, including the Gate-A.5 change-manifest gate, Gate-A.7 design-review gate, and Stage 5.5/5.6/5.7/5.8 quality gates, + Stage 10 (completion):
+**work claim → brainstorm → spec → evals → change-manifest → design-review → worktree implementation → tests → E2E/VISUAL verification → simplify → targeted verification rerun → sandbox-install verify → cross-family review → PR → merge/deploy → publish/broadcast/ensure → completion**
 
 ---
 
@@ -85,6 +85,7 @@ Run autonomously through reversible work. Gate A is always a human stop; Gate B 
 - **GATE A:** human approves `docs/plans/<slug>.md` spec — STOP.
 - **GATE B:** locked merge gate, not a mandatory human stop. DEFAULT = auto-merge on CI green (`gh pr merge --auto --squash`). STOP at PR for a human only when the session or ticket carries the single brake, or risk auto-applies it: **"human merge needed"** / `human-merge`. See Stage 8 for the exact locked model.
 - **GATE A.5 (Change-Manifest):** between Gate A and the build — a fail-hard cross-family check that the build's Change Manifest enumerates every removal/migration the spec implies. A "replaces"-language spec with an empty `− removed`/`⚙ migrated` is BLOCKED (names the missing removal + remediation). See **Gate-A.5**.
+- **GATE A.7 (Design-Reasoning Review):** between Gate-A.5 and Stage 4 — an enforced design review of the approved spec + Change Manifest. Missing/stale/RED/UNREACHABLE verdicts BLOCK Stage 4 through `rules/design-review-gate`, not prose.
 
 Never gate reversible work. Brainstorm/spec before Gate A, and change-manifest/implementation/test/E2E-visual/simplify/rerun/review/PR between Gate A and Gate B, should run without extra interrupts unless user intent is ambiguous or data integrity is at risk.
 
@@ -236,6 +237,20 @@ Every bucket MUST be present. An empty bucket is written explicitly as `− remo
 
 ---
 
+## Gate-A.7 — Design-Reasoning Review (Fable persona-jury)
+
+Runs after Gate-A.5 and before Stage 4. This is the design-time twin of Gate-A.5 and Stage 6: A.5 checks that removals/migrations are accounted for, Stage 6 reviews built code, and A.7 reviews the spec + Change Manifest reasoning where most defects are born.
+
+**Stakes routing.** T0/T1 mechanical changes may skip only by the objective skip-rule in `skills/ship-feature/design-review/run.ts`: small file count, all paths in the mechanical allowlist, no new public surface, and no behavior flag. Never skip because the orchestrator self-declared a low tier. T2 runs the Fable reviewer alone. T3+ adds a cross-family reviewer when available; if unavailable, the verdict records `cross_family: unavailable`.
+
+**Verdicts.** `GREEN` proceeds. `YELLOW` proceeds only when adjustments are Class A, or when any Class-B finding is left unapplied and Stage 4 builds the original reviewed spec. Class A is additive/clarifying with no scope, behavior, or DoD change. Class B changes scope, removes/alters a requirement, or changes user-visible behavior/DoD; it is never auto-applied and goes to Gate B for human judgment. `RED` stops. Max two RED cycles: scoped re-review asks only whether prior findings were addressed; a second RED writes escalation and parks the run.
+
+**Enforcement.** Run `bun run ${CLAUDE_PLUGIN_ROOT}/skills/ship-feature/design-review/run.ts docs/plans/<slug>.md` before any Stage-4 `codex exec` or `git worktree add ... -b feat/*`. The sidecar `docs/plans/<slug>.design-review.json` is the machine-checked artifact. `rules/design-review-gate` FAIL-HARD blocks Stage 4 when the sidecar is missing, stale by `spec_sha256`, RED, UNREACHABLE, or records an applied Class-B adjustment. Activation is human-gated like `ship-feature-gate`: the handler enforces this contract when invoked (and when a human wires it as a PreToolUse hook in `~/.claude/settings.json`); the run.ts + gate invocation above is the operative path until then.
+
+**Fails closed (the XOS-56 fix).** The earlier reasoning gate (XOS-48) was removed (XOS-56/59) because it fail-OPENED when `claude-fable-5` was unavailable — a gate that silently passes is worse than none. This gate FAILS CLOSED: if the reviewer CLI is unreachable or returns unparseable output, run.ts records `UNREACHABLE`, which BLOCKS Stage 4. Reintroducing `claude-fable-5` is safe precisely because an unavailable model now blocks instead of waving work through.
+
+---
+
 ## Stage 4 — Implement in git worktree (as a TEAM)
 
 **This stage is `TeamCreate` work by default — run it via `superpowers:subagent-driven-development` + `superpowers:dispatching-parallel-agents`.** Decompose the change into INDEPENDENT workstreams; spin up an implementation team with **one teammate per workstream, each in its OWN git worktree** (`superpowers:using-git-worktrees` — never the shared primary checkout). Each teammate delegates the actual code to Codex (`codex exec`). Dependent edits stay serialized inside one teammate. Merge when all workstreams are green. Running independent workstreams SERIALLY here is the exact failure this skill exists to prevent.
@@ -288,7 +303,7 @@ Trigger:
 
 Tools:
 
-- **Web UI:** run the branch on a LOCAL dev/preview server in the worktree (`npm run dev` -> localhost, or equivalent); never verify local changes on prod. Use Playwright against local dev, authenticating in-process with `E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD` from `.env.local`; NEVER echo/log the password. Use the skill-creator eval/benchmark + Playwright harness to drive critical flows and screenshots at desktop width `1440` and mobile width `375`; use `chrome-devtools-mcp` / authenticated Chrome on port `9222` when browser state matters. Do not pass secrets to external reviewers.
+- **Web UI:** run the branch on a LOCAL dev/preview server in the worktree (`npm run dev` -> localhost, or equivalent); never verify local changes on prod. Use Playwright against local dev, authenticating in-process with test credentials from the repo's local secret store or credential provider; NEVER echo/log the password. Use the skill-creator eval/benchmark + Playwright harness to drive critical flows and screenshots at desktop width `1440` and mobile width `375`; use `chrome-devtools-mcp` / authenticated Chrome on port `9222` when browser state matters. Do not pass secrets to external reviewers.
 - **Web UI visual verdict:** send ACTUAL rendered screenshots to the cross-family `judge-panel` with domain personas (`--persona "Steve Jobs" --persona "Jony Ive"` for UX/visual; XOS-124), plus `agy`/Gemini-vision when useful. Claude owns the final visual verdict.
 - **Plugin/CLI (no web UI):** run representative commands/flows at narrow and standard terminal widths; capture stdout/stderr; optionally capture a terminal screenshot for `agy`/Gemini-vision if visual review is useful. Do not pass secrets.
 - **Sensorium routing:** visual/UI e2e is a sensorium faculty headless agents lack; route it to an organ-with-eyes (authenticated browser session, `chrome-devtools-mcp` on port `9222`, or the human). Do not ask a headless agent to "verify visually"; it will fake it. The CLI path can stay with the running session.

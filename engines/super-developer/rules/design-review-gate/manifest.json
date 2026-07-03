@@ -1,0 +1,72 @@
+{
+  "name": "design-review-gate",
+  "slug": "design-review-gate",
+  "version": "1.0.0",
+  "status": "active",
+  "created": "2026-07-03",
+  "type": "gate",
+  "canonical": "handler.ts",
+  "description": "PreToolUse Bash gate that blocks Stage-4 /ship-feature implementation commands unless the current docs/plans spec has a fresh Gate-A.7 design-review sidecar verdict whose spec_sha256 matches the plan. Missing, stale, RED, UNREACHABLE, and Class-B-applied records BLOCK; GREEN, SKIPPED, and allowed YELLOW records PASS.",
+  "enforcement": {
+    "how": "handler.ts",
+    "audit": "AUDIT.ts",
+    "watch": "WATCH.ts",
+    "log": "~/.cyborg-enforcement-log.jsonl",
+    "runtime": "bun",
+    "no_bash_in_load_bearing_paths": true,
+    "input": {
+      "command": "Bash command string",
+      "cwd": "absolute current working directory",
+      "spec_path": "optional docs/plans/<slug>.md path; otherwise inferred from command, feat/* branch, or active marker"
+    },
+    "output": {
+      "verdict": "PASS | BLOCK",
+      "target": "resolved command working directory",
+      "reason": "machine-readable rationale",
+      "message": "human-readable WHAT/HOW remediation"
+    },
+    "fail_hard": {
+      "block_exits_nonzero": true,
+      "block_message_requires": ["WHAT:", "HOW:"]
+    },
+    "fail_open": {
+      "on_handler_crash": true,
+      "environment_bypass": "DESIGN_REVIEW_GATE_OFF=1"
+    }
+  },
+  "hook_type": "PreToolUse",
+  "hook_target_tools": ["Bash"],
+  "cadence": "per-bash-tool-call",
+  "last_update": "2026-07-03",
+  "last_watch_run": null,
+  "blocked_stage4_commands": [
+    "codex exec",
+    "git worktree add ... -b feat/*",
+    "implement-class commands inside a claimed /ship-feature run"
+  ],
+  "verdict_record": {
+    "path": "docs/plans/<slug>.design-review.json",
+    "required_fields": [
+      "verdict",
+      "findings",
+      "spec_sha256",
+      "manifest_sha256",
+      "reviewer_model",
+      "reviewer_family",
+      "cross_family",
+      "cycle",
+      "timestamp"
+    ],
+    "pass_verdicts": ["GREEN", "SKIPPED", "YELLOW without applied Class-B adjustments"],
+    "block_verdicts": ["missing sidecar", "spec_sha256 mismatch", "RED", "UNREACHABLE", "unknown", "applied Class-B adjustment"]
+  },
+  "known_limitations": [
+    "Settings activation is human-gated: this manifest does not imply the handler is wired into ~/.claude/settings.json as a PreToolUse Bash hook. Until a human wires it, the gate enforces only when invoked directly; the SKILL documents the run.ts + gate invocation as the operative path.",
+    "The reviewer is claude-fable-5 via OAuth CLI. Unlike the XOS-56 gate that fail-OPENED when the model was unavailable, this gate FAILS CLOSED: an unreachable/unparseable reviewer records verdict UNREACHABLE, which BLOCKS Stage 4. Reintroducing the model is safe precisely because the fail-open flaw is fixed.",
+    "The Class-A/B adjustment classifier is intentionally conservative (ambiguous defaults to Class B, toward human review) and does not attempt to parse every possible spec-edit shape."
+  ],
+  "related_invariant": "Agentic SDLC / ship-feature Gate-A.7 / design-reasoning review",
+  "litmus": "Before Stage 4 starts: does docs/plans/<slug>.design-review.json exist, does its spec_sha256 equal the current plan file hash, and is the verdict GREEN, SKIPPED, or an allowed YELLOW with no Class-B adjustment applied to the reviewed spec? If no - BLOCK and rerun Gate-A.7.",
+  "dispatch_slug": "design-review-gate",
+  "origin": "XOS-196, 2026-07-03 - enforce Gate-A.7 design-reasoning review as a machine-checked artifact before /ship-feature implementation starts."
+}
