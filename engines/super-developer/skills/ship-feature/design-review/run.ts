@@ -5,6 +5,13 @@
  * Reads a /ship-feature plan plus its appended Change Manifest, asks a fresh
  * reviewer for a structured design verdict, writes the sidecar verdict record,
  * and appends a human-readable verdict block for the PR body.
+ *
+ * FAILS CLOSED (the XOS-56 fix): the earlier reasoning gate was removed because
+ * it fail-OPENED when claude-fable-5 was unavailable. Here, an unreachable or
+ * unparseable reviewer records verdict UNREACHABLE, which design-review-gate
+ * treats as BLOCK — an unavailable model never waves Stage 4 through.
+ * OAuth CLI only: *_API_KEY env vars are stripped (sanitizedEnv) so the reviewer
+ * runs on the flat-fee subscription, never pay-per-token API billing.
  */
 
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
