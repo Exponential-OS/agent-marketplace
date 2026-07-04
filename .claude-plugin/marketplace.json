@@ -40,7 +40,7 @@
       ],
       "source": "./engines/co-dialectic",
       "description": "Co-Dialectic v4.31.0 (XOS-167: statusline reads the brain-kernel state source, same as the survival hook \u2014 split-brain false-DEGRADED fix). Prior v4.27.0 - XOS-146 in-message status-header no-fabricate / no-silent-drop. New Stop hook status-liveness-check verifies the model-authored Protocol 1 header against ~/.codialectic/state.json using the SAME freshness rule as statusline.sh (one shared rule, so the in-message header and terminal status line can never disagree): a score may appear only when codi is LIVE; otherwise the header is forced to '\u26a0 Codi DEGRADED' with no numbers. Catches fabrication / inconsistent / silent-drop / missing-degraded-header; response-unreadable fails open silently while missing/corrupt state is treated as DEGRADED and still evaluated. Builds on v4.26.0 (XOS-141) structural terminal-statusLine liveness.",
-      "version": "4.33.0",
+      "version": "4.34.0",
       "category": "ai-runtime",
       "homepage": "https://github.com/Exponential-OS/prompt-engineering-in-action"
     },
