@@ -29,6 +29,8 @@ Runs Stage 0 (claim) + the 9 core stages, including the Gate-A.5 change-manifest
 - **Codex teammates:** all implementation, tests, repo investigation. Run via `codex exec` from Bash. Parallel where independent. Codex writes ALL code.
 - **Gemini/agy:** browser, smoke tests, large-file review via `agy`/Gemini. 50x cheaper. NEVER handed secrets.
 
+Cost routing is now CODIFIED, not prose-only: `rules/cost-routing-gate` is the hard PreToolUse Edit/Write/Bash enforcement layer for fresh `/ship-feature` runs, blocking in-session source writes and deploy/poll loops in the live worktree and routing them out-of-process to `codex exec` or `claude --model haiku -p`; it complements the codi v4.34.0 advisory nudge rather than replacing it.
+
 Note: `gemini-delegate.ts` now invokes `agy` (Antigravity, Ultra quota). Treat legacy `agly` references as migrated to `agy`.
 
 ### Model & size right-sizing (per task class)

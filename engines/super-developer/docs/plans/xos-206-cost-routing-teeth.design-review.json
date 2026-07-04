@@ -1,0 +1,36 @@
+{
+  "verdict": "YELLOW",
+  "findings": [
+    {
+      "severity": "YELLOW",
+      "lens": "missing-requirements",
+      "fix": "The Bash path-scoping (decision 4 / AC-3) depends on the PreToolUse hook payload actually providing the Bash invocation `cwd`. This is asserted but not verified. If Claude Code's PreToolUse payload omits cwd for Bash (or the command `cd`s into the worktree after launch), Bash deploy/poll detection silently fails-open and the Stage-8 deploy-loop leak — a primary motivating case — is never caught. Add an AC/pre-implementation check that confirms the hook payload exposes cwd for Bash; if it does not, document the reduced coverage and the chosen fallback."
+    },
+    {
+      "severity": "YELLOW",
+      "lens": "forward-failure",
+      "fix": "Activation is machine-local: the settings.json hook block is applied manually in Stage 9/completion and never committed. If wiring is skipped or mis-pasted the gate is a silent no-op (theater-in-practice) with no signal. Add a Stage 9/5.8 verification step + AC that asserts the hook is actually registered and firing after wiring (e.g., print current settings.json PreToolUse block and run one confirming BLOCK/PASS probe), not merely that the wiring block is documented."
+    }
+  ],
+  "manifest_sha256": "03f9337dce36d6db661ea54f982a2a4fa6b47b47814cfc3315ce55b06a02030b",
+  "reviewer_model": "opus",
+  "reviewer_family": "anthropic",
+  "cross_family": {
+    "status": "not_required"
+  },
+  "cycle": 6,
+  "timestamp": "2026-07-04T17:24:56.580Z",
+  "adjustments": [
+    {
+      "class": "A",
+      "applied": false,
+      "text": "The Bash path-scoping (decision 4 / AC-3) depends on the PreToolUse hook payload actually providing the Bash invocation `cwd`. This is asserted but not verified. If Claude Code's PreToolUse payload omits cwd for Bash (or the command `cd`s into the worktree after launch), Bash deploy/poll detection silently fails-open and the Stage-8 deploy-loop leak — a primary motivating case — is never caught. Add an AC/pre-implementation check that confirms the hook payload exposes cwd for Bash; if it does not, document the reduced coverage and the chosen fallback."
+    },
+    {
+      "class": "B",
+      "applied": false,
+      "text": "Activation is machine-local: the settings.json hook block is applied manually in Stage 9/completion and never committed. If wiring is skipped or mis-pasted the gate is a silent no-op (theater-in-practice) with no signal. Add a Stage 9/5.8 verification step + AC that asserts the hook is actually registered and firing after wiring (e.g., print current settings.json PreToolUse block and run one confirming BLOCK/PASS probe), not merely that the wiring block is documented."
+    }
+  ],
+  "spec_sha256": "3d1f471ab52136747bd7ca5ab8d04105995571454d51cd5c5764eb39655bb2a5"
+}

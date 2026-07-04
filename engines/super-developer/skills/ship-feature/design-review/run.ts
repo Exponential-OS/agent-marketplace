@@ -115,12 +115,19 @@ interface ManifestSummary {
 
 export const MECHANICAL_SKIP_FILE_THRESHOLD = 5;
 const DEFAULT_MODEL = "claude-fable-5";
+const PRIMARY_MODEL_ENV = "DESIGN_REVIEW_MODEL";
 const DEFAULT_FAMILY = "anthropic";
 const GEMINI_MODEL = "gemini-2.5-flash";
 const REVIEW_BLOCK_HEADING = "## Design-review verdict (Gate-A.7)";
 const CLASS_A_HEADING = "## Design-review Class-A adjustments (Gate-A.7)";
 const ESCALATION_HEADING = "## Design-review escalation (Gate-A.7)";
 const API_KEY_ENV = new Set(["OPENAI_API_KEY", "GEMINI_API_KEY", "GOOGLE_API_KEY"]);
+
+export function resolvePrimaryReviewerModel(env: Record<string, string | undefined> = process.env): string {
+  const configured = env[PRIMARY_MODEL_ENV]?.trim();
+  // Fable-5 quota exhaustion must not permanently wedge the gate; operators can route to an available model.
+  return configured ? configured : DEFAULT_MODEL;
+}
 
 function here(): string {
   return dirname(fileURLToPath(import.meta.url));
@@ -468,11 +475,15 @@ function buildPrompt(args: {
     .join("\n");
 }
 
-async function callPrimaryReviewer(prompt: string, options: RunOptions): Promise<{ verdict: StructuredVerdict | null; result: ReviewerCliResult | null; unreachable: boolean }> {
+async function callPrimaryReviewer(
+  prompt: string,
+  options: RunOptions,
+  primaryModel: string
+): Promise<{ verdict: StructuredVerdict | null; result: ReviewerCliResult | null; unreachable: boolean }> {
   const reviewer = options.reviewer ?? ((p, c) => defaultReviewer(p, c, options));
   for (let attempt = 1; attempt <= 2; attempt++) {
     const kind: ReviewerContext["kind"] = attempt === 1 ? "primary" : "retry";
-    const result = await reviewer(prompt, { attempt, kind, model: DEFAULT_MODEL, family: DEFAULT_FAMILY });
+    const result = await reviewer(prompt, { attempt, kind, model: primaryModel, family: DEFAULT_FAMILY });
     if (!result.ok) return { verdict: null, result, unreachable: true };
     const parsed = parseStructuredVerdict(result.stdout);
     if (parsed) return { verdict: parsed, result, unreachable: false };
@@ -626,14 +637,15 @@ export async function runDesignReview(specPathInput: string, options: RunOptions
   const lensesPath = options.lensesPath ?? join(here(), "lenses.md");
   const lenses = readFileSync(lensesPath, "utf8");
   const prompt = buildPrompt({ lenses, specText: reviewableSpec, manifestText, priorRed: prior?.verdict === "RED" ? prior : null });
-  const primary = await callPrimaryReviewer(prompt, options);
+  const primaryModel = resolvePrimaryReviewerModel(options.env);
+  const primary = await callPrimaryReviewer(prompt, options, primaryModel);
 
   if (primary.unreachable || !primary.verdict) {
     const record = writeRecord(specPath, sidecarPath, {
       verdict: "UNREACHABLE",
       findings: [],
       manifest_sha256: manifestSha,
-      reviewer_model: primary.result?.model ?? DEFAULT_MODEL,
+      reviewer_model: primary.result?.model ?? primaryModel,
       reviewer_family: primary.result?.family ?? DEFAULT_FAMILY,
       cross_family: { status: "not_required" },
       cycle,
@@ -655,7 +667,7 @@ export async function runDesignReview(specPathInput: string, options: RunOptions
     verdict: finalVerdict.verdict,
     findings: finalVerdict.findings,
     manifest_sha256: manifestSha,
-    reviewer_model: primary.result?.model ?? DEFAULT_MODEL,
+    reviewer_model: primary.result?.model ?? primaryModel,
     reviewer_family: primary.result?.family ?? DEFAULT_FAMILY,
     cross_family: cross.record,
     cycle,

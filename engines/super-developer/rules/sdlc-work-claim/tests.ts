@@ -242,6 +242,7 @@ test("claim writes an active ship-feature marker", async () => {
     session: "session-marker",
     branch: "feat/xos-47",
     started: "2026-06-09T12:00:00Z",
+    worktree: "/tmp/cyborg-xos47",
   });
 });
 

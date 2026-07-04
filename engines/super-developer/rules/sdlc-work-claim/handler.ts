@@ -515,6 +515,7 @@ function writeActiveMarker(input: NormalizedInput, started: string, options: Pro
         session: input.session,
         branch: input.branch ?? "",
         started,
+        worktree: input.worktree ?? "",
       },
       null,
       2

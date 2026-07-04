@@ -5,7 +5,9 @@ import { dirname, join } from "path";
 import {
   classifyAdjustment,
   parseStructuredVerdict,
+  resolvePrimaryReviewerModel,
   runDesignReview,
+  sanitizedEnv,
   sha256Text,
   shouldSkip,
   sidecarPathForSpec,
@@ -54,6 +56,20 @@ function reviewer(stdout: string, ok = true): ReviewerCommand {
   return () => ({ ok, stdout, stderr: ok ? "" : "unreachable", exitCode: ok ? 0 : 1, model: "claude-fable-5", family: "anthropic" });
 }
 
+function echoModelReviewer(models: string[]): ReviewerCommand {
+  return (_prompt, context) => {
+    models.push(context.model);
+    return {
+      ok: true,
+      stdout: '{"verdict":"YELLOW","findings":[{"severity":"YELLOW","lens":"cost-routing","fix":"Keep the model selection explicit."}]}',
+      stderr: "",
+      exitCode: 0,
+      model: context.model,
+      family: context.family,
+    };
+  };
+}
+
 afterEach(() => {
   for (const dir of tempDirs.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
@@ -83,6 +99,75 @@ test("verdict parse happy path extracts structured JSON", () => {
     verdict: "YELLOW",
     findings: [{ severity: "YELLOW", lens: "simplicity", fix: "Clarify the rollout note." }],
   });
+});
+
+test("primary reviewer model defaults to claude-fable-5 when DESIGN_REVIEW_MODEL is unset", async () => {
+  const fx = fixture();
+  const models: string[] = [];
+  const result = await runDesignReview(fx.specPath, {
+    env: {},
+    reviewer: echoModelReviewer(models),
+    now: new Date("2026-07-03T12:00:00Z"),
+  });
+
+  expect(resolvePrimaryReviewerModel({})).toBe("claude-fable-5");
+  expect(models).toEqual(["claude-fable-5"]);
+  expect(result.record.reviewer_model).toBe("claude-fable-5");
+});
+
+test("DESIGN_REVIEW_MODEL overrides the primary reviewer model and sidecar record", async () => {
+  const fx = fixture();
+  const models: string[] = [];
+  const result = await runDesignReview(fx.specPath, {
+    env: { DESIGN_REVIEW_MODEL: "claude-sonnet-4-20250514" },
+    reviewer: echoModelReviewer(models),
+    now: new Date("2026-07-03T12:00:00Z"),
+  });
+
+  expect(models).toEqual(["claude-sonnet-4-20250514"]);
+  expect(result.record.reviewer_model).toBe("claude-sonnet-4-20250514");
+});
+
+test("sanitizedEnv preserves DESIGN_REVIEW_MODEL while stripping API keys", () => {
+  const clean = sanitizedEnv({
+    DESIGN_REVIEW_MODEL: "claude-sonnet-4-20250514",
+    OPENAI_API_KEY: "secret",
+    KEEP_ME: "1",
+  });
+
+  expect(clean.DESIGN_REVIEW_MODEL).toBe("claude-sonnet-4-20250514");
+  expect(clean.KEEP_ME).toBe("1");
+  expect(clean.OPENAI_API_KEY).toBeUndefined();
+});
+
+test("default reviewer spawn receives resolved model and sanitized DESIGN_REVIEW_MODEL env", async () => {
+  const fx = fixture();
+  let command: string[] = [];
+  let childEnv: Record<string, string> = {};
+  const result = await runDesignReview(fx.specPath, {
+    env: {
+      DESIGN_REVIEW_MODEL: "claude-opus-4-20250514",
+      OPENAI_API_KEY: "secret",
+      KEEP_ME: "1",
+    },
+    commandRunner: (cmd, options) => {
+      command = cmd;
+      childEnv = options.env;
+      return {
+        ok: true,
+        stdout: '{"verdict":"YELLOW","findings":[{"severity":"YELLOW","lens":"cost-routing","fix":"Keep the configured reviewer model visible."}]}',
+        stderr: "",
+        exitCode: 0,
+      };
+    },
+    now: new Date("2026-07-03T12:00:00Z"),
+  });
+
+  expect(command.slice(0, 3)).toEqual(["claude", "--model", "claude-opus-4-20250514"]);
+  expect(childEnv.DESIGN_REVIEW_MODEL).toBe("claude-opus-4-20250514");
+  expect(childEnv.KEEP_ME).toBe("1");
+  expect(childEnv.OPENAI_API_KEY).toBeUndefined();
+  expect(result.record.reviewer_model).toBe("claude-opus-4-20250514");
 });
 
 test("classifyAdjustment returns A, B, and ambiguous defaults to B", () => {

@@ -6,8 +6,8 @@
     "email": "thewhyman@users.noreply.github.com"
   },
   "metadata": {
-    "description": "xOS Marketplace \u2014 Platform for xOS engines. First-party primitives ship here; third-party contributors (60% revenue share) publish engines in any category. Engines are independently versioned repos. Dependency declarations enforce minimum compatible versions. Installed via Claude Code plugin system.",
-    "branding_note": "xOS brand term is 'engine' not 'plugin'. The plugin[] field and .claude-plugin/ convention are Claude Code technical infrastructure \u2014 not user-facing terminology."
+    "description": "xOS Marketplace — Platform for xOS engines. First-party primitives ship here; third-party contributors (60% revenue share) publish engines in any category. Engines are independently versioned repos. Dependency declarations enforce minimum compatible versions. Installed via Claude Code plugin system.",
+    "branding_note": "xOS brand term is 'engine' not 'plugin'. The plugin[] field and .claude-plugin/ convention are Claude Code technical infrastructure — not user-facing terminology."
   },
   "plugins": [
     {
@@ -15,7 +15,7 @@
       "platform": "xHumanOS",
       "license": "Proprietary",
       "source": "./engines/career-intelligence",
-      "description": "Career Intelligence Engine \u2014 xHumanOS engine for job search, network, pipeline, sessions. v0.77.0: profile\u2194brand-voice alignment score (XOS-93). v0.76.0: full telemetry + fusion suite \u2014 content\u2192DM attribution, conversation\u2192post prompt, weekly inbound insight, profile-change inbound impact, unified career+brand dashboard, follow-up nudge engine, brand\u2192career inbound-pipeline tracker, fail-closed milestone\u2192brand detector. v0.74.0: XOS-133 local beta-funnel + NSM dashboard. All local-only JSONL, XOS_98_TELEMETRY-gated, ZERO network (no-phone-home). Draft-first outreach + Company Action Gate + claim-grounding safety gates throughout.",
+      "description": "Career Intelligence Engine — xHumanOS engine for job search, network, pipeline, sessions. v0.77.0: profile↔brand-voice alignment score (XOS-93). v0.76.0: full telemetry + fusion suite — content→DM attribution, conversation→post prompt, weekly inbound insight, profile-change inbound impact, unified career+brand dashboard, follow-up nudge engine, brand→career inbound-pipeline tracker, fail-closed milestone→brand detector. v0.74.0: XOS-133 local beta-funnel + NSM dashboard. All local-only JSONL, XOS_98_TELEMETRY-gated, ZERO network (no-phone-home). Draft-first outreach + Company Action Gate + claim-grounding safety gates throughout.",
       "version": "0.77.0",
       "category": "career",
       "homepage": "https://github.com/Exponential-OS/career-intelligence-engine"
@@ -25,8 +25,8 @@
       "platform": "xHumanOS",
       "license": "Proprietary",
       "source": "./engines/super-developer",
-      "description": "v0.10.0: Gate-A.7 Design-Reasoning Review (XOS-196) \u2014 a FAIL-HARD pre-build stage after Gate-A.5 and before Stage 4. A fresh reviewer reads only the approved spec + Change Manifest, records a structured sidecar verdict, supports objective mechanical skips, Class-A/B adjustment handling, max-two-RED parking, and `rules/design-review-gate` blocks Stage-4 build spawns on missing/stale/RED/UNREACHABLE/Class-B-applied records. v0.9.0: Stage 1/2/5 bodies now INVOKE their superpowers skills (XOS-178) \u2014 brainstorming (Stage 1), writing-plans (Stage 2), test-driven-development (Stage 5); previously these were only listed in the summary, so an executing agent ran ad-hoc. Now the stage body is the execution truth, matching Stage 4. Also routes Stage 1 brainstorm + Stage 6 review to domain 0.001% personas (UX\u2192Ive/Jobs), previously only at Stage 5.5. v0.8.0: Stage 5.8 plugin/skill sandbox-install + turn-on verification (XOS-173) \u2014 a fail-hard CONDITIONAL stage (by shipped-artifact-class) that installs the built plugin into an isolated sandbox (temp HOME/CLAUDE_PLUGIN_DATA) and proves it ACTIVATES (skill triggers, engine entrypoint runs, hooks fire) before review; 'merged' != 'activated'. v0.7.0: Gate-A.5 Change-Manifest gate (XOS-164) \u2014 a fail-hard cross-family gate between Gate A and the build that forces the builder to enumerate every removal/migration the spec implies; a 'replaces/supersedes'-language spec with an empty \u2212removed/\u2699migrated is BLOCKED with the missing removal named. Super Developer Engine - global agentic-SDLC ship-feature pipeline for every repo. v0.6.0: Stage 9 PUBLISH+BROADCAST+ENSURE (XOS-142) \u2014 post-merge, artifact-class-routed (plugin\u2192marketplace+reload-bulletin; cyborg\u2192route-sync-to-cyborg-agent; workspace\u2192sync.sh; SaaS\u2192cache-bust+client-reload+flag+migration+verify-live) + ship-feature-publish-gate skew detector (installed<marketplace \u2192 BLOCK + loud reinstall line). 'Shipped' = activated across the running swarm, not merged. v0.5.0: cross-family judge UNSKIPPABLE (XOS-138) \u2014 Stage 6 non-optional + FAIL-HARD, canonical `ship-feature-judge-receipt:v1` in every PR body, merge-gate BLOCKs receiptless `gh pr merge`. v0.4.1: Stage 5.5 (E2E+VISUAL) + 5.6 (/simplify) + 5.7 (rerun). v0.3.0: SELF-CONTAINED SDLC rules via ${CLAUDE_PLUGIN_ROOT}. User-scope, workspace_binding=global. Canonical source: Exponential-OS/xos monorepo plugins/cross/super-developer (derived vendored mirror, overwritten on each sync).",
-      "version": "0.10.0",
+      "description": "v0.11.0: cost-routing TEETH (XOS-206) — a PreToolUse Edit/Write/Bash gate (rules/cost-routing-gate) that, during a FRESH /ship-feature run, blocks in-session source writes + deploy/poll loops in the run's worktree and routes them out-of-process (codex exec / claude --model haiku -p); the per-action codification of LLM-OPTIMIZATION. Also persists worktree in the sdlc-work-claim active marker (so the gate can path-scope real runs) and adds DESIGN_REVIEW_MODEL override for Gate-A.7. v0.10.0: Gate-A.7 Design-Reasoning Review (XOS-196) — a FAIL-HARD pre-build stage after Gate-A.5 and before Stage 4. A fresh reviewer reads only the approved spec + Change Manifest, records a structured sidecar verdict, supports objective mechanical skips, Class-A/B adjustment handling, max-two-RED parking, and `rules/design-review-gate` blocks Stage-4 build spawns on missing/stale/RED/UNREACHABLE/Class-B-applied records. v0.9.0: Stage 1/2/5 bodies now INVOKE their superpowers skills (XOS-178) — brainstorming (Stage 1), writing-plans (Stage 2), test-driven-development (Stage 5); previously these were only listed in the summary, so an executing agent ran ad-hoc. Now the stage body is the execution truth, matching Stage 4. Also routes Stage 1 brainstorm + Stage 6 review to domain 0.001% personas (UX→Ive/Jobs), previously only at Stage 5.5. v0.8.0: Stage 5.8 plugin/skill sandbox-install + turn-on verification (XOS-173) — a fail-hard CONDITIONAL stage (by shipped-artifact-class) that installs the built plugin into an isolated sandbox (temp HOME/CLAUDE_PLUGIN_DATA) and proves it ACTIVATES (skill triggers, engine entrypoint runs, hooks fire) before review; 'merged' != 'activated'. v0.7.0: Gate-A.5 Change-Manifest gate (XOS-164) — a fail-hard cross-family gate between Gate A and the build that forces the builder to enumerate every removal/migration the spec implies; a 'replaces/supersedes'-language spec with an empty −removed/⚙migrated is BLOCKED with the missing removal named. Super Developer Engine - global agentic-SDLC ship-feature pipeline for every repo. v0.6.0: Stage 9 PUBLISH+BROADCAST+ENSURE (XOS-142) — post-merge, artifact-class-routed (plugin→marketplace+reload-bulletin; cyborg→route-sync-to-cyborg-agent; workspace→sync.sh; SaaS→cache-bust+client-reload+flag+migration+verify-live) + ship-feature-publish-gate skew detector (installed<marketplace → BLOCK + loud reinstall line). 'Shipped' = activated across the running swarm, not merged. v0.5.0: cross-family judge UNSKIPPABLE (XOS-138) — Stage 6 non-optional + FAIL-HARD, canonical `ship-feature-judge-receipt:v1` in every PR body, merge-gate BLOCKs receiptless `gh pr merge`. v0.4.1: Stage 5.5 (E2E+VISUAL) + 5.6 (/simplify) + 5.7 (rerun). v0.3.0: SELF-CONTAINED SDLC rules via ${CLAUDE_PLUGIN_ROOT}. User-scope, workspace_binding=global. Canonical source: Exponential-OS/xos monorepo plugins/cross/super-developer (derived vendored mirror, overwritten on each sync).",
+      "version": "0.11.0",
       "category": "developer-tools",
       "homepage": "https://github.com/Exponential-OS/xos"
     },
@@ -39,7 +39,7 @@
         "cross-family-judge"
       ],
       "source": "./engines/co-dialectic",
-      "description": "Co-Dialectic v4.31.0 (XOS-167: statusline reads the brain-kernel state source, same as the survival hook \u2014 split-brain false-DEGRADED fix). Prior v4.27.0 - XOS-146 in-message status-header no-fabricate / no-silent-drop. New Stop hook status-liveness-check verifies the model-authored Protocol 1 header against ~/.codialectic/state.json using the SAME freshness rule as statusline.sh (one shared rule, so the in-message header and terminal status line can never disagree): a score may appear only when codi is LIVE; otherwise the header is forced to '\u26a0 Codi DEGRADED' with no numbers. Catches fabrication / inconsistent / silent-drop / missing-degraded-header; response-unreadable fails open silently while missing/corrupt state is treated as DEGRADED and still evaluated. Builds on v4.26.0 (XOS-141) structural terminal-statusLine liveness.",
+      "description": "Co-Dialectic v4.31.0 (XOS-167: statusline reads the brain-kernel state source, same as the survival hook — split-brain false-DEGRADED fix). Prior v4.27.0 - XOS-146 in-message status-header no-fabricate / no-silent-drop. New Stop hook status-liveness-check verifies the model-authored Protocol 1 header against ~/.codialectic/state.json using the SAME freshness rule as statusline.sh (one shared rule, so the in-message header and terminal status line can never disagree): a score may appear only when codi is LIVE; otherwise the header is forced to '⚠ Codi DEGRADED' with no numbers. Catches fabrication / inconsistent / silent-drop / missing-degraded-header; response-unreadable fails open silently while missing/corrupt state is treated as DEGRADED and still evaluated. Builds on v4.26.0 (XOS-141) structural terminal-statusLine liveness.",
       "version": "4.34.0",
       "category": "ai-runtime",
       "homepage": "https://github.com/Exponential-OS/prompt-engineering-in-action"
@@ -49,7 +49,7 @@
       "platform": "xOS",
       "license": "Proprietary",
       "source": "./engines/brand-intelligence",
-      "description": "Brand Intelligence \u2014 Persona schema, extraction, and registry. N-voice support for individuals (xHumanOS, N=1) and orgs (xTeamOS, N\u22653). Includes persona-onboarding interview, handles, channel directory. Foundational primitive \u2014 no dependencies.",
+      "description": "Brand Intelligence — Persona schema, extraction, and registry. N-voice support for individuals (xHumanOS, N=1) and orgs (xTeamOS, N≥3). Includes persona-onboarding interview, handles, channel directory. Foundational primitive — no dependencies.",
       "version": "0.47.0",
       "category": "brand",
       "homepage": "https://github.com/Exponential-OS/brand-intelligence-engine"
@@ -59,7 +59,7 @@
       "platform": "xOS",
       "license": "Proprietary",
       "source": "./engines/knowledge-graph",
-      "description": "Knowledge Graph \u2014 Graph data layer for all xOS engines. Phase 1: JSON files. Phase 2: Neo4j substrate replacing all engine file stores. Foundational primitive \u2014 no dependencies.",
+      "description": "Knowledge Graph — Graph data layer for all xOS engines. Phase 1: JSON files. Phase 2: Neo4j substrate replacing all engine file stores. Foundational primitive — no dependencies.",
       "version": "0.1.0",
       "category": "knowledge",
       "homepage": "https://github.com/Exponential-OS/knowledge-graph-engine"
@@ -69,7 +69,7 @@
       "platform": "xOS",
       "license": "Proprietary",
       "source": "./engines/brand-amplification",
-      "description": "Brand Amplification Engine (BAE) \u2014 outbound brand-building umbrella. v0.55.0: post-algorithm content-strategy reset (relevance > volume) \u2014 content-flywheel Reset section (topic-audience fit, audience specificity, engagement-quality-over-velocity) + campaign-engine Relevance Gate (relevance_score \u2265 70 to proceed, else gap + sharpening) + local-only XOS_98_TELEMETRY-gated content_strategy_applied event (no phone-home). Includes the social distribution engine (SDE master orchestrator), flywheel amplification module, hub-and-spoke surface coverage, 9-gate preflight CI for content campaigns, golden-hour scheduling, invisible signal CTAs (bookmark/save/DM-share), platform-native routing across LinkedIn / Substack / Reddit / X / Instagram / Facebook / Threads, and the confidence-ladder browser MCP defaults (browserbase for setup; chrome-devtools-mcp for posting per Irreversible-Action Invariant).",
+      "description": "Brand Amplification Engine (BAE) — outbound brand-building umbrella. v0.55.0: post-algorithm content-strategy reset (relevance > volume) — content-flywheel Reset section (topic-audience fit, audience specificity, engagement-quality-over-velocity) + campaign-engine Relevance Gate (relevance_score ≥ 70 to proceed, else gap + sharpening) + local-only XOS_98_TELEMETRY-gated content_strategy_applied event (no phone-home). Includes the social distribution engine (SDE master orchestrator), flywheel amplification module, hub-and-spoke surface coverage, 9-gate preflight CI for content campaigns, golden-hour scheduling, invisible signal CTAs (bookmark/save/DM-share), platform-native routing across LinkedIn / Substack / Reddit / X / Instagram / Facebook / Threads, and the confidence-ladder browser MCP defaults (browserbase for setup; chrome-devtools-mcp for posting per Irreversible-Action Invariant).",
       "version": "0.55.0",
       "category": "distribution",
       "homepage": "https://github.com/Exponential-OS/brand-amplification-engine"
@@ -79,7 +79,7 @@
       "platform": "xOS",
       "license": "Proprietary",
       "source": "./engines/coordination",
-      "description": "xOS Coordination Engine v0.5.0 \u2014 XOS-140 auto-harvest quotable insights (Stop hook: transcript scan, Gemini Flash extraction, 3 safety-gated sections with keyword HOLD net, idempotent, fail-safe). v0.4.0: solo-session-roles + heartbeat liveness (XOS-120).",
+      "description": "xOS Coordination Engine v0.5.0 — XOS-140 auto-harvest quotable insights (Stop hook: transcript scan, Gemini Flash extraction, 3 safety-gated sections with keyword HOLD net, idempotent, fail-safe). v0.4.0: solo-session-roles + heartbeat liveness (XOS-120).",
       "version": "0.5.0",
       "category": "coordination",
       "homepage": "https://github.com/Exponential-OS/coordination-engine"
@@ -89,7 +89,7 @@
       "platform": "xOS",
       "license": "Proprietary",
       "source": "./engines/content-adapt",
-      "description": "Content Adapt \u2014 Transform engine. One idea \u2192 platform-native variants (xHumanOS) or audience-specific variants (xTeamOS). Reads Brand Intelligence personas; queries Knowledge Graph for source context.",
+      "description": "Content Adapt — Transform engine. One idea → platform-native variants (xHumanOS) or audience-specific variants (xTeamOS). Reads Brand Intelligence personas; queries Knowledge Graph for source context.",
       "version": "0.1.0",
       "category": "content",
       "homepage": "https://github.com/Exponential-OS/content-adapt-engine"
@@ -99,7 +99,7 @@
       "platform": "xOS",
       "license": "Proprietary",
       "source": "./engines/xos",
-      "description": "xOS platform meta-commands \u2014 cross-cutting commands for the whole swarm. /xos:swarm-sync = bidirectional swarm sync (publish this agent's state, then catch up to the latest cyborg brain + plugins). Canonical source: Exponential-OS/xos monorepo plugins/cross/xos (this engines/ copy is a derived vendored mirror).",
+      "description": "xOS platform meta-commands — cross-cutting commands for the whole swarm. /xos:swarm-sync = bidirectional swarm sync (publish this agent's state, then catch up to the latest cyborg brain + plugins). Canonical source: Exponential-OS/xos monorepo plugins/cross/xos (this engines/ copy is a derived vendored mirror).",
       "version": "0.1.0",
       "category": "developer-tools",
       "homepage": "https://github.com/Exponential-OS/xos"
@@ -109,7 +109,7 @@
       "platform": "xHumanOS",
       "license": "Proprietary",
       "source": "./engines/jury",
-      "description": "Jury v0.1.0 \u2014 standalone cross-family cascade-then-jury reviewer (the free 'jury beats judge' base). Optional dependency for codi/super-developer cross-family verification. OAuth local CLIs, no API keys.",
+      "description": "Jury v0.1.0 — standalone cross-family cascade-then-jury reviewer (the free 'jury beats judge' base). Optional dependency for codi/super-developer cross-family verification. OAuth local CLIs, no API keys.",
       "version": "0.1.0",
       "category": "developer-tools"
     }

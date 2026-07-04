@@ -1,0 +1,67 @@
+{
+  "name": "cost-routing-gate",
+  "slug": "cost-routing-gate",
+  "version": "1.0.0",
+  "status": "active",
+  "created": "2026-07-04",
+  "type": "gate",
+  "canonical": "handler.ts",
+  "description": "PreToolUse Edit/Write/Bash gate that enforces /ship-feature cost routing during a fresh live run. In-session source writes inside the run worktree BLOCK and route to out-of-process codex exec. Conservative deploy/poll-loop Bash inside the run worktree BLOCKs and routes to out-of-process claude --model haiku -p. No fresh marker, stale markers, unscopable markers, unrelated worktrees, ordinary Bash, crashes, and COST_ROUTING_GATE_OFF=1 PASS/fail open.",
+  "enforcement": {
+    "how": "handler.ts",
+    "audit": "AUDIT.ts",
+    "watch": "WATCH.ts",
+    "log": "~/.cyborg-enforcement-log.jsonl",
+    "runtime": "bun",
+    "no_bash_in_load_bearing_paths": true,
+    "input": {
+      "Edit": "PreToolUse payload with tool_input.file_path",
+      "Write": "PreToolUse payload with tool_input.file_path",
+      "Bash": "PreToolUse payload with tool_input.command and cwd"
+    },
+    "output": {
+      "verdict": "PASS | BLOCK",
+      "target": "resolved file path or Bash cwd",
+      "reason": "machine-readable rationale",
+      "message": "human-readable WHAT/HOW remediation"
+    },
+    "fail_hard": {
+      "block_exits_nonzero": true,
+      "block_message_requires": ["WHAT:", "HOW:"]
+    },
+    "fail_open": {
+      "on_handler_crash": true,
+      "environment_bypass": "COST_ROUTING_GATE_OFF=1"
+    }
+  },
+  "hook_type": "PreToolUse",
+  "hook_target_tools": ["Edit", "Write", "Bash"],
+  "cadence": "per-tool-call",
+  "last_update": "2026-07-04",
+  "last_watch_run": null,
+  "live_run_detection": {
+    "marker_dir": "~/.ship-feature/active",
+    "fresh_threshold_seconds": 1800,
+    "fresh_fields": ["heartbeat", "heartbeat_at", "heartbeatAt", "last_heartbeat", "lastHeartbeat"],
+    "scope_fields": ["worktree", "cwd", "repo"],
+    "unscopable_marker_behavior": "PASS"
+  },
+  "allowed_in_session_paths": ["docs/**", "*.md"],
+  "blocked_edit_write": "non-docs, non-markdown paths inside a fresh marker's valid worktree/cwd/repo",
+  "blocked_bash": [
+    "railway up or railway redeploy paired with while/until+sleep or repeated status/watch polling",
+    "gh pr checks --watch",
+    "gh run watch",
+    "vercel --prod paired with polling",
+    "bare while/until loops containing both sleep and a status/poll command"
+  ],
+  "known_limitations": [
+    "Bash deploy-loop blocking requires the PreToolUse payload to expose cwd. If cwd is absent, the Bash side fails open by design; Edit/Write source blocking remains the primary teeth.",
+    "Fresh markers with no existing worktree/cwd/repo field cannot be path-scoped and therefore PASS.",
+    "The Bash signature is intentionally conservative; ambiguous commands PASS to avoid blocking benign one-shot Bash."
+  ],
+  "related_invariant": "LLM-OPTIMIZATION / Agentic SDLC cost routing",
+  "litmus": "During a fresh /ship-feature run, is this in-session tool call doing Codex implementation or Haiku deploy-watch work inside the run worktree? If yes, BLOCK and route out of process; if no, PASS.",
+  "dispatch_slug": "cost-routing-gate",
+  "origin": "XOS-206, 2026-07-04 - turn prose cost-routing guidance into a hard PreToolUse gate for /ship-feature execution leaks."
+}

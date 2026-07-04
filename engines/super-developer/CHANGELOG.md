@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.11.0 - 2026-07-04
+
+- Make the Gate-A.7 primary design-review reviewer configurable with `DESIGN_REVIEW_MODEL`, defaulting to `claude-fable-5`, so Fable-5 quota exhaustion can be routed around without changing the Gemini cross-family fallback.
+- Add `rules/cost-routing-gate`: a PreToolUse Edit/Write/Bash gate that enforces fresh `/ship-feature` cost routing by blocking in-session source writes inside the live worktree and conservative deploy/poll loops, routing them out-of-process to `codex exec` or `claude --model haiku -p`.
+
 ## 0.10.0 - 2026-07-03
 
 - Add Gate-A.7 Design-Reasoning Review (XOS-196): a FAIL-HARD pre-build stage between Gate-A.5 and Stage 4. The new `skills/ship-feature/design-review/run.ts` fresh-reviewer harness reads only the approved spec + Change Manifest, records structured GREEN/YELLOW/RED/UNREACHABLE/SKIPPED verdicts in `docs/plans/<slug>.design-review.json`, supports objective mechanical skips, Class-A/B adjustment handling, max-two-RED parking, and appends the PR-ready verdict block. The new `rules/design-review-gate` PreToolUse Bash gate blocks Stage-4 build spawns on missing/stale/RED/UNREACHABLE/Class-B-applied records.
