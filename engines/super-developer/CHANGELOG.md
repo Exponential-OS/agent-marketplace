@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.12.0 - 2026-07-04
+
+- Consume the XOS-207 cross_family signal in the Stage-6 receipt (XOS-210, receipt half): the ship-feature-judge-receipt now carries a `cross_family` line read from the judge JSON authoritative `cross_family.degraded` field (co-dialectic >=4.35.0), so a Stage-6 review that silently lost a family (lane errored/timed-out/emptied) is now visible in the PR instead of masquerading as full cross-family. A `cross_family.degraded: true` result on a T3+ change AUTO-APPLIES human-merge (the review carried only one family blind spots). Consumer reads cross_family.degraded, never all_flags[0]. codi Protocol-8 consumer half deferred (separate slice).
+
 ## 0.11.0 - 2026-07-04
 
 - Make the Gate-A.7 primary design-review reviewer configurable with `DESIGN_REVIEW_MODEL`, defaulting to `claude-fable-5`, so Fable-5 quota exhaustion can be routed around without changing the Gemini cross-family fallback.

@@ -1,10 +1,10 @@
 {
   "name": "super-developer",
   "platform": "xHumanOS",
-  "version": "0.11.0",
-  "description": "agentic-SDLC super-developer pipeline — the /ship-feature engine.",
+  "version": "0.12.0",
+  "description": "agentic-SDLC super-developer pipeline \u2014 the /ship-feature engine.",
   "workspace_binding": {
     "mode": "global",
-    "_comment": "global so /ship-feature resolves in EVERY cwd/repo — fixes the loose-symlink resolution failure; this is cross-xOS dev tooling, not workspace-bound."
+    "_comment": "global so /ship-feature resolves in EVERY cwd/repo \u2014 fixes the loose-symlink resolution failure; this is cross-xOS dev tooling, not workspace-bound."
   }
 }

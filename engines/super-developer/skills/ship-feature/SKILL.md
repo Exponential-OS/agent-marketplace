@@ -417,11 +417,18 @@ If `RED`, Codex fixes and returns to Stage 5, then repeats Stage 5.5/5.6/5.7 and
 
 At the END of Stage 6, emit the canonical receipt block below, populated from the `judge-panel` JSON: `final_verdict` → `verdict` (`GREEN`/`RED`), families that returned → `families`, `all_flags` count plus one-line summary → `flags`, `cascade.escalated` → `escalated`, and the current ISO8601 timestamp → `ts`.
 
+**Cross-family health line (XOS-210 — read the AUTHORITATIVE structured field, not `all_flags[0]`).** The judge JSON now carries a top-level `cross_family` object (co-dialectic ≥ 4.35.0): `{ distinct_families_returned, degraded, down_lanes:[{family,model,reason}] }`. Populate the receipt's `cross_family` line from it — NEVER infer cross-family health from the `families` list alone (a lane that errored/timed-out/emptied is silently absent from `families`, which is exactly the blind spot this line exists to surface):
+
+- If `cross_family.degraded` is `false` → `cross_family: intact (N distinct families)`.
+- If `cross_family.degraded` is `true` → `cross_family: ⚠ DEGRADED — <down family> lane down (<reason>); this T3 review was NOT truly cross-family`. **A degraded cross-family result on a T3+/publishing/irreversible change is a `human-merge` trigger** — the reviewer only had one family's blind spots. Auto-apply `human-merge` (Stage 8) when `cross_family.degraded` is true AND stakes are T3+.
+- If the judge JSON has no `cross_family` field (older co-dialectic) → `cross_family: unknown (judge < 4.35.0 — upgrade to surface degradation)`.
+
 ```markdown
 <!-- ship-feature-judge-receipt:v1 -->
 ## 🧪 Cross-family judge receipt
 - verdict: GREEN | RED
 - families: <comma list of families that actually returned, e.g. google, openai>
+- cross_family: intact (N distinct) | ⚠ DEGRADED — <family> lane down (<reason>) | unknown (judge <4.35.0)
 - flags: <count> — <one-line summary or "none">
 - escalated: yes | no
 - ts: <ISO8601>
@@ -474,7 +481,7 @@ STOP at PR for a human to merge IF either:
 
 - **Two scopes, same words.** Say it in a session → the whole session stops at PR. Put it on a Linear ticket → that ticket stops at PR. Nothing said = auto. The conversation/ticket IS the state — nothing shared across sessions, so no collision by construction.
 - **Session state:** `ship_mode != "auto"` is the session-scope brake created by the exact phrase **"human merge needed"**.
-- **Auto-escalation (defense in depth):** the build agent AUTO-APPLIES `human-merge` when the diff hits a risk heuristic even if the human didn't say it — publishing/irreversible surface (Substack/LinkedIn publish), auth/secrets, schema migration, large blast radius, OR judge-panel RED. Maps to stakes tiers (T0–T2 auto, T3+ human).
+- **Auto-escalation (defense in depth):** the build agent AUTO-APPLIES `human-merge` when the diff hits a risk heuristic even if the human didn't say it — publishing/irreversible surface (Substack/LinkedIn publish), auth/secrets, schema migration, large blast radius, judge-panel RED, OR **`cross_family.degraded: true` on a T3+ change** (XOS-210 — the Stage-6 review lost a family, so it carried only one family's blind spots; a degraded cross-family review is not a sufficient cross-family gate for T3+/irreversible work). Maps to stakes tiers (T0–T2 auto, T3+ human).
 - **Adapt AI:** human-merge always — not via this local flow at all; AdaptAI builds route through Tier-2 cloud; the ship command's personal-repo allowlist NEVER touches `~/aifund-adaptai`.
 
 If Gate B stops, present the PR URL, review verdict, test summary, deploy plan, and the `human-merge` reason. Do not merge or deploy.
