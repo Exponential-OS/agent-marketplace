@@ -106,12 +106,13 @@
     },
     {
       "name": "jury",
-      "platform": "xHumanOS",
+      "platform": "xOS",
       "license": "Proprietary",
       "source": "./engines/jury",
       "description": "Jury v0.1.0 — standalone cross-family cascade-then-jury reviewer (the free 'jury beats judge' base). Optional dependency for codi/super-developer cross-family verification. OAuth local CLIs, no API keys.",
       "version": "0.1.0",
-      "category": "developer-tools"
+      "category": "developer-tools",
+      "homepage": "https://github.com/Exponential-OS/xos"
     }
   ]
 }
