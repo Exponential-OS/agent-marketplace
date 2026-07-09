@@ -1,3 +1,7 @@
+---
+description: Bidirectional swarm sync — publish this agent's state, then catch up to the latest cyborg brain + plugins. Run at the start of significant work, after shipping, or when told a swarm update landed.
+---
+
 # /xos:swarm-sync — sync this agent with the swarm (both directions)
 
 Bring the current agent into sync with the shared swarm state. Two duties, in order:
