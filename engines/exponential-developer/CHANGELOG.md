@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.1.0] — 2026-07-09 — XOS-218: local-first gates + anti-404 visual gate + v2 amendments
+
+Gates run LOCAL, pre-PR — **not GitHub Actions** (new "Where gates run" invariant). Motivated by a real 2026-07 failure: a GitHub Actions "PR Readiness Gate" greened a PR whose visual review linked **404 images** (checked *presence*, not *resolution*), PRs sat waiting async while agents forgot to rebase (collision mess), and Actions minutes hit **paid overage**.
+
+- **Local-first gate architecture (invariant):** all deterministic gates run in-pipeline before `gh pr create`; GitHub Actions is a thin backstop (fresh-clone build + merge-queue) — do NOT add `.github/workflows` that re-run lint/types/tests/visual/sonar. BANS presence-not-substance passing conditions ("image attachment detected", "tests file exists").
+- **C — anti-404 / anti-rubber-stamp visual gate (Stage 5.5):** every visual proof must RESOLVE (non-zero valid PNG / HTTP 200) AND a named vision reviewer must have SEEN the pixels; emits a visual-review receipt; "attachment detected" is a FAIL, not a PASS.
+- **E — local reliability pre-sweep (Stage 6.7):** run Sonar-rated patterns (non-null assertions, array-index keys, unassociated labels, non-interactive onClick) locally on touched files before the PR; root-cause fixes only, suppressions forbidden. Kills the 3-round-trip Sonar CI loop.
+- **B — adversarial judge-flag verification (Stage 6):** no flag acted on blind; each verified against code with line evidence and classified CONFIRMED (fix) / DISPROVEN (receipt) / PRE-EXISTING (follow-up ticket). ~half of judge flags were hallucinations from truncated diffs.
+- **A — XL-staged build mode (Stage 4):** optional 2–4 staged Codex dispatches on one branch for large changes (>1,200 lines / >15 files / >5 themes / "apply to ALL X"); orchestrator verifies + commits between stages.
+- **D — cost-route watchers + never open-and-wander (Stage 8):** whale touches only judgment; the Haiku/Monitor watcher owns the PR to a terminal state (watch-to-green, rebase on drift, merge, or escalate) — an untended PR is the collision-mess root cause.
+
 ## [1.0.0] — 2026-07-09 — Renamed super-developer → exponential-developer
 
 - Plugin renamed `super-developer` → **`exponential-developer`** (product name). Commands/skill now

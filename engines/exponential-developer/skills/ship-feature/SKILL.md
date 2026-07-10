@@ -93,6 +93,19 @@ Never gate reversible work. Brainstorm/spec before Gate A, and change-manifest/i
 
 ---
 
+## Where gates run — LOCAL, pre-PR — NOT GitHub Actions (cost + correctness invariant)
+
+**Every quality gate in this pipeline runs LOCALLY, on the building agent's machine, BEFORE `gh pr create` — never as a GitHub Actions workflow.** This is a hard architectural rule, not a preference. It exists because the alternative was observed to fail three ways at once (2026-07): a rubber-stamp Actions "PR Readiness Gate" greened a PR whose visual review linked **404 images** (it checked *presence*, not *resolution*), PRs sat waiting async while agents forgot to tend/rebase them into a collision mess, and the Actions minutes ran the account into **paid overage**.
+
+- **Deterministic / locally-computable gates run in-pipeline, blocking, $0:** lint, typecheck, unit + eval tests (Stage 5), E2E + visual with image-resolution + vision review (Stage 5.5), the reliability/Sonar pre-sweep (Stage 6.7), cross-family judge (Stage 6), sandbox turn-on (Stage 5.8), change-manifest/design-review (Gate-A.5/A.7). A local gate runs in the SAME turn as the build, so the agent cannot "forget" it, it costs no Actions minutes, and it can actually FETCH the artifact (an image, a URL) and assert it — it cannot be fooled by a mere reference.
+- **GitHub Actions is a THIN BACKSTOP only** — reserved for what genuinely needs a clean-room: a fresh-clone build reproduction and/or a merge-queue check. **Do NOT add `.github/workflows/*` that re-run lint/types/tests/visual/sonar** — that duplicates local gates, burns quota, and runs async. If you find such a workflow, it is tech debt to remove, not extend.
+- **SonarCloud runs local-first** (Stage 6.7 pre-sweep) so violations are caught BEFORE the PR; Sonar-in-CI is a backstop, never the primary catch (the 3-round-trip PR-annotation loop is the anti-pattern).
+- **BANNED passing conditions.** A gate may NEVER pass on the *presence* of a thing when it can check the *substance*: "image attachment detected" ✋ (assert HTTP 200 + non-zero bytes + a vision reviewer saw the pixels), "tests file exists" ✋ (run them), "screenshot committed" ✋ (fetch + view it). Presence-not-substance is a false green — worse than no gate, because it reads as verified.
+
+**Litmus:** "Is this gate running locally in-pipeline before the PR, and does it check the artifact's SUBSTANCE (fetch/run/view), not merely its presence? If it lives in `.github/workflows` and re-runs a local gate — delete it."
+
+---
+
 ## Board mapping
 
 Backlog→Design(spec)→Build(worktree `feat/<slug>`)→Review(PR+verdict)→Deploy(id)→Done(smoke GREEN)
@@ -276,6 +289,8 @@ Use Codex for:
 
 Claude reads Codex conclusions and diffs only; Claude never re-executes implementation work.
 
+**XL-staged build mode — optional path for large changes (XOS-218 amendment A).** Single-dispatch is the default for normal tickets. Trigger XL mode when ANY holds: predicted diff > ~1,200 lines · > 15 files · spec carries > 5 fold-ins/themes · a governing-principle "apply to ALL X" scope. In XL mode, decompose into 2–4 staged Codex dispatches **on ONE branch**, each stage a coherent architectural layer (canonical order: skeleton/IA → shared primitives → per-surface wiring/polish). Between stages the **ORCHESTRATOR (not the builder)** runs the affected suites + targeted greps and commits the stage; a stage that fails verification is re-dispatched before the next begins. This catches inter-stage drift at commit boundaries that a single mega-dispatch would entangle (observed on a 44-file, +3,133/−1,170 ticket). **Litmus:** "Could a wrong decision in part 1 silently invalidate part 3? If yes, stage it. If no, one dispatch."
+
 ---
 
 ## Stage 5 — Tests + evals green
@@ -316,9 +331,14 @@ Web UI process:
 - Capture the local Playwright run: assertions, console state, screenshots, and skill-creator eval/benchmark result.
 - Attach screenshots the proven-reliable way for a PRIVATE repo: commit the PNGs to the tracked `docs/verify/<ticket>/*.png` path (desktop ~1280 + mobile ~390) and push to the PR branch — committed PNGs RENDER in the PR's "Files changed" tab, which is the guaranteed proof a viewer can see in one click. (Repo `.gitignore` typically ignores loose screenshots but ALLOWS `docs/verify/` — commit to that tracked path.) Then add a PR comment listing each committed screenshot and what it shows. Do NOT rely on `raw.githubusercontent...` / release-download asset URLs (they 404 for a viewer on a private repo) or on inline-in-description `github.com/user-attachments/...` assets (those need a GitHub web-UI drag-drop or an undocumented upload API — not reliably scriptable by a cell).
 
+**⛔ Visual proof MUST RESOLVE + be SEEN — the anti-404, anti-rubber-stamp gate (XOS-218 amendment C).** A visual gate that passes on "image attachment detected" is a false green — the exact failure observed 2026-07 (a GitHub Actions "PR Readiness Gate" greened a PR whose visual links were 404). Presence of a markdown image link is NOT proof. This gate FAIL-HARDs unless BOTH hold, checked LOCALLY before `gh pr create`:
+  1. **Every visual proof resolves.** For each screenshot the PR will reference, assert it exists as a committed blob on the branch AND renders — verify the file is a non-zero, viewable image asset that actually decodes at its `docs/verify/<ticket>/` path (`test -s` + a `file`/magic-byte image-type check; a committed PNG is the common case, but any real image the reviewer can view — PNG/JPEG/WebP/SVG — satisfies the intent), and if any URL form is used, `curl -sI` it and assert `HTTP 200` + non-zero `content-length`. Any 404 / zero-byte / non-decoding / missing file ⇒ `FAIL` (fix the path, re-commit, re-verify) — never open the PR with an unresolved image.
+  2. **A vision-capable reviewer SAW the pixels.** "attachment detected" / "screenshot committed" are BANNED as passing conditions. A vision reviewer (`agy`/Gemini-vision, GPT-4V, or the human) must look at the exact rendered pixels of every changed surface and return a verdict. Self-attestation by a headless agent does not count (sensorium routing, above).
+  Emit a **visual-review receipt** carried into the PR body: for each surface — committed path · resolves(200/valid-image)=yes · vision-reviewer(model/human)=<who> · verdict. No receipt, or any surface unresolved/unseen ⇒ Stage 5.5 is `FAIL`, not `PASS`.
+
 Pass/fail:
 
-- **Web UI `PASS`:** ran on LOCAL dev/preview, not prod; authenticated local dev through Playwright with E2E creds; dogfooded the real customer path through real UI/auth/data, not a bypass or demo harness; desktop and mobile screenshots are non-blank; no overflow, clipping, incoherent overlap, or broken responsive layout; no critical console errors; critical Playwright eval/benchmark flows pass; persona `judge-panel` returns `GREEN`; screenshots are committed to `docs/verify/<ticket>/` and pushed so they render in the PR's "Files changed" tab for the reviewer (NOT raw/release/user-attachments URLs that 404 on a private repo).
+- **Web UI `PASS`:** ran on LOCAL dev/preview, not prod; authenticated local dev through Playwright with E2E creds; dogfooded the real customer path through real UI/auth/data, not a bypass or demo harness; desktop and mobile screenshots are non-blank; no overflow, clipping, incoherent overlap, or broken responsive layout; no critical console errors; critical Playwright eval/benchmark flows pass; persona `judge-panel` returns `GREEN`; screenshots are committed to `docs/verify/<ticket>/` and pushed so they render in the PR's "Files changed" tab for the reviewer (NOT raw/release/user-attachments URLs that 404 on a private repo); AND the **visual-review receipt** is present — every surface resolves (non-zero viewable image that decodes / HTTP 200) and a named vision reviewer saw the pixels (a green on "attachment detected" is a FAIL, not a PASS).
 - **Plugin/CLI `PASS`:** commands exit cleanly with no stack traces or errors; stdout/stderr is well-formed at both widths with no broken tables, clipped/overflowing output, or garbled layout; help/usage text is present and correct; optional terminal-screenshot vision review returns `GREEN` if used.
 - **Backend-only `not_applicable`:** unchanged: include evidence with files touched plus why no browser-visible behavior or UI acceptance criteria were affected.
 - **`FAIL` (either mode):** any required check fails. Loop to Stage 4/5, fix, rerun automated tests, then rerun Stage 5.5.
@@ -413,7 +433,13 @@ HOW: restore at least one cross-family judge route (agy/Gemini or Codex/OpenAI),
 
 Required verdict: `GREEN` or `RED`.
 
-If `RED`, Codex fixes and returns to Stage 5, then repeats Stage 5.5/5.6/5.7 and Stage 5.8 as applicable before review runs again.
+**Adversarial judge-flag verification — no flag is acted on blind (XOS-218 amendment B).** The judge is a *detector*, not an authority. Across a 2026-07 run, roughly HALF of all judge flags were hallucinations from truncated diffs (claiming reorders/files/Suspense boundaries didn't exist when they did) — blind compliance would have ADDED defects. So every flag is verified against the actual code with **line evidence** and classified before any fix:
+- **CONFIRMED** — reproduced against the real code → fix with the smallest correct change, test included.
+- **DISPROVEN** — the code contradicts the flag → document in the PR with the disproving line refs (the receipt IS the review artifact); do NOT "fix" it.
+- **PRE-EXISTING** — real but not introduced by this change → follow-up ticket with a root-cause note, never scope creep.
+A fix without a line-evidence receipt AND a skip without a line-evidence receipt both FAIL this stage. This is the FEEDBACK-LOOP invariant applied recursively to the feedback itself.
+
+If `RED`, Codex fixes the CONFIRMED flags (only) and returns to Stage 5, then repeats Stage 5.5/5.6/5.7 and Stage 5.8 as applicable before review runs again.
 
 At the END of Stage 6, emit the canonical receipt block below, populated from the `judge-panel` JSON: `final_verdict` → `verdict` (`GREEN`/`RED`), families that returned → `families`, `all_flags` count plus one-line summary → `flags`, `cascade.escalated` → `escalated`, and the current ISO8601 timestamp → `ts`.
 
@@ -433,6 +459,23 @@ At the END of Stage 6, emit the canonical receipt block below, populated from th
 - escalated: yes | no
 - ts: <ISO8601>
 ```
+
+---
+
+## Stage 6.7 — Local reliability pre-sweep — before `gh pr create` (XOS-218 amendment E)
+
+Run LOCALLY on the touched files immediately before Stage 7, because SonarCloud (and similar CI linters) surface reliability findings PIECEMEAL as PR annotations — observed 2026-07 to take THREE round-trips on one PR (non-null assertions → array-index keys → a11y BUG-class rules), each round-trip a full ~8–12 min CI cycle plus a whale diagnosis turn. A 5-second local sweep eliminates the loop. This is the local-first gate rule (above) applied to Sonar: catch it here, not in CI.
+
+Run the reliability-rated patterns Sonar gates on against the touched files (a codified `bun` handler is the target; greps are the interim):
+
+```
+grep -rnE '\w+!\.|\)!\.'      <touched files>   # non-null assertions
+grep -rnE 'key=\{i(ndex)?\}'  <touched files>   # array-index React keys
+grep -rn  '<label[^>]*>'      <touched files>   # labels missing htmlFor / control association
+grep -rn  'onClick'           <touched files>   # click handlers on non-interactive elements (a11y)
+```
+
+Fix **root-cause** — stable-id registries, native `<label>` semantics, narrowed types. **Suppressions are FORBIDDEN** (consistent with FAIL-HARD): a `// NOSONAR` / eslint-disable to pass the sweep is a violation, not a fix. Only open the PR once the touched files are clean. **Litmus:** "Did the pre-sweep run on the touched files before `gh pr create`?"
 
 ---
 
@@ -486,7 +529,9 @@ STOP at PR for a human to merge IF either:
 
 If Gate B stops, present the PR URL, review verdict, test summary, deploy plan, and the `human-merge` reason. Do not merge or deploy.
 
-If Gate B does not stop, **hand merge + deploy to a Haiku sub-agent** (`claude --model haiku -p` or Agent `model: haiku`) — the Opus whale must not watch the build/poll loop.
+If Gate B does not stop, **hand merge + deploy to a Haiku sub-agent** (`claude --model haiku -p` or Agent `model: haiku`) — the Opus whale must not watch the build/poll loop (XOS-218 amendment D: the whale touches only spec-pinning, stage-gate judgment, judge-flag adjudication, and merge/release decisions; watchers/plumbing route down).
+
+**Never open-and-wander (the anti-collision rule).** The pipeline does NOT open a PR and move on — a PR left untended is where "sits waiting → forgets to rebase → collision mess" is born (a SELF-MONITORING / no-silent-stall violation). The Haiku/Monitor watcher owns the PR THROUGH to a terminal state: it watches checks to green, rebases on `main` drift, merges, and reports — or, if the watcher stalls or the PR blocks, it escalates loudly. A run is not "done" with a PR still open unless Gate B explicitly parked it for human merge. Because CI is a thin backstop and the real gates already ran locally (see the local-first gate rule), the watcher's wait is short — it is not babysitting a 10-minute Actions matrix that re-runs local work.
 
 1. The Haiku sub-agent queues the autonomous merge:
 
