@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0] — 2026-07-10 — XOS-221: Stage 4 build-reliability (foundation-first)
+
+Stage 4 delegated to `codex exec` but never specified how — so builds silently stalled or returned partial work (observed twice building THE-541). Codified the three non-negotiables:
+- **`codex exec --sandbox workspace-write`** — codex defaults to a read-only sandbox; a builder without this plans, can't `apply_patch`, and stops with no edits. (Judge/review lanes stay read-only.)
+- **Model + effort by the resilience rule** — inherit codex config model (gpt-5.6-sol; never gpt-5.6-codex/API-only), `-c model_reasoning_effort=high`, step down on "at capacity", parse+retry on invalid-effort 400. Never pin ultra/xhigh (capacity-walled).
+- **Orchestrator verifies completion** — never trust a "launched"/partial return; confirm requested changes present (diff + greps) + `bun build` clean before Stage 5. Amendment-D open-and-wander applied to the builder.
+
 ## [1.1.0] — 2026-07-09 — XOS-218: local-first gates + anti-404 visual gate + v2 amendments
 
 Gates run LOCAL, pre-PR — **not GitHub Actions** (new "Where gates run" invariant). Motivated by a real 2026-07 failure: a GitHub Actions "PR Readiness Gate" greened a PR whose visual review linked **404 images** (checked *presence*, not *resolution*), PRs sat waiting async while agents forgot to rebase (collision mess), and Actions minutes hit **paid overage**.
