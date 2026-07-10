@@ -1,11 +1,11 @@
 {
   "name": "jury",
   "platform": "xOS",
-  "version": "0.1.0",
-  "description": "Jury v0.1.0 — standalone cross-family cascade-then-jury reviewer (Gemini + GPT small-fish → cross-family tiebreaker). The free 'jury beats judge' base; codi and super-developer depend on it optionally for cross-family verification. No API keys (OAuth local CLIs).",
+  "version": "0.2.0",
+  "description": "Jury v0.1.0 — standalone cross-family cascade-then-jury reviewer (Gemini + GPT small-fish → cross-family tiebreaker). The free 'jury beats judge' base; codi and exponential-developer depend on it optionally for cross-family verification. No API keys (OAuth local CLIs).",
   "category": "developer-tools",
   "workspace_binding": {
     "mode": "global",
-    "_comment": "global so cross-family review resolves in EVERY cwd/repo — platform-level cross-xOS dev tooling that codi + super-developer depend on, not workspace-bound."
+    "_comment": "global so cross-family review resolves in EVERY cwd/repo — platform-level cross-xOS dev tooling that codi + exponential-developer depend on, not workspace-bound."
   }
 }

@@ -1,12 +1,12 @@
 #!/usr/bin/env bun
 /**
- * judge_panel.ts — Judge-panel cascade-then-jury harness (OAuth local-CLI edition).
+ * judge_panel.ts — Judge-panel cascade-then-jury harness (OAuth-only local-CLI edition).
  *
  * Small-fish first: ≥2 cross-family cheap judges in parallel.
  * Escalate to one big-fish cross-family tiebreaker on disagreement or low confidence.
  *
- * Both judges run via OAuth-authenticated local CLIs over the user's paid
- * subscriptions — NO API keys required:
+ * Both judges run exclusively via OAuth-authenticated local CLIs over the
+ * user's paid subscriptions. API keys and API-billing fallbacks are unsupported:
  *   - Google → `agy` CLI (Antigravity OAuth / Ultra entitlement)
  *   - OpenAI → `codex` CLI (ChatGPT Plus/Pro subscription via codex login OAuth)
  *
@@ -14,18 +14,13 @@
  *   1. `agy` on PATH and authenticated:
  *      agy --model "Gemini 3.5 Flash (Low)" --dangerously-skip-permissions \
  *        --sandbox --print-timeout 120s -p "..."
- *      The script does NOT pass GEMINI_API_KEY / GOOGLE_API_KEY /
- *      GOOGLE_GENAI_API_KEY; agy uses OAuth / Ultra entitlement.
+ *      The script strips API-key-shaped environment variables so agy uses
+ *      OAuth / Ultra entitlement.
  *   2. `codex` on PATH and authenticated (`codex login`).
  *      Creds at ~/.codex/auth.json. CLI uses ChatGPT Plus/Pro entitlements.
  *
- * If either CLI is MISSING (binary not on PATH), the juror returns verdict="error"
- * with flag CLI_NOT_INSTALLED — UNLESS the user has explicitly approved API-billing
- * fallback for that lane via:
- *   --api-fallback-approved              (master gate — both lanes)
- *   --api-fallback-approved-gemini       (Gemini lane only)
- *   --api-fallback-approved-openai       (OpenAI lane only)
- * or the equivalent JUDGE_PANEL_API_FALLBACK_APPROVED[_{GEMINI,OPENAI}]=1 env vars.
+ * If either CLI is MISSING (binary not on PATH), the juror fails hard with
+ * verdict="error" and flag CLI_NOT_INSTALLED. It never falls back to an API.
  *
  * If a CLI is INSTALLED but fails (auth, runtime, timeout, non-zero exit), the
  * juror returns the CLI error — NO fallback fires.
@@ -95,35 +90,7 @@ interface ParsedArgs {
   tiebreaker: string | null;
   persona: string | null;
   silent: boolean;
-  apiFallbackApproved: boolean;
-  apiFallbackApprovedGemini: boolean;
-  apiFallbackApprovedOpenai: boolean;
 }
-
-// ─── API-fallback approval state (module-level) ─────────────────────────────
-
-let API_FALLBACK_APPROVED_GEMINI = false;
-let API_FALLBACK_APPROVED_OPENAI = false;
-
-function boolEnv(name: string, defaultVal = false): boolean {
-  const v = process.env[name];
-  if (v === undefined) return defaultVal;
-  return ["1", "true", "yes", "on"].includes(v.trim().toLowerCase());
-}
-
-function initApprovalFromEnv(): void {
-  const master = boolEnv("JUDGE_PANEL_API_FALLBACK_APPROVED", false);
-  API_FALLBACK_APPROVED_GEMINI = boolEnv(
-    "JUDGE_PANEL_API_FALLBACK_APPROVED_GEMINI",
-    master,
-  );
-  API_FALLBACK_APPROVED_OPENAI = boolEnv(
-    "JUDGE_PANEL_API_FALLBACK_APPROVED_OPENAI",
-    master,
-  );
-}
-
-initApprovalFromEnv();
 
 // ─── Config — model pins from $JURY_ENV (default ~/.jury/.env; falls back to
 // $CO_DIALECTIC_ENV / ~/.co-dialectic/.env for back-compat) ──────────────────
@@ -167,25 +134,17 @@ function loadEnv(path: string): Record<string, string> {
 
 const ENV_FILE = loadEnv(CYBORG_ENV);
 
-const SMALL_GEMINI =
-  ENV_FILE["GEMINI_CLI_DEFAULT_MODEL"] ?? "Gemini 3.5 Flash (Low)";
+const FALLBACK_SMALL_GEMINI = "Gemini 3.5 Flash (Low)";
+const FALLBACK_BIG_GEMINI = "Gemini 3.1 Pro (High)";
 
 // OAuth caveat: ChatGPT-account-auth Codex CLI rejects nano/mini-tier API models.
-// JUDGE_PANEL_OPENAI_OAUTH_MODEL takes precedence; default gpt-5.4.
+// JUDGE_PANEL_OPENAI_OAUTH_MODEL takes precedence; default gpt-5.6-sol.
 const OPENAI_OAUTH_DEFAULT =
-  ENV_FILE["JUDGE_PANEL_OPENAI_OAUTH_MODEL"] ??
   process.env.JUDGE_PANEL_OPENAI_OAUTH_MODEL ??
-  "gpt-5.4";
+  ENV_FILE["JUDGE_PANEL_OPENAI_OAUTH_MODEL"] ??
+  "gpt-5.6-sol";
 const SMALL_OPENAI = OPENAI_OAUTH_DEFAULT;
 const BIG_OPENAI = ENV_FILE["OPENAI_BIG_JUDGE_MODEL"] ?? "gpt-5.4";
-const BIG_GEMINI =
-  ENV_FILE["GEMINI_CLI_PREMIUM_MODEL"] ?? "Gemini 3.1 Pro (High)";
-
-// Default tiebreaker: Gemini Pro — cross-family + cross-tier vs. the small-fish panel.
-const DEFAULT_TIEBREAKER =
-  ENV_FILE["JUDGE_PANEL_DEFAULT_TIEBREAKER"] ??
-  process.env.JUDGE_PANEL_DEFAULT_TIEBREAKER ??
-  BIG_GEMINI;
 
 const CONFIDENCE_THRESHOLD = parseInt(
   ENV_FILE["JUDGE_PANEL_CONF_THRESHOLD"] ?? "80",
@@ -208,10 +167,10 @@ interface PricingEntry {
   out: number;
 }
 const PRICING: Record<string, PricingEntry> = {
-  [SMALL_GEMINI]: { in: 0.3, out: 2.5 },
+  [FALLBACK_SMALL_GEMINI]: { in: 0.3, out: 2.5 },
   [SMALL_OPENAI]: { in: 0.05, out: 0.4 },
   [BIG_OPENAI]: { in: 1.25, out: 10.0 },
-  [BIG_GEMINI]: { in: 1.25, out: 10.0 },
+  [FALLBACK_BIG_GEMINI]: { in: 1.25, out: 10.0 },
 };
 
 // ─── Rubrics ────────────────────────────────────────────────────────────────
@@ -379,6 +338,42 @@ function newJurorError(
   };
 }
 
+function balancedJsonObjects(raw: string): string[] {
+  const objects: string[] = [];
+  let start = -1;
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = 0; i < raw.length; i += 1) {
+    const char = raw[i];
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (char === "\\") {
+        escaped = true;
+      } else if (char === '"') {
+        inString = false;
+      }
+      continue;
+    }
+    if (char === '"') {
+      inString = true;
+    } else if (char === "{") {
+      if (depth === 0) start = i;
+      depth += 1;
+    } else if (char === "}" && depth > 0) {
+      depth -= 1;
+      if (depth === 0 && start >= 0) {
+        objects.push(raw.slice(start, i + 1));
+        start = -1;
+      }
+    }
+  }
+
+  return objects.sort((a, b) => b.length - a.length);
+}
+
 function parseVerdict(
   raw: string,
   model: string,
@@ -387,9 +382,11 @@ function parseVerdict(
   tokensOut: number,
   latencyMs: number,
 ): JurorResult {
-  // Non-greedy JSON-object regex with DOTALL semantics.
-  const match = raw.match(/\{[\s\S]*?\}/);
-  if (!match) {
+  const trimmed = raw.trim();
+  const candidates = [trimmed, ...balancedJsonObjects(raw)].filter(
+    (candidate, index, all) => candidate.length > 0 && all.indexOf(candidate) === index,
+  );
+  if (candidates.length === 0) {
     return newJurorError(
       model,
       family,
@@ -401,16 +398,27 @@ function parseVerdict(
       tokensOut,
     );
   }
-  let obj: Record<string, unknown>;
-  try {
-    obj = JSON.parse(match[0]) as Record<string, unknown>;
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e);
+
+  let obj: Record<string, unknown> | null = null;
+  let lastDecodeError = "unknown JSON parse failure";
+  for (const candidate of candidates) {
+    try {
+      const parsed = JSON.parse(candidate) as unknown;
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        obj = parsed as Record<string, unknown>;
+        break;
+      }
+      lastDecodeError = "decoded JSON value is not an object";
+    } catch (e: unknown) {
+      lastDecodeError = e instanceof Error ? e.message : String(e);
+    }
+  }
+  if (!obj) {
     return newJurorError(
       model,
       family,
       [],
-      `json decode: ${msg}`,
+      `json decode: ${lastDecodeError}`,
       latencyMs,
       raw,
       tokensIn,
@@ -480,257 +488,9 @@ function ensureCli(
     model,
     family,
     ["CLI_NOT_INSTALLED"],
-    `\`${binName}\` not on PATH — install + authenticate the OAuth CLI, ` +
-      "or pass --api-fallback-approved to allow API-billing fallback. " +
-      "See judge_panel.ts docstring for setup.",
+    `\`${binName}\` not on PATH — install and authenticate the OAuth CLI. ` +
+      "This harness is OAuth-only and has no API fallback.",
   );
-}
-
-// ─── API-fallback runners ───────────────────────────────────────────────────
-
-async function runGeminiApi(
-  model: string,
-  prompt: string,
-): Promise<JurorResult> {
-  const start = Date.now();
-  const apiKey =
-    process.env.GEMINI_API_KEY ||
-    process.env.GOOGLE_API_KEY ||
-    ENV_FILE["GEMINI_API_KEY"] ||
-    ENV_FILE["GOOGLE_API_KEY"] ||
-    "";
-  if (!apiKey) {
-    return newJurorError(
-      model,
-      "google",
-      ["API_FALLBACK_NO_KEY"],
-      "API fallback approved but GEMINI_API_KEY / GOOGLE_API_KEY not set",
-    );
-  }
-  const body = JSON.stringify({
-    contents: [{ parts: [{ text: prompt }] }],
-    generationConfig: { temperature: 0, maxOutputTokens: 400 },
-  });
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), CALL_TIMEOUT_MS);
-
-  let resp: Response;
-  try {
-    resp = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": apiKey,
-      },
-      body,
-      signal: controller.signal,
-    });
-  } catch (e: unknown) {
-    clearTimeout(timeoutId);
-    const latencyMs = Date.now() - start;
-    const msg = e instanceof Error ? e.message : String(e);
-    if (e instanceof Error && e.name === "AbortError") {
-      return newJurorError(
-        model,
-        "google",
-        ["API_FALLBACK_TIMEOUT"],
-        `timeout after ${CALL_TIMEOUT_S}s`,
-        latencyMs,
-        "",
-        0,
-        0,
-        "timeout",
-      );
-    }
-    return newJurorError(
-      model,
-      "google",
-      ["API_FALLBACK_URL_ERROR"],
-      `gemini api url: ${msg}`,
-      latencyMs,
-    );
-  }
-  clearTimeout(timeoutId);
-
-  if (!resp.ok) {
-    const errBody = (await resp.text()).slice(0, 500);
-    return newJurorError(
-      model,
-      "google",
-      ["API_FALLBACK_HTTP_ERROR"],
-      `gemini api http ${resp.status}: ${errBody}`,
-      Date.now() - start,
-    );
-  }
-
-  let payload: Record<string, unknown>;
-  try {
-    payload = (await resp.json()) as Record<string, unknown>;
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e);
-    return newJurorError(
-      model,
-      "google",
-      ["API_FALLBACK_PAYLOAD_SHAPE"],
-      `gemini api payload parse: ${msg}`,
-      Date.now() - start,
-    );
-  }
-
-  const latencyMs = Date.now() - start;
-  let raw = "";
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const candidates = (payload as any).candidates;
-    raw = candidates[0].content.parts[0].text ?? "";
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e);
-    return newJurorError(
-      model,
-      "google",
-      ["API_FALLBACK_PAYLOAD_SHAPE"],
-      `gemini api payload shape: ${msg} — keys=${JSON.stringify(Object.keys(payload))}`,
-      latencyMs,
-    );
-  }
-
-  const result = parseVerdict(
-    raw,
-    model,
-    "google",
-    estimateTokens(prompt),
-    estimateTokens(raw),
-    latencyMs,
-  );
-  if (!result.flags.includes("API_FALLBACK_USED")) {
-    result.flags.unshift("API_FALLBACK_USED");
-  }
-  return result;
-}
-
-async function runOpenaiApi(
-  model: string,
-  prompt: string,
-): Promise<JurorResult> {
-  const start = Date.now();
-  const apiKey = process.env.OPENAI_API_KEY || ENV_FILE["OPENAI_API_KEY"] || "";
-  if (!apiKey) {
-    return newJurorError(
-      model,
-      "openai",
-      ["API_FALLBACK_NO_KEY"],
-      "API fallback approved but OPENAI_API_KEY not set",
-    );
-  }
-  const body = JSON.stringify({
-    model,
-    messages: [{ role: "user", content: prompt }],
-    temperature: 0,
-    max_completion_tokens: 400,
-  });
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), CALL_TIMEOUT_MS);
-
-  let resp: Response;
-  try {
-    resp = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body,
-      signal: controller.signal,
-    });
-  } catch (e: unknown) {
-    clearTimeout(timeoutId);
-    const latencyMs = Date.now() - start;
-    const msg = e instanceof Error ? e.message : String(e);
-    if (e instanceof Error && e.name === "AbortError") {
-      return newJurorError(
-        model,
-        "openai",
-        ["API_FALLBACK_TIMEOUT"],
-        `timeout after ${CALL_TIMEOUT_S}s`,
-        latencyMs,
-        "",
-        0,
-        0,
-        "timeout",
-      );
-    }
-    return newJurorError(
-      model,
-      "openai",
-      ["API_FALLBACK_URL_ERROR"],
-      `openai api url: ${msg}`,
-      latencyMs,
-    );
-  }
-  clearTimeout(timeoutId);
-
-  if (!resp.ok) {
-    const errBody = (await resp.text()).slice(0, 500);
-    return newJurorError(
-      model,
-      "openai",
-      ["API_FALLBACK_HTTP_ERROR"],
-      `openai api http ${resp.status}: ${errBody}`,
-      Date.now() - start,
-    );
-  }
-
-  let payload: Record<string, unknown>;
-  try {
-    payload = (await resp.json()) as Record<string, unknown>;
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e);
-    return newJurorError(
-      model,
-      "openai",
-      ["API_FALLBACK_PAYLOAD_SHAPE"],
-      `openai api payload parse: ${msg}`,
-      Date.now() - start,
-    );
-  }
-
-  const latencyMs = Date.now() - start;
-  let raw = "";
-  let tokensIn = estimateTokens(prompt);
-  let tokensOut = 0;
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const p = payload as any;
-    raw = p.choices[0].message.content ?? "";
-    const usage = p.usage ?? {};
-    tokensIn = usage.prompt_tokens ?? tokensIn;
-    tokensOut = usage.completion_tokens ?? estimateTokens(raw);
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e);
-    return newJurorError(
-      model,
-      "openai",
-      ["API_FALLBACK_PAYLOAD_SHAPE"],
-      `openai api payload shape: ${msg} — keys=${JSON.stringify(Object.keys(payload))}`,
-      latencyMs,
-    );
-  }
-
-  const result = parseVerdict(
-    raw,
-    model,
-    "openai",
-    tokensIn,
-    tokensOut,
-    latencyMs,
-  );
-  if (!result.flags.includes("API_FALLBACK_USED")) {
-    result.flags.unshift("API_FALLBACK_USED");
-  }
-  return result;
 }
 
 // ─── CLI runners (OAuth) ────────────────────────────────────────────────────
@@ -778,31 +538,253 @@ async function spawnWithTimeout(
   };
 }
 
-function envWithoutKeys(removeKeys: string[]): Record<string, string | undefined> {
+interface SpawnResult {
+  exitCode: number;
+  stdout: string;
+  stderr: string;
+  timedOut: boolean;
+}
+
+interface ResolvedModels {
+  smallGemini: string;
+  bigGemini: string;
+}
+
+function oauthOnlyEnv(): Record<string, string | undefined> {
   const out: Record<string, string | undefined> = {};
   for (const [k, v] of Object.entries(process.env)) {
-    if (!removeKeys.includes(k)) out[k] = v;
+    if (!/(?:^|_)API_KEY$/i.test(k)) out[k] = v;
   }
   return out;
 }
 
-async function runGemini(model: string, prompt: string): Promise<JurorResult> {
-  if (!cliInstalled(AGY_BIN)) {
-    if (API_FALLBACK_APPROVED_GEMINI) {
-      return runGeminiApi(model, prompt);
+function normalizeCliVersion(label: string, stdout: string): string {
+  const firstLine = stdout
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .find(Boolean);
+  if (!firstLine) return `${label} unknown`;
+  const compact = firstLine.replace(/\s+/g, " ");
+  return compact.toLowerCase().startsWith(label.toLowerCase())
+    ? compact
+    : `${label} ${compact}`;
+}
+
+const cliVersionCache = new Map<string, Promise<string>>();
+
+function cliVersion(
+  cacheKey: string,
+  label: string,
+  attempts: string[][],
+): Promise<string> {
+  const cached = cliVersionCache.get(cacheKey);
+  if (cached) return cached;
+
+  const pending = (async (): Promise<string> => {
+    if (!cliInstalled(attempts[0][0])) return `${label} unknown`;
+    for (const command of attempts) {
+      try {
+        const result = await spawnWithTimeout(
+          command,
+          oauthOnlyEnv(),
+          Math.min(CALL_TIMEOUT_MS, 5_000),
+        );
+        if (!result.timedOut && result.exitCode === 0 && result.stdout.trim()) {
+          return normalizeCliVersion(label, result.stdout);
+        }
+      } catch {
+        // Try the next version command.
+      }
     }
+    return `${label} unknown`;
+  })();
+  cliVersionCache.set(cacheKey, pending);
+  return pending;
+}
+
+function logLane(family: string, version: string, model: string): void {
+  process.stderr.write(`[jury] ${family}: ${version} / ${model}\n`);
+}
+
+function compareModelVersions(a: number[], b: number[]): number {
+  const width = Math.max(a.length, b.length);
+  for (let i = 0; i < width; i += 1) {
+    const diff = (a[i] ?? 0) - (b[i] ?? 0);
+    if (diff !== 0) return diff;
+  }
+  return 0;
+}
+
+interface GeminiModelCandidate {
+  displayName: string;
+  version: number[];
+  tier: "flash" | "pro";
+  effort: string;
+}
+
+function parseGeminiModelCandidates(output: string): GeminiModelCandidate[] {
+  const candidates: GeminiModelCandidate[] = [];
+  for (const line of output.split(/\r?\n/)) {
+    const match = line.match(
+      /\b(Gemini\s+([\d.]+)\s+(Flash|Pro)(?:\s+\(([^)]+)\))?)/i,
+    );
+    if (!match) continue;
+    const displayName = match[1].replace(/\s+/g, " ").trim();
+    if (candidates.some((candidate) => candidate.displayName === displayName)) {
+      continue;
+    }
+    candidates.push({
+      displayName,
+      version: match[2].split(".").map((part) => Number(part)),
+      tier: match[3].toLowerCase() as "flash" | "pro",
+      effort: (match[4] ?? "").trim().toLowerCase(),
+    });
+  }
+  return candidates;
+}
+
+function selectLatestGeminiModel(
+  candidates: GeminiModelCandidate[],
+  tier: "flash" | "pro",
+): string | null {
+  let pool = candidates.filter((candidate) => candidate.tier === tier);
+  if (tier === "pro") {
+    const highEffort = pool.filter((candidate) => candidate.effort === "high");
+    if (highEffort.length > 0) pool = highEffort;
+  }
+  if (pool.length === 0) return null;
+
+  pool.sort((a, b) => {
+    const versionOrder = compareModelVersions(b.version, a.version);
+    if (versionOrder !== 0) return versionOrder;
+    if (tier === "flash") {
+      return Number(b.effort === "low") - Number(a.effort === "low");
+    }
+    return Number(b.effort === "high") - Number(a.effort === "high");
+  });
+  return pool[0].displayName;
+}
+
+let resolvedModelsPromise: Promise<ResolvedModels> | null = null;
+
+async function resolveModels(): Promise<ResolvedModels> {
+  if (resolvedModelsPromise) return resolvedModelsPromise;
+  resolvedModelsPromise = (async (): Promise<ResolvedModels> => {
+    let discoveredSmall: string | null = null;
+    let discoveredBig: string | null = null;
+    if (cliInstalled(AGY_BIN)) {
+      try {
+        const result = await spawnWithTimeout(
+          [AGY_BIN, "models"],
+          oauthOnlyEnv(),
+          Math.min(CALL_TIMEOUT_MS, 15_000),
+        );
+        if (!result.timedOut && result.exitCode === 0) {
+          const candidates = parseGeminiModelCandidates(result.stdout);
+          discoveredSmall = selectLatestGeminiModel(candidates, "flash");
+          discoveredBig = selectLatestGeminiModel(candidates, "pro");
+        }
+      } catch {
+        // Discovery is best-effort; stable defaults below keep the jury usable.
+      }
+    }
+
+    // Discovery WINS (pick the latest live fish); env vars are only a fallback when
+    // `agy models` is unavailable — a stale env pin must never beat the discovered latest
+    // ("discover the latest," not "honor an old pin"). Fallback constants are the last resort.
+    return {
+      smallGemini:
+        discoveredSmall ??
+        process.env.GEMINI_CLI_DEFAULT_MODEL ??
+        ENV_FILE["GEMINI_CLI_DEFAULT_MODEL"] ??
+        FALLBACK_SMALL_GEMINI,
+      bigGemini:
+        discoveredBig ??
+        process.env.GEMINI_CLI_PREMIUM_MODEL ??
+        ENV_FILE["GEMINI_CLI_PREMIUM_MODEL"] ??
+        FALLBACK_BIG_GEMINI,
+    };
+  })();
+  return resolvedModelsPromise;
+}
+
+const AGY_PROMPT_CHAR_LIMIT = 24_000;
+
+function compactPromptForAgy(prompt: string): string {
+  if (prompt.length <= AGY_PROMPT_CHAR_LIMIT) return prompt;
+
+  const artifactMarker = "ARTIFACT:\n```\n";
+  const responseMarker =
+    "\n```\n\nReturn ONLY a single JSON object on one line.";
+  const artifactStart = prompt.indexOf(artifactMarker);
+  const responseStart = prompt.lastIndexOf(responseMarker);
+  const omission =
+    "\n\n[... middle of oversized artifact omitted by jury harness ...]\n\n";
+
+  if (artifactStart >= 0 && responseStart > artifactStart) {
+    const contentStart = artifactStart + artifactMarker.length;
+    const prefix = prompt.slice(0, contentStart);
+    const suffix = prompt.slice(responseStart);
+    const artifact = prompt.slice(contentStart, responseStart);
+    const artifactBudget = AGY_PROMPT_CHAR_LIMIT - prefix.length - suffix.length - omission.length;
+    if (artifactBudget > 1_000) {
+      const headLength = Math.ceil(artifactBudget * 0.65);
+      const tailLength = artifactBudget - headLength;
+      return `${prefix}${artifact.slice(0, headLength)}${omission}${artifact.slice(-tailLength)}${suffix}`;
+    }
+  }
+
+  const fallbackBudget = AGY_PROMPT_CHAR_LIMIT - omission.length;
+  const headLength = Math.ceil(fallbackBudget * 0.65);
+  return `${prompt.slice(0, headLength)}${omission}${prompt.slice(-(fallbackBudget - headLength))}`;
+}
+
+function highestAllowedReasoningEffort(output: string): string | null {
+  const supported = output.match(/Supported values are\s*:?\s*([^\r\n]+)/i);
+  if (!supported) return null;
+  const segment = supported[1];
+  let values = Array.from(
+    segment.matchAll(/['"`]([a-z][a-z0-9_-]*)['"`]/gi),
+    (match) => match[1].toLowerCase(),
+  );
+  if (values.length === 0) {
+    values = Array.from(
+      segment.matchAll(/\b(none|minimal|low|medium|high|xhigh)\b/gi),
+      (match) => match[1].toLowerCase(),
+    );
+  }
+  values = [...new Set(values)];
+  if (values.length === 0) return null;
+
+  const rank = ["none", "minimal", "low", "medium", "high", "xhigh"];
+  return values.sort((a, b) => rank.indexOf(b) - rank.indexOf(a))[0];
+}
+
+function codexReasoningRetry(result: SpawnResult): string | null {
+  if (result.exitCode === 0 || result.timedOut) return null;
+  const output = `${result.stderr}\n${result.stdout}`;
+  if (!/\b400\b/.test(output) || !/Supported values are/i.test(output)) {
+    return null;
+  }
+  return highestAllowedReasoningEffort(output);
+}
+
+async function runGemini(model: string, prompt: string): Promise<JurorResult> {
+  const version = await cliVersion("google", "agy", [
+    [AGY_BIN, "version"],
+    [AGY_BIN, "--version"],
+  ]);
+  if (!cliInstalled(AGY_BIN)) {
+    logLane("google", version, model);
     return ensureCli(AGY_BIN, "google", model) as JurorResult;
   }
+  const effectivePrompt = compactPromptForAgy(prompt);
   const start = Date.now();
-  // Strip API-key env vars so agy uses OAuth (not pay-per-token API).
-  const childEnv = envWithoutKeys([
-    "GEMINI_API_KEY",
-    "GOOGLE_API_KEY",
-    "GOOGLE_GENAI_API_KEY",
-  ]);
+  const childEnv = oauthOnlyEnv();
 
-  let result: { exitCode: number; stdout: string; stderr: string; timedOut: boolean };
+  let result: SpawnResult;
   try {
+    logLane("google", version, model);
     result = await spawnWithTimeout(
       [
         AGY_BIN,
@@ -813,7 +795,7 @@ async function runGemini(model: string, prompt: string): Promise<JurorResult> {
         "--print-timeout",
         `${CALL_TIMEOUT_S}s`,
         "-p",
-        prompt,
+        effectivePrompt,
       ],
       childEnv,
       CALL_TIMEOUT_MS,
@@ -844,11 +826,12 @@ async function runGemini(model: string, prompt: string): Promise<JurorResult> {
     );
   }
   if (result.exitCode !== 0) {
+    const errSnippet = result.stderr.slice(0, 500) || result.stdout.slice(0, 500);
     return newJurorError(
       model,
       "google",
       [],
-      `agy exit ${result.exitCode}: ${result.stderr.slice(0, 500)}`,
+      `agy exit ${result.exitCode}: ${errSnippet}`,
       latencyMs,
     );
   }
@@ -858,52 +841,66 @@ async function runGemini(model: string, prompt: string): Promise<JurorResult> {
     raw,
     model,
     "google",
-    estimateTokens(prompt),
+    estimateTokens(effectivePrompt),
     estimateTokens(raw),
     latencyMs,
   );
 }
 
 async function runCodex(model: string, prompt: string): Promise<JurorResult> {
+  const version = await cliVersion("openai", "codex", [
+    [CODEX_BIN, "--version"],
+  ]);
   if (!cliInstalled(CODEX_BIN)) {
-    if (API_FALLBACK_APPROVED_OPENAI) {
-      return runOpenaiApi(model, prompt);
-    }
+    logLane("openai", version, model);
     return ensureCli(CODEX_BIN, "openai", model) as JurorResult;
   }
   const start = Date.now();
-  const childEnv = envWithoutKeys(["OPENAI_API_KEY"]);
+  const childEnv = oauthOnlyEnv();
 
   // Create temp file for --output-last-message.
   const tmpDir = mkdtempSync(join(tmpdir(), "judge-panel-codex-"));
   const lastMsgPath = join(tmpDir, "last-message.txt");
 
   try {
-    let result: {
-      exitCode: number;
-      stdout: string;
-      stderr: string;
-      timedOut: boolean;
-    };
+    let result: SpawnResult;
+    const codexArgs = (reasoningEffort: string): string[] => [
+      CODEX_BIN,
+      "exec",
+      "--skip-git-repo-check",
+      "--color",
+      "never",
+      "--sandbox",
+      "read-only",
+      "--output-last-message",
+      lastMsgPath,
+      "-m",
+      model,
+      "-c",
+      `model_reasoning_effort=${reasoningEffort}`,
+      prompt,
+    ];
     try {
+      logLane("openai", version, model);
       result = await spawnWithTimeout(
-        [
-          CODEX_BIN,
-          "exec",
-          "--skip-git-repo-check",
-          "--color",
-          "never",
-          "--sandbox",
-          "read-only",
-          "--output-last-message",
-          lastMsgPath,
-          "-m",
-          model,
-          prompt,
-        ],
+        codexArgs("high"),
         childEnv,
         CALL_TIMEOUT_MS,
       );
+
+      const retryEffort = codexReasoningRetry(result);
+      if (retryEffort) {
+        try {
+          unlinkSync(lastMsgPath);
+        } catch {
+          // The failed run may not have created the output file.
+        }
+        result = await spawnWithTimeout(
+          codexArgs(retryEffort),
+          childEnv,
+          CALL_TIMEOUT_MS,
+        );
+      }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       return newJurorError(
@@ -1017,9 +1014,12 @@ function aggregate(small: JurorResult[]): AggregateResult {
   return { agreement: "disagree", confidenceTier: "n/a", escalate: true };
 }
 
-async function runSmallPanel(prompt: string): Promise<JurorResult[]> {
+async function runSmallPanel(
+  prompt: string,
+  smallGeminiModel: string,
+): Promise<JurorResult[]> {
   return Promise.all([
-    runGemini(SMALL_GEMINI, prompt),
+    runGemini(smallGeminiModel, prompt),
     runCodex(SMALL_OPENAI, prompt),
   ]);
 }
@@ -1037,7 +1037,13 @@ async function runTiebreaker(
 function estimateCost(jurors: JurorResult[]): number {
   let total = 0.0;
   for (const j of jurors) {
-    const p = PRICING[j.model];
+    const p =
+      PRICING[j.model] ??
+      (j.model.toLowerCase().includes("gemini")
+        ? j.model.toLowerCase().includes("flash")
+          ? { in: 0.3, out: 2.5 }
+          : { in: 1.25, out: 10.0 }
+        : undefined);
     if (!p) continue;
     total += (j.tokens_in / 1_000_000) * p.in;
     total += (j.tokens_out / 1_000_000) * p.out;
@@ -1052,7 +1058,14 @@ async function runCascade(
   tiebreaker: string | null,
   cliPersona: string | null = null,
 ): Promise<CascadeResult> {
-  const tb = tiebreaker ?? DEFAULT_TIEBREAKER;
+  const models = await resolveModels();
+  // Default tiebreaker: latest discovered Gemini Pro (High), cross-family and
+  // cross-tier versus the small-fish panel. Explicit CLI/env choices still win.
+  const tb =
+    tiebreaker ??
+    process.env.JUDGE_PANEL_DEFAULT_TIEBREAKER ??
+    ENV_FILE["JUDGE_PANEL_DEFAULT_TIEBREAKER"] ??
+    models.bigGemini;
   let template: string;
   if (rubricSlug === "custom") {
     if (!rubricText) {
@@ -1069,7 +1082,7 @@ async function runCascade(
   const prompt = buildPrompt(template, artifact, effectivePersona);
 
   // Stage 1 — small-fish panel
-  const small = await runSmallPanel(prompt);
+  const small = await runSmallPanel(prompt, models.smallGemini);
   const { agreement, confidenceTier, escalate } = aggregate(small);
 
   // Stage 2 — tiebreaker (only if needed)
@@ -1159,9 +1172,6 @@ function printUsageError(msg: string): never {
       "                                  [--rubric-text <text>] [--tiebreaker <model>]\n" +
       "                                  [--persona <name(s)>]\n" +
       "                                  [--silent]\n" +
-      "                                  [--api-fallback-approved]\n" +
-      "                                  [--api-fallback-approved-gemini]\n" +
-      "                                  [--api-fallback-approved-openai]\n" +
       "\n" +
       "  --persona        Inject a persona lens into every judge prompt.\n" +
       "                   E.g.: --persona \"Steve Jobs + Jony Ive\"\n" +
@@ -1186,9 +1196,6 @@ function parseArgs(argv: string[]): ParsedArgs {
     // Seed from env first; CLI flag (parsed below) wins over it.
     persona: process.env["JUDGE_PANEL_PERSONAS"] ?? null,
     silent: false,
-    apiFallbackApproved: false,
-    apiFallbackApprovedGemini: false,
-    apiFallbackApprovedOpenai: false,
   };
 
   let i = 0;
@@ -1217,15 +1224,6 @@ function parseArgs(argv: string[]): ParsedArgs {
       args.tiebreaker = needsValue("--tiebreaker");
     } else if (a === "--silent") {
       args.silent = true;
-      i += 1;
-    } else if (a === "--api-fallback-approved") {
-      args.apiFallbackApproved = true;
-      i += 1;
-    } else if (a === "--api-fallback-approved-gemini") {
-      args.apiFallbackApprovedGemini = true;
-      i += 1;
-    } else if (a === "--api-fallback-approved-openai") {
-      args.apiFallbackApprovedOpenai = true;
       i += 1;
     } else if (a === "-h" || a === "--help") {
       printUsageError("help");
@@ -1257,18 +1255,6 @@ function parseArgs(argv: string[]): ParsedArgs {
 
 async function main(): Promise<number> {
   const args = parseArgs(process.argv.slice(2));
-
-  // Wire approval flags (CLI flag wins over env-init).
-  if (args.apiFallbackApproved) {
-    API_FALLBACK_APPROVED_GEMINI = true;
-    API_FALLBACK_APPROVED_OPENAI = true;
-  }
-  if (args.apiFallbackApprovedGemini) {
-    API_FALLBACK_APPROVED_GEMINI = true;
-  }
-  if (args.apiFallbackApprovedOpenai) {
-    API_FALLBACK_APPROVED_OPENAI = true;
-  }
 
   let artifact = args.artifact;
   if (args.artifactFile) {

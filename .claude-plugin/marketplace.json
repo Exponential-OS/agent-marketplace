@@ -120,7 +120,7 @@
       "license": "Proprietary",
       "source": "./engines/jury",
       "description": "Jury v0.1.0 — standalone cross-family cascade-then-jury reviewer (the free 'jury beats judge' base). Optional dependency for codi/exponential-developer cross-family verification. OAuth local CLIs, no API keys.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "category": "developer-tools",
       "homepage": "https://github.com/Exponential-OS/xos"
     }
