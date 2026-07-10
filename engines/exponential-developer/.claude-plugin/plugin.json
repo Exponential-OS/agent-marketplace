@@ -1,7 +1,7 @@
 {
   "name": "exponential-developer",
   "platform": "xHumanOS",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Exponential Developer \u2014 the agentic-SDLC ship-feature pipeline (formerly super-developer). Commands scoped exponential-developer:ship-feature.",
   "workspace_binding": {
     "mode": "global",

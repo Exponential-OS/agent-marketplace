@@ -25,7 +25,7 @@ Runs Stage 0 (claim) + the 9 core stages, including the Gate-A.5 change-manifest
 
 ## Cost routing
 
-- **Claude (whale, Opus):** brainstorm, spec, eval-design, gate decisions, synthesis, catch hallucinations. Reads conclusions, never re-executes. Delegates cheap orchestration (deploy/git/poll) to a **Haiku sub-agent**, and cross-family review to the **`judge-panel` skill** — Opus is the last resort, not the default.
+- **Claude (whale, Opus):** brainstorm, spec, eval-design, gate decisions, synthesis, catch hallucinations. Reads conclusions, never re-executes. Delegates cheap orchestration (deploy/git/poll) to a **Haiku sub-agent**, and cross-family review to the **`jury` skill** — Opus is the last resort, not the default.
 - **Codex teammates:** all implementation, tests, repo investigation. Run via `codex exec` from Bash. Parallel where independent. Codex writes ALL code.
 - **Gemini/agy:** browser, smoke tests, large-file review via `agy`/Gemini. 50x cheaper. NEVER handed secrets.
 
@@ -43,14 +43,14 @@ Pick the cheapest agent + smallest model that does the job WELL. **If you're uns
 | Code implementation / tests / repo investigation | Codex (`codex exec`) | default; raise reasoning only for genuinely hard logic |
 | Browser-driving, prod smoke, large-file reads, media review | agy/Gemini | **Flash (Low/Medium)** — cheap, mechanical |
 | E2E + VISUAL verification (Stage 5.5 screenshots, console, flows) | **Claude + agy/Gemini-vision** | **Claude owns UI/visual design-lane judgment; agy reviews the ACTUAL rendered screenshots, not diffs.** Use Playwright/dev-server; use `chrome-devtools-mcp` when authenticated state matters |
-| Cross-family review / adjudication | **co-dialectic `judge-panel` skill** (fish cascade → 1 tiebreaker) | Flash/nano fish first; whale only if panel escalates AND stays conflicted |
+| Cross-family review / adjudication | **`jury` skill (cross/jury — the canonical cross-family reviewer)** (fish cascade → 1 tiebreaker) | Flash/nano fish first; whale only if panel escalates AND stays conflicted |
 | Behavior-preserving simplify pass (Stage 5.6) | Codex / existing Claude Code **`/simplify`** skill | Quality-only: reuse/simplification/efficiency/altitude cleanups. Fall back to Codex-routed simplify only if `/simplify` is not invokable in-pipeline |
 | Media generation (image/video) | agy | gemini-3-pro-image / Veo |
 | UI / frontend / visual design / UX / styling / layout | **Claude (design persona — Jony Ive caliber)** | **Claude — UI is design judgment, NOT mechanical. Route UI/visual work to Claude, never Codex or agy.** |
 | FREQUENT structural/semantic gates (codification-verification, named-person, content/path gates — fire every Write/Edit; ambiguity/structure, not deep reasoning) | their handler's LLM judge | **Haiku** (`CYBORG_SEMANTIC_JUDGE_MODEL`, default `claude-haiku-4-5`) — cheap, high-frequency |
 | Brainstorm, spec, eval-design, gates, hallucination-catch, synthesis | Claude (whale, Opus) | the only Opus-justified work |
 
-Rule of thumb: there is almost always SOME orchestrator — the question is which size. Deterministic task (deploy, curl, git op) → **Haiku sub-agent**, never the Opus whale. Mechanical task (scroll a page, read a file, convert text) → **Flash**. Cross-family review → **reuse `judge-panel`**, don't re-derive. Only true judgment/gating/synthesis earns Opus tokens. Ambiguous class → **ask**.
+Rule of thumb: there is almost always SOME orchestrator — the question is which size. Deterministic task (deploy, curl, git op) → **Haiku sub-agent**, never the Opus whale. Mechanical task (scroll a page, read a file, convert text) → **Flash**. Cross-family review → **reuse `jury`**, don't re-derive. Only true judgment/gating/synthesis earns Opus tokens. Ambiguous class → **ask**.
 
 ---
 
@@ -67,14 +67,14 @@ Per stage, the team shape:
 
 | Stage | TeamCreate the team as… |
 |---|---|
-| 1 Brainstorm | N agents each explore a DIFFERENT approach/angle → judge-panel the approaches → synthesize the winner (+ graft best ideas from runners-up). |
+| 1 Brainstorm | N agents each explore a DIFFERENT approach/angle → jury the approaches → synthesize the winner (+ graft best ideas from runners-up). |
 | 3 Eval design | one teammate per eval dimension (happy/boundary/environmental) drafting assertions in parallel. |
 | 3.5 Plugin/skill eval loop | a teammate per (prompt × {with-skill, baseline}) pair — the with-skill-vs-baseline runs ARE the team. |
 | 4 Implement | decompose into INDEPENDENT workstreams; **one teammate per workstream, each in its OWN git worktree** (isolation guard), each delegating code to Codex; merge when all green. Dependent edits stay serialized within a teammate. |
 | 5.5 E2E + VISUAL verification | split by route/flow/viewport when useful; Claude owns the UI/visual verdict and routes actual rendered screenshots to agy/Gemini-vision. |
 | 5.6 Simplify | invoke the existing `/simplify` skill over the changed code; if unavailable, use a Codex-routed quality-only pass. Keep it behavior-preserving and discard on regression. |
 | 5.7 Targeted verification rerun | Codex reruns impacted tests/lint/typecheck/build; rerun 5.5 too when simplify touched UI files. |
-| 6 Cross-family review | the `judge-panel` cascade already IS a parallel team (≥2 cross-family fish + tiebreaker) — reuse it, don't re-derive. |
+| 6 Cross-family review | the `jury` cascade already IS a parallel team (≥2 cross-family fish + tiebreaker) — reuse it, don't re-derive. |
 
 Each teammate: owns its piece, works in an isolated worktree (never the shared primary checkout), reports back via SendMessage. Team-lead synthesizes. **A stage that decomposes and is run serially is a routing failure** — the parallelism is the point.
 
@@ -146,7 +146,7 @@ Parse `$ARGUMENTS` into:
 - `ticket`: required Linear issue id.
 - `repo`: explicit repo path from args, else current repo.
 
-**Run this via `superpowers:brainstorming`** — not a lone ad-hoc brainstorm. Explore several DISTINCT approaches/angles in parallel, judge-panel them, and synthesize the winner (grafting the best ideas from runners-up). The brainstorm covers the smallest valuable feature slice, user impact, likely repo surfaces, risks, and rollback path.
+**Run this via `superpowers:brainstorming`** — not a lone ad-hoc brainstorm. Explore several DISTINCT approaches/angles in parallel, jury them, and synthesize the winner (grafting the best ideas from runners-up). The brainstorm covers the smallest valuable feature slice, user impact, likely repo surfaces, risks, and rollback path.
 
 **Brainstorm AS the domain's 0.001%-caliber persona** (co-dialectic Protocol 11), not a generic voice: UX / visual / product-design → Claude **design persona (Jony Ive caliber)**; architecture / systems → **Jeff Dean**; positioning / naming / launch → **Steve Jobs**; data / metrics → **Nate Silver**; debugging → **Linus Torvalds**. Cross-domain features → fuse personas (e.g. Ive + Jobs for a UX launch). The right expert's brainstorm beats a generic one — the same routing the cost table already mandates for UI work, applied at brainstorm time.
 
@@ -189,7 +189,7 @@ repo: <repo-path>
 <how to undo safely>
 ```
 
-Reasoning validation, when warranted, is covered by the cross-family judge-panel (Stage 6).
+Reasoning validation, when warranted, is covered by the cross-family jury (Stage 6).
 
 **GATE A — STOP:** present the spec path and ask for human approval before proceeding.
 
@@ -243,7 +243,7 @@ Runs after Gate A (spec approved) and Stage 3.5, BEFORE Stage 4 (Codex build). F
 
 Every bucket MUST be present. An empty bucket is written explicitly as `− removed: (none)` so an omission is a stated claim, never a silent gap.
 
-**BLOCK contract (fail-hard).** A cross-family **judge-panel** (the Stage 6 harness, run early here) checks the manifest against the approved spec:
+**BLOCK contract (fail-hard).** A cross-family **jury** (the Stage 6 harness, run early here) checks the manifest against the approved spec:
 
 - If the spec uses "replaces / supersedes / instead of / deprecates / retires / migrates" (or a clear synonym) about an EXISTING surface, AND both the `− removed` and `⚙ migrated` buckets fail to account for that surface → **BLOCK**. The error MUST name (a) the spec sentence implying a removal, (b) the unaccounted surface, and (c) the remediation ("add the `− removed` / `⚙ migrated` entry for <surface>, or amend the spec to state the old surface stays").
 - FAIL-HARD: on BLOCK the pipeline does not advance to Stage 4. Judge unreachable ⇒ treat as BLOCK (no silent skip), same contract as the Stage 6 fish-required gate.
@@ -326,7 +326,7 @@ Trigger:
 Tools:
 
 - **Web UI:** run the branch on a LOCAL dev/preview server in the worktree (`npm run dev` -> localhost, or equivalent); never verify local changes on prod. Use Playwright against local dev, authenticating in-process with test credentials from the repo's local secret store or credential provider; NEVER echo/log the password. Use the skill-creator eval/benchmark + Playwright harness to drive critical flows and screenshots at desktop width `1440` and mobile width `375`; use `chrome-devtools-mcp` / authenticated Chrome on port `9222` when browser state matters. Do not pass secrets to external reviewers.
-- **Web UI visual verdict:** send ACTUAL rendered screenshots to the cross-family `judge-panel` with domain personas (`--persona "Steve Jobs" --persona "Jony Ive"` for UX/visual; XOS-124), plus `agy`/Gemini-vision when useful. Claude owns the final visual verdict.
+- **Web UI visual verdict:** send ACTUAL rendered screenshots to the cross-family `jury` with domain personas (`--persona "Steve Jobs" --persona "Jony Ive"` for UX/visual; XOS-124), plus `agy`/Gemini-vision when useful. Claude owns the final visual verdict.
 - **Plugin/CLI (no web UI):** run representative commands/flows at narrow and standard terminal widths; capture stdout/stderr; optionally capture a terminal screenshot for `agy`/Gemini-vision if visual review is useful. Do not pass secrets.
 - **Sensorium routing:** visual/UI e2e is a sensorium faculty headless agents lack; route it to an organ-with-eyes (authenticated browser session, `chrome-devtools-mcp` on port `9222`, or the human). Do not ask a headless agent to "verify visually"; it will fake it. The CLI path can stay with the running session.
 
@@ -343,7 +343,7 @@ Web UI process:
 
 Pass/fail:
 
-- **Web UI `PASS`:** ran on LOCAL dev/preview, not prod; authenticated local dev through Playwright with E2E creds; dogfooded the real customer path through real UI/auth/data, not a bypass or demo harness; desktop and mobile screenshots are non-blank; no overflow, clipping, incoherent overlap, or broken responsive layout; no critical console errors; critical Playwright eval/benchmark flows pass; persona `judge-panel` returns `GREEN`; screenshots are committed to `docs/verify/<ticket>/` and pushed so they render in the PR's "Files changed" tab for the reviewer (NOT raw/release/user-attachments URLs that 404 on a private repo); AND the **visual-review receipt** is present — every surface resolves (non-zero viewable image that decodes / HTTP 200) and a named vision reviewer saw the pixels (a green on "attachment detected" is a FAIL, not a PASS).
+- **Web UI `PASS`:** ran on LOCAL dev/preview, not prod; authenticated local dev through Playwright with E2E creds; dogfooded the real customer path through real UI/auth/data, not a bypass or demo harness; desktop and mobile screenshots are non-blank; no overflow, clipping, incoherent overlap, or broken responsive layout; no critical console errors; critical Playwright eval/benchmark flows pass; persona `jury` returns `GREEN`; screenshots are committed to `docs/verify/<ticket>/` and pushed so they render in the PR's "Files changed" tab for the reviewer (NOT raw/release/user-attachments URLs that 404 on a private repo); AND the **visual-review receipt** is present — every surface resolves (non-zero viewable image that decodes / HTTP 200) and a named vision reviewer saw the pixels (a green on "attachment detected" is a FAIL, not a PASS).
 - **Plugin/CLI `PASS`:** commands exit cleanly with no stack traces or errors; stdout/stderr is well-formed at both widths with no broken tables, clipped/overflowing output, or garbled layout; help/usage text is present and correct; optional terminal-screenshot vision review returns `GREEN` if used.
 - **Backend-only `not_applicable`:** unchanged: include evidence with files touched plus why no browser-visible behavior or UI acceptance criteria were affected.
 - **`FAIL` (either mode):** any required check fails. Loop to Stage 4/5, fix, rerun automated tests, then rerun Stage 5.5.
@@ -424,16 +424,16 @@ Use `agy`/Gemini for:
 
 Do not pass secrets to Gemini/agy.
 
-**Use the co-dialectic `judge-panel` skill** for the verdict — it runs ≥2 cheap cross-family fish (Gemini-Flash + GPT-nano) first and escalates to ONE expensive tiebreaker only on disagreement. Do NOT make the Opus whale the default judge. The whale steps in only if `judge-panel` escalates AND the tiebreaker still can't resolve. Whale always does the final hallucination-catch (cheap: scan, don't re-execute).
+**Use the `jury` skill (cross/jury — the canonical cross-family reviewer)** for the verdict — it runs ≥2 cheap cross-family fish (Gemini-Flash + GPT-nano) first and escalates to ONE expensive tiebreaker only on disagreement. Do NOT make the Opus whale the default judge. The whale steps in only if `jury` escalates AND the tiebreaker still can't resolve. Whale always does the final hallucination-catch (cheap: scan, don't re-execute).
 
 **Apply domain-persona lenses, not only cross-family.** Cross-*family* (Gemini + GPT) catches training-distribution blind spots; cross-*persona* catches domain blind spots. For UX / visual artifacts, run the judge with `--persona "Steve Jobs" --persona "Jony Ive"` (as Stage 5.5 already does); for architecture use a systems-caliber lens, for data a statistical lens. Route the persona set by the artifact's domain.
 
-**FAIL-HARD if no fish are reachable:** if `judge-panel` cannot reach ≥1 cross-family fish, HALT the pipeline and surface this fish-remediation block. NEVER silently skip and proceed to PR. This mirrors the FAIL-HARD invariant and co-dialectic Protocol 8 T3 behavior.
+**FAIL-HARD if no fish are reachable:** if `jury` cannot reach ≥1 cross-family fish, HALT the pipeline and surface this fish-remediation block. NEVER silently skip and proceed to PR. This mirrors the FAIL-HARD invariant and co-dialectic Protocol 8 T3 behavior.
 
 ```text
 FISH REMEDIATION REQUIRED
 WHAT: Stage 6 cannot reach any cross-family judge fish, so the /ship-feature pipeline is halted before PR.
-HOW: restore at least one cross-family judge route (agy/Gemini or Codex/OpenAI), fix auth/network/tool installation, rerun judge-panel, and only continue once ≥1 fish returns a result.
+HOW: restore at least one cross-family judge route (agy/Gemini or Codex/OpenAI), fix auth/network/tool installation, rerun jury, and only continue once ≥1 fish returns a result.
 ```
 
 Required verdict: `GREEN` or `RED`.
@@ -446,7 +446,7 @@ A fix without a line-evidence receipt AND a skip without a line-evidence receipt
 
 If `RED`, Codex fixes the CONFIRMED flags (only) and returns to Stage 5, then repeats Stage 5.5/5.6/5.7 and Stage 5.8 as applicable before review runs again.
 
-At the END of Stage 6, emit the canonical receipt block below, populated from the `judge-panel` JSON: `final_verdict` → `verdict` (`GREEN`/`RED`), families that returned → `families`, `all_flags` count plus one-line summary → `flags`, `cascade.escalated` → `escalated`, and the current ISO8601 timestamp → `ts`.
+At the END of Stage 6, emit the canonical receipt block below, populated from the `jury` JSON: `final_verdict` → `verdict` (`GREEN`/`RED`), families that returned → `families`, `all_flags` count plus one-line summary → `flags`, `cascade.escalated` → `escalated`, and the current ISO8601 timestamp → `ts`.
 
 **Cross-family health line (XOS-210 — read the AUTHORITATIVE structured field, not `all_flags[0]`).** The judge JSON now carries a top-level `cross_family` object (co-dialectic ≥ 4.35.0): `{ distinct_families_returned, degraded, down_lanes:[{family,model,reason}] }`. Populate the receipt's `cross_family` line from it — NEVER infer cross-family health from the `families` list alone (a lane that errored/timed-out/emptied is silently absent from `families`, which is exactly the blind spot this line exists to surface):
 
@@ -529,7 +529,7 @@ STOP at PR for a human to merge IF either:
 
 - **Two scopes, same words.** Say it in a session → the whole session stops at PR. Put it on a Linear ticket → that ticket stops at PR. Nothing said = auto. The conversation/ticket IS the state — nothing shared across sessions, so no collision by construction.
 - **Session state:** `ship_mode != "auto"` is the session-scope brake created by the exact phrase **"human merge needed"**.
-- **Auto-escalation (defense in depth):** the build agent AUTO-APPLIES `human-merge` when the diff hits a risk heuristic even if the human didn't say it — publishing/irreversible surface (Substack/LinkedIn publish), auth/secrets, schema migration, large blast radius, judge-panel RED, OR **`cross_family.degraded: true` on a T3+ change** (XOS-210 — the Stage-6 review lost a family, so it carried only one family's blind spots; a degraded cross-family review is not a sufficient cross-family gate for T3+/irreversible work). Maps to stakes tiers (T0–T2 auto, T3+ human).
+- **Auto-escalation (defense in depth):** the build agent AUTO-APPLIES `human-merge` when the diff hits a risk heuristic even if the human didn't say it — publishing/irreversible surface (Substack/LinkedIn publish), auth/secrets, schema migration, large blast radius, jury RED, OR **`cross_family.degraded: true` on a T3+ change** (XOS-210 — the Stage-6 review lost a family, so it carried only one family's blind spots; a degraded cross-family review is not a sufficient cross-family gate for T3+/irreversible work). Maps to stakes tiers (T0–T2 auto, T3+ human).
 - **Adapt AI:** human-merge always — not via this local flow at all; AdaptAI builds route through Tier-2 cloud; the ship command's personal-repo allowlist NEVER touches `~/aifund-adaptai`.
 
 If Gate B stops, present the PR URL, review verdict, test summary, deploy plan, and the `human-merge` reason. Do not merge or deploy.

@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.3.0] — 2026-07-10 — THE-541: cross-family judge → canonical `jury`
+
+- Stage 6 (+ cost-routing, Gate-A.5, visual verdict) now invoke the canonical **`jury`** skill (cross/jury) instead of co-dialectic `judge-panel` — retiring the near-duplicate (XOS-217). jury v0.2.0 is OAuth-only, self-updating (agy-models discovery wins), effort-laddered, with per-lane model+version transparency. Same rubric/verdict interface; receipt marker unchanged.
+
+
 ## [1.2.0] — 2026-07-10 — XOS-221: Stage 4 build-reliability (foundation-first)
 
 Stage 4 delegated to `codex exec` but never specified how — so builds silently stalled or returned partial work (observed twice building THE-541). Codified the three non-negotiables:
