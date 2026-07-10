@@ -31,6 +31,16 @@
       "homepage": "https://github.com/Exponential-OS/xos"
     },
     {
+      "name": "xdev",
+      "platform": "xOS",
+      "license": "Proprietary",
+      "source": "./engines/xdev",
+      "description": "xdev v1.0.0 — short-code fast-invoke wrapper for exponential-developer. Provides /xdev:ship as the fast daily form of /exponential-developer:ship-feature (the Agentic SDLC pipeline). Holds NO pipeline copy: commands/ship.md is a one-line namespace delegator to the exponential-developer:ship-feature skill (single source of truth). REQUIRES exponential-developer@xos installed. Canonical source: Exponential-OS/xos plugins/cross/xdev (derived vendored mirror, overwritten on each sync).",
+      "version": "1.0.0",
+      "category": "developer-tools",
+      "homepage": "https://github.com/Exponential-OS/xos"
+    },
+    {
       "name": "co-dialectic",
       "platform": "xOS",
       "license": "Proprietary",

@@ -1,0 +1,10 @@
+{
+  "name": "xdev",
+  "version": "1.0.0",
+  "description": "xdev — short-code fast-invoke wrapper for exponential-developer. Provides /xdev:ship as the fast daily form of /exponential-developer:ship-feature (the Agentic SDLC pipeline). Holds NO copy of the pipeline: the command delegates to the exponential-developer:ship-feature skill by namespace (single source of truth). REQUIRES exponential-developer@xos installed. See docs/REPO-ARCHITECTURE.md §4a.",
+  "author": {
+    "name": "Anand Vallamsetla"
+  },
+  "homepage": "https://github.com/Exponential-OS/xos",
+  "keywords": ["short-code", "fast-invoke", "ship-feature", "agentic-sdlc", "alias"]
+}
