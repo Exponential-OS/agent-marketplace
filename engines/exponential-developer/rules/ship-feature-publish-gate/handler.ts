@@ -7,8 +7,8 @@
  * stale and must reinstall + reload before "shipped" can mean activated.
  *
  * Direct input:
- *   { "plugin": "super-developer" }
- *   { "plugins": ["super-developer", "work-kernel"] }
+ *   { "plugin": "exponential-developer" }
+ *   { "plugins": ["exponential-developer", "work-kernel"] }
  *   { "plugin": "all" }
  *
  * Optional test/fixture paths:

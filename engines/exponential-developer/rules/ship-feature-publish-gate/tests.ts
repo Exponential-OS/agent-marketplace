@@ -58,16 +58,16 @@ afterEach(() => {
 
 test("PASS: installed version equals marketplace version", () => {
   const fx = fixture();
-  writeMarketplace(fx, { plugins: { "super-developer": { version: "0.6.0" } } });
-  install(fx, "super-developer", "0.6.0");
+  writeMarketplace(fx, { plugins: { "exponential-developer": { version: "0.6.0" } } });
+  install(fx, "exponential-developer", "0.6.0");
 
-  const result = processInput({ plugin: "super-developer" }, options(fx));
+  const result = processInput({ plugin: "exponential-developer" }, options(fx));
 
   expect(result.verdict).toBe("PASS");
   expect(result.reason).toContain("current with marketplace");
   expect(result.checked).toEqual([
     {
-      plugin: "super-developer",
+      plugin: "exponential-developer",
       installedVersion: "0.6.0",
       marketplaceVersion: "0.6.0",
       status: "current",
@@ -84,20 +84,20 @@ test("version comparison normalizes numeric semver segments", () => {
 
   for (const { installed, marketplace, verdict, status } of cases) {
     const fx = fixture();
-    writeMarketplace(fx, { plugins: { "super-developer": { version: marketplace } } });
-    install(fx, "super-developer", installed);
+    writeMarketplace(fx, { plugins: { "exponential-developer": { version: marketplace } } });
+    install(fx, "exponential-developer", installed);
 
-    const result = processInput({ plugin: "super-developer" }, options(fx));
+    const result = processInput({ plugin: "exponential-developer" }, options(fx));
 
     expect(result.verdict).toBe(verdict);
     expect(result.checked[0]).toMatchObject({
-      plugin: "super-developer",
+      plugin: "exponential-developer",
       installedVersion: installed,
       marketplaceVersion: marketplace,
       status,
     });
     if (status === "stale") {
-      expect(result.stale.map((check) => check.plugin)).toEqual(["super-developer"]);
+      expect(result.stale.map((check) => check.plugin)).toEqual(["exponential-developer"]);
     } else {
       expect(result.stale).toEqual([]);
     }
@@ -106,29 +106,29 @@ test("version comparison normalizes numeric semver segments", () => {
 
 test("BLOCK: installed version below marketplace is loud and lists the plugin", () => {
   const fx = fixture();
-  writeMarketplace(fx, { plugins: { "super-developer": { version: "0.6.0" } } });
-  install(fx, "super-developer", "0.5.0");
+  writeMarketplace(fx, { plugins: { "exponential-developer": { version: "0.6.0" } } });
+  install(fx, "exponential-developer", "0.5.0");
 
-  const result = processInput({ plugin: "super-developer" }, options(fx));
+  const result = processInput({ plugin: "exponential-developer" }, options(fx));
 
   expect(result.verdict).toBe("BLOCK");
   expect(result.message).toContain("WHAT: installed xos plugin cache is behind the marketplace catalog.");
-  expect(result.message).toContain("⚠ STALE: super-developer installed 0.5.0 < marketplace 0.6.0");
-  expect(result.message).toContain("claude plugin install super-developer && /reload-plugins");
-  expect(result.stale.map((check) => check.plugin)).toEqual(["super-developer"]);
+  expect(result.message).toContain("⚠ STALE: exponential-developer installed 0.5.0 < marketplace 0.6.0");
+  expect(result.message).toContain("claude plugin install exponential-developer && /reload-plugins");
+  expect(result.stale.map((check) => check.plugin)).toEqual(["exponential-developer"]);
 });
 
 test("CLI exits non-zero and prints the loud stale list on detected skew", () => {
   const fx = fixture();
-  writeMarketplace(fx, { plugins: { "super-developer": { version: "0.6.0" } } });
-  install(fx, "super-developer", "0.5.0");
+  writeMarketplace(fx, { plugins: { "exponential-developer": { version: "0.6.0" } } });
+  install(fx, "exponential-developer", "0.5.0");
 
   const result = Bun.spawnSync(
     [
       "bun",
       HANDLER,
       JSON.stringify({
-        plugin: "super-developer",
+        plugin: "exponential-developer",
         cache_root: fx.cacheRoot,
         marketplace_path: fx.marketplacePath,
       }),
@@ -138,19 +138,19 @@ test("CLI exits non-zero and prints the loud stale list on detected skew", () =>
 
   expect(result.exitCode).toBe(1);
   expect(decode(result.stdout)).toContain('"verdict":"BLOCK"');
-  expect(decode(result.stderr)).toContain("⚠ STALE: super-developer installed 0.5.0 < marketplace 0.6.0");
+  expect(decode(result.stderr)).toContain("⚠ STALE: exponential-developer installed 0.5.0 < marketplace 0.6.0");
 });
 
 test("BLOCK: missing install is flagged as stale against marketplace", () => {
   const fx = fixture();
-  writeMarketplace(fx, { plugins: [{ name: "super-developer", version: "0.6.0" }] });
+  writeMarketplace(fx, { plugins: [{ name: "exponential-developer", version: "0.6.0" }] });
 
-  const result = processInput({ plugin: "super-developer" }, options(fx));
+  const result = processInput({ plugin: "exponential-developer" }, options(fx));
 
   expect(result.verdict).toBe("BLOCK");
-  expect(result.message).toContain("⚠ STALE: super-developer installed missing < marketplace 0.6.0");
+  expect(result.message).toContain("⚠ STALE: exponential-developer installed missing < marketplace 0.6.0");
   expect(result.stale[0]?.status).toBe("missing_install");
-  expect(result.stale[0]?.requires_reload).toBe("super-developer@0.6.0");
+  expect(result.stale[0]?.requires_reload).toBe("exponential-developer@0.6.0");
 });
 
 test("BLOCK: all-mode reports only stale and missing plugins from a mixed catalog", () => {
@@ -179,10 +179,10 @@ test("BLOCK: all-mode reports only stale and missing plugins from a mixed catalo
 
 test("PASS: injected fixture paths avoid the real home/cache", () => {
   const fx = fixture();
-  writeMarketplace(fx, { plugins: { "super-developer": { version: "0.6.0" } } });
-  install(fx, "super-developer", "0.6.0");
+  writeMarketplace(fx, { plugins: { "exponential-developer": { version: "0.6.0" } } });
+  install(fx, "exponential-developer", "0.6.0");
 
-  const result = processInput({ plugins: ["super-developer"] }, options(fx));
+  const result = processInput({ plugins: ["exponential-developer"] }, options(fx));
 
   expect(result.verdict).toBe("PASS");
   expect(result.target).toBe(fx.marketplacePath);

@@ -1,6 +1,6 @@
-# super-developer
+# exponential-developer
 
-`super-developer` packages the xHumanOS super-developer engine as a cross-xOS Claude plugin. It installs the canonical `ship-feature` skill and the `/ship-feature` command alias for the agentic SDLC pipeline used across xHumanOS, xTeamOS, and xFamilyOS development.
+`exponential-developer` packages the xHumanOS exponential-developer engine as a cross-xOS Claude plugin. It installs the canonical `ship-feature` skill and the `/ship-feature` command alias for the agentic SDLC pipeline used across xHumanOS, xTeamOS, and xFamilyOS development.
 
 Install it through the xOS marketplace once registered. The plugin declares `workspace_binding.mode = "global"` so `/ship-feature` resolves from every cwd/repo; this is cross-xOS developer tooling, not a workspace-bound product plugin.
 

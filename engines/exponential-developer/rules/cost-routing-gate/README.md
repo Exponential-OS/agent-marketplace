@@ -22,7 +22,7 @@ Do not commit this machine-local wiring. Add it to `~/.claude/settings.json` whe
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/anandvallam/.bun/bin/bun /Users/anandvallam/aiprojects/super-developer-plugin/rules/cost-routing-gate/handler.ts"
+            "command": "/Users/anandvallam/.bun/bin/bun ${CLAUDE_PLUGIN_ROOT}/rules/cost-routing-gate/handler.ts"
           }
         ]
       }
@@ -49,10 +49,10 @@ cat > "$marker" <<EOF
 EOF
 
 payload="{\"tool_name\":\"Edit\",\"tool_input\":{\"file_path\":\"$tmp/src/app.ts\"},\"cwd\":\"$tmp\"}"
-printf '%s\n' "$payload" | /Users/anandvallam/.bun/bin/bun /Users/anandvallam/aiprojects/super-developer-plugin/rules/cost-routing-gate/handler.ts
+printf '%s\n' "$payload" | /Users/anandvallam/.bun/bin/bun ${CLAUDE_PLUGIN_ROOT}/rules/cost-routing-gate/handler.ts
 echo "expected BLOCK exit=1 actual=$?"
 
-printf '%s\n' "$payload" | env COST_ROUTING_GATE_OFF=1 /Users/anandvallam/.bun/bin/bun /Users/anandvallam/aiprojects/super-developer-plugin/rules/cost-routing-gate/handler.ts
+printf '%s\n' "$payload" | env COST_ROUTING_GATE_OFF=1 /Users/anandvallam/.bun/bin/bun ${CLAUDE_PLUGIN_ROOT}/rules/cost-routing-gate/handler.ts
 echo "expected PASS exit=0 actual=$?"
 
 rm -f "$marker"
