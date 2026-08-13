@@ -2,6 +2,43 @@
 <!-- this file is the historical changelog. Entries reference the original author/user as provenance, not runtime data. -->
 # Changelog
 
+## [0.80.0] - 2026-07-05 - XOS-211 ledger rotation
+
+### Added
+- Shared `hooks/scripts/_ledger-path.sh` resolver for active session-ledger shards, capping new writes to numeric day shards (`YYYY-MM-DD.md`, `.02`, `.03`, ...) at the env-overridable 40 MiB threshold.
+- Best-effort rotate locking under `STATE_DIR` so concurrent prompt/response/session-start writers do not commit lock artifacts into `brain/sessions/ledger/`.
+- Bun coverage for resolver edge cases, gapped shards, numeric-not-lexical ordering, concurrent rolled-shard header creation, and whole-day shard concatenation.
+
+### Changed
+- Session-start, prompt, and response hooks now resolve the active shard before writing, while preserving per-shard `# Session Ledger — DATE` headers.
+- Whole-day ledger readers consume base first and `.NN` shards in numeric order; beta-funnel D7 detection maps shard filenames back to the base calendar day.
+- Bumped plugin and package metadata to `0.80.0`; added forward migration `v0.79.0-to-v0.80.0.sh`.
+
+## [0.79.0] - 2026-07-01 - XOS-100 audience preview
+
+### Added
+- XOS-100 MVP "Who will see this" audience preview: pure `scoreAudience(postThemes, people, opts)` helper ranks local people-graph contacts by topic relevance times normalized relationship warmth.
+- Robust `normalizeWarmth(raw)` parsing for messy live people-file warmth values, including numbers, null or missing values, leading-integer strings, arbitrary strings, and malformed values without crashing.
+- Paste-safe `formatAudiencePreview(ranked, { limit })` output with no pipe characters, showing likely warm contacts and matched themes before publishing.
+- New `audience-preview` skill documenting the advisory, local-only workflow for extracting draft-post themes, reading `network/people`, scoring contacts, and presenting the preview without posting.
+- Local-only `audience_preview_viewed` telemetry event recording only audience count and top-score bucket through the existing `XOS_98_TELEMETRY`-gated JSONL helper. No names, companies, roles, post text, themes, or people-file content.
+- Bun tests for warmth normalization, topic overlap, audience ranking, malformed-contact skips, empty inputs, pipe-free formatting limits, and gated PII-free telemetry.
+
+### Changed
+- Bumped plugin and package metadata to `0.79.0`, intentionally skipping `0.78.0` because it is reserved by PR #25; added forward migration `v0.77.0-to-v0.79.0.sh`.
+## [0.78.0] - 2026-07-01 - XOS-96 identity file bootstrap
+
+### Added
+- XOS-96 MVP identity-file bootstrap: pure `bootstrapIdentityFiles(input)` helper returns durable `identity/handles.md` and `identity/brand-voice.md` file payloads without writing to disk or using network.
+- `buildHandlesDoc(input)` writes a labeled-line markdown handles document and omits blank fields.
+- `buildBrandVoiceDoc(input)` writes `## Themes` and `## Voice` sections, tolerating empty input with TODO stubs.
+- Local-only `identity_file_bootstrapped` telemetry event recording only relative file paths and count through the existing `XOS_98_TELEMETRY`-gated JSONL helper. No names, handles, themes, voice text, profile content, or network transport.
+- Career Intelligence onboarding instructions now also bootstrap `identity/handles.md` and `identity/brand-voice.md`, then emit the PII-free completion telemetry event.
+- Bun tests for bootstrap output paths, blank-field omission, brand-voice stubs, and gated PII-free telemetry.
+
+### Changed
+- Bumped plugin and package metadata to `0.78.0`; added forward migration `v0.77.0-to-v0.78.0.sh`.
+
 ## [0.77.0] - 2026-06-30 - XOS-93 profile brand alignment score
 
 ### Added
@@ -322,7 +359,7 @@ The zombie has been deleted from the workspace (2026-06-04).
 - `capture-prompt.sh` + `capture-response.sh`: `co-dialectic/` added to
   HOOK_PATHS (brain-kernel codi state auto-committed; silences unit-of-work noise)
 - Both hooks: commit messages now include file count + path preview
-  (`session-log: prompt 2026-06-04 11:21 — 2 files (brain/sessions/ledger/...,WIP/...)`)
+  (prefix, timestamp, staged-file count, then a truncated list of the staged paths)
 - Both hooks: `[DEBUG]` forensic line written to git-errors.log on every fire
   (branch + pre_hook_staged + hook_paths count)
 - Both hooks: skip commit + push when HOOK_PATHS has zero staged changes (eliminates

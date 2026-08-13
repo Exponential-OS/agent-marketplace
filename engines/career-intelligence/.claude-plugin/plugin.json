@@ -1,7 +1,7 @@
 {
   "name": "career-intelligence",
   "platform": "xHumanOS",
-  "version": "0.77.0",
+  "version": "0.80.0",
   "depends_on_kernel": [
     "brain-kernel >= 1.0.0"
   ],
@@ -48,7 +48,7 @@
       "pipeline-job-staleness"
     ]
   },
-  "description": "Career Intelligence Engine (xHumanOS) v0.77.0 \u2014 job search, network, pipeline, resume, interview-prep, outreach, profile-brand alignment scoring, milestone brand prompts, follow-up nudges, inbound-pipeline tracking, and local beta-metrics skills for Claude Code, backed by the brain-kernel. Recent: XOS-93 advisory LinkedIn profile-to-brand-voice alignment scoring with prioritized gap ranking and PII-free local telemetry; XOS-133 local beta-metrics dashboard; unified Mission Control career+brand health dashboard + dashboard_viewed telemetry; profile-change inbound impact + weekly content-attributed inbound-DM insight + insight-card/conversation-to-post/content-to-DM telemetry; fail-closed opt-in milestone-to-brand suggestions; brand-attributed inbound recruiter-DM pipeline tracking; draft-only follow-up nudges; warm-contact-outreach-dedup JSON support; claim-grounding + off-rubric risk gates; flat-path canonicalization onto career-intelligence/projects/job-search/; and workspace-identity gates across all session hooks. Detection: $CAREER_HOME match OR brain/identity/ marker OR .career-os-workspace sentinel.",
+  "description": "Career Intelligence Engine (xHumanOS) v0.80.0 \u2014 job search, network, pipeline, resume, interview-prep, outreach, audience preview, profile-brand alignment scoring, milestone brand prompts, follow-up nudges, inbound-pipeline tracking, and local beta-metrics skills for Claude Code, backed by the brain-kernel. Recent: XOS-211 session-ledger day-file rotation with 40 MiB active-shard caps, numeric shard readers, and state-dir rotate locks; XOS-100 advisory who-will-see-this audience preview for draft posts with robust messy-warmth parsing and PII-free local telemetry; XOS-93 advisory LinkedIn profile-to-brand-voice alignment scoring with prioritized gap ranking and PII-free local telemetry; XOS-133 local beta-metrics dashboard; unified Mission Control career+brand health dashboard + dashboard_viewed telemetry; profile-change inbound impact + weekly content-attributed inbound-DM insight + insight-card/conversation-to-post/content-to-DM telemetry; fail-closed opt-in milestone-to-brand suggestions; brand-attributed inbound recruiter-DM pipeline tracking; draft-only follow-up nudges; warm-contact-outreach-dedup JSON support; claim-grounding + off-rubric risk gates; flat-path canonicalization onto career-intelligence/projects/job-search/; and workspace-identity gates across all session hooks. Detection: $CAREER_HOME match OR brain/identity/ marker OR .career-os-workspace sentinel.",
   "author": {
     "name": "Anand Vallamsetla"
   },

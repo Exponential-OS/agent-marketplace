@@ -64,7 +64,7 @@ Scan reports themselves remain markdown files at `career-intelligence/projects/j
 Say "onboard me to career intelligence" to run it. It creates `brain/identity/experience-history.md` and `career-intelligence/projects/job-search/job-search-config.md` from an 8-question interview. Without these files, the scanner has no targeting config and will produce irrelevant results.
 
 **Step 1 — Expand job search config**
-After onboarding, say: "set up my job search config" or "expand job search targeting". This reads your preferences from `job-search-config.md` and creates the full operational config at `brain/config/job-search.md` — adding ATS direct URLs, LinkedIn search keywords, company tiers, and warm-path settings. This is what the scanner reads on every run.
+After onboarding, say: "set up my job search config" or "expand job search targeting". This reads your preferences from `job-search-config.md` and creates the full operational config at `career-intelligence/config/job-search.md` — adding ATS direct URLs, LinkedIn search keywords, company tiers, and warm-path settings. This is what the scanner reads on every run.
 
 **Step 2 — Add your resume tracks**
 Create a folder `Resumes & Cover Letters/` in your workspace. Paste or upload your current resume as one or more files. The file names become your track names (e.g., `resume-engineering-leader.md`, `resume-executive.md`). The resume engine auto-detects tracks from filenames. If you have only one resume, name it `resume-base.md` — the engine will derive tracks from your experience history.
@@ -78,7 +78,7 @@ Use Claude Code's scheduled task system to run the scanner automatically:
 The automated scan runs in surface-level mode (no deep People tab navigation). You review the output and run "enrich warm paths" manually for high-priority roles.
 
 **What to customize per your situation:**
-- `brain/config/job-search.md` → edit `Target Roles`, `Filters`, `ATS Direct URLs`, `LinkedIn Search Keywords`
+- `career-intelligence/config/job-search.md` → edit `Target Roles`, `Filters`, `ATS Direct URLs`, `LinkedIn Search Keywords`
 - Target level and comp floor come from your onboarding answers — edit them in the config file if your search evolves
 - The scanner reads the config on every run; edits take effect immediately
 
@@ -132,11 +132,30 @@ report for user to review or enrich manually.
 
 ---
 
+## ⚠️ PATH DRIFT — verified 2026-08-12
+
+Paths below were corrected after a live scan found the documented config did not exist. The
+workspace migrated `brain/` into engine-named folders; this skill still pointed at the old
+tree. An agent trusting the old paths runs the scanner with NO targeting config and produces
+irrelevant results silently.
+
+| Was | Now | Verified |
+|---|---|---|
+| `brain/config/job-search.md` | `career-intelligence/config/job-search.md` | 2026-08-12 |
+| `brain/reference/jd-samples/` | `brain/identity/reference/jd-samples/` | 2026-08-12 |
+| `brain/identity/skills-matrix.md` | `identity/skills-matrix.md` | 2026-08-12 |
+| `brain/identity/identity.md` | `xHumanOS/identity/identity.md` | 2026-08-12 |
+
+`brain/identity/experience-history.md` was checked and is CORRECT — left alone.
+
+**Before trusting any path in this file, confirm it exists.** These are workspace-specific
+and drift whenever the brain layer is reorganised.
+
 ## CROSS-REFERENCES (P9 Coherence)
 
 | Artifact | Location | Relationship |
 |----------|----------|-------------|
-| Config (targeting) | `brain/config/job-search.md` | Source of truth for all targeting parameters |
+| Config (targeting) | `career-intelligence/config/job-search.md` | Source of truth for all targeting parameters |
 | Scheduled task prompt | `skills/job-search-scheduler/scan-prompt-v11.md` | Canonical scanner prompt (v11 — plugin path format). Paste into scheduled-task config. |
 | Mission-control routing | `skills/mission-control/SKILL.md` | Routes scan + enrich triggers to this skill |
 | Job-match-scorer skill | `skills/job-match-scorer/SKILL.md` | Receives scan output for deep scoring |
@@ -153,12 +172,12 @@ If you change scan logic → update this SKILL.md AND the scheduled task prompt.
 
 | Source | Path | What It Provides |
 |--------|------|------------------|
-| Config | `brain/config/job-search.md` | Target roles, company tiers, ATS URLs, LinkedIn keywords, filters, skip rules, warm-path settings |
-| JD samples | `brain/reference/jd-samples/*.md` | Saved JD snapshots for roles already fetched |
+| Config | `career-intelligence/config/job-search.md` | Target roles, company tiers, ATS URLs, LinkedIn keywords, filters, skip rules, warm-path settings |
+| JD samples | `brain/identity/reference/jd-samples/*.md` | Saved JD snapshots for roles already fetched |
 | Pipeline | `career-intelligence/projects/job-search/job-pipeline.json` | Already Applied table (skip dupes) + Warm Intros table (existing contacts) |
-| Skills matrix | `brain/identity/skills-matrix.md` | Technology proficiency for quick-filter gap detection |
+| Skills matrix | `identity/skills-matrix.md` | Technology proficiency for quick-filter gap detection |
 | People | `network/people/*.md` | Contact network for warm-path cross-referencing |
-| Identity | `brain/identity/identity.md` | Values, philosophy for culture fit |
+| Identity | `xHumanOS/identity/identity.md` | Values, philosophy for culture fit |
 | LinkedIn (via Chrome MCP) | Browser navigation | Job feeds, company pages, People tabs, connection data |
 | Previous scan | `career-intelligence/projects/job-search/scans/{latest}/*.md` | Delta tracking — what changed since last scan |
 
@@ -168,7 +187,7 @@ If you change scan logic → update this SKILL.md AND the scheduled task prompt.
 |--------|------|------------------|
 | Scan report | `career-intelligence/projects/job-search/scans/{YYYY-MM-DD}/scan-{HH}-{MM}.md` | Roles found, warm tags, JD quality, verify queue |
 | Enrichment report | `career-intelligence/projects/job-search/scans/{YYYY-MM-DD}/enrich-{HH}-{MM}.md` | Deep warm-path results for roles from latest scan |
-| JD snapshots | `brain/reference/jd-samples/{company}-{role-slug}.md` | Fetched JD text (permanent — URLs die, snapshots don't) |
+| JD snapshots | `brain/identity/reference/jd-samples/{company}-{role-slug}.md` | Fetched JD text (permanent — URLs die, snapshots don't) |
 | Task updates | GitHub Issues `$CAREER_GITHUB_REPO` | New `kind:scan-result` issues opened per high-priority role |
 | Pipeline updates | `career-intelligence/projects/job-search/job-pipeline.json` | New "Ready to Apply" entries |
 
@@ -190,7 +209,7 @@ When the skill is invoked, determine mode from the trigger:
 
 ### Step 1: Load Context
 
-Read from config file (`brain/config/job-search.md`):
+Read from config file (`career-intelligence/config/job-search.md`):
 - Target roles, company tiers, ATS URLs, LinkedIn keywords, filters
 - Skip rules, structural gap auto-skip rules
 - Resume track mapping
@@ -237,7 +256,7 @@ For every NEW role found:
 
 1. Extract direct job apply URL (not company page, not LinkedIn search URL)
 2. Validate URL pattern per config rules
-3. If valid: fetch JD text, save to `brain/reference/jd-samples/`, tag `✅ JD`
+3. If valid: fetch JD text, save to `brain/identity/reference/jd-samples/`, tag `✅ JD`
 4. If LinkedIn search/company URL only: tag `🔄 partial`
 5. If 404 / "Job not found": mark CLOSED, exclude
 6. If cannot fetch (JS, login wall): add to Verify Queue, tag `⚠️ title-only`
@@ -494,7 +513,7 @@ Use surgical edits — do not rewrite the entire scan file.
 
 ## BEHAVIOR: First Run (No Config)
 
-When `brain/config/job-search.md` does NOT exist:
+When `career-intelligence/config/job-search.md` does NOT exist:
 
 Walk through setup questions (one at a time, P11):
 1. Target role titles

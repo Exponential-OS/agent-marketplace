@@ -61,6 +61,7 @@ mkdir -p "$STATE_DIR"
 # is_career_os_workspace() copy that was forgotten in THIS file in v0.66.
 source "$SCRIPT_DIR/_workspace-gate.sh"
 source "$SCRIPT_DIR/_git-sync-push.sh"
+source "$SCRIPT_DIR/_ledger-path.sh"
 
 # --- Version check + migration (P6: Zero-Data-Loss Upgrades) ---
 # Must run BEFORE any other logic. Migration scripts know old file locations.
@@ -252,25 +253,31 @@ fi
 # Validates ledger format hasn't been corrupted. Warn only — git history has the clean version.
 YESTERDAY=$(date -v-1d +%Y-%m-%d 2>/dev/null || date -d "yesterday" +%Y-%m-%d 2>/dev/null || echo "")
 if [ -n "$YESTERDAY" ]; then
-    YESTERDAY_LEDGER="$WORKSPACE_ROOT/brain/sessions/ledger/$YESTERDAY.md"
-    if [ -f "$YESTERDAY_LEDGER" ]; then
-        FIRST_LINE=$(head -n 1 "$YESTERDAY_LEDGER" 2>/dev/null || echo "")
+    LEDGER_DIR="$WORKSPACE_ROOT/brain/sessions/ledger"
+    FIRST_LINE=$(cat_ledger_day "$LEDGER_DIR" "$YESTERDAY" 2>/dev/null | head -n 1 || true)
+    if [ -n "$FIRST_LINE" ]; then
         if [[ "$FIRST_LINE" != "# Session Ledger"* ]]; then
-            echo "⚠️ Career OS: Yesterday's ledger has unexpected format. Check $YESTERDAY_LEDGER"
+            echo "⚠️ Career OS: Yesterday's ledger has unexpected format. Check $LEDGER_DIR/$YESTERDAY*.md"
         fi
     fi
 fi
 
 # --- Write session start marker to ledger ---
-mkdir -p "$WORKSPACE_ROOT/brain/sessions/ledger"
+LEDGER_DIR="$WORKSPACE_ROOT/brain/sessions/ledger"
+mkdir -p "$LEDGER_DIR"
 
 TODAY=$(date +%Y-%m-%d)
 TIMESTAMP=$(date +%H:%M:%S)
-LEDGER_FILE="$WORKSPACE_ROOT/brain/sessions/ledger/$TODAY.md"
+LEDGER_FILE="$(resolve_active_ledger "$LEDGER_DIR" "$TODAY")"
 
 if [ ! -f "$LEDGER_FILE" ]; then
-    echo "# Session Ledger — $TODAY" > "$LEDGER_FILE"
-    echo "" >> "$LEDGER_FILE"
+    (
+        set -C
+        {
+            echo "# Session Ledger — $TODAY"
+            echo ""
+        } > "$LEDGER_FILE"
+    ) 2>/dev/null || true
 fi
 
 {

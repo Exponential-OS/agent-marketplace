@@ -86,6 +86,14 @@ export interface DashboardViewedOptions extends EmitEventOptions {
   cohort?: string;
 }
 
+export interface IdentityFileBootstrappedInput {
+  files_created?: readonly string[];
+}
+
+export interface IdentityFileBootstrappedOptions extends EmitEventOptions {
+  now?: Date;
+}
+
 export interface ContentToDmTrackedEvent extends TelemetryEvent {
   event: "content_to_dm_tracked";
   post_id: string;
@@ -135,6 +143,13 @@ export interface DashboardViewedEvent extends TelemetryEvent {
   has_career_data: boolean;
   has_brand_data: boolean;
   cohort?: string;
+  ts: string;
+}
+
+export interface IdentityFileBootstrappedEvent extends TelemetryEvent {
+  event: "identity_file_bootstrapped";
+  files_created: string[];
+  count: number;
   ts: string;
 }
 
@@ -341,6 +356,27 @@ export function emitDashboardViewed(
   return emitEvent(event, options);
 }
 
+export function buildIdentityFileBootstrappedEvent(
+  input: IdentityFileBootstrappedInput = {},
+  now: Date = new Date(),
+): IdentityFileBootstrappedEvent {
+  const files_created = normalizeStringList(input.files_created);
+  return {
+    event: "identity_file_bootstrapped",
+    files_created,
+    count: files_created.length,
+    ts: ts(now),
+  };
+}
+
+export function emitIdentityFileBootstrapped(
+  input: IdentityFileBootstrappedInput = {},
+  options: IdentityFileBootstrappedOptions = {},
+): EmitEventResult<IdentityFileBootstrappedEvent> {
+  const event = buildIdentityFileBootstrappedEvent(input, options.now);
+  return emitEvent(event, options);
+}
+
 export function emitEvent<T extends TelemetryEvent>(
   event: T,
   options: EmitEventOptions = {},
@@ -399,8 +435,65 @@ function requiredBoolean(value: boolean, field: string): boolean {
   return value;
 }
 
+function normalizeStringList(values: readonly string[] | undefined): string[] {
+  return (values ?? []).map((value) => value.trim()).filter(Boolean);
+}
+
 function assertContentToDmAttributionMethod(value: string): asserts value is ContentToDmAttributionMethod {
   if (value !== "user" && value !== "inferred") {
     throw new Error('attributed_by must be "user" or "inferred"');
   }
 }
+
+export interface AudiencePreviewViewedInput {
+  audience_count: number;
+  top_score?: number;
+}
+
+export interface AudiencePreviewViewedOptions extends EmitEventOptions {
+  now?: Date;
+}
+
+export type AudiencePreviewTopScoreBucket = "0" | "1-4" | "5-9" | "10-19" | "20+";
+
+export interface AudiencePreviewViewedEvent extends TelemetryEvent {
+  event: "audience_preview_viewed";
+  audience_count: number;
+  top_score_bucket: AudiencePreviewTopScoreBucket;
+  ts: string;
+}
+
+export function buildAudiencePreviewViewedEvent(
+  input: AudiencePreviewViewedInput,
+  now: Date = new Date(),
+): AudiencePreviewViewedEvent {
+  return {
+    event: "audience_preview_viewed",
+    audience_count: nonNegativeInteger(input.audience_count),
+    top_score_bucket: audienceTopScoreBucket(input.top_score),
+    ts: ts(now),
+  };
+}
+
+export function emitAudiencePreviewViewed(
+  input: AudiencePreviewViewedInput,
+  options: AudiencePreviewViewedOptions = {},
+): EmitEventResult<AudiencePreviewViewedEvent> {
+  const event = buildAudiencePreviewViewedEvent(input, options.now);
+  return emitEvent(event, options);
+}
+
+function nonNegativeInteger(value: unknown): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) return 0;
+  return Math.max(0, Math.floor(value));
+}
+
+function audienceTopScoreBucket(value: unknown): AudiencePreviewTopScoreBucket {
+  const score = typeof value === "number" && Number.isFinite(value) ? Math.max(0, value) : 0;
+  if (score <= 0) return "0";
+  if (score < 5) return "1-4";
+  if (score < 10) return "5-9";
+  if (score < 20) return "10-19";
+  return "20+";
+}
+

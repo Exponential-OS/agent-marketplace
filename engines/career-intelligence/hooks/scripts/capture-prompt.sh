@@ -99,6 +99,7 @@ WSG_SKIP_ECHO='{"decision": "approve"}'
 source "$SCRIPT_DIR/_workspace-gate.sh"
 unset WSG_SKIP_ECHO
 source "$SCRIPT_DIR/_git-sync-push.sh"
+source "$SCRIPT_DIR/_ledger-path.sh"
 
 cd "$WORKSPACE_ROOT"
 
@@ -106,13 +107,18 @@ cd "$WORKSPACE_ROOT"
 TODAY=$(date +%Y-%m-%d)
 TIMESTAMP=$(date +%H:%M:%S)
 LEDGER_DIR="$WORKSPACE_ROOT/brain/sessions/ledger"
-LEDGER_FILE="$LEDGER_DIR/$TODAY.md"
 
 mkdir -p "$LEDGER_DIR"
+LEDGER_FILE="$(resolve_active_ledger "$LEDGER_DIR" "$TODAY")"
 
 if [ ! -f "$LEDGER_FILE" ]; then
-    echo "# Session Ledger — $TODAY" > "$LEDGER_FILE"
-    echo "" >> "$LEDGER_FILE"
+    (
+        set -C
+        {
+            echo "# Session Ledger — $TODAY"
+            echo ""
+        } > "$LEDGER_FILE"
+    ) 2>/dev/null || true
 fi
 
 {

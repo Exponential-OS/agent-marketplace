@@ -263,7 +263,7 @@ function hasD7Return(ledgerDir: string, now: Date): boolean {
 
   const today = localDayNumber(now);
   const priorDays = entries
-    .map((entry) => /^(\d{4})-(\d{2})-(\d{2})\.md$/.exec(entry))
+    .map((entry) => /^(\d{4})-(\d{2})-(\d{2})(?:\.\d{2})?\.md$/.exec(entry))
     .filter((match): match is RegExpExecArray => Boolean(match))
     .map((match) => localDayNumberFromParts(Number(match[1]), Number(match[2]), Number(match[3])))
     .filter((day) => day < today);

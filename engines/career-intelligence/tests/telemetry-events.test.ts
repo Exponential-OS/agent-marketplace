@@ -1,11 +1,12 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import {
   buildBetaUserActivatedEvent,
   buildFirstArtifactCreatedEvent,
   emitArtifactCreated,
+  emitD7ReturnFromLedger,
 } from "../src/telemetry/beta-funnel";
 import {
   buildContentToDmTrackedEvent,
@@ -583,6 +584,34 @@ describe("XOS-98 local telemetry", () => {
     });
     expect(String(events[1].cohort)).toMatch(/^\d{4}-W\d{2}$/);
     expect(events.some((event) => event.event === "validated_outward_win")).toBe(false);
+  });
+
+  test("d7 return ledger scan counts shard files as the shard's calendar day", () => {
+    const root = makeRoot();
+    const ledgerDir = join(root, "ledger");
+    const eventsPath = join(root, "events.jsonl");
+    const statePath = join(root, "state.json");
+    mkdirSync(ledgerDir);
+    writeFileSync(join(ledgerDir, "2026-07-02.02.md"), "# Session Ledger — 2026-07-02\n");
+
+    const result = emitD7ReturnFromLedger(
+      { ledgerDir },
+      {
+        env: { XOS_98_TELEMETRY: "1" },
+        eventsPath,
+        statePath,
+        now: new Date("2026-07-10T12:00:00Z"),
+      },
+    );
+
+    expect(result.written).toBe(true);
+    expect(readEvents(eventsPath)).toEqual([
+      {
+        event: "d7_return",
+        cohort: "2026-W28",
+        ts: "2026-07-10T12:00:00Z",
+      },
+    ]);
   });
 
   test("active user time emits only a coarse seconds bucket", () => {

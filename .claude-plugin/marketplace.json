@@ -16,7 +16,7 @@
       "license": "Proprietary",
       "source": "./engines/career-intelligence",
       "description": "Career Intelligence Engine — xHumanOS engine for job search, network, pipeline, sessions. v0.77.0: profile↔brand-voice alignment score (XOS-93). v0.76.0: full telemetry + fusion suite — content→DM attribution, conversation→post prompt, weekly inbound insight, profile-change inbound impact, unified career+brand dashboard, follow-up nudge engine, brand→career inbound-pipeline tracker, fail-closed milestone→brand detector. v0.74.0: XOS-133 local beta-funnel + NSM dashboard. All local-only JSONL, XOS_98_TELEMETRY-gated, ZERO network (no-phone-home). Draft-first outreach + Company Action Gate + claim-grounding safety gates throughout.",
-      "version": "0.77.0",
+      "version": "0.80.0",
       "category": "career",
       "homepage": "https://github.com/Exponential-OS/career-intelligence-engine"
     },

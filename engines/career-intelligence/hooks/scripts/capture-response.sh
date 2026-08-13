@@ -117,6 +117,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 # ledger / commit / push outside it. Replaces the per-script is_career_os_workspace() copy.
 source "$SCRIPT_DIR/_workspace-gate.sh"
 source "$SCRIPT_DIR/_git-sync-push.sh"
+source "$SCRIPT_DIR/_ledger-path.sh"
 
 cd "$WORKSPACE_ROOT"
 PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
@@ -124,13 +125,18 @@ PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 TODAY=$(date +%Y-%m-%d)
 TIMESTAMP=$(date +%H:%M:%S)
 LEDGER_DIR="$WORKSPACE_ROOT/brain/sessions/ledger"
-LEDGER_FILE="$LEDGER_DIR/$TODAY.md"
 
 mkdir -p "$LEDGER_DIR"
+LEDGER_FILE="$(resolve_active_ledger "$LEDGER_DIR" "$TODAY")"
 
 if [ ! -f "$LEDGER_FILE" ]; then
-    echo "# Session Ledger — $TODAY" > "$LEDGER_FILE"
-    echo "" >> "$LEDGER_FILE"
+    (
+        set -C
+        {
+            echo "# Session Ledger — $TODAY"
+            echo ""
+        } > "$LEDGER_FILE"
+    ) 2>/dev/null || true
 fi
 
 {

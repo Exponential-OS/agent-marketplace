@@ -3,7 +3,7 @@ name: career-intelligence-onboarding
 description: >
   Week 1 onboarding wizard for new Career Intelligence users. Interviews the user
   across 3 areas (work history, skills, job search preferences), then generates the
-  2 required context files that Career Intelligence needs to run. The outreach-composer,
+  required durable context files that Career Intelligence needs to run. The outreach-composer,
   outreach-fact-check, resume-engine, and job-match-scorer skills all load these files
   automatically — the user never re-explains their background.
 triggers:
@@ -22,7 +22,7 @@ triggers:
 
 ## Purpose
 
-New Career Intelligence users need 2 files before job search, outreach, and resume skills can run accurately. This skill generates both through a structured interview. Once complete, the user's experience history and job search preferences persist across every future session — no re-explaining background on every outreach draft.
+New Career Intelligence users need durable identity and job-search files before job search, outreach, and resume skills can run accurately. This skill generates them through a structured interview and bootstrap. Once complete, the user's experience history, handles, brand voice, and job search preferences persist across every future session — no re-explaining background on every outreach draft.
 
 ## Output Format
 
@@ -31,7 +31,7 @@ Always start with:
 ━━━ Career Intelligence: Onboarding ━━━
 ```
 
-## The 2 Files This Skill Generates
+## The Files This Skill Generates
 
 All writes go through `brain.write()` with `engine_id: "career-intelligence"`.
 `identity/experience-history.md` is an xOS primitive — permitted via
@@ -40,6 +40,8 @@ All writes go through `brain.write()` with `engine_id: "career-intelligence"`.
 | File | brain.write() path | What it does |
 |---|---|---|
 | `experience-history.md` | `identity/experience-history.md` | Work history, key achievements, skills, education. Loaded by outreach-fact-check before every outreach draft to prevent fabricated claims. |
+| `handles.md` | `identity/handles.md` | Durable labeled list of the user's public handles and contact links. Blank fields are omitted; missing data is left as a TODO stub. |
+| `brand-voice.md` | `identity/brand-voice.md` | Durable themes and voice line for brand/profile alignment workflows. Missing data is left as a TODO stub. |
 | `job-search-config.md` | `career-intelligence/projects/job-search-config.md` | Target roles, companies, location, salary, and non-negotiables. Loaded by job-match-scorer and mission-control. |
 
 ## Execution Flow
@@ -102,7 +104,7 @@ After all 8 answers:
 
 2. Fill in all `{{PLACEHOLDER}}` tokens with the user's answers. For multi-role work history (Q2): expand the template's role blocks to cover all roles mentioned.
 
-3. Write the 2 files via brain.write():
+3. Write the existing 2 onboarding files via brain.write():
    ```
    brain.write("identity/experience-history.md", content, {
      provenance: { who: "career-intelligence", why: "onboarding: experience history", source: "career-intelligence-onboarding" },
@@ -115,11 +117,41 @@ After all 8 answers:
    ```
    **If files already exist (brain.exists() returns true): show what would change. Ask: "Overwrite, merge, or skip?"**
 
-4. Validate: confirm both files exist and are non-empty.
+4. Bootstrap the 2 durable identity files using `src/pipeline/identity-bootstrap.ts`. Prefer `bootstrapIdentityFiles(input)`; `buildHandlesDoc(input)` and `buildBrandVoiceDoc(input)` are also acceptable. Use any handle or brand details the user already provided; do not invent missing profile data. Empty input is allowed and produces TODO stubs.
+   ```
+   const identityBootstrap = bootstrapIdentityFiles({
+     name,
+     linkedin,
+     github,
+     substack,
+     twitter,
+     website,
+     email,
+     themes,
+     voiceLine
+   })
 
-5. Smoke test: confirm `experience-history.md` has at least one role entry and `job-search-config.md` has a `target_roles` field.
+   brain.write("identity/handles.md", identityBootstrap.files.find(f => f.path === "identity/handles.md").content, {
+     provenance: { who: "career-intelligence", why: "onboarding: identity handles bootstrap", source: "career-intelligence-onboarding" },
+     engine_id: "career-intelligence"
+   })
+   brain.write("identity/brand-voice.md", identityBootstrap.files.find(f => f.path === "identity/brand-voice.md").content, {
+     provenance: { who: "career-intelligence", why: "onboarding: brand voice bootstrap", source: "career-intelligence-onboarding" },
+     engine_id: "career-intelligence"
+   })
+   ```
+   **If files already exist (brain.exists() returns true): show what would change. Ask: "Overwrite, merge, or skip?"**
 
-6. Emit the local-only onboarding completion signal:
+5. Validate: confirm all 4 files exist and are non-empty.
+
+6. Smoke test: confirm `experience-history.md` has at least one role entry, `job-search-config.md` has a `target_roles` field, `handles.md` has either labeled handles or a TODO stub, and `brand-voice.md` has `## Themes` and `## Voice`.
+
+7. Emit the local-only identity bootstrap telemetry event. The helper no-ops unless `XOS_98_TELEMETRY` is enabled. Payload must contain only relative file paths and count; do not include names, handles, themes, voice text, or profile content:
+   ```
+   emitIdentityFileBootstrapped({ files_created: identityBootstrap.filesCreated })
+   ```
+
+8. Emit the local-only onboarding completion signal:
    ```bash
    bun "$CLAUDE_PLUGIN_ROOT/src/telemetry/beta-funnel.ts" onboarding-completed '{}'
    ```
@@ -128,6 +160,14 @@ After all 8 answers:
 
 ### Phase 4 — Completion Summary
 
+Completion checklist before printing:
+- `identity/experience-history.md` exists and is non-empty.
+- `career-intelligence/projects/job-search-config.md` exists and is non-empty.
+- `identity/handles.md` exists and is non-empty.
+- `identity/brand-voice.md` exists and is non-empty.
+- `identity_file_bootstrapped` was emitted through the local gated telemetry helper with `files_created`.
+- `onboarding_completed` was emitted through the local gated telemetry helper.
+
 Print this summary:
 
 ```
@@ -135,10 +175,13 @@ Print this summary:
 
 Files created:
   ✅ brain/identity/experience-history.md
+  ✅ brain/identity/handles.md
+  ✅ brain/identity/brand-voice.md
   ✅ career-intelligence/projects/job-search/job-search-config.md
 
 Cross-session memory: ACTIVE
   → Your background is now loaded into every outreach draft automatically.
+  → Your handles and brand voice now persist for profile and brand workflows.
   → outreach-fact-check will verify claims against your real history before sending.
   → job-match-scorer will score roles against your preferences — no re-explaining each time.
 
@@ -148,8 +191,8 @@ What's next:
   → "write outreach to [name] at [company]" — grounded in your real background
 
 One optional step: git commit your context files so they're versioned:
-  git -C $CAREER_HOME add brain/identity/experience-history.md career-intelligence/projects/job-search/job-search-config.md
-  git -C $CAREER_HOME commit -m "feat(career): Week 1 onboarding — experience history + job search config"
+  git -C $CAREER_HOME add brain/identity/experience-history.md brain/identity/handles.md brain/identity/brand-voice.md career-intelligence/projects/job-search/job-search-config.md
+  git -C $CAREER_HOME commit -m "feat(career): Week 1 onboarding identity files"
 ```
 
 ---
