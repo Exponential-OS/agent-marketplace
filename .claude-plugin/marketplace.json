@@ -69,8 +69,8 @@
       "platform": "xOS",
       "license": "Proprietary",
       "source": "./engines/brand-amplification",
-      "description": "Brand Amplification Engine (BAE) — outbound brand-building umbrella. v0.55.0: post-algorithm content-strategy reset (relevance > volume) — content-flywheel Reset section (topic-audience fit, audience specificity, engagement-quality-over-velocity) + campaign-engine Relevance Gate (relevance_score ≥ 70 to proceed, else gap + sharpening) + local-only XOS_98_TELEMETRY-gated content_strategy_applied event (no phone-home). Includes the social distribution engine (SDE master orchestrator), flywheel amplification module, hub-and-spoke surface coverage, 9-gate preflight CI for content campaigns, golden-hour scheduling, invisible signal CTAs (bookmark/save/DM-share), platform-native routing across LinkedIn / Substack / Reddit / X / Instagram / Facebook / Threads, and the confidence-ladder browser MCP defaults (browserbase for setup; chrome-devtools-mcp for posting per Irreversible-Action Invariant).",
-      "version": "0.55.0",
+      "description": "Brand Amplification Engine (xOS) v0.59.0 - The outbound brand-building engine for xOS. Coordinated content distribution across owned surfaces (LinkedIn, Substack, Reddit, X, Instagram, Facebook, Threads) with hub-and-spoke flywheel, surface coverage matrix, pre-publish quality gates, offline Reddit pre-post viability checks, relevance-gated campaign strategy, quote-a-day draft flywheel with DRAFT-",
+      "version": "0.59.0",
       "category": "distribution",
       "homepage": "https://github.com/Exponential-OS/brand-amplification-engine"
     },

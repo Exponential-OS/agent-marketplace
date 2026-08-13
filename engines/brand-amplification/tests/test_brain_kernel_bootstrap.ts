@@ -59,10 +59,13 @@ const BRAIN_KERNEL_PATH = join(
   "kernel.ts",
 );
 const BOOTSTRAP_PATH = join(import.meta.dir, "..", "brain-kernel-bootstrap.ts");
+const describeWithBrainKernel = existsSync(BRAIN_KERNEL_PATH)
+  ? describe
+  : describe.skip;
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
-describe("brand-amplification brain-kernel bootstrap", () => {
+describeWithBrainKernel("brand-amplification brain-kernel bootstrap", () => {
   let tmpDir: string;
 
   beforeEach(async () => {

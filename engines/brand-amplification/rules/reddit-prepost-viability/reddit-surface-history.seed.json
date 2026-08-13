@@ -1,0 +1,41 @@
+{
+  "handle": "thewhyman007",
+  "updated": "2026-08-13",
+  "entries": [
+    {
+      "subreddit": "r/LocalLLaMA",
+      "date": "2026-08-13",
+      "outcome": "removed",
+      "removed_by": "moderator",
+      "title": "Building got free, so the moat moved"
+    },
+    {
+      "subreddit": "r/TechSEO",
+      "date": "2026-07-24",
+      "outcome": "removed",
+      "removed_by": "automod",
+      "title": "AI engines comparison"
+    },
+    {
+      "subreddit": "r/PromptEngineering",
+      "date": "2026-05-09",
+      "outcome": "survived",
+      "removed_by": null,
+      "title": "Eval harness, 50 seeded artifacts"
+    },
+    {
+      "subreddit": "r/LocalLLaMA",
+      "date": "2026-04-29",
+      "outcome": "removed",
+      "removed_by": "moderator",
+      "title": "Co-Dialectic v4"
+    },
+    {
+      "subreddit": "r/MachineLearning",
+      "date": "2026-04-29",
+      "outcome": "removed",
+      "removed_by": "moderator",
+      "title": "Co-Dialectic v4"
+    }
+  ]
+}
