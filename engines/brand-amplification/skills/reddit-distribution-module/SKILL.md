@@ -22,6 +22,21 @@ Always start your response with:
 ━━━ Brand Amplification: Reddit Distribution Module ━━━
 ```
 
+## Reddit Pre-Post Viability Gate (MANDATORY)
+
+Run this gate before drafting for a Reddit surface, then run it again with the final candidate title/body before posting. It is offline: history comes from `submission_history` or the workspace ledger, never a Reddit fetch.
+
+```bash
+python3 "$(ls -v ~/.claude/plugins/cache/xos/brand-amplification/*/rules/reddit-prepost-viability/HOW.py 2>/dev/null | tail -1)" '{
+  "subreddit": "r/Entrepreneur",
+  "body": "<planned framing before drafting, or exact final body before posting>",
+  "title": "<optional post title>",
+  "handle": "thewhyman007"
+}'
+```
+
+Exit 0 = PASS (draft/post may continue). Exit 1 = BLOCK (do not draft or post). Exit 2 = WARN (surface the named warning and resolve or explicitly review it before continuing).
+
 ## Capabilities
 
 ### 1. Autonomous Execution & Content Adaptation

@@ -1,6 +1,50 @@
 <!-- product-vs-solution: example -->
 # Changelog
 
+## [0.59.0] — 2026-08-13 — Reddit pre-post viability (XOS-236)
+
+### Added — offline Reddit viability gate
+Added `reddit-prepost-viability`, a deterministic pre-draft and pre-post gate that blocks subreddits with prior removals, blocks targets outside the verified top-50 AI citation index, warns when copy reads as announcing rather than answering, blocks U+2014 em dashes, and warns on U+2013 en dashes. Every result reports all four gates and their inspectable evidence in one JSON object.
+
+### Grounded — anonymous Reddit history fetch is unavailable
+Verified on 2026-08-13 that both `www.reddit.com/user/thewhyman007/submitted.json` and `old.reddit.com/user/thewhyman007/submitted.json` return HTTP 403 anonymously. The gate makes no Reddit request; it reads supplied history or the workspace ledger and warns visibly when ledger or research evidence is missing.
+
+## [0.58.0] — 2026-06-30 — DRAFT-safe daily quote cadence (XOS-161)
+
+### Added — once-per-day quote draft surfacing
+Added `scripts/daily-cadence.ts`, a deterministic DRAFT-only guard that reads the existing quote flywheel log, stops when a quote already has `drafted_at` on today's calendar day, and otherwise reuses the existing §1-only quote selector/draft run path.
+
+### Added — quote flywheel daily playbook
+Extended `quote-flywheel` with a "today's draft" daily mode plus human-gated optional wiring guidance for a once/day SessionStart hook or cron. No global hook is force-wired, and approval remains separate from publishing.
+
+### Added — local-only daily telemetry
+Added gated `quote_daily_surfaced` telemetry through the existing BrainTelemetryWriter pattern at `brand-amplification/telemetry/events.jsonl`. Telemetry remains local-only and disabled unless `XOS_98_TELEMETRY` is enabled.
+
+## [0.57.0] — 2026-06-30 — draft-first screenshot cascade planner (XOS-157)
+
+### Added — Substack to LinkedIn to spokes planner
+Added `cascade-planner`, a DRAFT-first playbook for planning the screenshot cascade from a provided Substack source: LinkedIn uses the Substack screenshot and puts the Substack URL in the comment only, while X and configured spokes reuse the same screenshot and link one rung up to the LinkedIn post.
+
+### Added — deterministic cascade plan helper
+Added `scripts/cascade-plan.ts` to build the staged sequence, dependency order, link-target map, reusable screenshot reference, platform-native drafts, visual-review notes, and confidence ladder without network calls, posting transport, scheduling, or screenshot capture.
+
+### Added — guardrail coverage
+Added hermetic Bun tests for the LinkedIn-comment-to-Substack and spoke-to-LinkedIn link map, LinkedIn-before-spokes dependency ordering, one-screenshot reuse, DRAFT-only guardrails, and plain-text no-pipe rendering.
+
+## [0.56.0] — 2026-06-30 — quote-a-day draft flywheel (XOS-153)
+
+### Added — Naval quote-a-day flywheel
+Added `quote-flywheel`, a DRAFT-first playbook that selects one §1-only quote from the cyborg quote deck, drafts a LinkedIn-native post, runs framing gates, and presents the copy for explicit approval. The MVP excludes harvest and screenshot cascades.
+
+### Added — deterministic §1 selector, local log, and graduation helper
+Added `scripts/quote-selector.ts` with configurable deck/log paths, least-recently-used rotation, 30-day default dedup, safe missing-deck skips, local JSONL draft/approval records, and a 10-approved-run graduation eligibility helper. The parser stops at the next safety-gate heading so §2 HOLD and §3 BORROWED quotes never enter the candidate set.
+
+### Fixed — fail-closed quote deck safety boundary
+Hardened the §1-only selector so drafts require a recognized §2 HOLD/patent boundary after §1, fail closed on headingless protected-section bleed, and block protected quote text across smart-quote and punctuation variants.
+
+### Added — local-only quote telemetry
+Added gated `quote_drafted` and `quote_approved` telemetry helpers that reuse the existing BAE local JSONL pattern through `brain.read()` + `brain.write()` only when `XOS_98_TELEMETRY` is enabled. No network transport or auto-post transport is introduced.
+
 ## [0.55.0] — 2026-06-28 — post-algorithm relevance reset (XOS-99)
 
 ### Added — Relevance Gate for campaign strategy

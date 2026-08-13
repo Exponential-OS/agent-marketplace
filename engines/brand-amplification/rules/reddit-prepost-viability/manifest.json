@@ -1,0 +1,28 @@
+{
+  "slug": "reddit-prepost-viability",
+  "version": "1.0.0",
+  "status": "active",
+  "created": "2026-08-13",
+  "origin": "XOS-236 acceptance items #4 and #5 plus Rule 1. Reddit viability must be checked before drafting or posting because prior removals, low-citation surfaces, announcement framing, and Reddit punctuation failures are knowable before publication. Anonymous submitted.json access was verified HTTP 403 on 2026-08-13, so enforcement is offline and ledger-backed.",
+  "description": "Offline deterministic pre-draft and pre-post Reddit gate. Checks subreddit removal history, top-50 AI citation targeting, answering-vs-announcing format, and dash compatibility.",
+  "gates": [
+    "surface_history: any prior removal in the target subreddit = BLOCK; missing ledger = WARN",
+    "top50_citation_index: subreddit absent from the top-50 AI citation index = BLOCK; missing research = WARN",
+    "format_class: deterministic answering-vs-announcing classifier = WARN when announcing",
+    "em_dash: U+2014 in title or body = BLOCK; U+2013 = WARN"
+  ],
+  "enforcement": {
+    "how": "HOW.py",
+    "check": "check.py",
+    "audit": "AUDIT.sh",
+    "watch": "WATCH.sh",
+    "log": "~/.career-os-enforcement-log.jsonl"
+  },
+  "applies_to": [
+    "Any Reddit post draft before writing begins",
+    "Any Reddit post immediately before publishing",
+    "Any Reddit comment or reply intended as a distribution surface"
+  ],
+  "litmus": "Run HOW.py with subreddit and candidate body/title — exit 0=viable, exit 1=blocked, exit 2=warning requiring review",
+  "dispatch_slug": "reddit-prepost-viability"
+}
