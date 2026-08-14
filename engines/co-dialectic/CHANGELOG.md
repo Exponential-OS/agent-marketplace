@@ -1,5 +1,25 @@
 # Changelog — Co-Dialectic
 
+## [4.39.0] — 2026-08-14 — XOS-237: session-scoped, turn-relative liveness
+
+- `statusline.sh` now reads Claude Code status-line stdin and selects `~/.codialectic/sessions/<session_id>.json`; one profile/session can no longer green or degrade another.
+- Liveness is turn-relative: a heartbeat at or after `last_user_prompt_ts` stays LIVE regardless of elapsed tool time. Only a heartbeat that predates the prompt beyond the overridable backstop is stale; the default backstop is now 21,600 seconds (6 hours).
+- Missing session evidence renders `🧠 Co-Dialectic · uninitialized`, not DEGRADED. Empty or malformed stdin keeps the legacy brain-first/global fallback for older Claude Code and manual invocations.
+- Workspace `co-dialectic/status-state.json` is the canonical durable preference/config state. `~/.codialectic/state.json` is legacy read/bootstrap fallback only; heartbeat writes are no longer mirrored between them.
+- New precompact packets and their latest marker now land at `<workspace>/brain/sessions/<session_id>/`; existing global packets are intentionally left untouched.
+
+## [4.38.0] — 2026-07-05 — Single-key sharpen select (I/S/D) + canonical `codi` prefix
+
+- Concise-mode sharpen offer is now `Sharpen? Reply I / S / D → IMPROVED / SOCRATIC / DIALECTIC (or 'codi sharpen' for all three).` A bare `I`/`S`/`D` (case-insensitive, trimmed) immediately after the offer picks that ONE tier — lowest input tax. Context-gated: only interpreted as a sharpen-select right after the offer, so a literal single-letter answer to another question is never hijacked. `codi sharpen` still renders all three.
+- Reminder + skill now use the canonical `codi` command prefix everywhere the full skill shows (was inconsistently `cod`): `codi verbose`/`codi concise`/`codi cruise`/etc.
+
+
+## [4.37.0] — 2026-07-04 — XOS-198: deterministic Protocol-1 heartbeat
+
+- `status-liveness-check.ts` now stamps the Protocol-1 heartbeat deterministically after it verifies a valid final-assistant status header in the transcript. The Stop hook writes `last_protocol_ts`, parsed score/Cal/persona fields, runtime `version`, and increments `growth_total_turns`, preserving command-owned preferences (`mode`, `verbosity`, `wildcard`, `active`) via read-modify-write.
+- Brain-kernel `co-dialectic/status-state.json` is the authoritative write target when present; legacy `~/.codialectic/state.json` is a best-effort mirror. Writes use temp-file + rename and fail open independently.
+- Removed model-facing heartbeat/counter write instructions from the survival reminder and Protocol 1 skill text. The model still renders the header and only persists command-driven preference changes.
+
 ## [4.36.0] — 2026-07-04 — XOS-210 (codi half): Protocol 8 surfaces cross_family.degraded
 
 - Protocol 8 auto-verify now reads the judge JSON authoritative `cross_family.degraded` field (from co-dialectic ≥4.35.0 / XOS-207). A T3 auto-verify that ran on <2 distinct families no longer renders the clean `🟢 2 independent models agreed` line — it surfaces a loud `⚠ CROSS-FAMILY DEGRADED — <family> lane down; T3 ran single-family` instead. Turns the silent single-family blind spot (down agy lane → T3 gate ran OpenAI-only, undetected) into a user-visible signal. Read cross_family.degraded, never all_flags[0]. Backward-compatible (no field → omit line). Prose-only Protocol-8 instruction change; companion to XOS-210 super-developer receipt half.

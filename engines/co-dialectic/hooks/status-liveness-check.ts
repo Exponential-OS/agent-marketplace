@@ -7,21 +7,30 @@
  * via Stop-hook systemMessage, but never blocks or crashes the session.
  */
 
-import { existsSync, readFileSync } from "fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "fs";
 import { homedir } from "os";
-import { join } from "path";
+import { dirname, join } from "path";
 import {
   evaluateSharedLiveness,
   staleSecsFromEnv,
   stringOr,
 } from "./liveness.ts";
+import {
+  sessionIdFromHookInput,
+  sessionStatePath,
+  workspaceRootFromInput,
+  type SessionAwareHookInput,
+} from "./session-state.ts";
 
-interface HookInput {
+interface HookInput extends SessionAwareHookInput {
   transcript_path?: string;
 }
 
 export interface CodiStatusState {
   active?: unknown;
+  mode?: unknown;
+  verbosity?: unknown;
+  wildcard?: unknown;
   persona?: unknown;
   persona_icon?: unknown;
   last_score?: unknown;
@@ -30,11 +39,15 @@ export interface CodiStatusState {
   version?: unknown;
   last_session_start_ts?: unknown;
   last_protocol_ts?: unknown;
+  last_user_prompt_ts?: unknown;
+  growth_total_turns?: unknown;
+  [key: string]: unknown;
 }
 
 export interface StatusFreshness {
   live: boolean;
   degraded: boolean;
+  unknown: boolean;
   stale: boolean;
   skew: boolean;
   inactive: boolean;
@@ -45,14 +58,22 @@ export interface RenderedHeader {
   firstLine: string;
   liveHeader: boolean;
   degradedHeader: boolean;
+  quietFooter: boolean;
   hasNumericScore: boolean;
   hasStatusScoreToken: boolean;
+  persona: string | null;
+  personaIcon: string | null;
   score: number | null;
   cal: number | null;
 }
 
+export interface StateWriteTarget {
+  path: string;
+  authoritative: boolean;
+}
+
 export interface StatusLivenessCheck {
-  reason: "fabrication" | "inconsistent" | "silent-drop" | "missing-degraded-header" | null;
+  reason: "silent-drop" | "missing-degraded-header" | null;
   nudge: string | null;
   freshness: StatusFreshness;
   header: RenderedHeader;
@@ -81,13 +102,39 @@ function homeDir(): string {
   return process.env.HOME?.trim() || homedir();
 }
 
-export function authoritativeStatePath(): string {
-  // Keep this resolution identical to statusline.sh and user-prompt-submit.ts:
-  // brain-kernel workspace first, then legacy machine-local state.
-  const root = process.env.BRAIN_WORKSPACE_ROOT ?? process.env.CAREER_HOME ?? process.cwd();
+export function authoritativeStatePath(input: HookInput = {}): string {
+  const sessionId = sessionIdFromHookInput(input);
+  if (sessionId) return sessionStatePath(sessionId);
+
+  // Backward-compatible no-stdin/no-session path: brain-kernel workspace first,
+  // then legacy machine-local state. There is exactly one write target.
+  const root = workspaceRootFromInput(input);
   const brainPath = join(root, "co-dialectic", "status-state.json");
   if (existsSync(brainPath)) return brainPath;
+  return legacyStatePath();
+}
+
+export function legacyStatePath(): string {
   return join(homeDir(), ".codialectic", "state.json");
+}
+
+function brainStatePath(input: HookInput = {}): string {
+  const root = workspaceRootFromInput(input);
+  return join(root, "co-dialectic", "status-state.json");
+}
+
+export function resolveStateWriteTargets(input: HookInput = {}): StateWriteTarget[] {
+  const sessionId = sessionIdFromHookInput(input);
+  if (sessionId) {
+    return [{ path: sessionStatePath(sessionId), authoritative: true }];
+  }
+
+  const brainPath = brainStatePath(input);
+  const brainDir = dirname(brainPath);
+  if (existsSync(brainDir)) {
+    return [{ path: brainPath, authoritative: true }];
+  }
+  return [{ path: legacyStatePath(), authoritative: true }];
 }
 
 export function evaluateStatusFreshness(
@@ -107,6 +154,7 @@ export function evaluateStatusFreshness(
   return {
     live: liveness.live,
     degraded: liveness.degraded,
+    unknown: liveness.unknown,
     stale: liveness.stale,
     skew: liveness.skew,
     inactive: liveness.inactive,
@@ -114,14 +162,17 @@ export function evaluateStatusFreshness(
   };
 }
 
-function parseOptionalNumber(value: unknown): number | null {
-  if (typeof value === "number" && Number.isFinite(value)) return value;
-  if (typeof value === "string" && /^\d+$/.test(value.trim())) return Number(value.trim());
-  return null;
-}
-
 function firstNonEmptyLine(message: string): string {
   return message.split(/\r?\n/).find((line) => line.trim().length > 0)?.trim() ?? "";
+}
+
+function lastNonEmptyLine(message: string): string {
+  const lines = message.split(/\r?\n/);
+  for (let index = lines.length - 1; index >= 0; index -= 1) {
+    const trimmed = lines[index].trim();
+    if (trimmed.length > 0) return trimmed;
+  }
+  return "";
 }
 
 function hasStatusScoreToken(message: string): boolean {
@@ -130,9 +181,13 @@ function hasStatusScoreToken(message: string): boolean {
 
 export function parseRenderedHeader(message: string): RenderedHeader {
   const firstLine = firstNonEmptyLine(message);
+  const finalLine = lastNonEmptyLine(message);
   const liveMatch = firstLine.match(LIVE_HEADER_RE);
   const liveHeader = liveMatch !== null;
   const degradedHeader = DEGRADED_HEADER_RE.test(firstLine);
+  const quietFooter = /^Co-Dialectic tracking silently/.test(finalLine);
+  const personaLead = liveMatch ? liveMatch[1].trim() : null;
+  const personaParts = personaLead ? parsePersonaLead(personaLead) : { persona: null, personaIcon: null };
   const score = liveMatch ? Number(liveMatch[2]) : null;
   const cal = liveMatch ? Number(liveMatch[3]) : null;
 
@@ -140,26 +195,26 @@ export function parseRenderedHeader(message: string): RenderedHeader {
     firstLine,
     liveHeader,
     degradedHeader,
+    quietFooter,
     hasNumericScore: liveHeader,
     hasStatusScoreToken: hasStatusScoreToken(message),
+    persona: personaParts.persona,
+    personaIcon: personaParts.personaIcon,
     score,
     cal,
   };
 }
 
+function parsePersonaLead(lead: string): { persona: string | null; personaIcon: string | null } {
+  const match = lead.match(/^((?:\p{Extended_Pictographic}|\p{S}))\s*(.+)$/u);
+  if (!match) return { persona: lead, personaIcon: null };
+  return {
+    persona: match[2].trim() || null,
+    personaIcon: match[1] || null,
+  };
+}
+
 function buildNudge(reason: NonNullable<StatusLivenessCheck["reason"]>): string {
-  if (reason === "fabrication") {
-    return [
-      "⚠ CODI STATUS FABRICATION — the response showed a score while codi is DEGRADED (stale/absent heartbeat or inactive).",
-      "Unless codi is LIVE (a fresh heartbeat within the liveness window — the same rule the terminal status line uses), render `⚠ Codi DEGRADED` with no score, never invented numbers.",
-    ].join("\n");
-  }
-  if (reason === "inconsistent") {
-    return [
-      "⚠ CODI STATUS INCONSISTENT — the rendered score/Cal does not match the heartbeat in ~/.codialectic/state.json.",
-      "Render only numbers you actually wrote to state.json this turn.",
-    ].join("\n");
-  }
   if (reason === "silent-drop") {
     return [
       "⚠ CODI STATUS SILENT DROP — codi is LIVE but the Protocol 1 status line was missing.",
@@ -180,21 +235,21 @@ export function checkStatusLiveness(
 ): StatusLivenessCheck {
   const freshness = evaluateStatusFreshness(state, now, staleSecs);
   const header = parseRenderedHeader(message);
-  const expectedScore = parseOptionalNumber(state?.last_score);
-  const expectedCal = parseOptionalNumber(state?.last_cal);
   const scorePermitted = freshness.live;
 
   let reason: StatusLivenessCheck["reason"] = null;
-  if (!scorePermitted) {
-    if (header.liveHeader || header.hasStatusScoreToken) {
-      reason = "fabrication";
-    } else if (!header.degradedHeader) {
+  if (header.quietFooter) {
+    reason = null;
+  } else if (freshness.unknown) {
+    // No session heartbeat is not evidence of failure. A valid header below
+    // will initialize it; absence remains quiet rather than crying wolf.
+    reason = null;
+  } else if (!scorePermitted) {
+    if (!header.liveHeader && !header.degradedHeader) {
       reason = freshness.degraded ? "missing-degraded-header" : "silent-drop";
     }
   } else if (!header.liveHeader) {
     reason = "silent-drop";
-  } else if (header.score !== expectedScore || header.cal !== expectedCal) {
-    reason = "inconsistent";
   }
 
   return {
@@ -213,6 +268,130 @@ function readState(path: string = authoritativeStatePath()): CodiStatusState {
     throw new Error("state is not an object");
   }
   return parsed as CodiStatusState;
+}
+
+function readExistingStateForWrite(path: string): CodiStatusState | null {
+  try {
+    if (!existsSync(path)) return null;
+    const parsed = JSON.parse(readFileSync(path, "utf8"));
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+    return parsed as CodiStatusState;
+  } catch {
+    return null;
+  }
+}
+
+function readBaseStateForWrite(
+  targets: StateWriteTarget[],
+  input: HookInput = {},
+): CodiStatusState {
+  for (const target of targets) {
+    const state = readExistingStateForWrite(target.path);
+    if (state !== null) return state;
+  }
+
+  // First canonical workspace write may bootstrap durable preferences from the
+  // legacy file, but the legacy file is never mirrored afterward.
+  if (targets.some((target) => target.path === brainStatePath(input))) {
+    const legacy = readExistingStateForWrite(legacyStatePath());
+    if (legacy) return legacy;
+  }
+
+  // A new per-session file derives durable preferences from the workspace
+  // canonical state (or legacy bootstrap) without inheriting its heartbeat.
+  if (sessionIdFromHookInput(input)) {
+    const brain = readExistingStateForWrite(brainStatePath(input));
+    const legacy = readExistingStateForWrite(legacyStatePath());
+    const seed = brain ?? legacy;
+    if (seed) {
+      const next = { ...seed };
+      delete next.last_protocol_ts;
+      return next;
+    }
+  }
+  return {};
+}
+
+export function resolvePluginVersion(
+  existingState: CodiStatusState = {},
+  hookDir: string = import.meta.dir,
+): string | undefined {
+  try {
+    const pluginJson = join(hookDir, "..", ".claude-plugin", "plugin.json");
+    const parsed = JSON.parse(readFileSync(pluginJson, "utf8"));
+    if (typeof parsed.version === "string" && parsed.version.length > 0) {
+      return parsed.version;
+    }
+  } catch {
+    // Fall through to state-backed version.
+  }
+  return typeof existingState.version === "string" && existingState.version.length > 0
+    ? existingState.version
+    : undefined;
+}
+
+function numericTurnCount(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+function buildStampedState(
+  existingState: CodiStatusState,
+  header: RenderedHeader,
+  now: Date,
+  version: string | undefined,
+): CodiStatusState {
+  const next: CodiStatusState = {
+    ...existingState,
+    last_protocol_ts: now.toISOString(),
+    growth_total_turns: numericTurnCount(existingState.growth_total_turns) + 1,
+  };
+
+  // A rendered Protocol-1 header proves codi executed → it is active. On a
+  // missing/corrupt state file existingState is {} (no active), so default to
+  // true here; nullish-coalesce preserves an explicit active:false (user turned
+  // codi off). Without this, a from-scratch/corrupt-recovery write would leave
+  // active:undefined → isActive()===false → a NEW DEGRADED-on-next-turn path
+  // in the very saga this ticket ends (XOS-198 review finding).
+  next.active = existingState.active ?? true;
+
+  if (header.liveHeader) {
+    next.persona = header.persona;
+    next.persona_icon = header.personaIcon;
+    next.last_score = header.score;
+    next.last_cal = header.cal;
+  }
+
+  if (version) next.version = version;
+  return next;
+}
+
+function atomicWriteJson(path: string, value: CodiStatusState): void {
+  const dir = dirname(path);
+  const tmpPath = join(dir, `.status-state.${process.pid}.${Date.now()}.${Math.random().toString(16).slice(2)}.tmp`);
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(tmpPath, JSON.stringify(value, null, 2) + "\n");
+  renameSync(tmpPath, path);
+}
+
+export function stampProtocolHeartbeat(
+  header: RenderedHeader,
+  now: Date = new Date(),
+  options: { hookDir?: string; targets?: StateWriteTarget[]; input?: HookInput } = {},
+): void {
+  if (!header.liveHeader && !header.degradedHeader && !header.quietFooter) return;
+
+  const input = options.input ?? {};
+  const targets = options.targets ?? resolveStateWriteTargets(input);
+  const existing = readBaseStateForWrite(targets, input);
+  const version = resolvePluginVersion(existing, options.hookDir);
+  const next = buildStampedState(existing, header, now, version);
+  for (const target of targets) {
+    try {
+      atomicWriteJson(target.path, next);
+    } catch {
+      // Stop hooks fail open: heartbeat writes must never block the session.
+    }
+  }
 }
 
 function textFromContent(value: unknown): string[] {
@@ -295,12 +474,13 @@ async function main(): Promise<void> {
 
   let state: CodiStatusState | null = null;
   try {
-    state = readState();
+    state = readState(authoritativeStatePath(input));
   } catch {
     state = null;
   }
 
   const result = checkStatusLiveness(message, state);
+  stampProtocolHeartbeat(result.header, new Date(), { input });
   if (result.nudge) emitNudge(result.nudge);
   emitSilent();
 }

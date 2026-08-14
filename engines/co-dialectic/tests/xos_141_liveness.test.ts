@@ -167,15 +167,13 @@ describe("statusline freshness gate (XOS-141)", () => {
     expect(line).toContain("🤖 Codi: full");
   });
 
-  test("missing last_protocol_ts renders DEGRADED", () => {
+  test("missing last_protocol_ts renders uninitialized, not DEGRADED", () => {
     const home = makeTempDir("codi-xos-141-home-");
     const state = baseState();
     delete state.last_protocol_ts;
     writeState(home, state);
 
-    expect(runStatusline(home)).toBe(
-      "⚠ Codi DEGRADED · v4.26.0 · protocols stale — type 'codi on' to re-activate",
-    );
+    expect(runStatusline(home)).toBe("🧠 Co-Dialectic · uninitialized");
   });
 
   test("old last_protocol_ts renders DEGRADED", () => {
@@ -297,7 +295,7 @@ describe("install-survival-layer state sync (XOS-141)", () => {
 });
 
 describe("UserPromptSubmit deterministic self-resurrection (XOS-141)", () => {
-  test("liveness nudge tells the model to refresh the model-owned heartbeat", () => {
+  test("liveness nudge tells the model to render the verified status header", () => {
     const liveness = evaluateCodiLiveness(
       {
         active: true,
@@ -314,7 +312,7 @@ describe("UserPromptSubmit deterministic self-resurrection (XOS-141)", () => {
     expect(liveness.stale).toBe(true);
     expect(liveness.skew).toBe(true); // still computed (informational), no longer gates degraded
     expect(buildDegradationNudge(liveness)).toBe(
-      "⚠ CODI DEGRADED — re-fire Protocol 0/1 NOW: render the status line + set ~/.codialectic/state.json last_protocol_ts to current ISO time (and last_score/last_cal/persona/mode).",
+      "⚠ CODI DEGRADED — re-fire Protocol 0/1 NOW: render the required status header; the Stop hook will stamp the heartbeat after verifying the transcript.",
     );
   });
 
@@ -366,7 +364,7 @@ describe("UserPromptSubmit deterministic self-resurrection (XOS-141)", () => {
     expect(context).not.toContain("Cal: 97%");
   });
 
-  test("missing state gets a degraded self-resurrection context", () => {
+  test("missing state gets an uninitialized self-resurrection context", () => {
     const home = makeTempDir("codi-xos-141-home-");
     const workspace = makeTempDir("codi-xos-141-workspace-");
 
@@ -374,10 +372,11 @@ describe("UserPromptSubmit deterministic self-resurrection (XOS-141)", () => {
     const context = payload.hookSpecificOutput.additionalContext;
 
     expect(context).toContain("state source: missing state (self-resurrection)");
-    expect(context).toContain("No codi state file was loaded");
-    expect(context).toContain("active=true");
-    expect(context).toContain("last_protocol_ts=current ISO time");
-    expect(payload.systemMessage).toContain("⚠ CODI DEGRADED");
+    expect(context).toContain("Preference persistence");
+    expect(context).toContain("persist ONLY mode, verbosity, and wildcard");
+    expect(context).not.toContain("last_protocol_ts=current ISO time");
+    expect(payload.systemMessage).toContain("uninitialized for this session");
+    expect(payload.systemMessage).not.toContain("⚠ CODI DEGRADED");
   });
 
   test("explicit codi off remains silent", () => {

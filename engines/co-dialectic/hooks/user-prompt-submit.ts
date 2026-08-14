@@ -4,17 +4,19 @@
  *
  * Fires on EVERY user message in Claude Code (UserPromptSubmit event).
  *
- * STATE SOURCE OF TRUTH HIERARCHY (v4.17.0):
- *   1. co-dialectic/status-state.json  via brain-kernel (GitHub-backed, portable)
- *   2. ~/.codialectic/state.json        machine-local fallback (v4.16 legacy path)
+ * STATE SOURCES (v4.39.0):
+ *   1. co-dialectic/status-state.json — canonical durable preferences/config
+ *   2. ~/.codialectic/state.json — legacy read/bootstrap fallback only
+ *   3. ~/.codialectic/sessions/<session_id>.json — authoritative liveness for
+ *      the current session; never shared across profiles/sessions
  *
  * Codi reads the brain-kernel path first (using BRAIN_WORKSPACE_ROOT env or cwd).
  * If the brain path is absent (first run after install, or workspace not yet
  * bootstrapped), falls back to the legacy machine-local file.
  *
  * After each successful read of the brain path, the in-memory state is the
- * authoritative source. The survival reminder instructs Claude to write back
- * to the brain path (not the legacy path) after each response.
+ * authoritative source. Per-turn heartbeat fields are stamped by the Stop hook;
+ * the model only persists command-driven preference changes.
  *
  * SPEC-CLARIFICATION-NEEDED (migration period):
  *   - statusline.sh uses the same brain-first, legacy-fallback state order as
@@ -37,12 +39,20 @@
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
-import { evaluateSharedLiveness } from "./liveness.ts";
+import { DEFAULT_STALE_SECS, evaluateSharedLiveness } from "./liveness.ts";
 import {
   consumeCostNudgeForSession,
   sessionIdFromInput,
   type HookInput as CostNudgeHookInput,
 } from "./cost-routing-nudge.ts";
+import {
+  atomicWriteJson,
+  readJsonObject,
+  sessionIdFromHookInput,
+  sessionStatePath,
+  workspaceRootFromInput,
+  type SessionAwareHookInput,
+} from "./session-state.ts";
 
 interface CodiState {
   schema_version: string;
@@ -75,10 +85,7 @@ interface CodiState {
 type LoadedStateSource = "brain" | "legacy";
 type ReminderStateSource = LoadedStateSource | "missing";
 
-interface UserPromptSubmitInput {
-  session_id?: string;
-  sessionId?: string;
-}
+interface UserPromptSubmitInput extends SessionAwareHookInput {}
 
 // ─── State loading ────────────────────────────────────────────────────────────
 
@@ -97,12 +104,8 @@ const BRAIN_STATE_RELATIVE = "co-dialectic/status-state.json";
  * BRAIN_WORKSPACE_ROOT must be explicitly set per workspace. Falling back to
  * cwd is only correct when the hook fires inside the workspace directory tree.
  */
-function resolveWorkspaceRoot(): string {
-  return (
-    process.env.BRAIN_WORKSPACE_ROOT ??
-    process.env.CAREER_HOME ??
-    process.cwd()
-  );
+function resolveWorkspaceRoot(input: UserPromptSubmitInput = {}): string {
+  return workspaceRootFromInput(input);
 }
 
 /**
@@ -111,8 +114,8 @@ function resolveWorkspaceRoot(): string {
  * Returns null if the workspace root doesn't have the brain path, or if the
  * JSON is invalid. Failures here are soft — we fall back to legacy.
  */
-function loadBrainState(): CodiState | null {
-  const root = resolveWorkspaceRoot();
+function loadBrainState(input: UserPromptSubmitInput = {}): CodiState | null {
+  const root = resolveWorkspaceRoot(input);
   const absPath = join(root, BRAIN_STATE_RELATIVE);
   if (!existsSync(absPath)) return null;
   try {
@@ -143,8 +146,8 @@ function loadLegacyState(): CodiState | null {
  *
  * Returns: [state, source] where source is "brain" | "legacy" | null.
  */
-function loadState(): [CodiState | null, LoadedStateSource | null] {
-  const brainState = loadBrainState();
+function loadState(input: UserPromptSubmitInput = {}): [CodiState | null, LoadedStateSource | null] {
+  const brainState = loadBrainState(input);
   if (brainState !== null) return [brainState, "brain"];
 
   const legacyState = loadLegacyState();
@@ -156,7 +159,9 @@ function loadState(): [CodiState | null, LoadedStateSource | null] {
 // ─── Structural liveness (XOS-141) ───────────────────────────────────────────
 
 export interface CodiLiveness {
+  live: boolean;
   degraded: boolean;
+  unknown: boolean;
   stale: boolean;
   skew: boolean;
   inactive: boolean;
@@ -186,7 +191,7 @@ export function evaluateCodiLiveness(
   state: Partial<CodiState> | null,
   installedVersion: string,
   now: Date = new Date(),
-  staleSecs: number = Number(process.env.CODI_STALE_SECS ?? "900"),
+  staleSecs: number = Number(process.env.CODI_STALE_SECS ?? DEFAULT_STALE_SECS),
 ): CodiLiveness {
   const result = evaluateSharedLiveness(
     state,
@@ -197,7 +202,9 @@ export function evaluateCodiLiveness(
   );
 
   return {
+    live: result.live,
     degraded: result.degraded,
+    unknown: result.unknown,
     stale: result.stale,
     skew: result.skew,
     inactive: result.inactive,
@@ -208,12 +215,12 @@ export function evaluateCodiLiveness(
 
 export function buildDegradationNudge(liveness: CodiLiveness): string {
   const inactiveInstruction = liveness.inactive
-    ? " If active is missing/null, restore active=true; if active=false, respect explicit user-off and tell the user to type 'codi on'."
+    ? " If codi was explicitly turned off, tell the user to type 'codi on'."
     : "";
   return (
     "⚠ CODI DEGRADED — re-fire Protocol 0/1 NOW: " +
-    "render the status line + set ~/.codialectic/state.json last_protocol_ts " +
-    "to current ISO time (and last_score/last_cal/persona/mode)." +
+    "render the required status header; the Stop hook will stamp the heartbeat " +
+    "after verifying the transcript." +
     inactiveInstruction
   );
 }
@@ -238,6 +245,47 @@ function buildDefaultState(installedVersion: string): CodiState {
     growth_total_turns: 0,
     last_updated_ts: now,
   };
+}
+
+export function recordUserPrompt(
+  input: UserPromptSubmitInput,
+  durableState: CodiState,
+  now: Date = new Date(),
+): CodiState {
+  const sessionId = sessionIdFromHookInput(input);
+  if (!sessionId) return durableState;
+
+  const path = sessionStatePath(sessionId);
+  const existing = readJsonObject(path) as CodiState | null;
+  const next = {
+    ...durableState,
+    ...(existing ?? {}),
+    // Durable command-owned preferences remain authoritative; session files
+    // are projections plus per-session liveness/persona/score fields.
+    active: durableState.active,
+    mode: durableState.mode,
+    honesty: durableState.honesty,
+    wildcard: durableState.wildcard,
+    verbosity: durableState.verbosity,
+    installed_version: durableState.installed_version,
+    session_id: sessionId,
+    workspace_root: resolveWorkspaceRoot(input),
+    last_user_prompt_ts: now.toISOString(),
+  } as CodiState & Record<string, unknown>;
+
+  if (existing === null) {
+    // Never inherit a different session's heartbeat from legacy/canonical
+    // bootstrap state. Absence is UNKNOWN until this session proves Protocol 1.
+    delete next.last_protocol_ts;
+  }
+
+  try {
+    atomicWriteJson(path, next);
+  } catch {
+    // Survival hooks fail open. The in-memory state still gives this prompt a
+    // sensible UNKNOWN/LIVE/DEGRADED reminder.
+  }
+  return next;
 }
 
 // ─── Hook output ──────────────────────────────────────────────────────────────
@@ -349,13 +397,14 @@ export function buildOnboardingHint(state: CodiState): string {
     "      'critique the UX' → 🎨 UX Critique    'prioritize this list' → 📦 Product Strategy",
     "      'debug this' → 🔍 Debug    'pitch this to a VC' → 🎯 Positioning",
     "  • Type 'who' in any turn to see which persona is active.",
-    "  • Type '/cod verbose' to see persona names; '/cod concise' to hide them.",
+    "  • Type 'codi verbose' to see persona names; 'codi concise' to hide them.",
     "</codi-onboarding-hint>",
   ].join("\n");
 }
 
 interface BuildReminderOptions {
   liveness?: CodiLiveness;
+  workspaceRoot?: string;
 }
 
 export function buildReminder(
@@ -363,16 +412,19 @@ export function buildReminder(
   stateSource: ReminderStateSource,
   options: BuildReminderOptions = {},
 ): string {
-  const degraded = options.liveness?.degraded ?? state.active !== true;
+  const degraded = options.liveness?.degraded ?? state.active === false;
+  const unknown = options.liveness?.unknown ?? false;
   const displayVersion =
     options.liveness?.installedVersion ?? state.installed_version ?? state.version ?? "unknown";
-  const healthLabel = degraded ? "DEGRADED" : "ACTIVE";
+  const healthLabel = degraded ? "DEGRADED" : unknown ? "UNINITIALIZED" : "ACTIVE";
   const personaLine = state.persona
     ? `${state.persona_icon ?? "🎯"} ${state.persona} (active persona)`
     : "Persona: auto-detect from current task";
 
   const scoresLine = degraded
     ? "Last response score/cal hidden: codi liveness is degraded; refresh Protocol 1 before trusting model-owned metrics"
+    : unknown
+      ? "Last response score/cal unavailable: this session has not completed Protocol 1 yet"
     : state.last_score !== null && state.last_cal !== null
       ? `Last response: ${state.last_score}% · Cal: ${state.last_cal}%`
       : "Status line will populate on this response";
@@ -402,27 +454,30 @@ export function buildReminder(
 
   const nowLine = `Now (OS-grounded, do NOT recall from memory): ${osGroundedDate()}`;
 
-  // Tell Claude which path to write state back to after the response.
-  const workspaceRoot = resolveWorkspaceRoot();
+  // The Stop hook owns per-turn heartbeat/counter writes. The model only persists
+  // command-driven preference changes so routine turns have a single writer.
+  const workspaceRoot = options.workspaceRoot ?? resolveWorkspaceRoot();
   const brainStatePath = join(workspaceRoot, "co-dialectic/status-state.json");
-  const writeBackInstruction = stateSource === "brain"
-    ? `After your response, write back to the brain-kernel path: ${brainStatePath}`
-    : stateSource === "legacy"
-      ? `After your response, write to the brain-kernel path: ${brainStatePath} ` +
-        `(NOTE: state was loaded from legacy ~/.codialectic/state.json — brain path not yet initialized; ` +
-        `writing to brain path will complete the migration)`
-      : `No codi state file was loaded. After your response, initialize the brain-kernel path: ${brainStatePath} ` +
-        `and ~/.codialectic/state.json with active=true, last_protocol_ts=current ISO time, and version=${displayVersion}.`;
+  const preferencePersistInstruction =
+    `Preference persistence: only when the user changes a codi preference via command ` +
+    `(\`codi cruise\` / \`codi drive\` / \`codi quiet\` / \`codi verbose\` / ` +
+    `\`codi concise\` / \`codi wildcard\`), persist ONLY mode, verbosity, and wildcard ` +
+    `to the brain-kernel state path: ${brainStatePath}.`;
 
   const onboardingHint = buildOnboardingHint(state);
   const verbosity = state.verbosity ?? "concise";
-  const verbosityLine = `Verbosity: ${verbosity} (toggle: 'cod verbose' / 'cod concise')`;
+  const verbosityLine = `Verbosity: ${verbosity} (toggle: 'codi verbose' / 'codi concise')`;
 
   const protocol3Concise =
     "Protocol 3 (Tiered Sharpening) — CONCISE MODE (default): " +
     "lead with the ANSWER. Do NOT eagerly render the three tiers. " +
     "If the prompt has room to improve, end the response with ONE LINE: " +
-    "`Sharpen? Type 'cod sharpen' for IMPROVED / SOCRATIC / DIALECTIC.` " +
+    "`Sharpen? Reply I / S / D → IMPROVED / SOCRATIC / DIALECTIC (or 'codi sharpen' for all three).` " +
+    "Single-key select (input-tax minimizer): if the user's NEXT message is exactly `I`, `S`, or `D` " +
+    "(case-insensitive, trimmed) AND this response just offered the Sharpen prompt, treat it as picking that " +
+    "one tier and render only it. Only interpret a bare I/S/D as a sharpen-select right after the offer — " +
+    "never elsewhere (so a literal `D`/`S`/`I` answer to some other question is NOT hijacked). `codi sharpen` " +
+    "still renders all three. " +
     "Exception: T3+ stakes (named person, public-facing, irreversible decision) → " +
     "render DIALECTIC inline even in concise mode (the user is making a one-way-door call).";
 
@@ -450,14 +505,14 @@ export function buildReminder(
     `${scoresLine}`,
     "Local verification: credentials for local runs are usually already in the project's env/config files (.env / .env.local); local testing is expected before you claim done — run it and paste the output.",
     "",
-    "Protocol 1 (Status Line): begin EVERY response with the persona/score/Cal/[HH:MM] line — the [HH:MM] is the time from the OS-grounded Now line above (never recalled), so the user sees the response is temporally grounded and can scroll back to a moment. A score requires codi to be LIVE (a fresh heartbeat within the liveness window — the same rule the terminal status line uses); otherwise render `⚠ Codi DEGRADED`, never a %. On a day boundary use [MM-DD HH:MM].",
-    "Protocol 1 Heartbeat: when you render the status line, write ~/.codialectic/state.json last_protocol_ts=current ISO time, version=installed_version, and current last_score/last_cal/persona/mode. This is model-owned proof of execution; hooks must not fake it.",
+    "Protocol 1 (Status Line): begin EVERY response with the persona/score/Cal/[HH:MM] line — the [HH:MM] is the time from the OS-grounded Now line above (never recalled), so the user sees the response is temporally grounded and can scroll back to a moment. LIVE means this session's heartbeat covers the current user turn; elapsed tool time cannot make it stale. DEGRADED means its heartbeat predates the current prompt beyond the grace backstop. UNINITIALIZED means this session has no heartbeat yet. On a day boundary use [MM-DD HH:MM].",
+    "Protocol 1 Verification: render the status header; the Stop hook verifies the transcript and stamps the heartbeat/counter fields.",
     protocol3Line,
     "Protocol 11 (Persona Roster): activate the appropriate persona at 0.001% caliber based on prompt domain. Task-first routing per skills/co-dialectic/task-persona-map.md — users describe tasks, not persona names.",
     "Protocol 17 (Temporal Grounding): every time-referential phrase ('tonight', 'tomorrow', 'recently', 'yesterday') in your response MUST anchor to the OS-grounded Now line above. Convert relative → absolute datetime before writing.",
     "",
-    writeBackInstruction,
-    "Update last_protocol_ts, version, last_score, last_cal, persona, growth_total_turns (increment by 1), and verbosity fields. The brain-kernel path is the source of truth across sessions and devices.",
+    preferencePersistInstruction,
+    "The brain-kernel path is the source of truth across sessions and devices.",
     "</codi-survival-reminder>",
   ];
   if (onboardingHint) {
@@ -470,21 +525,24 @@ export function buildReminder(
 
 async function main(): Promise<void> {
   const hookInput = await readHookInput();
-  const [loadedState, loadedSource] = loadState();
-  const legacyState = loadLegacyState();
-  if (loadedState?.active === false || legacyState?.active === false) {
+  const [loadedState, loadedSource] = loadState(hookInput);
+  if (loadedState?.active === false) {
     // `active:false` is the only cheap durable signal for an explicit `codi off`.
-    // Missing state or missing `active` is treated as never-initialized/degraded
-    // and may self-resurrect via the Protocol 0/1 nudge below.
+    // Missing state or missing `active` is UNINITIALIZED, not degraded, and
+    // self-initializes when the verified Protocol 1 header completes.
     emitSilent();
   }
 
-  const installedVersion = resolveInstalledVersion(legacyState ?? loadedState);
-  const state = loadedState ?? buildDefaultState(installedVersion);
+  const installedVersion = resolveInstalledVersion(loadedState);
+  const durableState = loadedState ?? buildDefaultState(installedVersion);
+  const state = recordUserPrompt(hookInput, durableState);
   const source: ReminderStateSource = loadedSource ?? "missing";
-  const livenessState = loadedState;
+  const livenessState = sessionIdFromHookInput(hookInput) ? state : loadedState;
   const liveness = evaluateCodiLiveness(livenessState, installedVersion);
-  const baseContext = buildReminder(state, source, { liveness });
+  const baseContext = buildReminder(state, source, {
+    liveness,
+    workspaceRoot: resolveWorkspaceRoot(hookInput),
+  });
   const degradationNudge = buildDegradationNudge(liveness);
   const survivalContext = liveness.degraded
     ? `${baseContext}\n\n${degradationNudge}`
@@ -496,7 +554,7 @@ async function main(): Promise<void> {
   const displayVersion = state.installed_version ?? state.version ?? installedVersion;
   const systemMessage = liveness.degraded
     ? degradationNudge
-    : `Co-Dialectic v${displayVersion} active · mode=${state.mode}${state.persona ? ` · persona=${state.persona}` : ""} — render status line + apply Protocol 3 tiered sharpening per spec.`;
+    : `Co-Dialectic v${displayVersion} ${liveness.unknown ? "uninitialized for this session" : "active"} · mode=${state.mode}${state.persona ? ` · persona=${state.persona}` : ""} — render status line + apply Protocol 3 tiered sharpening per spec.`;
   emit(additionalContext, systemMessage);
 }
 
