@@ -158,10 +158,11 @@ describe("buildReminder integration (issues #8 + #9)", () => {
     expect(reminder).toContain("Task-first routing");
   });
 
-  test("reminder instructs Claude to increment growth_total_turns", () => {
+  test("reminder leaves per-turn liveness and counter fields to the Stop hook", () => {
     const reminder = buildReminder(makeState({ growth_total_turns: 0 }), "brain");
-    expect(reminder).toContain("growth_total_turns");
-    expect(reminder).toContain("increment by 1");
+    expect(reminder).not.toContain("growth_total_turns");
+    expect(reminder).not.toContain("increment by 1");
+    expect(reminder).toContain("Stop hook");
   });
 
   test("reminder always includes the core survival block", () => {
@@ -179,7 +180,10 @@ describe("verbosity / concise-by-default (issue #10)", () => {
     expect(reminder).toContain("Verbosity: concise");
     expect(reminder).toContain("CONCISE MODE");
     expect(reminder).toContain("lead with the ANSWER");
-    expect(reminder).toContain("'cod sharpen'");
+    // Sharpen offer uses single-key I/S/D + canonical `codi` (not `cod`), all-three via `codi sharpen`.
+    expect(reminder).toContain("Reply I / S / D");
+    expect(reminder).toContain("'codi sharpen'");
+    expect(reminder).not.toContain("'cod sharpen'");
     expect(reminder).not.toContain("VERBOSE MODE:");
   });
 
@@ -223,14 +227,20 @@ describe("verbosity / concise-by-default (issue #10)", () => {
       makeState({ growth_total_turns: 50, verbosity: "verbose" }),
       "brain",
     );
-    expect(conciseReminder).toContain("'cod verbose'");
-    expect(conciseReminder).toContain("'cod concise'");
-    expect(verboseReminder).toContain("'cod verbose'");
-    expect(verboseReminder).toContain("'cod concise'");
+    expect(conciseReminder).toContain("'codi verbose'");
+    expect(conciseReminder).toContain("'codi concise'");
+    expect(verboseReminder).toContain("'codi verbose'");
+    expect(verboseReminder).toContain("'codi concise'");
+    // canonical is `codi`, never the truncated `cod`
+    expect(conciseReminder).not.toContain("'cod verbose'");
   });
 
-  test("write-back instruction tells Claude to persist verbosity", () => {
+  test("preference persistence is narrow and command-driven", () => {
     const reminder = buildReminder(makeState({ growth_total_turns: 50 }), "brain");
+    expect(reminder).toContain("only when the user changes a codi preference via command");
+    expect(reminder).toContain("persist ONLY mode, verbosity, and wildcard");
+    expect(reminder).toContain("codi verbose");
     expect(reminder).toContain("verbosity");
+    expect(reminder).toContain("wildcard");
   });
 });
