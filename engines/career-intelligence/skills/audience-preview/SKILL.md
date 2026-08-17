@@ -14,7 +14,7 @@ triggers:
   - target this post
 ---
 
-# Audience Preview - Career OS Skill
+# Audience Preview - Career Intelligence Skill
 
 ## Purpose
 
@@ -30,7 +30,7 @@ Output plain text only. Do not use markdown tables or pipe characters.
 Always start with:
 
 ```text
-Career OS: Audience Preview
+Career Intelligence: Audience Preview
 ```
 
 Then print the helper output:

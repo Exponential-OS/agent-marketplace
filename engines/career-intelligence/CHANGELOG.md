@@ -2,6 +2,43 @@
 <!-- this file is the historical changelog. Entries reference the original author/user as provenance, not runtime data. -->
 # Changelog
 
+## [1.0.0] - 2026-08-17 - Career Intelligence 1.0
+
+First 1.0. Two things change: the upgrade path is repaired and simplified, and the product is called by its own name everywhere.
+
+### The bug this started as
+
+Every session start printed `❌ Career OS: migration chain failed. Install aborted.`
+
+The cause was two **mislabelled** migration scripts. `v0.73.4-to-v0.74.0.sh` and `v0.77.0-to-v0.79.0.sh` each gave their from-version a *second* successor — XOS-133's real predecessor is 0.73.9, and XOS-100's is 0.78.0. The runner walks the graph greedily, silently took the lower branch, and dead-ended: 0.78.0 had no outgoing script because its real one was misfiled under 0.77.0. **Every install between 0.73.5 and 0.78.0 was unupgradable.**
+
+Because `init-repo.sh` aborts the whole hook when the chain fails, none of its *other* setup ran either — on every session, indefinitely, while the version file stayed pinned at the old value so it re-failed forever. This also accounts for the CI hooks baseline of 12 tolerated failures, attributed in `run-all.sh` to "migrate-chain version propagation". That baseline is now **0**.
+
+### The 1.0 cut
+
+Rather than repair 59 scripts, 1.0 retires the whole 0.x chain. Nearly all of those scripts did nothing but write a version number to a file; the value was near zero and the failure surface was real. They are replaced by one script, `migrations/v0.0.0-to-v1.0.0.sh`, and any pre-1.0 data version takes a single hop to the baseline. **A single edge into 1.0.0 cannot fork**, so the bug class is gone by construction rather than by care. Git history keeps the retired scripts.
+
+One guarantee is carried over deliberately. A workspace that still contains `.career-os/` never made the v0.29.0 state relocation, so the baseline **fails hard rather than stamping 1.0.0** — recording a migration that never ran is the failure `test-hooks.sh` [B3] has always existed to prevent. The message now names the directory and what to do with it, instead of the internal "Incomplete migration path".
+
+Also fixed along the way: chain resolution forked a process per version comparison and per `basename`, costing **8.3s** on the longest path — paid at session start by exactly the oldest installs that could least afford it. Now **0.32s**.
+
+Two new guards make this class visible instead of silent: a **fork guard** that refuses an ambiguous graph and names the offending files rather than guessing, and `MIGRATE_DRY_RUN=1`, which resolves a chain without executing it. Chain *resolution* and chain *execution* are separate failure modes and are easy to confuse — a migration that legitimately refuses to run until a human fixes a layout looks identical to a broken graph if you only watch the exit code.
+
+`tests/test_migration_chain.sh` (9 assertions) is wired into `run-all.sh` as **Suite 4**, and tests the graph rather than the one reported path: no forks, the baseline exists and targets the plugin version, every pre-1.0 entry point resolves, the abort paths still fire, and the legacy workspace still refuses. Mutation-proved — planting a fork, deleting the baseline, and letting the legacy workspace through each turn the suite red.
+
+### Naming
+
+166 user-facing occurrences of "Career OS" across 47 files are now **Career Intelligence**, the plugin's actual name — including the error above.
+
+Data contracts are deliberately untouched and were verified byte-identical after the rename: `~/.career-os-state`, `.career-os/`, the `career-os-data` repo label, `is_career_os_workspace`, and `anand-career-os` are live paths and identifiers, not labels. Renaming the state directory is a data migration with real risk and is not bundled into a naming change. `CHANGELOG.md` history is left as written, since renaming past releases would falsify the record.
+
+### Removed
+
+- The 0.x migration chain (58 scripts). Superseded by the 1.0 baseline.
+- `test-hooks.sh` [M6]–[M16] and [R9] WO-054, which exercised individual retired scripts against the retired `.career-os/` layout. Replaced by tests of the runner contract and the single pre-1.0 hop.
+
+**Suites:** hooks 218, bun 130, outreach-dedup 21, mission-control 68, migration graph 9 — **0 failures**.
+
 ## [0.81.0] - 2026-08-16 - XOS-215 atomic ledger appends
 
 - The session-logger appended each entry as a brace group of six `echo`s through one `>>` redirect. O_APPEND makes each write atomic on its own, but nothing held the six together, so capture-prompt and capture-response (which run in the same turn against the same file) could interleave mid-entry and corrupt entry boundaries.

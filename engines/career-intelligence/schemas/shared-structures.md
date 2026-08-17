@@ -1,5 +1,5 @@
 <!-- schema: v3.0 -->
-# Career OS Shared Structures Registry
+# Career Intelligence Shared Structures Registry
 
 **Per ADR-002 (Schema Evolution Protocol).** Single source of truth for which
 data structures are "shared" (read by more than one skill, script, or hook),

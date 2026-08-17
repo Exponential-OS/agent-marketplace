@@ -16,7 +16,7 @@ triggers:
   - app questions for
 ---
 
-# Application QA — Career OS Skill
+# Application QA — Career Intelligence Skill
 
 ## Purpose
 
@@ -32,7 +32,7 @@ you can verify and edit before submitting.
 
 Always start with:
 ```
-━━━ Career OS: Application QA — {Company} {Role} ━━━
+━━━ Career Intelligence: Application QA — {Company} {Role} ━━━
 ```
 
 ## How to Invoke
@@ -146,7 +146,7 @@ apply to this specific role/company:
 ### Step 4: Format Output
 
 ```
-━━━ Career OS: Application QA — {Company} {Role} ━━━
+━━━ Career Intelligence: Application QA — {Company} {Role} ━━━
 
 Q1: Why do you want to work at {Company}?
 ━━━

@@ -1,9 +1,9 @@
 ---
-name: Build Career OS Feature
+name: Build Career Intelligence Feature
 description: Reads a work order from $CAREER_SPECS and implements the feature in the plugin repo with tests.
 ---
 
-# Build Career OS Feature
+# Build Career Intelligence Feature
 
 ## What This Does
 Reads an existing work order and implements the feature in the plugin repo with tests.

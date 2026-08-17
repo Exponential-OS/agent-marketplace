@@ -18,7 +18,7 @@ triggers:
   - show me what to apply to
 ---
 
-# Apply Dashboard — Career OS Skill
+# Apply Dashboard — Career Intelligence Skill
 
 ## Purpose
 
@@ -36,7 +36,7 @@ question answering, or file updates.
 
 Always start your response with:
 ```
-━━━ Career OS: Apply Dashboard ━━━
+━━━ Career Intelligence: Apply Dashboard ━━━
 ```
 
 ## How to Invoke
@@ -121,7 +121,7 @@ Present the script's grouped table output directly. Add a footer with
 available actions:
 
 ```
-━━━ Career OS: Apply Dashboard ━━━
+━━━ Career Intelligence: Apply Dashboard ━━━
 
 [grouped table output from script]
 

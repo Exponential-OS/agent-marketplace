@@ -14,7 +14,7 @@ triggers:
   - follow up on applications
 ---
 
-# Follow-Up Nudge — Career OS Skill
+# Follow-Up Nudge — Career Intelligence Skill
 
 ## Purpose
 
@@ -132,7 +132,7 @@ Contact grounding:
 Always start with:
 
 ```text
-━━━ Career OS: Follow-Up Nudges ━━━
+━━━ Career Intelligence: Follow-Up Nudges ━━━
 ```
 
 If there are no nudges:

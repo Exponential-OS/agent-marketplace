@@ -14,7 +14,7 @@
         "HOW.py greps draft for tenure/role/report-count/scale/date-range/role-org patterns; verifies each against canonical_sources via numeric+capitalized-token co-occurrence; BLOCK on any unanchored claim",
         "AUDIT.sh consumes enforcement log; tallies shipped/blocked/bypassed; flags T4 INPUT/ drafts with no matching HOW record",
         "WATCH.sh 3 micro-experiments (false-positive rate, pattern coverage, pattern effectiveness); cadence ladder weekly->per-T4-artifact",
-        "Default canonical: $CAREER_OS_HOME/brain/identity/experience-history.md (set CAREER_OS_HOME env var to your career OS home dir)"
+        "Default canonical: $CAREER_OS_HOME/brain/identity/experience-history.md (set CAREER_OS_HOME env var to your Career Intelligence home dir)"
       ]
     }
   ],

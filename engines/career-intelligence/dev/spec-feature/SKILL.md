@@ -1,9 +1,9 @@
 ---
-name: Spec Career OS Feature
+name: Spec Career Intelligence Feature
 description: Generates work order specs from product specs. Creates feature specs that any IDE or agent can pick up to build.
 ---
 
-# Spec Career OS Feature
+# Spec Career Intelligence Feature
 
 ## What This Does
 Reads product specs (PRD.md, PRODUCT_SPEC.md) from $CAREER_SPECS and generates work order files in $CAREER_SPECS/work-orders/. Work orders are feature specs that any IDE or agent can pick up to build.

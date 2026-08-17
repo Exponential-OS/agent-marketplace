@@ -1,12 +1,12 @@
 ---
-name: Release Career OS Plugin
-description: Release gate for Career OS plugin. Audits boundary rules coherence, test coverage, adds missing tests, runs suite, bumps version with migration, commits and pushes.
+name: Release Career Intelligence Plugin
+description: Release gate for Career Intelligence plugin. Audits boundary rules coherence, test coverage, adds missing tests, runs suite, bumps version with migration, commits and pushes.
 ---
 
-# Release Career OS Plugin
+# Release Career Intelligence Plugin
 
 ## What This Does
-Release gate for the Career OS plugin. Audits workspace boundary rules against SKILL.md declarations, audits test coverage gaps, adds missing tests, runs the full suite, bumps version with migration, commits, and pushes. If tests fail, stops and provides actionable fix prompts.
+Release gate for the Career Intelligence plugin. Audits workspace boundary rules against SKILL.md declarations, audits test coverage gaps, adds missing tests, runs the full suite, bumps version with migration, commits, and pushes. If tests fail, stops and provides actionable fix prompts.
 
 Does NOT define what "good tests" or "good migrations" look like — that's P6, P7, P9 in ~/.claude/CLAUDE.md. This skill only orchestrates the release sequence.
 

@@ -1,7 +1,7 @@
 ---
 name: cruise-control
 description: >
-  Autonomous execution engine for Career OS. Takes a plan (from open GitHub
+  Autonomous execution engine for Career Intelligence. Takes a plan (from open GitHub
   Issues at $CAREER_GITHUB_REPO, or a conversation-agreed task list) and
   executes it end-to-end — applying to roles,
   generating resumes, sending outreach, updating pipeline. Gate-controlled: only
@@ -18,7 +18,7 @@ triggers:
   - run the queue
 ---
 
-# Cruise Control — Career OS Skill
+# Cruise Control — Career Intelligence Skill
 
 ## Task Substrate (v0.25.0+)
 
@@ -53,14 +53,14 @@ documents, updating files, and reporting results. It exists to protect the human
 time (P13) by turning a list of tasks into completed work.
 
 This was previously a Kernel-level execution mode (Layer 2). It is now a plugin
-skill (Layer 3) because it orchestrates other Career OS skills and benefits from
+skill (Layer 3) because it orchestrates other Career Intelligence skills and benefits from
 the same upgrade/versioning/testing infrastructure.
 
 ## Output Format
 
 Always start your response with:
 ```
-━━━ Career OS: Cruise Control ━━━
+━━━ Career Intelligence: Cruise Control ━━━
 ```
 
 ## How to Invoke
@@ -101,7 +101,7 @@ Cruise Control requires a plan before execution. The plan can come from:
 
 If no plan exists when Cruise Control is triggered:
 ```
-━━━ Career OS: Cruise Control ━━━
+━━━ Career Intelligence: Cruise Control ━━━
 
 No execution plan found. Let me build one from your current state.
 
@@ -190,7 +190,7 @@ Blocked tasks are collected and presented at the end:
 ### Skill Orchestration
 
 Cruise Control doesn't implement application logic itself — it orchestrates
-other Career OS skills:
+other Career Intelligence skills:
 
 | Task Type | Skill Invoked |
 |-----------|--------------|

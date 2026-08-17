@@ -1,7 +1,7 @@
 ---
 name: session-logger
 description: >
-  Search, replay, and analyze your Career OS conversation history.
+  Search, replay, and analyze your Career Intelligence conversation history.
   Query past sessions by topic, date, or keyword. View session summaries
   and usage analytics. Conversation capture is automatic via hooks.
 triggers:
@@ -14,7 +14,7 @@ triggers:
   - find the conversation
 ---
 
-# Session Logger — Career OS Skill
+# Session Logger — Career Intelligence Skill
 
 ## Purpose
 
@@ -26,7 +26,7 @@ that data **queryable**.
 
 Always start your response with:
 ```
-━━━ Career OS: Session Logger ━━━
+━━━ Career Intelligence: Session Logger ━━━
 ```
 
 ## Capabilities
@@ -45,7 +45,7 @@ Read the ledger file(s) for the requested session and present a structured summa
 3. Present:
 
 ```
-━━━ Career OS: Session Logger ━━━
+━━━ Career Intelligence: Session Logger ━━━
 
 Session: 2026-03-31, 14:32 – 15:47 (1h 15m)
 Exchanges: 8
@@ -77,7 +77,7 @@ Search across all ledger files for the requested topic:
 4. Present matches with date, timestamp, and context snippet:
 
 ```
-━━━ Career OS: Session Logger ━━━
+━━━ Career Intelligence: Session Logger ━━━
 
 Found 3 matches for "anthropic":
 
@@ -103,7 +103,7 @@ Generate a summary of recent sessions:
 3. Present as a table:
 
 ```
-━━━ Career OS: Session Logger ━━━
+━━━ Career Intelligence: Session Logger ━━━
 
 Recent Sessions:
 
@@ -121,7 +121,7 @@ Total this week: 7 sessions, 43 exchanges
 
 ### 4. Session Analytics
 
-**Triggers:** "session stats", "how much have I used career os"
+**Triggers:** "session stats", "how much have I used Career Intelligence"
 
 Aggregate across all ledger files:
 
@@ -131,9 +131,9 @@ Aggregate across all ledger files:
 4. Present:
 
 ```
-━━━ Career OS: Session Logger ━━━
+━━━ Career Intelligence: Session Logger ━━━
 
-Career OS Usage:
+Career Intelligence Usage:
 
 | Metric | Value |
 |--------|-------|
@@ -205,7 +205,7 @@ This skill is **read-only** against `brain/sessions/ledger/`.
 
 ## Edge Cases
 
-- **No ledger files yet:** "No session history found. Start a conversation and come back — Career OS captures every exchange automatically."
+- **No ledger files yet:** "No session history found. Start a conversation and come back — Career Intelligence captures every exchange automatically."
 - **Search with no matches:** "No matches for '[term]' in your session history."
 - **Very large ledger files:** Scan headers first (## lines) to identify relevant sections before reading full content. Avoid loading entire multi-hundred-line ledger files when only a snippet is needed.
 - **Ambiguous date:** "replay last week" → show the summary table for that week, let user pick a day.

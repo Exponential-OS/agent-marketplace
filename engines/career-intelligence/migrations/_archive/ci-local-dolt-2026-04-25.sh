@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # product-vs-solution: example — archived dev script.
-# ci-local.sh — Local CI runner for the Career OS plugin.
+# ci-local.sh — Local CI runner for the Career Intelligence plugin.
 #
 # Smokes the full Dolt + migrate + pytest loop in one command so v0.22.0+
 # iteration is tight. Complements the existing dev/ci/ skill (which is a

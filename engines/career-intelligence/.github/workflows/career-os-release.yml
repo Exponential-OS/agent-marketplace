@@ -70,7 +70,7 @@ jobs:
           files: career-os.plugin
           generate_release_notes: true
           body: |
-            ## Career OS v${{ github.ref_name }}
+            ## Career Intelligence v${{ github.ref_name }}
 
             ### Install
             Download `career-os.plugin` and open it — Claude will prompt you to install.

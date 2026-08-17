@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ci-local.sh — Local CI runner for the Career OS plugin (v0.24.0+ file-only).
+# ci-local.sh — Local CI runner for the Career Intelligence plugin (v0.24.0+ file-only).
 #
 # Substrate rollback 2026-04-26 retired the Dolt + migrate + pytest loop.
 # This runner is now pytest-only — no Docker, no migration step, no DB.

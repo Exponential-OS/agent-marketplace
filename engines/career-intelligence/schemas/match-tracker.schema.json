@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Career OS Match Tracker",
+  "title": "Career Intelligence Match Tracker",
   "description": "Schema for job-pipeline-match-tracker.json — the single source of truth for all scored roles.",
   "type": "array",
   "items": {

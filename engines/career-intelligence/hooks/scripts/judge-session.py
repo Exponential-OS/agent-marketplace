@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-judge-session.py — LLM quality judge for Career OS session responses.
+judge-session.py — LLM quality judge for Career Intelligence session responses.
 
 Called by capture-response.sh after each Claude response is captured.
 Uses claude-haiku (fast/cheap) to classify risk tier and flag issues.

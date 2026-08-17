@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# test-hooks.sh — Regression test suite for Career OS hook scripts
+# test-hooks.sh — Regression test suite for Career Intelligence hook scripts
 #
 # Tests the three hooks: init-repo.sh, capture-prompt.sh, capture-response.sh
 # Also validates plugin structure, hook registration, and skill coherence.
@@ -84,7 +84,7 @@ export CLAUDE_PLUGIN_ROOT="$PLUGIN_ROOT"
 export CLAUDE_PLUGIN_DATA="$STATE_DIR"
 
 # XOS-33: the v0.67 workspace-identity gate (init-repo/capture-prompt/
-# capture-response) silently no-ops unless the cwd looks like a Career OS
+# capture-response) silently no-ops unless the cwd looks like a Career Intelligence
 # workspace. Tests create throwaway mktemp dirs that don't, so ~55 hook
 # assertions failed (gate exited 0 before any scaffold/ledger/commit ran),
 # and the red CI was bypassed for two releases. `ws_mark <dir>` drops the
@@ -107,7 +107,7 @@ cleanup() {
 trap cleanup EXIT
 
 echo "==================================================="
-echo " Career OS Hook Tests"
+echo " Career Intelligence Hook Tests"
 echo " Plugin: $PLUGIN_ROOT"
 echo " Workspace: $TEST_DIR"
 echo "==================================================="
@@ -188,7 +188,7 @@ echo ""
 echo "-- Migration coherence (P9 — version bump = blast radius) ----"
 # ============================================================
 # Lesson from 2026-04-27: I bumped plugin.json 0.19.1 → 0.24.0 without
-# shipping migrations/v0.23.0-to-v0.24.0.sh. The migration chain stopped
+# shipping the matching migration script. The migration chain stopped
 # at v0.23.0 mid-walk, leaving fresh installs stuck on the old version
 # file. Caught only at test time (12 cascade fails). Mechanical check:
 # every plugin.json version must have a matching migration target.
@@ -199,8 +199,8 @@ assert_eq "plugin.json version has matching migration script" "$PLUGIN_JSON_VER"
 LATEST_MIGRATION_SCRIPT=$(ls "$PLUGIN_ROOT"/migrations/v*-to-v"$PLUGIN_JSON_VER".sh 2>/dev/null | sort -V | tail -1)
 PREV_PLUGIN_VER=$(basename "$LATEST_MIGRATION_SCRIPT" 2>/dev/null | sed -E 's/^v([0-9.]+)-to-v[0-9.]+\.sh$/\1/')
 # Note: if you JUST bumped plugin.json, you also need a new
-# migrations/v<prev>-to-v<new>.sh script. See migrations/v0.23.0-to-v0.24.0.sh
-# for the minimal-shape template.
+# migrations/v<prev>-to-v<new>.sh script. See migrations/v0.0.0-to-v1.0.0.sh
+# for the minimal shape. (The 0.x chain was retired in the 1.0 cut.)
 echo ""
 
 # ============================================================
@@ -320,10 +320,13 @@ export CLAUDE_PLUGIN_DATA="$LEGACY_STATE_DIR"
 OUTPUT=$(bash "$PLUGIN_ROOT/hooks/scripts/init-repo.sh" 2>&1)
 RC=$?
 assert_contains "detects legacy install" "$OUTPUT" "Legacy install detected"
-# The repo intentionally has no complete v0.3.0→current chain after v0.29.0.
-# The hook must fail hard instead of stamping a false current version.
+# A pre-v0.29.0 workspace still has .career-os/, so it never made the state
+# relocation. The hook must fail hard rather than stamp a version nothing
+# migrated to — the invariant is unchanged from the 0.x chain; only the message
+# is, and it is now actionable (it names the directory and what to do with it)
+# instead of the internal "Incomplete migration path".
 assert_eq "legacy incomplete chain exits fail-hard" "1" "$RC"
-assert_contains "legacy missing migration path reported" "$OUTPUT" "Incomplete migration path"
+assert_contains "legacy failure names the offending directory" "$OUTPUT" ".career-os/"
 if [ ! -f "$LEGACY_STATE_DIR/version" ]; then pass "legacy failure does not stamp STATE_DIR"
 else fail "legacy failure does not stamp STATE_DIR" "unexpected version: $(cat "$LEGACY_STATE_DIR/version")"; fi
 export CLAUDE_PLUGIN_DATA="$SAVED_STATE_DIR"
@@ -473,34 +476,48 @@ git remote add origin "$REMOTE_DIR"
 echo ""
 
 # ============================================================
-echo "-- migrate.sh ----------------------------------"
+echo "-- migrate.sh (1.0 baseline) -------------------"
 # ============================================================
+# 1.0 retired the 0.x chain: 59 scripts, nearly all of which only stamped a
+# version number, replaced by one baseline script. The tests that exercised
+# individual 0.x scripts went with them. What is worth testing now is the
+# runner's contract and the single pre-1.0 hop.
+#
+# The graph itself (no forks, no dead ends, both abort paths) is covered by
+# tests/test_migration_chain.sh, wired into run-all.sh as Suite 4.
 
-# --- Happy path ---
+# Recursive delete of a mktemp -d path only. Refuses anything else, so a
+# variable that failed to expand cannot turn cleanup into a wipe.
+cleanup_dir() {
+  case "${1:-}" in
+    /tmp/*|/private/tmp/*|/var/folders/*) [ -d "$1" ] && rm -rf "$1" ;;
+    *) echo "cleanup_dir: refusing to delete '${1:-<empty>}'" >&2 ;;
+  esac
+}
 
 echo "[M1] Same version -> no-op exit 0"
-OUTPUT=$(bash "$PLUGIN_ROOT/migrations/migrate.sh" "$TEST_DIR" "0.5.0" "0.5.0" 2>&1)
+OUTPUT=$(bash "$PLUGIN_ROOT/migrations/migrate.sh" "$TEST_DIR" "1.0.0" "1.0.0" 2>&1)
 RC=$?
 assert_eq "same version exits 0" "0" "$RC"
 assert_contains "same version message" "$OUTPUT" "Already at version"
 echo ""
 
-echo "[M2] Full chain 0.3.0 -> 0.5.0 runs both scripts"
-CHAIN_DIR=$(mktemp -d)
-mkdir -p "$CHAIN_DIR/.career-os/config"
-echo "0.3.0" > "$CHAIN_DIR/.career-os/config/version"
-OUTPUT=$(bash "$PLUGIN_ROOT/migrations/migrate.sh" "$CHAIN_DIR" "0.3.0" "0.5.0" 2>&1)
-RC=$?
-assert_eq "chain exits 0" "0" "$RC"
-assert_contains "chain runs v0.3.0 script" "$OUTPUT" "v0.3.0-to-v0.4.0.sh"
-assert_contains "chain runs v0.4.0 script" "$OUTPUT" "v0.4.0-to-v0.5.0.sh"
-assert_contains "chain complete message" "$OUTPUT" "Migration complete"
-FINAL_VER=$(cat "$CHAIN_DIR/.career-os/config/version" | tr -d '[:space:]')
-assert_eq "final version is 0.5.0" "0.5.0" "$FINAL_VER"
-rm -rf "$CHAIN_DIR"
+echo "[M2] Any pre-1.0 version takes one hop to the 1.0 baseline"
+# The 0.x fork bug was only possible because a version could have two
+# successors. One edge into 1.0.0 cannot fork — assert every pre-1.0 entry
+# point lands on the same single script.
+for FROM in 0.29.0 0.73.4 0.77.0 0.78.0 0.81.0; do
+  M2_DIR=$(mktemp -d); M2_STATE=$(mktemp -d)
+  SAVED_STATE_DIR="$CLAUDE_PLUGIN_DATA"; export CLAUDE_PLUGIN_DATA="$M2_STATE"
+  OUTPUT=$(bash "$PLUGIN_ROOT/migrations/migrate.sh" "$M2_DIR" "$FROM" "1.0.0" 2>&1)
+  RC=$?
+  assert_eq "v$FROM -> 1.0.0 exits 0" "0" "$RC"
+  assert_contains "v$FROM routes to the baseline script" "$OUTPUT" "v0.0.0-to-v1.0.0.sh"
+  assert_eq "v$FROM stamps 1.0.0" "1.0.0" "$(cat "$M2_STATE/version" 2>/dev/null | tr -d '[:space:]')"
+  export CLAUDE_PLUGIN_DATA="$SAVED_STATE_DIR"
+  cleanup_dir "$M2_DIR"; cleanup_dir "$M2_STATE"
+done
 echo ""
-
-# --- Boundary ---
 
 echo "[M3] Missing arguments -> exit 1"
 OUTPUT=$(bash "$PLUGIN_ROOT/migrations/migrate.sh" "$TEST_DIR" "" "" 2>&1)
@@ -509,188 +526,46 @@ assert_eq "missing args exits 1" "1" "$RC"
 assert_contains "shows usage" "$OUTPUT" "Usage:"
 echo ""
 
-echo "[M4] No migration path -> exit 1"
-OUTPUT=$(bash "$PLUGIN_ROOT/migrations/migrate.sh" "$TEST_DIR" "0.1.0" "0.2.0" 2>&1)
+echo "[M4] Post-1.0 target with no script -> exit 1 (FAIL-HARD preserved)"
+# Gap tolerance is NOT the fix for a missing migration. A 1.x target with no
+# script must still abort rather than stamp a version nothing migrated to.
+M4_DIR=$(mktemp -d); M4_STATE=$(mktemp -d)
+SAVED_STATE_DIR="$CLAUDE_PLUGIN_DATA"; export CLAUDE_PLUGIN_DATA="$M4_STATE"
+OUTPUT=$(bash "$PLUGIN_ROOT/migrations/migrate.sh" "$M4_DIR" "1.0.0" "99.0.0" 2>&1)
 RC=$?
-assert_eq "no path exits 1" "1" "$RC"
-assert_contains "no path error" "$OUTPUT" "No migration path found"
-echo ""
-
-echo "[M5] Incomplete chain -> exit 1"
-OUTPUT=$(bash "$PLUGIN_ROOT/migrations/migrate.sh" "$TEST_DIR" "0.3.0" "99.0.0" 2>&1)
-RC=$?
-assert_eq "incomplete chain exits 1" "1" "$RC"
-assert_contains "incomplete chain error" "$OUTPUT" "Incomplete migration path"
-echo ""
-
-# --- Environmental ---
-
-echo "[M6] v0.4.0-to-v0.5.0.sh is idempotent"
-IDEM_DIR=$(mktemp -d)
-cd "$IDEM_DIR"
-git init -b main &>/dev/null
-git config user.email "test@test.com" && git config user.name "Test"
-mkdir -p .career-os/config
-echo "0.4.0" > .career-os/config/version
-git add -A && git commit -q -m "setup"
-# Run twice
-bash "$PLUGIN_ROOT/migrations/v0.4.0-to-v0.5.0.sh" "$IDEM_DIR" &>/dev/null
-bash "$PLUGIN_ROOT/migrations/v0.4.0-to-v0.5.0.sh" "$IDEM_DIR" &>/dev/null
-RC=$?
-assert_eq "idempotent run exits 0" "0" "$RC"
-IDEM_VER=$(cat "$IDEM_DIR/.career-os/config/version" | tr -d '[:space:]')
-assert_eq "version still 0.5.0 after double run" "0.5.0" "$IDEM_VER"
-rm -rf "$IDEM_DIR"
-cd "$TEST_DIR"
-echo ""
-
-echo "[M7] v0.5.0-to-v0.6.0.sh happy path"
-M7_DIR=$(mktemp -d)
-mkdir -p "$M7_DIR/.career-os/config"
-echo "0.5.0" > "$M7_DIR/.career-os/config/version"
-OUTPUT=$(bash "$PLUGIN_ROOT/migrations/v0.5.0-to-v0.6.0.sh" "$M7_DIR" 2>&1)
-RC=$?
-assert_eq "v0.5.0→v0.6.0 exits 0" "0" "$RC"
-assert_contains "v0.5.0→v0.6.0 complete message" "$OUTPUT" "v0.5.0 → v0.6.0 complete"
-M7_VER=$(cat "$M7_DIR/.career-os/config/version" | tr -d '[:space:]')
-assert_eq "version set to 0.6.0" "0.6.0" "$M7_VER"
-assert_file_exists "pending-organize flag created" "$M7_DIR/.career-os/config/pending-organize"
-rm -rf "$M7_DIR"
-echo ""
-
-echo "[M8] v0.5.0-to-v0.6.0.sh is idempotent"
-M8_DIR=$(mktemp -d)
-mkdir -p "$M8_DIR/.career-os/config"
-echo "0.5.0" > "$M8_DIR/.career-os/config/version"
-bash "$PLUGIN_ROOT/migrations/v0.5.0-to-v0.6.0.sh" "$M8_DIR" &>/dev/null
-bash "$PLUGIN_ROOT/migrations/v0.5.0-to-v0.6.0.sh" "$M8_DIR" &>/dev/null
-RC=$?
-assert_eq "idempotent v0.5.0→v0.6.0 exits 0" "0" "$RC"
-M8_VER=$(cat "$M8_DIR/.career-os/config/version" | tr -d '[:space:]')
-assert_eq "version still 0.6.0 after double run" "0.6.0" "$M8_VER"
-rm -rf "$M8_DIR"
-echo ""
-
-echo "[M9] v0.5.0-to-v0.6.0.sh skips flag when STORY_INDEX exists"
-M9_DIR=$(mktemp -d)
-mkdir -p "$M9_DIR/.career-os/config" "$M9_DIR/.career-os/memory/stories"
-echo "0.5.0" > "$M9_DIR/.career-os/config/version"
-echo "# Index" > "$M9_DIR/.career-os/memory/stories/STORY_INDEX.md"
-bash "$PLUGIN_ROOT/migrations/v0.5.0-to-v0.6.0.sh" "$M9_DIR" &>/dev/null
-if [ ! -f "$M9_DIR/.career-os/config/pending-organize" ]; then
-    pass "no pending-organize when STORY_INDEX exists"
-else
-    fail "no pending-organize when STORY_INDEX exists" "flag was created despite STORY_INDEX"
-fi
-rm -rf "$M9_DIR"
-echo ""
-
-echo "[M10] v0.3.0-to-v0.4.0.sh is idempotent"
-M10_DIR=$(mktemp -d)
-cd "$M10_DIR"
-mkdir -p memory/stories .career-os/config
-echo "test glossary" > memory/glossary.md
-echo "0.3.0" > .career-os/config/version
-bash "$PLUGIN_ROOT/migrations/v0.3.0-to-v0.4.0.sh" "$M10_DIR" &>/dev/null
-bash "$PLUGIN_ROOT/migrations/v0.3.0-to-v0.4.0.sh" "$M10_DIR" &>/dev/null
-RC=$?
-assert_eq "idempotent v0.3.0→v0.4.0 exits 0" "0" "$RC"
-M10_VER=$(cat "$M10_DIR/.career-os/config/version" | tr -d '[:space:]')
-assert_eq "version still 0.4.0 after double run" "0.4.0" "$M10_VER"
-assert_file_contains "glossary migrated" "$M10_DIR/.career-os/memory/glossary.md" "test glossary"
-rm -rf "$M10_DIR"
-cd "$TEST_DIR"
-echo ""
-
-echo "[M11] Full chain 0.3.0 -> 0.9.0 runs all scripts"
-M11_DIR=$(mktemp -d)
-mkdir -p "$M11_DIR/.career-os/config"
-echo "0.3.0" > "$M11_DIR/.career-os/config/version"
-OUTPUT=$(bash "$PLUGIN_ROOT/migrations/migrate.sh" "$M11_DIR" "0.3.0" "0.9.0" 2>&1)
-RC=$?
-assert_eq "full chain exits 0" "0" "$RC"
-assert_contains "chain runs v0.3.0 script" "$OUTPUT" "v0.3.0-to-v0.4.0.sh"
-assert_contains "chain runs v0.4.0 script" "$OUTPUT" "v0.4.0-to-v0.5.0.sh"
-assert_contains "chain runs v0.5.0 script" "$OUTPUT" "v0.5.0-to-v0.6.0.sh"
-assert_contains "chain runs v0.6.0 script" "$OUTPUT" "v0.6.0-to-v0.7.0.sh"
-assert_contains "chain runs v0.7.0 script" "$OUTPUT" "v0.7.0-to-v0.8.0.sh"
-assert_contains "chain runs v0.8.0 script" "$OUTPUT" "v0.8.0-to-v0.9.0.sh"
-M11_VER=$(cat "$M11_DIR/.career-os/config/version" | tr -d '[:space:]')
-assert_eq "final version is 0.9.0" "0.9.0" "$M11_VER"
-rm -rf "$M11_DIR"
-echo ""
-
-echo "[M12] v0.6.0-to-v0.7.0.sh happy path"
-M12_DIR=$(mktemp -d)
-mkdir -p "$M12_DIR/.career-os/config"
-echo "0.6.0" > "$M12_DIR/.career-os/config/version"
-OUTPUT=$(bash "$PLUGIN_ROOT/migrations/v0.6.0-to-v0.7.0.sh" "$M12_DIR" 2>&1)
-RC=$?
-assert_eq "v0.6.0→v0.7.0 exits 0" "0" "$RC"
-assert_contains "v0.6.0→v0.7.0 complete message" "$OUTPUT" "v0.6.0 → v0.7.0 complete"
-M12_VER=$(cat "$M12_DIR/.career-os/config/version" | tr -d '[:space:]')
-assert_eq "version set to 0.7.0" "0.7.0" "$M12_VER"
-rm -rf "$M12_DIR"
-echo ""
-
-echo "[M13] v0.6.0-to-v0.7.0.sh is idempotent"
-M13_DIR=$(mktemp -d)
-mkdir -p "$M13_DIR/.career-os/config"
-echo "0.6.0" > "$M13_DIR/.career-os/config/version"
-bash "$PLUGIN_ROOT/migrations/v0.6.0-to-v0.7.0.sh" "$M13_DIR" &>/dev/null
-bash "$PLUGIN_ROOT/migrations/v0.6.0-to-v0.7.0.sh" "$M13_DIR" &>/dev/null
-RC=$?
-assert_eq "idempotent v0.6.0→v0.7.0 exits 0" "0" "$RC"
-M13_VER=$(cat "$M13_DIR/.career-os/config/version" | tr -d '[:space:]')
-assert_eq "version still 0.7.0 after double run" "0.7.0" "$M13_VER"
-rm -rf "$M13_DIR"
-echo ""
-
-echo "[M14] v0.8.0-to-v0.9.0.sh happy path"
-M14_DIR=$(mktemp -d)
-mkdir -p "$M14_DIR/.career-os/config"
-echo "0.8.0" > "$M14_DIR/.career-os/config/version"
-OUTPUT=$(bash "$PLUGIN_ROOT/migrations/v0.8.0-to-v0.9.0.sh" "$M14_DIR" 2>&1)
-RC=$?
-assert_eq "v0.8.0→v0.9.0 exits 0" "0" "$RC"
-assert_contains "v0.8.0→v0.9.0 complete message" "$OUTPUT" "v0.8.0 → v0.9.0 complete"
-M14_VER=$(cat "$M14_DIR/.career-os/config/version" | tr -d '[:space:]')
-assert_eq "version set to 0.9.0" "0.9.0" "$M14_VER"
-assert_dir_exists "scans dir created" "$M14_DIR/.career-os/scans"
-rm -rf "$M14_DIR"
-echo ""
-
-echo "[M15] v0.8.0-to-v0.9.0.sh is idempotent"
-M15_DIR=$(mktemp -d)
-mkdir -p "$M15_DIR/.career-os/config"
-echo "0.8.0" > "$M15_DIR/.career-os/config/version"
-bash "$PLUGIN_ROOT/migrations/v0.8.0-to-v0.9.0.sh" "$M15_DIR" &>/dev/null
-bash "$PLUGIN_ROOT/migrations/v0.8.0-to-v0.9.0.sh" "$M15_DIR" &>/dev/null
-RC=$?
-assert_eq "idempotent v0.8.0→v0.9.0 exits 0" "0" "$RC"
-M15_VER=$(cat "$M15_DIR/.career-os/config/version" | tr -d '[:space:]')
-assert_eq "version still 0.9.0 after double run" "0.9.0" "$M15_VER"
-rm -rf "$M15_DIR"
-echo ""
-
-echo "[M16] v0.28.0-to-v0.29.0.sh relocates runtime state"
-M16_DIR=$(mktemp -d)
-M16_STATE_DIR=$(mktemp -d)
-mkdir -p "$M16_DIR/.career-os/config" "$M16_DIR/.career-os/ledger"
-echo "0.28.0" > "$M16_DIR/.career-os/config/version"
-echo "# old ledger" > "$M16_DIR/.career-os/ledger/2026-06-23.md"
-SAVED_STATE_DIR="$CLAUDE_PLUGIN_DATA"
-export CLAUDE_PLUGIN_DATA="$M16_STATE_DIR"
-OUTPUT=$(bash "$PLUGIN_ROOT/migrations/v0.28.0-to-v0.29.0.sh" "$M16_DIR" 2>&1)
-RC=$?
-assert_eq "v0.28.0→v0.29.0 exits 0" "0" "$RC"
-assert_contains "v0.28.0→v0.29.0 complete message" "$OUTPUT" "v0.28.0 → v0.29.0 complete"
-assert_eq "version moved to STATE_DIR" "0.29.0" "$(cat "$M16_STATE_DIR/version" | tr -d '[:space:]')"
-assert_file_exists "ledger moved to brain/sessions/ledger" "$M16_DIR/brain/sessions/ledger/2026-06-23.md"
-if [ ! -d "$M16_DIR/.career-os" ]; then pass ".career-os/ removed by v0.29.0 migration"
-else fail ".career-os/ removed by v0.29.0 migration" "directory still present"; fi
+assert_eq "unreachable 1.x target exits 1" "1" "$RC"
 export CLAUDE_PLUGIN_DATA="$SAVED_STATE_DIR"
-rm -rf "$M16_DIR" "$M16_STATE_DIR"
+cleanup_dir "$M4_DIR"; cleanup_dir "$M4_STATE"
+echo ""
+
+echo "[M5] Baseline script is idempotent"
+M5_DIR=$(mktemp -d); M5_STATE=$(mktemp -d)
+SAVED_STATE_DIR="$CLAUDE_PLUGIN_DATA"; export CLAUDE_PLUGIN_DATA="$M5_STATE"
+bash "$PLUGIN_ROOT/migrations/v0.0.0-to-v1.0.0.sh" "$M5_DIR" >/dev/null 2>&1
+bash "$PLUGIN_ROOT/migrations/v0.0.0-to-v1.0.0.sh" "$M5_DIR" >/dev/null 2>&1
+RC=$?
+assert_eq "second run still exits 0" "0" "$RC"
+assert_eq "still stamped 1.0.0" "1.0.0" "$(cat "$M5_STATE/version" | tr -d '[:space:]')"
+export CLAUDE_PLUGIN_DATA="$SAVED_STATE_DIR"
+cleanup_dir "$M5_DIR"; cleanup_dir "$M5_STATE"
+echo ""
+
+echo "[M6] Pre-v0.29.0 workspace still FAILS HARD instead of stamping"
+# The one guarantee carried over from the retired chain. A workspace that still
+# has .career-os/ never made the v0.29.0 state relocation, so stamping 1.0.0
+# would record a migration that never ran.
+M6_DIR=$(mktemp -d); M6_STATE=$(mktemp -d)
+mkdir -p "$M6_DIR/.career-os/memory"
+touch "$M6_DIR/.career-os/memory/job-pipeline.md"
+SAVED_STATE_DIR="$CLAUDE_PLUGIN_DATA"; export CLAUDE_PLUGIN_DATA="$M6_STATE"
+OUTPUT=$(bash "$PLUGIN_ROOT/migrations/migrate.sh" "$M6_DIR" "0.3.0" "1.0.0" 2>&1)
+RC=$?
+assert_eq "legacy layout exits 1" "1" "$RC"
+assert_contains "names the offending directory" "$OUTPUT" ".career-os/"
+if [ ! -f "$M6_STATE/version" ]; then pass "legacy failure does not stamp STATE_DIR"
+else fail "legacy failure does not stamp STATE_DIR" "unexpected version: $(cat "$M6_STATE/version")"; fi
+export CLAUDE_PLUGIN_DATA="$SAVED_STATE_DIR"
+cleanup_dir "$M6_DIR"; cleanup_dir "$M6_STATE"
 echo ""
 
 # ============================================================
@@ -1110,50 +985,9 @@ rm -rf "$WO052_DIR" "$WO052_STATE_DIR"
 cd "$TEST_DIR"
 echo ""
 
-echo "[R9] WO-054: interview-prep filename convention enforcement"
-# Boundary test: after migration, every non-archived file in
-# .career-os/interview-prep/ must match prep-*.md or intel-*.md.
-# Guards against future drift where a skill or user writes a file
-# that doesn't conform to the canonical convention.
-WO054_DIR=$(mktemp -d)
-cd "$WO054_DIR"
-mkdir -p .career-os/config .career-os/interview-prep
-echo "0.18.1" > .career-os/config/version
-# Seed with legacy-shaped files + a loose WIP file to ingest
-touch .career-os/interview-prep/affirm-recruiter-screen-prep.md
-touch .career-os/interview-prep/openai-insider-intel.md
-touch .career-os/interview-prep/scale-ai-mihir-screen-ARCHIVED.md
-mkdir -p WIP
-touch WIP/handshake-recruiter-screen-prep.md
-# Run migration
-bash "$PLUGIN_ROOT/migrations/v0.18.1-to-v0.19.0.sh" "$WO054_DIR" >/dev/null 2>&1
-# Assert: version stamp updated
-assert_eq "B-interview-prep-convention: version bumped to 0.19.0" "0.19.0" "$(cat .career-os/config/version)"
-# Assert: every top-level file in interview-prep/ matches convention
-NONCONFORMING=0
-for f in .career-os/interview-prep/*.md; do
-    [ -f "$f" ] || continue
-    base=$(basename "$f")
-    case "$base" in
-        prep-*.md|intel-*.md) ;;
-        *) NONCONFORMING=$((NONCONFORMING + 1)); echo "    non-conforming: $base" ;;
-    esac
-done
-assert_eq "B-interview-prep-convention: zero non-conforming filenames post-migration" "0" "$NONCONFORMING"
-# Assert: archive subdir created and archived file moved into it
-assert_dir_exists "B-interview-prep-convention: _archive/ subdir exists" ".career-os/interview-prep/_archive"
-assert_file_exists "B-interview-prep-convention: archived prep moved to _archive/" ".career-os/interview-prep/_archive/prep-scale-ai-mihir-ARCHIVED.md"
-# Assert: pipeline-snapshots scaffold created
-assert_dir_exists "B-interview-prep-convention: pipeline-snapshots/ scaffold" ".career-os/memory/pipeline-snapshots"
-# Assert: loose WIP file was ingested into plugin memory
-assert_file_exists "B-interview-prep-convention: loose WIP file ingested" ".career-os/interview-prep/prep-handshake-senior-em.md"
-# Assert: idempotent — second run is a no-op (no errors, same final state)
-bash "$PLUGIN_ROOT/migrations/v0.18.1-to-v0.19.0.sh" "$WO054_DIR" >/dev/null 2>&1
-SECOND_RUN_EXIT=$?
-assert_eq "B-interview-prep-convention: migration is idempotent (run 2 exits 0)" "0" "$SECOND_RUN_EXIT"
-rm -rf "$WO054_DIR"
-cd "$TEST_DIR"
-echo ""
+# [R9] WO-054 (interview-prep filename convention) was removed in the 1.0
+# cut: it exercised migrations/v0.18.1-to-v0.19.0.sh against the legacy
+# .career-os/ layout, and both the script and that layout are retired.
 
 # ============================================================
 echo "-- v0.68.0 Hook Improvements (spec 2026-06-04) -----"

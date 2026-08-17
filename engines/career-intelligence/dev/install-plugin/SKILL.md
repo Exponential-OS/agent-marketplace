@@ -1,12 +1,12 @@
 ---
-name: Install Career OS Plugin
-description: Installs or updates the Career OS plugin from GitHub. Handles auth, validates install, confirms plugin is ready.
+name: Install Career Intelligence Plugin
+description: Installs or updates the Career Intelligence plugin from GitHub. Handles auth, validates install, confirms plugin is ready.
 ---
 
-# Install Career OS Plugin
+# Install Career Intelligence Plugin
 
 ## What This Does
-Installs (or updates) the Career OS plugin from its GitHub repo into Claude Code's plugin system. Handles GitHub authentication, validates the install, and confirms the plugin is ready for use.
+Installs (or updates) the Career Intelligence plugin from its GitHub repo into Claude Code's plugin system. Handles GitHub authentication, validates the install, and confirms the plugin is ready for use.
 
 Does NOT set up a career workspace — that happens automatically on first session start via the plugin's SessionStart hook.
 
@@ -24,7 +24,7 @@ If any are missing, stop and tell the user what to install.
 Run `gh auth status` to check if the user is authenticated to github.com.
 
 **If NOT authenticated:**
-1. Tell the user: "Career OS plugin is hosted on GitHub. You need to authenticate."
+1. Tell the user: "Career Intelligence plugin is hosted on GitHub. You need to authenticate."
 2. Run `gh auth login` — this handles OAuth securely via GitHub's device flow. No tokens stored in plaintext.
 3. Verify auth succeeded with `gh auth status`.
 4. If auth fails, stop and provide the manual auth instructions:
@@ -40,7 +40,7 @@ Run `claude plugin list 2>/dev/null` and check if `career-os` appears.
 
 **If installed:**
 - Show the installed version
-- Ask: "Career OS plugin is already installed (v{version}). Update to latest? (y/n)"
+- Ask: "Career Intelligence plugin is already installed (v{version}). Update to latest? (y/n)"
 - If yes → run `claude plugin update career-intelligence@xos` or uninstall + reinstall
 - If no → skip to Step 5 (verify)
 
@@ -67,11 +67,11 @@ Run these checks:
 
 Output verification result:
 ```
-✅ Career OS plugin v{version} installed successfully.
+✅ Career Intelligence plugin v{version} installed successfully.
 
 Next steps:
 1. Open a Cowork session with a fresh folder as your career workspace
-2. Career OS will automatically scaffold the workspace on first run
+2. Career Intelligence will automatically scaffold the workspace on first run
 3. Say "mission control" to see your career home screen
 
 Requirements:

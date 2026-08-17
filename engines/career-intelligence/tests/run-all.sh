@@ -101,9 +101,24 @@ else
 fi
 echo ""
 
+# ── Suite 4: migration graph (hard fail) ──────────────────────────────────────
+# A broken chain aborts init-repo.sh entirely, so every other hook silently
+# stops running too. Two mislabelled scripts made every install between 0.73.5
+# and 0.78.0 unupgradable and went unnoticed until a user reported the banner.
+echo "Suite 4: migration graph..."
+if bash "$REPO_DIR/tests/test_migration_chain.sh" 2>&1; then
+  echo "  → migration graph: PASS ✓"
+  SUITE4_STATUS="PASS"
+else
+  echo "  → migration graph: FAIL ✗  (hard fail — the upgrade path is broken)"
+  exit $FAIL
+fi
+echo ""
+
 echo "━━━ CI PASSED ━━━"
 echo "  hooks:          $SUITE1_STATUS"
 echo "  bun unit tests: $SUITE1C_STATUS"
 echo "  outreach-dedup: $SUITE2_STATUS"
 echo "  mission-control: $SUITE3_STATUS"
+echo "  migration graph: $SUITE4_STATUS"
 exit $PASS

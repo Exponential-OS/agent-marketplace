@@ -17,7 +17,7 @@ triggers:
   - protocol 8 verify
 ---
 
-# Outreach Fact-Check — Career OS Skill
+# Outreach Fact-Check — Career Intelligence Skill
 
 ## What This Skill Does
 
@@ -479,7 +479,7 @@ verification skill.
 
 Always start the response with:
 ```
-━━━ Career OS: Outreach Fact-Check ━━━
+━━━ Career Intelligence: Outreach Fact-Check ━━━
 ```
 
 For multi-claim verification (e.g., dispatched from Protocol 8 with N claims):

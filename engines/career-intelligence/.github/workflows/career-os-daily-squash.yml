@@ -29,7 +29,7 @@ jobs:
 
       - name: Squash yesterday's commits
         run: |
-          git config user.name "Career OS Bot"
+          git config user.name "Career Intelligence Bot"
           git config user.email "career-os[bot]@users.noreply.github.com"
 
           YESTERDAY=$(date -d "yesterday" +%Y-%m-%d 2>/dev/null || date -v-1d +%Y-%m-%d)
