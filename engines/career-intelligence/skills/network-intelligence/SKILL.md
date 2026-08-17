@@ -29,7 +29,7 @@ triggers:
   - post generated
 ---
 
-# Network Intelligence — Career OS Skill
+# Network Intelligence — Career Intelligence Skill
 
 ## Task Substrate (v0.25.0+)
 
@@ -53,7 +53,7 @@ Maps your professional and personal network to target companies. Discovers warm 
 
 Always start with:
 ```
-━━━ Career OS: Network Intelligence ━━━
+━━━ Career Intelligence: Network Intelligence ━━━
 ```
 
 ## How to Invoke
@@ -418,7 +418,7 @@ Worth a check-in before asking for an intro?
 If `network/people/` is empty or has < 3 profiles:
 
 ```
-━━━ Career OS: Network Intelligence ━━━
+━━━ Career Intelligence: Network Intelligence ━━━
 
 Your network map needs contacts to work with.
 

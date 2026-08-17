@@ -20,7 +20,7 @@ triggers:
   - draft email to
 ---
 
-# Outreach Composer — Career OS Skill
+# Outreach Composer — Career Intelligence Skill
 
 ## Task Substrate (v0.25.0+)
 
@@ -61,7 +61,7 @@ Generates personalized outreach messages calibrated to the relationship, channel
 
 Always start with:
 ```
-━━━ Career OS: Outreach Composer ━━━
+━━━ Career Intelligence: Outreach Composer ━━━
 ```
 
 ## How to Invoke
@@ -371,7 +371,7 @@ Channel: {from profile}
 If no `network/people/{name}.md` exists:
 
 ```
-━━━ Career OS: Outreach Composer ━━━
+━━━ Career Intelligence: Outreach Composer ━━━
 
 I don't have a profile for {Name} yet. To write effective outreach, I need:
 

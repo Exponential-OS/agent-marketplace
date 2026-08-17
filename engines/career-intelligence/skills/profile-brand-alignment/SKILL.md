@@ -16,7 +16,7 @@ triggers:
   - profile undermines brand
 ---
 
-# Profile Brand Alignment - Career OS Skill
+# Profile Brand Alignment - Career Intelligence Skill
 
 ## Purpose
 
@@ -34,7 +34,7 @@ profile copy, route that to the separate profile rewrite workflow.
 Always start with:
 
 ```text
-Career OS: Profile Brand Alignment
+Career Intelligence: Profile Brand Alignment
 ```
 
 Output plain text only. Do not use markdown tables or pipe characters.

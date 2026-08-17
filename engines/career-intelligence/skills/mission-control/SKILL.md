@@ -1,7 +1,7 @@
 ---
 name: mission-control
 description: >
-  Career OS home screen and central router. Two jobs: show the dashboard and
+  Career Intelligence home screen and central router. Two jobs: show the dashboard and
   route every action to the correct skill. Mission Control reads and presents
   but never directly edits persistence files.
 triggers:
@@ -22,7 +22,7 @@ triggers:
   - local telemetry
 ---
 
-# Mission Control — Career OS Home Screen & Router
+# Mission Control — Career Intelligence Home Screen & Router
 
 ## Task Substrate (v0.25.0+)
 
@@ -40,7 +40,7 @@ Mission Control is read-only on tasks (priority dashboard rendering only). Skill
 
 ## Purpose
 
-Career OS's central nervous system. Two jobs: **show the dashboard** and
+Career Intelligence's central nervous system. Two jobs: **show the dashboard** and
 **route every action to the correct skill**. Mission Control never directly
 edits persistence files — it reads, presents, and dispatches.
 
@@ -48,7 +48,7 @@ edits persistence files — it reads, presents, and dispatches.
 
 Always start with:
 ```
-━━━ Career OS: Mission Control ━━━
+━━━ Career Intelligence: Mission Control ━━━
 ```
 
 ---
@@ -57,7 +57,7 @@ Always start with:
 
 Mission Control is the **dispatcher**. Every user action that mutates data
 MUST be routed to the skill that owns those files. This is the single most
-important rule in Career OS.
+important rule in Career Intelligence.
 
 ### Routing Table (NON-NEGOTIABLE)
 
@@ -144,7 +144,7 @@ These two skills overlap on warm-path detection. The routing rule:
 If the file does not exist, show the welcome and route to the onboarding wizard:
 
 ```
-━━━ Career OS: Mission Control ━━━
+━━━ Career Intelligence: Mission Control ━━━
 
 Welcome to Career Intelligence. I'm your career co-pilot with persistent memory.
 
@@ -171,7 +171,7 @@ Before rendering the dashboard, check for pending skill flags:
 
 - If `~/.career-os-state/pending-organize` exists:
   ```
-  ━━━ Career OS: New Feature Available ━━━
+  ━━━ Career Intelligence: New Feature Available ━━━
 
   The organize skill can index your stories — adding frontmatter,
   cross-references, and a searchable story index.
@@ -235,7 +235,7 @@ After 10 outcomes → first calibration (±1 day/cycle). Log to
 ### Dashboard Layout
 
 ```
-━━━ Career OS — [Day], [Date] ━━━
+━━━ Career Intelligence — [Day], [Date] ━━━
 
 ⚠️ STALE ALERTS (only if any)
   - {Company} ({Stage}, {N}d) — {action}

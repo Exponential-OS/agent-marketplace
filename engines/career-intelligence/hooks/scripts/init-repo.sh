@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# init-repo.sh — Session start initialization for Career OS
+# init-repo.sh — Session start initialization for Career Intelligence
 #
 # Called by SessionStart hook. Handles:
 #   0. VERSION CHECK + MIGRATION (P6) — runs BEFORE anything else
@@ -55,7 +55,7 @@ mkdir -p "$STATE_DIR"
 # workspace state. Safe to leave it before the gate.
 
 # WORKSPACE-BINDING GATE (XOS-39): single shared, manifest-driven gate. Sourcing
-# _workspace-gate.sh exit-0's HERE (silent no-op) when cwd is not a bound Career OS
+# _workspace-gate.sh exit-0's HERE (silent no-op) when cwd is not a bound Career Intelligence
 # workspace — never scaffold brain/, write CLAUDE.md, create Resumes/, write ledger
 # markers, or git add/commit/push outside it. Replaces the per-script
 # is_career_os_workspace() copy that was forgotten in THIS file in v0.66.
@@ -74,13 +74,13 @@ MIGRATIONS_DIR="$PLUGIN_ROOT/migrations"
 if [ -f "$VERSION_FILE" ]; then
     DATA_VERSION=$(cat "$VERSION_FILE" | tr -d '[:space:]')
     if [ "$DATA_VERSION" != "$PLUGIN_VERSION" ] && [ -f "$MIGRATIONS_DIR/migrate.sh" ]; then
-        echo "Career OS: Version mismatch detected (data: v${DATA_VERSION}, plugin: v${PLUGIN_VERSION})"
+        echo "Career Intelligence: Version mismatch detected (data: v${DATA_VERSION}, plugin: v${PLUGIN_VERSION})"
         echo "Running migration chain..."
         # FAIL-HARD INVARIANT: capture exit code; abort install if migration chain fails.
         # Pre-2026-04-27 this was a fire-and-forget invocation — soft failure when a
         # migration script was missing (v0.24.0 incident: stuck install on v0.23.0).
         if ! bash "$MIGRATIONS_DIR/migrate.sh" "$WORKSPACE_ROOT" "$DATA_VERSION" "$PLUGIN_VERSION"; then
-            echo "❌ Career OS: migration chain failed. Install aborted." >&2
+            echo "❌ Career Intelligence: migration chain failed. Install aborted." >&2
             echo "   Fix: ship the missing migrations/v<from>-to-v<to>.sh script and retry." >&2
             exit 1
         fi
@@ -92,10 +92,10 @@ elif [ -f "$LEGACY_VERSION_FILE" ]; then
     # migration relocates the version file into $STATE_DIR).
     DATA_VERSION=$(cat "$LEGACY_VERSION_FILE" | tr -d '[:space:]')
     if [ "$DATA_VERSION" != "$PLUGIN_VERSION" ] && [ -f "$MIGRATIONS_DIR/migrate.sh" ]; then
-        echo "Career OS: Pre-v0.29.0 install detected (data: v${DATA_VERSION}, plugin: v${PLUGIN_VERSION})"
+        echo "Career Intelligence: Pre-v0.29.0 install detected (data: v${DATA_VERSION}, plugin: v${PLUGIN_VERSION})"
         echo "Running migration chain..."
         if ! bash "$MIGRATIONS_DIR/migrate.sh" "$WORKSPACE_ROOT" "$DATA_VERSION" "$PLUGIN_VERSION"; then
-            echo "❌ Career OS: migration chain failed. Install aborted." >&2
+            echo "❌ Career Intelligence: migration chain failed. Install aborted." >&2
             echo "   Fix: ship the missing migrations/v<from>-to-v<to>.sh script and retry." >&2
             exit 1
         fi
@@ -104,11 +104,11 @@ elif [ -f "$LEGACY_VERSION_FILE" ]; then
 elif [ -d "$WORKSPACE_ROOT/.career-os" ]; then
     # .career-os exists but no version file in either location — legacy install
     # before versioning was added. Assume v0.3.0 and migrate.
-    echo "Career OS: Legacy install detected (no version file). Assuming v0.3.0."
+    echo "Career Intelligence: Legacy install detected (no version file). Assuming v0.3.0."
     if [ -f "$MIGRATIONS_DIR/migrate.sh" ]; then
         # FAIL-HARD INVARIANT: same as above — capture exit code.
         if ! bash "$MIGRATIONS_DIR/migrate.sh" "$WORKSPACE_ROOT" "0.3.0" "$PLUGIN_VERSION"; then
-            echo "❌ Career OS: legacy migration chain failed. Install aborted." >&2
+            echo "❌ Career Intelligence: legacy migration chain failed. Install aborted." >&2
             echo "   Fix: ship the missing migrations/v<from>-to-v<to>.sh script and retry." >&2
             exit 1
         fi
@@ -144,9 +144,9 @@ if [ ! -f "$VERSION_FILE" ]; then
     # Create starter CLAUDE.md if none exists
     if [ ! -f "$WORKSPACE_ROOT/CLAUDE.md" ]; then
         cat > "$WORKSPACE_ROOT/CLAUDE.md" << 'CLAUDEMD'
-# Career OS — Your Career Brain
+# Career Intelligence — Your Career Brain
 
-Welcome to Career OS. This file is your rules engine — edit it to customize how Claude works with your career data.
+Welcome to Career Intelligence. This file is your rules engine — edit it to customize how Claude works with your career data.
 
 ## About You
 <!-- Fill in during onboarding -->
@@ -161,11 +161,11 @@ Welcome to Career OS. This file is your rules engine — edit it to customize ho
 
 ## Plugin Boundary Rules
 
-Career OS is managed by a plugin. The plugin owns its own runtime state in
+Career Intelligence is managed by a plugin. The plugin owns its own runtime state in
 `$CLAUDE_PLUGIN_DATA` (default `~/.career-os-state/`). Workspace files are
 yours; plugin-state files are the plugin's.
 
-### Workspace data — owned by you (and Career OS skills)
+### Workspace data — owned by you (and Career Intelligence skills)
 
 | Path | Owner | Notes |
 |------|-------|-------|
@@ -203,7 +203,7 @@ CLAUDEMD
 
     # Mark first run state
     echo "FIRST_RUN=true" > "$STATE_DIR/.career-os-state"
-    echo "Career OS: First run detected (v${PLUGIN_VERSION}). The mission-control skill will guide you through onboarding."
+    echo "Career Intelligence: First run detected (v${PLUGIN_VERSION}). The mission-control skill will guide you through onboarding."
     exit 0
 fi
 
@@ -230,7 +230,7 @@ LAST_COMMIT_TIME=$(git log -1 --format=%ct 2>/dev/null || echo "0")
 NOW=$(date +%s)
 HOURS_SINCE=$(( (NOW - LAST_COMMIT_TIME) / 3600 ))
 if [ "$HOURS_SINCE" -gt 24 ]; then
-    echo "⚠️ Career OS WARNING: Last git commit was ${HOURS_SINCE} hours ago. Data may not be backed up."
+    echo "⚠️ Career Intelligence WARNING: Last git commit was ${HOURS_SINCE} hours ago. Data may not be backed up."
 fi
 
 # --- WO-046: Ledger backup health check ---
@@ -238,13 +238,13 @@ fi
 if git remote get-url origin &>/dev/null; then
     UNPUSHED=$(git log "origin/$MAIN_BRANCH..$MAIN_BRANCH" --oneline 2>/dev/null | wc -l | tr -d ' ')
     if [ "$UNPUSHED" -gt 0 ]; then
-        echo "⚠️ Career OS: ${UNPUSHED} session commits not pushed to remote. Running catch-up push..."
+        echo "⚠️ Career Intelligence: ${UNPUSHED} session commits not pushed to remote. Running catch-up push..."
         mkdir -p "$(dirname "$LOG_FILE")"
         if git_sync_push "$WORKSPACE_ROOT" "$MAIN_BRANCH" "$LOG_FILE"; then
-            echo "✅ Career OS: Catch-up push complete (${UNPUSHED} commits)."
+            echo "✅ Career Intelligence: Catch-up push complete (${UNPUSHED} commits)."
         else
             echo "[$(date)] catch-up push failed" >> "$LOG_FILE"
-            echo "⚠️ Career OS: Remote backup degraded. Check $LOG_FILE"
+            echo "⚠️ Career Intelligence: Remote backup degraded. Check $LOG_FILE"
         fi
     fi
 fi
@@ -257,7 +257,7 @@ if [ -n "$YESTERDAY" ]; then
     FIRST_LINE=$(cat_ledger_day "$LEDGER_DIR" "$YESTERDAY" 2>/dev/null | head -n 1 || true)
     if [ -n "$FIRST_LINE" ]; then
         if [[ "$FIRST_LINE" != "# Session Ledger"* ]]; then
-            echo "⚠️ Career OS: Yesterday's ledger has unexpected format. Check $LEDGER_DIR/$YESTERDAY*.md"
+            echo "⚠️ Career Intelligence: Yesterday's ledger has unexpected format. Check $LEDGER_DIR/$YESTERDAY*.md"
         fi
     fi
 fi

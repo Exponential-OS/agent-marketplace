@@ -14,7 +14,7 @@ triggers:
   - generate my base resume from experience history
 ---
 
-# Resume Engine — Career OS Skill
+# Resume Engine — Career Intelligence Skill
 
 ## FIRST-TIME SETUP (new users)
 
@@ -44,7 +44,7 @@ Generates and customizes resumes targeted at specific roles. Supports multiple r
 
 Always start with:
 ```
-━━━ Career OS: Resume Engine ━━━
+━━━ Career Intelligence: Resume Engine ━━━
 ```
 
 ## Context Pre-Flight (MANDATORY FIRST CHECK)

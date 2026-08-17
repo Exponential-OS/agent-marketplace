@@ -34,7 +34,7 @@ triggers:
   - linkedin people check
 ---
 
-# Job Search Scheduler — Career OS Skill
+# Job Search Scheduler — Career Intelligence Skill
 
 ## Task Substrate (v0.25.0+)
 
@@ -98,12 +98,12 @@ in the job search: finding roles AND finding the people who can get you in.
 
 Always start your response with:
 ```
-━━━ Career OS: Job Search ━━━
+━━━ Career Intelligence: Job Search ━━━
 ```
 
 For enrichment mode:
 ```
-━━━ Career OS: Warm Path Enrichment ━━━
+━━━ Career Intelligence: Warm Path Enrichment ━━━
 ```
 
 ## How to Invoke

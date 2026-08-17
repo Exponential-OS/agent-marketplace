@@ -13,7 +13,7 @@ triggers:
   - playwright submit
 ---
 
-# browser-submit — Career OS Skill (v0.1 skeleton)
+# browser-submit — Career Intelligence Skill (v0.1 skeleton)
 
 ## Purpose
 

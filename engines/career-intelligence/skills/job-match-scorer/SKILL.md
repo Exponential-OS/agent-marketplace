@@ -21,7 +21,7 @@ triggers:
   - rescore title-only
 ---
 
-# Job Match Scorer — Career OS Skill
+# Job Match Scorer — Career Intelligence Skill
 
 ## Purpose
 
@@ -38,7 +38,7 @@ only job-match-scorer writes to it.
 
 Always start your response with:
 ```
-━━━ Career OS: Job Match Scorer ━━━
+━━━ Career Intelligence: Job Match Scorer ━━━
 ```
 
 ## How to Invoke

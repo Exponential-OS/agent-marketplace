@@ -14,7 +14,7 @@ triggers:
   - career-to-brand
 ---
 
-# Milestone Brand — Career OS Skill
+# Milestone Brand — Career Intelligence Skill
 
 ## Purpose
 
@@ -35,7 +35,7 @@ stealth-exclusion list.
 Always start with:
 
 ```text
-Career OS: Milestone Brand Moments
+Career Intelligence: Milestone Brand Moments
 ```
 
 If there are no allowed prompts:

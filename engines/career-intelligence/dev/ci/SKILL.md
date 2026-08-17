@@ -12,7 +12,7 @@ triggers:
   - build and release
 ---
 
-# CI Pipeline — Career OS Dev Skill
+# CI Pipeline — Career Intelligence Dev Skill
 
 ## Purpose
 
@@ -23,7 +23,7 @@ Eliminates the need to remember which skill to run next or which directory to be
 
 Always start your response with:
 ```
-━━━ Career OS: CI Pipeline ━━━
+━━━ Career Intelligence: CI Pipeline ━━━
 ```
 
 ## How to Invoke

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""pipeline-query.py — Career OS Pipeline Query Tool.
+"""pipeline-query.py — Career Intelligence Pipeline Query Tool.
 
 Reads job-pipeline-match-tracker.json and outputs a filtered, sorted view.
 Pure Python stdlib — zero pip dependencies.
@@ -251,7 +251,7 @@ def run_self_test() -> int:
 # ---------------------------------------------------------------------------
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Career OS pipeline query")
+    parser = argparse.ArgumentParser(description="Career Intelligence pipeline query")
     parser.add_argument("--tracker-path", help="Path to match-tracker.json")
     parser.add_argument("--min-score", type=int, default=80)
     parser.add_argument("--decision", help="Comma-separated: FULL_INVEST,APPLY,CHECK_DELTA,SKIP")

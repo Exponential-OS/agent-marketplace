@@ -2,7 +2,7 @@
 name: version-control
 description: >
   Backup status, remote setup, Codeberg mirror, manual sync, and data recovery
-  for Career OS. The hooks handle auto-commit/push — this skill handles setup,
+  for Career Intelligence. The hooks handle auto-commit/push — this skill handles setup,
   monitoring, and recovery.
 triggers:
   - backup
@@ -25,7 +25,7 @@ triggers:
   - undo
 ---
 
-# Version Control — Career OS Skill
+# Version Control — Career Intelligence Skill
 
 ## Purpose
 
@@ -37,7 +37,7 @@ monitoring, and recovery**.
 
 Always start your response with:
 ```
-━━━ Career OS: Version Control ━━━
+━━━ Career Intelligence: Version Control ━━━
 ```
 
 ## Capabilities
@@ -56,7 +56,7 @@ Check and report the health of the user's backup:
 6. Present as a health card:
 
 ```
-━━━ Career OS: Version Control ━━━
+━━━ Career Intelligence: Version Control ━━━
 
 Backup Status:
 
@@ -86,7 +86,7 @@ Guided setup for dual-remote backup:
    - If exists → show current config and ask if user wants to update it
 2. If not configured, guide through setup:
    ```
-   ━━━ Career OS: Version Control ━━━
+   ━━━ Career Intelligence: Version Control ━━━
 
    Codeberg Mirror Setup:
 
@@ -120,7 +120,7 @@ For workspaces without a remote:
 1. Check `git remote -v`
 2. **If no remote:**
    ```
-   ━━━ Career OS: Version Control ━━━
+   ━━━ Career Intelligence: Version Control ━━━
 
    Your career data isn't connected to a remote yet. Let's fix that.
 
@@ -155,7 +155,7 @@ Force an immediate sync:
 4. Report result:
 
 ```
-━━━ Career OS: Version Control ━━━
+━━━ Career Intelligence: Version Control ━━━
 
 Sync complete:
   origin (github):   ✅ pushed (3 commits)
@@ -178,7 +178,7 @@ When the user thinks they lost data:
 4. **Present recovery options based on findings:**
 
 ```
-━━━ Career OS: Version Control ━━━
+━━━ Career Intelligence: Version Control ━━━
 
 Recovery Options:
 

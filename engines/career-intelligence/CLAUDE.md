@@ -1,10 +1,10 @@
 <!-- product-vs-solution: example -->
 <!-- this file contains project rules authored by the original developer. Personal references are provenance context, not runtime data. -->
-# Career OS Plugin — Project Rules
+# Career Intelligence Plugin — Project Rules
 
 ## What This Is
 
-A Cowork plugin for Career OS. Hooks in `hooks/`, skills in `skills/`, tests in `tests/`.
+A Cowork plugin for Career Intelligence. Hooks in `hooks/`, skills in `skills/`, tests in `tests/`.
 
 ## Private Workspace (anand-career-os)
 
@@ -31,7 +31,7 @@ pipeline-sync (Pipeline ↔ Tracker ↔ open issues), outreach-composer
 (kind:follow-up nudges), job-search-scheduler (kind:scan-result),
 network-intelligence (read-only). Read via `gh` CLI (universal) +
 `github-mcp` MCP server (structured fallback). Migration script:
-`migrations/v0.24.0-to-v0.25.0.sh` (version stamp + advisory; no
+`migrations/v0.0.0-to-v1.0.0.sh` (version stamp + advisory; no
 auto-migration of existing Tasks.md content).
 
 Previous: v0.24.0 — Substrate rollback (2026-04-26). Dolt + Neo4j +

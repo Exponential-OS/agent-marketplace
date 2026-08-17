@@ -21,7 +21,7 @@ triggers:
   - pipeline view
 ---
 
-# Pipeline View — Career OS Skill
+# Pipeline View — Career Intelligence Skill
 
 ## Purpose
 
@@ -33,7 +33,7 @@ the output. No state mutations. No writes.
 
 Always start with:
 ```
-━━━ Career OS: Pipeline View ━━━
+━━━ Career Intelligence: Pipeline View ━━━
 ```
 
 ## How to Invoke

@@ -6,70 +6,70 @@ I liked these statements
 
 
 
-Career OS automates the judgment
+Career Intelligence automates the judgment
 
 
 
-AIApply is a sprinter; Career OS is a marathoner.
+AIApply is a sprinter; Career Intelligence is a marathoner.
 
 
 
-OpenClaw is infrastructure; Career OS is application + philosophy
+OpenClaw is infrastructure; Career Intelligence is application + philosophy
 
 
 
-OpenClaw solves "how do I run agents safely?" Career OS solves "how do I amplify my judgment as a knowledge worker?"
+OpenClaw solves "how do I run agents safely?" Career Intelligence solves "how do I amplify my judgment as a knowledge worker?"
 
 
 
-Career OS treats prompt injection as a first-class security concern with defense layers; OpenClaw mentions it but doesn't codify defenses
+Career Intelligence treats prompt injection as a first-class security concern with defense layers; OpenClaw mentions it but doesn't codify defenses
 
 
 
-NanoClaw solves security + execution. Career OS solves judgment amplification + memory coherence. 
+NanoClaw solves security + execution. Career Intelligence solves judgment amplification + memory coherence. 
 
 
 
-NanoClaw is infrastructure; Career OS is operating system for a digital soul.
+NanoClaw is infrastructure; Career Intelligence is operating system for a digital soul.
 
 
 
-Obsidian + Claude is a building block; Career OS is a complete system
+Obsidian + Claude is a building block; Career Intelligence is a complete system
 
 
 
-Obsidian + Claude requires manual architecture design; Career OS ships with philosophy + practices
+Obsidian + Claude requires manual architecture design; Career Intelligence ships with philosophy + practices
 
 
 
-Career OS codifies security (prompt injection), persona management, co-education—Obsidian + Claude leaves this to the user
+Career Intelligence codifies security (prompt injection), persona management, co-education—Obsidian + Claude leaves this to the user
 
 
 
-Career OS enforces file organization patterns (memory/, stories/, glossary.md); Obsidian is a blank canvas
+Career Intelligence enforces file organization patterns (memory/, stories/, glossary.md); Obsidian is a blank canvas
 
 
 Competitor Difference
 
 CAT 2
 Open claw
-Build-vs-Integrate Decision: OpenClaw could theoretically be a transport layer for Career OS (execute actions over WhatsApp), but Career OS's philosophy requires file-first local persistence, not messaging-first. Not a natural fit—would require wrapping.
+Build-vs-Integrate Decision: OpenClaw could theoretically be a transport layer for Career Intelligence (execute actions over WhatsApp), but Career Intelligence's philosophy requires file-first local persistence, not messaging-first. Not a natural fit—would require wrapping.
 
 
 Nano claw
 
-Build-vs-Integrate Decision: NanoClaw's containerization and security posture are superior to OpenClaw for enterprise use. If Career OS needs to run actions at scale (e.g., enterprise deployment), NanoClaw's security model is worth adopting. But again, it's transport, not the OS itself. Potential integration: Career OS could run inside a NanoClaw agent swarm for enterprise features like "outreach coordination" or "interview panel scheduling."
+Build-vs-Integrate Decision: NanoClaw's containerization and security posture are superior to OpenClaw for enterprise use. If Career Intelligence needs to run actions at scale (e.g., enterprise deployment), NanoClaw's security model is worth adopting. But again, it's transport, not the OS itself. Potential integration: Career Intelligence could run inside a NanoClaw agent swarm for enterprise features like "outreach coordination" or "interview panel scheduling."
 
 
 NemoClaw (NVIDIA)
-Key differentiation from Career OS: NemoClaw is enterprise governance infrastructure. Career OS is personal operating system philosophy. Two completely different scales and audiences.
+Key differentiation from Career Intelligence: NemoClaw is enterprise governance infrastructure. Career Intelligence is personal operating system philosophy. Two completely different scales and audiences.
 
 ----------
 
 CAT 3
 
 Obsidian + Claude Code Integration
-Build-vs-Integrate Decision: Career OS is fundamentally built on the Obsidian + Claude Code pattern. Not "integrate"—it's the foundation. Career OS is the opinionated application layer on top.
+Build-vs-Integrate Decision: Career Intelligence is fundamentally built on the Obsidian + Claude Code pattern. Not "integrate"—it's the foundation. Career Intelligence is the opinionated application layer on top.
 - Integration with PARA method (Projects/Areas/Resources/Archives)
 
 -----------
@@ -77,7 +77,7 @@ Build-vs-Integrate Decision: Career OS is fundamentally built on the Obsidian + 
 Category 4: Enterprise Recruiting Tools (Recruiting-Focused Agents)
 
 hireEZ, SeekOut, Guide, Radancy, Phenom
-Key differentiation from Career OS: These tools are recruiting infrastructure (supporting hiring team), not career infrastructure (supporting individual). Completely different stake holders.
+Key differentiation from Career Intelligence: These tools are recruiting infrastructure (supporting hiring team), not career infrastructure (supporting individual). Completely different stake holders.
 
 ------------
 

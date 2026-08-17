@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "career-os-marketplace",
-  "description": "Career OS plugin marketplace — AI-powered career management system",
+  "description": "Career Intelligence plugin marketplace — AI-powered career management system",
   "owner": {
     "name": "Anand Vallamsetla"
   },

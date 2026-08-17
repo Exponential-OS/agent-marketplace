@@ -109,11 +109,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 # ─────────────────────────────────────────────────────────────────────────────
 # WORKSPACE-IDENTITY GATE (v0.66.0)
 # ─────────────────────────────────────────────────────────────────────────────
-# Refuse to write ledger / commit / push if this cwd is not a Career OS
+# Refuse to write ledger / commit / push if this cwd is not a Career Intelligence
 # workspace. See capture-prompt.sh for full detection logic.
 
 # WORKSPACE-BINDING GATE (XOS-39): single shared, manifest-driven gate. Sourcing it
-# exit-0's HERE (silent no-op) when cwd is not a bound Career OS workspace — never write
+# exit-0's HERE (silent no-op) when cwd is not a bound Career Intelligence workspace — never write
 # ledger / commit / push outside it. Replaces the per-script is_career_os_workspace() copy.
 source "$SCRIPT_DIR/_workspace-gate.sh"
 source "$SCRIPT_DIR/_git-sync-push.sh"

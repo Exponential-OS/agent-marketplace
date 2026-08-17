@@ -15,7 +15,7 @@ triggers:
   - interview dossier for
 ---
 
-# Interviewer Research — Career OS Skill
+# Interviewer Research — Career Intelligence Skill
 
 ## Purpose
 
@@ -35,7 +35,7 @@ produces the upstream interviewer research that prep consumes.
 
 Always start with:
 ```
-━━━ Career OS: Interviewer Research ━━━
+━━━ Career Intelligence: Interviewer Research ━━━
 ```
 
 ## How to Invoke
@@ -359,7 +359,7 @@ User: dossier for [Company]
 [apply-tracker would normally pre-load this; in manual mode, look it up]
 
 Skill:
-━━━ Career OS: Interviewer Research ━━━
+━━━ Career Intelligence: Interviewer Research ━━━
 
 Resolving [Company] from pipeline...
   Role: [Role]

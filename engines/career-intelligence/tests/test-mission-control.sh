@@ -2,7 +2,7 @@
 # test-mission-control.sh — Eval suite for mission-control skill
 #
 # Tests mission-control's detection logic using fixture directories.
-# Each fixture simulates a different Career OS state.
+# Each fixture simulates a different Career Intelligence state.
 # Assertions check that the SKILL.md spec produces correct behavior signals.
 #
 # Usage: bash tests/test-mission-control.sh

@@ -20,7 +20,7 @@ triggers:
   - they rejected me
 ---
 
-# Apply Tracker — Career OS Skill
+# Apply Tracker — Career Intelligence Skill
 
 ## Task Substrate (v0.25.0+)
 
@@ -56,7 +56,7 @@ status transitions after the initial scan/score/add cycle.
 
 Always start your response with:
 ```
-━━━ Career OS: Apply Tracker ━━━
+━━━ Career Intelligence: Apply Tracker ━━━
 ```
 
 ## How to Invoke

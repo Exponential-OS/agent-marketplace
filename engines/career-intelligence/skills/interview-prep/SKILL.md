@@ -15,7 +15,7 @@ triggers:
   - get ready for
 ---
 
-# Interview Prep — Career OS Skill
+# Interview Prep — Career Intelligence Skill
 
 ## Purpose
 
@@ -25,7 +25,7 @@ Prepares you for interviews by matching your stories to the role's requirements,
 
 Always start with:
 ```
-━━━ Career OS: Interview Prep ━━━
+━━━ Career Intelligence: Interview Prep ━━━
 ```
 
 ## How to Invoke
@@ -161,7 +161,7 @@ Tailored to role level, company stage, and interviewer background:
 
 After writing the prep doc, present a condensed version in conversation:
 ```
-━━━ Career OS: Interview Prep ━━━
+━━━ Career Intelligence: Interview Prep ━━━
 
 Prep doc ready for {Company} — {Role}
 
@@ -243,7 +243,7 @@ questions_asked: {N}
 If `brain/stories/` is empty or has no STORY_INDEX.md:
 
 ```
-━━━ Career OS: Interview Prep ━━━
+━━━ Career Intelligence: Interview Prep ━━━
 
 You don't have stories indexed yet. Stories power interview prep —
 they're how I match your experience to what the company is looking for.

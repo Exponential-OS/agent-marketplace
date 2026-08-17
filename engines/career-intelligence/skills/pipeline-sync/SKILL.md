@@ -1,7 +1,7 @@
 ---
 name: pipeline-sync
 description: >
-  Reconciles data across Career OS's three core surfaces: job-pipeline.json (stage detail + referrals),
+  Reconciles data across Career Intelligence's three core surfaces: job-pipeline.json (stage detail + referrals),
   job-pipeline-match-tracker.json (status + scoring), and GitHub Issues at $CAREER_GITHUB_REPO
   (action items — replaces Tasks.md as of v0.25.0). Detects
   drift between surfaces, propagates updates, and ensures row counts and statuses
@@ -18,7 +18,7 @@ triggers:
   - are my files in sync
 ---
 
-# Pipeline Sync — Career OS Skill
+# Pipeline Sync — Career Intelligence Skill
 
 ## Task Substrate (v0.25.0+)
 
@@ -36,7 +36,7 @@ Pipeline-sync reconciles **Pipeline (markdown)** ↔ **Match Tracker (markdown)*
 
 ## Purpose
 
-Career OS stores pipeline state across three interdependent files. When one file
+Career Intelligence stores pipeline state across three interdependent files. When one file
 is updated (by a scan, an application, or manual edit), the others can drift.
 This skill detects inconsistencies and reconciles them — so every skill that reads
 pipeline data gets a consistent view.
@@ -53,7 +53,7 @@ The three core files and their roles:
 
 Always start your response with:
 ```
-━━━ Career OS: Pipeline Sync ━━━
+━━━ Career Intelligence: Pipeline Sync ━━━
 ```
 
 ## How to Invoke

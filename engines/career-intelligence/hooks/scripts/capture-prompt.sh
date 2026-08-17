@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# capture-prompt.sh — Atomic prompt capture for Career OS
+# capture-prompt.sh — Atomic prompt capture for Career Intelligence
 #
 # Called by UserPromptSubmit hook. Captures user's prompt verbatim,
 # appends to daily ledger, unified git commit on main.
@@ -26,7 +26,7 @@
 #        session's staged work into a "session-log:" commit.
 #   Fix:
 #     1. Workspace-identity gate at the top — exit silently if cwd is not a
-#        Career OS workspace (no brain/identity/ AND no $CAREER_HOME match).
+#        Career Intelligence workspace (no brain/identity/ AND no $CAREER_HOME match).
 #     2. Scoped commit using `git commit -- <paths>` so only the files the
 #        hook itself staged get committed, regardless of other agents'
 #        staged work in the same index.
@@ -83,7 +83,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 # ─────────────────────────────────────────────────────────────────────────────
 # WORKSPACE-IDENTITY GATE (v0.66.0)
 # ─────────────────────────────────────────────────────────────────────────────
-# Refuse to write ledger / commit / push if this cwd is not a Career OS
+# Refuse to write ledger / commit / push if this cwd is not a Career Intelligence
 # workspace. Detection (any one is sufficient):
 #   1. $CAREER_HOME env var is set and matches $WORKSPACE_ROOT
 #   2. cwd contains brain/identity/ directory (workspace marker)

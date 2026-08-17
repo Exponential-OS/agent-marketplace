@@ -29,7 +29,7 @@ triggers:
   - I have experience with
 ---
 
-# Skills Update — Career OS Skill
+# Skills Update — Career Intelligence Skill
 
 ## Purpose
 
@@ -44,7 +44,7 @@ skills-update handles the ongoing, real-time maintenance of the skills matrix.
 
 Always start your response with:
 ```
-━━━ Career OS: Skills Update ━━━
+━━━ Career Intelligence: Skills Update ━━━
 ```
 
 ## How to Invoke

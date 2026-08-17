@@ -321,7 +321,7 @@ def main():
         print(json.dumps(out, indent=2))
         return
 
-    print(f"━━━ Career OS: Pipeline View ━━━  [{today_str()}]")
+    print(f"━━━ Career Intelligence: Pipeline View ━━━  [{today_str()}]")
 
     if args.section in ("all", "summary"):
         render_summary(pipeline, tracker_data)

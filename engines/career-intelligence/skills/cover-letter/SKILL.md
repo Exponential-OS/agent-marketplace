@@ -12,7 +12,7 @@ triggers:
   - cover letter
 ---
 
-# Cover Letter — Career OS Skill
+# Cover Letter — Career Intelligence Skill
 
 ## Purpose
 
@@ -28,7 +28,7 @@ work unless the work item explicitly asks for a cover letter.
 
 Always start with:
 ```
-━━━ Career OS: Cover Letter ━━━
+━━━ Career Intelligence: Cover Letter ━━━
 ```
 
 ## How to Invoke
@@ -230,7 +230,7 @@ bun "$CLAUDE_PLUGIN_ROOT/src/telemetry/beta-funnel.ts" artifact-created \
 ## Summary Output
 
 ```
-━━━ Career OS: Cover Letter ━━━
+━━━ Career Intelligence: Cover Letter ━━━
 
 Cover letter for {Company} — {Role}
 
