@@ -1,0 +1,4 @@
+
+# Python bytecode — was tracked; .pyc has no business in a plugin repo
+__pycache__/
+*.pyc

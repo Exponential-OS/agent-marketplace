@@ -1,6 +1,24 @@
 <!-- product-vs-solution: example -->
 # Changelog
 
+## [0.61.0] — 2026-08-16 — XOS-250: the engine starts remembering (and refuses to conclude)
+
+- Brand Amplification shipped campaigns and learned nothing. `analytics-sync-watch` only nagged that metrics were missing; nothing recorded what an asset WAS, so every campaign started from zero.
+- New `lesson_store.py`: per-asset capture of attributes, outcomes AND **effort**. Effort is first-class because the stated goal is reallocating Anand's hours, and you cannot reallocate time you never recorded — impressions alone can only produce an engagement chart.
+- Derived per surface: `engagements_per_hour` and `followers_per_hour` — return on effort, which is the number that turns into an hour saved.
+- **The digest refuses to state a direction below 15 campaigns**, reports n every time, and says "INSUFFICIENT DATA" out loud. Campaign 12 is row one, not a finding; a prior asserted at n=1 is noise dressed as signal.
+- Group impressions are excluded from headline success by default, with the exclusion explained as a hypothesis for the table to settle rather than a conclusion drawn today. The rows are still recorded.
+- Attribute schema is intentionally open, so a dimension nobody has named yet is preserved rather than silently dropped.
+## [0.60.0] — 2026-08-16 — XOS-249: the Draft Handoff Gate now leaves evidence
+
+- The Draft Handoff Gate was prose in SKILL.md. On 2026-08-16 an agent produced LinkedIn copy without running it and nothing noticed; three defects that day (XOS-240, XOS-244, XOS-248) all trace to the pipeline being bypassed invisibly.
+- `post_validator.py` now records every run to a ledger (`gate_ledger.py`), keyed by a sha256 of the exact copy validated. Recording is a side effect of running the validator — nothing new to remember.
+- New PreToolUse hook `preflight-draft-handoff-evidence.py` runs before `LINKEDIN_CREATE_LINKED_IN_POST`, `LINKEDIN_CREATE_ARTICLE_OR_URL_SHARE` and `REDDIT_CREATE_REDDIT_POST`, and DENIES a publish whose copy has no matching validation record, naming the exact command to run.
+- Deliberately hash-based, not a copy-shape heuristic: a "does this look like LinkedIn copy" detector fires on quoted examples and pasted drafts, and a gate that is usually wrong teaches everyone to ignore it (XOS-241). This has no false positives by construction.
+- Fails safe in two directions, both loud: an unreadable payload is allowed (the hook will not block on its own ignorance) and `BAE_DRAFT_GATE_SKIP=1` overrides a single call.
+- Normalization absorbs copy-paste noise only — line endings, trailing whitespace, collapsed blank-line runs — never edited words.
+- Not covered: copy handed to a human who publishes manually. The hook sees publish calls, not handoffs.
+
 ## [0.59.0] — 2026-08-13 — Reddit pre-post viability (XOS-236)
 
 ### Added — offline Reddit viability gate

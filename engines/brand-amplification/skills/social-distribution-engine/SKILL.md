@@ -129,6 +129,39 @@ python3 "$(ls -v ~/.claude/plugins/cache/xos/brand-amplification/*/skills/social
 
 **Litmus test:** "Before I handed this LinkedIn copy to the user — did I auto-select hashtags AND run Gate 1? If no to either — I handed over untested copy."
 
+### Step C — The gate now leaves evidence, and publishing checks it (XOS-249)
+
+This gate used to be prose only. On 2026-08-16 an agent produced LinkedIn copy
+without running it and **nothing noticed** — three defects that day (XOS-240,
+XOS-244, XOS-248) all trace to the pipeline being bypassed invisibly. A skill
+that must be remembered is a document, not a pipeline.
+
+So Step B is now self-recording:
+
+- `post_validator.py` writes every run to a ledger (`gate_ledger.py`), keyed by a
+  **sha256 of the exact copy it validated**. You do not invoke this; running the
+  validator is what records it.
+- A **PreToolUse hook** (`hooks/scripts/preflight-draft-handoff-evidence.py`) runs
+  before `LINKEDIN_CREATE_LINKED_IN_POST`, `LINKEDIN_CREATE_ARTICLE_OR_URL_SHARE`
+  and `REDDIT_CREATE_REDDIT_POST`. It hashes the copy being published and **denies
+  the call when there is no matching validation record**, naming the exact
+  command to run.
+
+**What this means for you in practice:** validate the copy you are *actually*
+going to publish, hashtags appended, exactly as it will appear. Editing the text
+after validating invalidates the evidence — that is deliberate, because the whole
+failure mode is publishing text nobody checked.
+
+The match tolerates only copy-paste noise: line endings, trailing whitespace, and
+collapsed blank-line runs. It does not tolerate edited words.
+
+Two cases pass without evidence, both loudly: a payload whose copy cannot be read
+(the hook will not block on its own ignorance) and a deliberate single-call
+override via `BAE_DRAFT_GATE_SKIP=1`.
+
+**Not yet covered:** copy handed to a human who publishes it manually. The hook
+sees publish calls, not handoffs. Tracked on XOS-249.
+
 ---
 
 ## Pre-Publication Gate (MANDATORY)
@@ -278,3 +311,45 @@ Exit 0 = PASS. Exit 1 = BLOCK. Exit 2 = WARN.
 5. **Observe:** Modules execute using current algorithmic rules.
 6. **Measure:** Hand off to the Distribution Analytics Engine after a window to collect data.
 7. **Learn:** Use updated insights for the next campaign.
+
+---
+
+## Campaign Lesson Store (XOS-250) — record everything, conclude almost nothing
+
+The engine used to ship campaigns and learn nothing from them. `lesson_store.py`
+is the memory across campaigns.
+
+**Record one row per asset when a campaign's numbers are pulled:**
+
+```python
+import lesson_store as ls
+ls.record_asset(
+    campaign="12-token-yield", asset_id="hub-article", surface="linkedin_article",
+    attributes={"format": "article", "mentions": {"count": 1, "own_page": True, "resharers": 0},
+                "age_at_measurement_min": 96},
+    outcomes={"impressions": 347, "engagements": 9, "profile_views": 2, "followers": 0},
+    effort={"variants_written": 1, "review_passes": 3, "total_minutes": 120},
+)
+```
+
+**`effort` is not optional.** The goal is reallocating hours, not building a
+dashboard — and you cannot reallocate time you never recorded. Without
+`total_minutes`, "0.07% engagement" is half a ratio and the store can never say
+"stop spending that hour."
+
+**`attributes` is open on purpose.** Dimensions we have not named yet get
+preserved rather than silently dropped.
+
+**Read the digest with `python3 lesson_store.py`.** It will refuse to tell you
+anything directional until 15 campaigns are recorded, and it reports n every
+time. That refusal is the feature. Campaign 12 is row one, not a finding — a
+single campaign cannot teach us anything about LinkedIn's algorithm, and a prior
+asserted today would be noise dressed as signal.
+
+**Group impressions do not count toward headline success** by default. That is a
+default, not a verdict: keep posting to groups, keep recording them, and let the
+table settle whether they earn their hour.
+
+**Do not run a "what did we learn" pass per campaign.** Directionality emerges
+over quarters; a per-campaign retro invites exactly the overfitting-to-noise this
+store is built to prevent.

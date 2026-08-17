@@ -228,6 +228,29 @@ def validate(platform_key: str, text: str, hashtags: list[str] | None = None) ->
     }
 
 
+def _record(platform: str, text: str, result: dict) -> None:
+    """
+    XOS-249: leave evidence that the Draft Handoff Gate actually ran for this copy.
+
+    Imported lazily and defensively. This validator is invoked by absolute path
+    from SKILL.md (via the plugin cache), so the sibling module is not
+    necessarily importable from the caller's sys.path — and a missing ledger
+    must never stop a validation from running.
+    """
+    try:
+        import pathlib as _pl
+        import sys as _sys
+
+        here = str(_pl.Path(__file__).resolve().parent)
+        if here not in _sys.path:
+            _sys.path.insert(0, here)
+        from gate_ledger import record_validation
+
+        record_validation(platform, text, result.get("verdict", "unknown"))
+    except Exception:
+        pass
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Validate a social post against platform constraints.")
     parser.add_argument("--platform", help="Platform key (e.g. linkedin_post, x_post)")
@@ -248,6 +271,7 @@ def main() -> int:
                 if not platform or not text:
                     _die("stdin JSON must have 'platform' and 'text' fields")
                 result = validate(platform, text, hashtags)
+                _record(platform, text, result)
                 print(json.dumps(result, indent=2))
                 return 0 if result["verdict"] in ("pass", "warn") else 1
             except json.JSONDecodeError:
@@ -269,6 +293,7 @@ def main() -> int:
 
     hashtags = [h.lstrip("#") for h in (args.hashtags or [])]
     result = validate(platform, text, hashtags)
+    _record(platform, text, result)
     print(json.dumps(result, indent=2))
     return 0 if result["verdict"] in ("pass", "warn") else 1
 

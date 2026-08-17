@@ -1,7 +1,16 @@
 {
-  "description": "Social Distribution plugin hooks — LinkedIn MCP routing hint + campaign tracker post-publish.",
+  "description": "Social Distribution plugin hooks — Draft Handoff Gate evidence check (XOS-249), LinkedIn MCP routing hint, campaign tracker post-publish.",
   "hooks": {
     "PreToolUse": [
+      {
+        "matcher": "mcp__composio__LINKEDIN_CREATE_LINKED_IN_POST|mcp__composio__LINKEDIN_CREATE_ARTICLE_OR_URL_SHARE|mcp__composio__REDDIT_CREATE_REDDIT_POST",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/preflight-draft-handoff-evidence.py\""
+          }
+        ]
+      },
       {
         "matcher": "mcp__chrome-devtools-mcp__navigate_page|mcp__chrome-devtools-mcp__new_page",
         "hooks": [
