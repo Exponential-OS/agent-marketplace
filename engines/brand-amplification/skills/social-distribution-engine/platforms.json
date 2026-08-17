@@ -33,67 +33,201 @@
     "linkedin_post": {
       "max": 5,
       "brand": [
-        { "tag": "#TheWhyCyborg", "priority": 1, "note": "Primary personal brand — thesis tag. Always slot 1 for personal branding posts." },
-        { "tag": "#{{PERSONAL_BRAND_HASHTAG}}",    "priority": 2, "note": "Personal brand handle tag. Set in your brand-spec.json; add when post is profile-building (not just topic-specific)." },
-        { "tag": "#CyborgWay",   "priority": 3, "note": "Series brand for the 8-essay arc. Add when post is part of that series." },
-        { "tag": "#xHumanOS",    "priority": 4, "note": "Product brand. Add only when post explicitly references xOS product vision." }
+        {
+          "tag": "#TheWhyCyborg",
+          "priority": 1,
+          "note": "Primary personal brand — thesis tag. Always slot 1 for personal branding posts."
+        },
+        {
+          "tag": "#{{PERSONAL_BRAND_HASHTAG}}",
+          "priority": 2,
+          "note": "Personal brand handle tag. Set in your brand-spec.json; add when post is profile-building (not just topic-specific)."
+        },
+        {
+          "tag": "#CyborgWay",
+          "priority": 3,
+          "note": "Series brand for the 8-essay arc. Add when post is part of that series."
+        },
+        {
+          "tag": "#xHumanOS",
+          "priority": 4,
+          "note": "Product brand. Add only when post explicitly references xOS product vision."
+        }
       ],
       "niche": [
-        { "tag": "#PersonalAgents", "priority": 1, "note": "Highest-fit niche for AI sovereignty / whose-assistant-is-it angle." },
-        { "tag": "#AgenticAI",      "priority": 2, "note": "Current hot niche — agentic systems, multi-agent loops." },
-        { "tag": "#AIInfra",        "priority": 3, "note": "Infrastructure angle — use for ClawCamp / technical posts." },
-        { "tag": "#FutureOfWork",   "priority": 4, "note": "Broader niche — employer AI / digital twin posts." },
-        { "tag": "#ClawCamp",       "priority": 5, "campaign": "clawcamp-2026-05-01", "note": "Campaign-specific — ClawCamp event posts only." },
-        { "tag": "#AIInfraSummit",  "priority": 6, "campaign": "clawcamp-2026-05-01", "note": "Campaign-specific — ClawCamp event posts only." }
+        {
+          "tag": "#PersonalAgents",
+          "priority": 1,
+          "note": "Highest-fit niche for AI sovereignty / whose-assistant-is-it angle."
+        },
+        {
+          "tag": "#AgenticAI",
+          "priority": 2,
+          "note": "Current hot niche — agentic systems, multi-agent loops."
+        },
+        {
+          "tag": "#AIInfra",
+          "priority": 3,
+          "note": "Infrastructure angle — use for ClawCamp / technical posts."
+        },
+        {
+          "tag": "#FutureOfWork",
+          "priority": 4,
+          "note": "Broader niche — employer AI / digital twin posts."
+        },
+        {
+          "tag": "#ClawCamp",
+          "priority": 5,
+          "campaign": "clawcamp-2026-05-01",
+          "note": "Campaign-specific — ClawCamp event posts only."
+        },
+        {
+          "tag": "#AIInfraSummit",
+          "priority": 6,
+          "campaign": "clawcamp-2026-05-01",
+          "note": "Campaign-specific — ClawCamp event posts only."
+        }
       ],
       "highway": [
-        { "tag": "#AILeadership",       "priority": 1, "note": "Best-fit highway — leaders + AI audience overlap with your ICP." },
-        { "tag": "#GenAI",              "priority": 2, "note": "Current high-velocity highway. Use as primary fill when 1 highway slot open." },
-        { "tag": "#ArtificialIntelligence", "priority": 3, "note": "Classic broad highway. Large but competitive — use when 2 highway slots open." },
-        { "tag": "#TechLeadership",     "priority": 4, "note": "Engineering leadership audience. Use for career/leadership-angle posts." }
+        {
+          "tag": "#AILeadership",
+          "priority": 1,
+          "note": "Best-fit highway — leaders + AI audience overlap with your ICP."
+        },
+        {
+          "tag": "#GenAI",
+          "priority": 2,
+          "note": "Current high-velocity highway. Use as primary fill when 1 highway slot open."
+        },
+        {
+          "tag": "#ArtificialIntelligence",
+          "priority": 3,
+          "note": "Classic broad highway. Large but competitive — use when 2 highway slots open."
+        },
+        {
+          "tag": "#TechLeadership",
+          "priority": 4,
+          "note": "Engineering leadership audience. Use for career/leadership-angle posts."
+        }
       ]
     },
     "x_post": {
       "max": 2,
       "brand": [
-        { "tag": "#TheWhyCyborg", "priority": 1, "note": "Always slot 1. Builds brand highway on X." }
+        {
+          "tag": "#TheWhyCyborg",
+          "priority": 1,
+          "note": "Always slot 1. Builds brand highway on X."
+        }
       ],
       "niche": [
-        { "tag": "#AgenticAI",   "priority": 1, "note": "Best niche fit for X AI audience." },
-        { "tag": "#PersonalAgents", "priority": 2, "note": "Emerging niche, high engagement rate." }
+        {
+          "tag": "#AgenticAI",
+          "priority": 1,
+          "note": "Best niche fit for X AI audience."
+        },
+        {
+          "tag": "#PersonalAgents",
+          "priority": 2,
+          "note": "Emerging niche, high engagement rate."
+        }
       ],
       "highway": [
-        { "tag": "#AI", "priority": 1, "note": "Slot 2 highway on X when no niche tag fits. X highway works better with fewer, bigger tags." }
+        {
+          "tag": "#AI",
+          "priority": 1,
+          "note": "Slot 2 highway on X when no niche tag fits. X highway works better with fewer, bigger tags."
+        }
       ]
     },
     "instagram_caption": {
       "max": 25,
       "recommended": 15,
       "brand": [
-        { "tag": "#TheWhyCyborg", "priority": 1 },
-        { "tag": "#{{PERSONAL_BRAND_HASHTAG}}",    "priority": 2 },
-        { "tag": "#CyborgWay",   "priority": 3 },
-        { "tag": "#xHumanOS",    "priority": 4 }
+        {
+          "tag": "#TheWhyCyborg",
+          "priority": 1
+        },
+        {
+          "tag": "#{{PERSONAL_BRAND_HASHTAG}}",
+          "priority": 2
+        },
+        {
+          "tag": "#CyborgWay",
+          "priority": 3
+        },
+        {
+          "tag": "#xHumanOS",
+          "priority": 4
+        }
       ],
       "niche": [
-        { "tag": "#PersonalAgents",  "priority": 1 },
-        { "tag": "#AgenticAI",       "priority": 2 },
-        { "tag": "#AIAgents",        "priority": 3 },
-        { "tag": "#AIInfra",         "priority": 4 },
-        { "tag": "#CyborgLife",      "priority": 5 },
-        { "tag": "#BuildWithAI",     "priority": 6 },
-        { "tag": "#AIFounder",       "priority": 7 },
-        { "tag": "#AgentEconomy",    "priority": 8 },
-        { "tag": "#DigitalTwin",     "priority": 9 },
-        { "tag": "#FutureOfWork",    "priority": 10 }
+        {
+          "tag": "#PersonalAgents",
+          "priority": 1
+        },
+        {
+          "tag": "#AgenticAI",
+          "priority": 2
+        },
+        {
+          "tag": "#AIAgents",
+          "priority": 3
+        },
+        {
+          "tag": "#AIInfra",
+          "priority": 4
+        },
+        {
+          "tag": "#CyborgLife",
+          "priority": 5
+        },
+        {
+          "tag": "#BuildWithAI",
+          "priority": 6
+        },
+        {
+          "tag": "#AIFounder",
+          "priority": 7
+        },
+        {
+          "tag": "#AgentEconomy",
+          "priority": 8
+        },
+        {
+          "tag": "#DigitalTwin",
+          "priority": 9
+        },
+        {
+          "tag": "#FutureOfWork",
+          "priority": 10
+        }
       ],
       "highway": [
-        { "tag": "#AILeadership",        "priority": 1 },
-        { "tag": "#ArtificialIntelligence", "priority": 2 },
-        { "tag": "#GenAI",               "priority": 3 },
-        { "tag": "#TechLeadership",      "priority": 4 },
-        { "tag": "#Innovation",          "priority": 5 },
-        { "tag": "#EnterpriseAI",        "priority": 6 }
+        {
+          "tag": "#AILeadership",
+          "priority": 1
+        },
+        {
+          "tag": "#ArtificialIntelligence",
+          "priority": 2
+        },
+        {
+          "tag": "#GenAI",
+          "priority": 3
+        },
+        {
+          "tag": "#TechLeadership",
+          "priority": 4
+        },
+        {
+          "tag": "#Innovation",
+          "priority": 5
+        },
+        {
+          "tag": "#EnterpriseAI",
+          "priority": 6
+        }
       ]
     }
   },
@@ -114,6 +248,27 @@
     "max_blank_lines_note": "More than 2 consecutive blank lines create jarring visual gaps in the feed.",
     "max_blank_line_ratio": 0.35,
     "max_blank_line_ratio_note": "Blank line after every single line (markdown-style spacing) makes the post unreadable in the feed. Group related lines together with one blank line between sections.",
+    "trailing_space_warn": true
+  },
+  "linkedin_group": {
+    "display_name": "LinkedIn Group Post",
+    "char_limit": 3000,
+    "hashtag_max": 5,
+    "hashtag_recommended": 3,
+    "links_in_body": true,
+    "links_note": "Groups are NOT the feed. Body links are not algorithmically suppressed here, and a group post without its link has no purpose. Validating a group post as linkedin_post FAILs it for a non-reason, which trains agents to override gates by reflex.",
+    "hashtag_bank_ref": "linkedin_post",
+    "hashtag_bank_ref_note": "Groups reuse the linkedin_post bank; there is no separate group bank.",
+    "line_break_hook": true,
+    "line_break_hook_note": "First 3 lines visible before 'see more'. Hook must land there.",
+    "plain_text_only": true,
+    "markdown_rendered": false,
+    "emoji_ok": true,
+    "image_alt_required": false,
+    "max_blank_lines": 2,
+    "max_blank_lines_note": "More than 2 consecutive blank lines create jarring visual gaps.",
+    "max_blank_line_ratio": 0.35,
+    "max_blank_line_ratio_note": "Blank line after every single line (markdown-style spacing) makes the post unreadable. Group related lines together with one blank line between sections.",
     "trailing_space_warn": true
   },
   "linkedin_article": {

@@ -1,6 +1,20 @@
 <!-- product-vs-solution: example -->
 # Changelog
 
+## [0.63.0] — 2026-08-16 — XOS-240: flywheel-ship-gate, in TypeScript, in ONE place
+
+- `rules/flywheel-ship-gate/` — per-STEP execution gate. `campaign-preflight` gates the PLAN; this gates EXECUTION. Every in-scope surface must carry a terminal status AND a recorded URL AND that URL must resolve. "It shipped" without a URL is unfalsifiable — a surface with no URL is not shipped, it is remembered.
+- **One enforcement path.** This rule briefly existed in BOTH `~/cyborg/rules/flywheel-ship-gate/` (handler.ts) and a proposed PR (HOW.py + check.py) — two paths for one slug, which the signal-pollution invariant forbids. The plugin is the shipped tier, so the cyborg copy is deleted in the same change rather than kept in sync.
+- **TypeScript, not HOW.py.** P4's Three-Layer Architecture puts the invariant layer in TypeScript via Bun and bans HOW.py outright.
+- **Tested for the first time.** Neither prior copy had a single test, for a gate whose whole job is to BLOCK a completion claim — an untested version can either wave through an unshipped campaign or wedge a finished one. 10 cases: happy path, pending surface, shipped-without-URL, mid-campaign WARN, missing file, no table, documented N/A omission, and a live dead-link check.
+
+## [0.62.0] — 2026-08-16 — XOS-240: linkedin_group platform (split from PR #9)
+
+- Group posts were validated as `linkedin_post`, whose `links_in_body: false` is a **feed-algorithm** rule. Groups do not suppress body links, and a group post without its link has no purpose — so every group post FAILED gate 1 for a non-reason. On 2026-08-16 two were published anyway under a documented override, into 112k- and 352k-member groups. A gate that is wrong trains agents to override gates by reflex, which is worse than no gate.
+- Adds the `linkedin_group` platform (`links_in_body: true`), reusing the `linkedin_post` hashtag bank. SKILL.md now routes group posts to it explicitly.
+- **Regression-guarded with an actual test.** PR #9 claimed this but shipped none. The load-bearing assertion is the PAIR: identical text passes as `linkedin_group` AND still fails as `linkedin_post`. Asserting only the first would pass even if the fix had disabled link checking everywhere. Also pins that groups still enforce the char limit and still reject pipe/markdown bleed, so `links_in_body:true` cannot become a blanket exemption.
+- Taken as the clean half of PR #9. The other half of that PR (a `flywheel-ship-gate` rule implemented as `HOW.py`) is handled separately — it duplicated a rule already landed in cyborg and used a file type P4 bans.
+
 ## [0.61.0] — 2026-08-16 — XOS-250: the engine starts remembering (and refuses to conclude)
 
 - Brand Amplification shipped campaigns and learned nothing. `analytics-sync-watch` only nagged that metrics were missing; nothing recorded what an asset WAS, so every campaign started from zero.

@@ -1,0 +1,32 @@
+{
+  "name": "flywheel-ship-gate",
+  "slug": "flywheel-ship-gate",
+  "version": "1.0.0",
+  "status": "active",
+  "created": "2026-08-16",
+  "type": "gate",
+  "canonical": "handler.ts",
+  "description": "Per-STEP execution gate for content flywheels. campaign-preflight gates the PLAN (is every surface enumerated); this gates EXECUTION (did every in-scope surface actually ship, with a recorded URL that resolves). BLOCKS any 'campaign complete' claim while a surface is pending, URL-less, or dead.",
+  "enforcement": {
+    "how": "handler.ts",
+    "runtime": "bun",
+    "log": "$CLAUDE_PLUGIN_DATA/enforcement-log.jsonl",
+    "no_python_harness": true,
+    "no_python_harness_note": "P4 Three-Layer Architecture: the invariant layer is TypeScript via Bun. HOW.py is banned. An earlier proposal shipped this rule as HOW.py + check.py; that form was rejected.",
+    "input": {
+      "target": "absolute path to the campaign master markdown",
+      "claim": "complete | in-progress (default complete)",
+      "skip_http": "true to skip live URL checks (default false)"
+    },
+    "output": { "verdict": "PASS | WARN | BLOCK", "reason": "string", "findings": "array", "remediation": "string on non-PASS" }
+  },
+  "exit_codes": { "0": "PASS", "1": "BLOCK", "2": "WARN" },
+  "single_source_of_truth": {
+    "canonical_location": "brand-amplification plugin (shipped tier)",
+    "removed_from": "~/cyborg/rules/flywheel-ship-gate/",
+    "why": "signal-pollution invariant — the same rule must never run from both cyborg/rules/ and an installed plugin. Two enforcement paths can disagree, and fixing one silently leaves the other wrong."
+  },
+  "cadence": "invoked before declaring any campaign complete; by social-distribution-engine at ship time",
+  "litmus": "For every in-scope surface: terminal status AND a URL AND the URL resolves? Any no means the campaign is not complete.",
+  "origin": "2026-08-16 campaign 12: a flywheel was declared finished while a requested deliverable had never shipped and surface statuses still read TODO for surfaces that were live. campaign-completeness passed, because the PLAN was complete."
+}
