@@ -115,6 +115,15 @@ Read the hashtag bank from `platforms.json` `_hashtag_banks.linkedin_post`. Appl
 
 Append selected hashtags at the **end** of the post body (never in the body). Platform rule: hashtags in body on LinkedIn are penalized — append only.
 
+**Group posts use `--platform linkedin_group`, never `linkedin_post` (XOS-240).**
+Groups are a different surface. `linkedin_post` sets `links_in_body: false`, which
+is a **feed-algorithm** rule — the feed suppresses body links, so they belong in
+the first comment. Groups do not suppress body links, and a group post without its
+link has no purpose. Validating a group post as `linkedin_post` FAILs it for a
+non-reason, and a gate that is wrong trains agents to override gates by reflex,
+which is worse than no gate. Groups reuse the `_hashtag_banks.linkedin_post` bank;
+there is no separate group bank.
+
 **No hashtag count can be zero.** A LinkedIn post with 0 hashtags is a Gate 1 WARN that must be fixed before handoff. Minimum 3 (brand + 1 niche + 1 highway).
 
 ### Step B — Run Gate 1 inline before handoff
@@ -353,3 +362,36 @@ table settle whether they earn their hour.
 **Do not run a "what did we learn" pass per campaign.** Directionality emerges
 over quarters; a per-campaign retro invites exactly the overfitting-to-noise this
 store is built to prevent.
+
+---
+
+## Flywheel Ship Gate (MANDATORY before declaring a campaign complete)
+
+`campaign-preflight` gates the **PLAN** — is every surface enumerated.
+This gates **EXECUTION** — did every in-scope surface actually ship.
+
+```bash
+bun run "$(ls -vd ~/.claude/plugins/cache/xos/brand-amplification/*/ | tail -1)rules/flywheel-ship-gate/handler.ts" \
+  '{"target":"/abs/path/campaign-master.md","claim":"complete"}'
+```
+
+For every in-scope surface it requires **all three**: a terminal status, a
+recorded URL, and a URL that resolves. Any surface that is pending, URL-less or
+dead **BLOCKS** the "campaign complete" claim.
+
+**Why a URL is non-negotiable:** "it shipped" without one is unfalsifiable. A
+surface with no URL is not shipped, it is remembered.
+
+`claim: "in-progress"` downgrades the same findings to WARN — an incomplete
+campaign is only a violation once you *claim* it is complete.
+
+**Origin:** 2026-08-16, campaign 12. The flywheel was declared finished while a
+requested deliverable had never shipped, and surface statuses still read TODO for
+surfaces that were live. `campaign-completeness` passed, because the PLAN was
+complete.
+
+**One enforcement path only (XOS-240).** This rule lives here, in the plugin, and
+nowhere else. It briefly existed in both `~/cyborg/rules/` and a proposed `HOW.py`
+— two paths for one slug, which the signal-pollution invariant forbids: a rule
+that runs from two places can disagree with itself, and fixing one copy silently
+leaves the other wrong.
