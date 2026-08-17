@@ -111,24 +111,12 @@ LEDGER_DIR="$WORKSPACE_ROOT/brain/sessions/ledger"
 mkdir -p "$LEDGER_DIR"
 LEDGER_FILE="$(resolve_active_ledger "$LEDGER_DIR" "$TODAY")"
 
-if [ ! -f "$LEDGER_FILE" ]; then
-    (
-        set -C
-        {
-            echo "# Session Ledger — $TODAY"
-            echo ""
-        } > "$LEDGER_FILE"
-    ) 2>/dev/null || true
-fi
-
-{
-    echo "## $TIMESTAMP — User"
-    echo ""
-    echo "$PROMPT_TEXT"
-    echo ""
-    echo "---"
-    echo ""
-} >> "$LEDGER_FILE"
+# XOS-215: see capture-response.sh. capture-prompt and capture-response append
+# to the same file within one turn, so this is the concurrent pair that motivated
+# the fix.
+# shellcheck source=./_ledger-append.sh
+. "$SCRIPT_DIR/_ledger-append.sh"
+ledger_append "$LEDGER_FILE" "$TIMESTAMP — User" "$PROMPT_TEXT"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # SCOPED COMMIT (v0.66.0)

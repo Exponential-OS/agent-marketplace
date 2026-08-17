@@ -157,6 +157,25 @@ __ledger_hash() {
     printf '%s\n' "$hash"
 }
 
+# ledger_lock_file <ledger_dir>
+#
+# The single lock that guards a ledger directory. XOS-215: the APPEND must take
+# the SAME lock as shard resolution, or the two serialize against each other's
+# nothing — a second, differently-named mutex excludes no one. Prints the path,
+# or returns non-zero when no usable state dir exists (callers fail open).
+ledger_lock_file() {
+    local ledger_dir="${1:-}"
+    local state_home
+    local state_dir
+
+    [ -n "$ledger_dir" ] || return 1
+    state_home="${HOME:-}"
+    [ -n "$state_home" ] || return 1
+    state_dir="${STATE_DIR:-$state_home/.career-os-state}"
+    mkdir -p "$state_dir" 2>/dev/null || return 1
+    printf '%s\n' "$state_dir/.ledger-rotate.$(__ledger_hash "$ledger_dir").lock"
+}
+
 resolve_active_ledger() {
     local ledger_dir="${1:-}"
     local ledger_date="${2:-}"
@@ -183,14 +202,11 @@ resolve_active_ledger() {
         return 0
     fi
 
-    state_dir="${STATE_DIR:-$state_home/.career-os-state}"
-    if ! mkdir -p "$state_dir" 2>/dev/null; then
+    # Single source for the lock path — shared with ledger_append (XOS-215).
+    if ! lock_file="$(ledger_lock_file "$ledger_dir")" || [ -z "$lock_file" ]; then
         printf '%s\n' "$base_path"
         return 0
     fi
-
-    hash="$(__ledger_hash "$ledger_dir")"
-    lock_file="$state_dir/.ledger-rotate.$hash.lock"
     : >> "$lock_file" 2>/dev/null || {
         printf '%s\n' "$base_path"
         return 0

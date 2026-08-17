@@ -2,6 +2,14 @@
 <!-- this file is the historical changelog. Entries reference the original author/user as provenance, not runtime data. -->
 # Changelog
 
+## [0.81.0] - 2026-08-16 - XOS-215 atomic ledger appends
+
+- The session-logger appended each entry as a brace group of six `echo`s through one `>>` redirect. O_APPEND makes each write atomic on its own, but nothing held the six together, so capture-prompt and capture-response (which run in the same turn against the same file) could interleave mid-entry and corrupt entry boundaries.
+- New `hooks/scripts/_ledger-append.sh` emits an entry in ONE write and serializes under the SAME lock `resolve_active_ledger` already uses — a second, differently-named mutex would exclude no one. `ledger_lock_file` was extracted into `_ledger-path.sh` as the single source for that path.
+- The ticket proposed wrapping the block in `flock`. `flock(1)` is util-linux and does **not exist on macOS**, where these hooks run, so the fix would have silently no-opped on the machine that matters. Mirrors the existing flock-or-mkdir fallback instead.
+- Stale-lock breaking added: a process killed mid-append used to leave the lock directory behind forever, taxing every subsequent append the full timeout for the life of the machine.
+- Fails open at every step — a busy or unobtainable lock never blocks a session or drops an entry.
+
 ## [0.80.0] - 2026-07-05 - XOS-211 ledger rotation
 
 ### Added
