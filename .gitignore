@@ -10,8 +10,14 @@
 .superset/
 WIP/
 INPUT/
+# Handoff DOCUMENTS, by name. Do NOT use a `*handoff*` wildcard here: this repo
+# vendors plugin source under engines/, and that pattern silently excluded
+# co-dialectic's `hooks/precompact-handoff.ts` AND its entire `skills/handoff/`
+# skill from every published package. hooks.json referenced a file that was
+# never shipped, so the PreCompact hook failed silently on every install.
+# Match handoff docs by filename; never by substring. (XOS-251)
 NEXT_SESSION_HANDOFF.md
-*handoff*
+HANDOFF.md
 handoff.md
 
 # Secrets
