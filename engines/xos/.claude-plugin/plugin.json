@@ -3,6 +3,13 @@
   "platform": "xOS",
   "version": "0.1.0",
   "description": "xOS platform meta-commands — cross-cutting commands for the whole swarm. /xos:swarm-sync = bidirectional swarm sync (publish this agent's state, then catch up to the latest cyborg brain + plugins). Canonical source: Exponential-OS/xos monorepo plugins/cross/xos (this engines/ copy is a derived vendored mirror, overwritten on each sync).",
+  "author": {
+    "name": "Anand Vallamsetla",
+    "email": "thewhyman@users.noreply.github.com"
+  },
+  "homepage": "https://github.com/Exponential-OS/xos",
+  "repository": "https://github.com/Exponential-OS/xos",
+  "license": "Proprietary",
   "workspace_binding": {
     "mode": "global",
     "_comment": "global so /xos:* commands resolve in EVERY cwd/repo — platform-level, not workspace-bound."
