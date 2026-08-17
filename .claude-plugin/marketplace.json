@@ -69,8 +69,8 @@
       "platform": "xOS",
       "license": "Proprietary",
       "source": "./engines/brand-amplification",
-      "description": "Brand Amplification Engine (xOS) v0.59.0 - The outbound brand-building engine for xOS. Coordinated content distribution across owned surfaces (LinkedIn, Substack, Reddit, X, Instagram, Facebook, Threads) with hub-and-spoke flywheel, surface coverage matrix, pre-publish quality gates, offline Reddit pre-post viability checks, relevance-gated campaign strategy, quote-a-day draft flywheel with DRAFT-",
-      "version": "0.59.0",
+      "description": "Brand Amplification Engine (xOS) v0.61.0 — XOS-250: the engine now remembers across campaigns. Per-asset capture of attributes, outcomes AND effort, so return-on-effort (followers/hour, engagements/hour) is measurable — the goal is reallocating hours, not a dashboard. The digest REFUSES to state a direction below 15 campaigns and always reports n; a prior asserted at n=1 is noise dressed as signal. Group impressions excluded from headline success by default. v0.60.0 — XOS-249: the Draft Handoff Gate now leaves evidence. post_validator.py records every run keyed by a sha256 of the exact copy, and a PreToolUse hook denies a publish whose copy has no matching validation record. Hash-based, not a copy-shape heuristic: no false positives by construction. Also adds the linkedin_group platform so group posts stop failing a feed-only link rule.",
+      "version": "0.61.0",
       "category": "distribution",
       "homepage": "https://github.com/Exponential-OS/brand-amplification-engine"
     },

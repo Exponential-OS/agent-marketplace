@@ -1,7 +1,7 @@
 {
   "name": "brand-amplification",
   "platform": "xOS",
-  "version": "0.59.0",
+  "version": "0.61.0",
   "depends_on_kernel": [
     "brain-kernel >= 1.0.0"
   ],
