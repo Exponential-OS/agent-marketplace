@@ -129,24 +129,14 @@ LEDGER_DIR="$WORKSPACE_ROOT/brain/sessions/ledger"
 mkdir -p "$LEDGER_DIR"
 LEDGER_FILE="$(resolve_active_ledger "$LEDGER_DIR" "$TODAY")"
 
-if [ ! -f "$LEDGER_FILE" ]; then
-    (
-        set -C
-        {
-            echo "# Session Ledger — $TODAY"
-            echo ""
-        } > "$LEDGER_FILE"
-    ) 2>/dev/null || true
-fi
-
-{
-    echo "## $TIMESTAMP — Claude"
-    echo ""
-    echo "$RESPONSE_TEXT"
-    echo ""
-    echo "---"
-    echo ""
-} >> "$LEDGER_FILE"
+# XOS-215: this was a brace group of six echoes through one >> redirect. Each
+# write is atomic on its own, but nothing held the six together, so a concurrent
+# writer (capture-prompt in the same turn, or another session in this workspace)
+# could interleave mid-entry. ledger_append takes the SAME lock the shard
+# resolver uses and emits the entry in one write. Fails open.
+# shellcheck source=./_ledger-append.sh
+. "$SCRIPT_DIR/_ledger-append.sh"
+ledger_append "$LEDGER_FILE" "$TIMESTAMP — Claude" "$RESPONSE_TEXT"
 
 # v0.29.0: invoke LLM judge for risk classification.
 # Advisory only — failures are logged but never block session capture.
