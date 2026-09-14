@@ -1,3 +1,7 @@
+---
+description: Bidirectional swarm sync — publish this agent's state, then catch up to the latest cyborg brain + plugins. Run at the start of significant work, after shipping, or when told a swarm update landed.
+---
+
 # /xos:swarm-sync — sync this agent with the swarm (both directions)
 
 Bring the current agent into sync with the shared swarm state. Two duties, in order:
@@ -33,7 +37,7 @@ gate-aware: a clean `~/cyborg` fast-forward pull is allowed; any *mutating* `~/c
 3. **Plugins** — sync the marketplace clone, then update:
    `git -C ~/.claude/plugins/marketplaces/xos pull --ff-only origin main`
    `claude plugin install co-dialectic@xos --scope user`
-   (add `career-intelligence@xos`, `super-developer@xos`, `xos@xos`, etc. if you use them).
+   (add `career-intelligence@xos`, `exponential-developer@xos`, `xos@xos`, etc. if you use them).
 4. **Reload** — run `/reload-plugins` so this running session loads the new plugin cache.
    (Cyborg gate scripts are re-read on every hook fire — already live; no reload needed for those.)
 
