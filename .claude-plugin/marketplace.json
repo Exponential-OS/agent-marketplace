@@ -70,7 +70,7 @@
       "license": "Proprietary",
       "source": "./engines/brand-amplification",
       "description": "Brand Amplification Engine (xOS) v0.63.0 \u2014 XOS-240: linkedin_group platform (group posts were failing a FEED-only link rule for a non-reason) + flywheel-ship-gate, a per-STEP execution gate requiring every in-scope surface to carry a terminal status, a URL, and a URL that resolves \u2014 \"it shipped\" without a URL is unfalsifiable. v0.61.0 \u2014 XOS-250: the engine remembers across campaigns; captures attributes, outcomes AND effort so return-on-effort is measurable, and REFUSES to state a direction below 15 campaigns. v0.60.0 \u2014 XOS-249: the Draft Handoff Gate leaves evidence; a PreToolUse hook denies a publish whose copy has no matching validation record.",
-      "version": "0.63.0",
+      "version": "0.64.0",
       "category": "distribution",
       "homepage": "https://github.com/Exponential-OS/brand-amplification-engine"
     },

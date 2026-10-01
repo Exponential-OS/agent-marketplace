@@ -1,0 +1,113 @@
+# Minimal CI for brand-amplification-engine. XOS-316.
+#
+# Why this exists: this repo had ZERO workflows. PR #16 added 79 tests covering
+# irreversible publishing automation (Substack drafts, LinkedIn posts/comments/groups),
+# and nothing would ever have run them. A guard nobody runs decays silently, and here the
+# failure surfaces in public and cannot be undone.
+#
+# Deliberately minimal — it runs the suite and nothing else. It does NOT cover version
+# consistency or marketplace sync, which is real uncovered drift (the marketplace ships
+# 0.63.0 while this repo is 0.59.0). The candidates for that, and for extracting a shared
+# reusable workflow across all xOS engine repos, are on XOS-316. This is the cheap
+# always-better-than-nothing floor, not the final shape.
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run tests
+        run: bun test ./tests
+
+      # XOS-328: this workflow ran ONLY `bun test`, so the Python half of the engine --
+      # post_validator.py, the conventions linter, and every tests/test_*.py -- had no CI at
+      # all. A new Python suite added under that workflow would have been dark on arrival,
+      # which is the exact defect this ticket is about: a working check that nothing invokes.
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Python test suites
+        run: |
+          set -euo pipefail
+          count=0
+          failed=0
+          for f in tests/test_*.py; do
+            [ -f "$f" ] || continue
+            count=$((count + 1))
+            echo "--- $f"
+            if python3 "$f"; then
+              echo "    ok"
+            else
+              echo "    FAILED"
+              failed=$((failed + 1))
+            fi
+          done
+          if [ "$count" -eq 0 ]; then
+            echo "FAIL: no tests/test_*.py found, but this step exists to run them."
+            echo "Either the glob is wrong or the suites were deleted; both are regressions."
+            exit 1
+          fi
+          echo "ran $count python suite(s), $failed failed"
+          [ "$failed" -eq 0 ]
+
+      - name: The LinkedIn conventions linter must stay wired
+        # XOS-328 regression guard. The linter sat executable, tested and UNINVOKED for three
+        # weeks. Asserting the wiring here means unplugging it fails CI instead of going
+        # quietly dark again -- the whole point of the ticket.
+        run: |
+          set -euo pipefail
+          cd skills/social-distribution-engine
+          python3 -c "
+          import json, sys
+          import post_validator as pv
+          r = pv.validate('linkedin_post', 'Three points.\n1. a\n2. b\n3. c')
+          if not r['lint']['ran']:
+              print('FAIL: post_validator did not run the conventions linter.')
+              print('      lint:', r['lint'])
+              print('FIX: confirm linkedin_post_lint.py imports and that linkedin_post')
+              print('     still carries lint_profile in platforms.json.')
+              sys.exit(1)
+          if r['verdict'] != 'fail':
+              print('FAIL: a markdown-list draft should fail the keycap rule, got', r['verdict'])
+              sys.exit(1)
+          if not any(v.startswith('[keycap_numerals]') for v in r['violations']):
+              print('FAIL: linter ran but the keycap rule did not reach violations:', r['violations'])
+              sys.exit(1)
+          print('OK: linter wired, keycap rule fails the gate')
+          "
+
+
+      - name: Platform executables must print usage without touching a browser
+        run: |
+          bun run platforms/substack.ts --help
+          bun run platforms/linkedin.ts --help
+
+      - name: No suite may report zero passing tests
+        # XOS-315: a suite that registers nothing, or skips everything, is
+        # indistinguishable from a passing suite. Fail loudly instead.
+        run: |
+          out=$(bun test ./tests 2>&1)
+          echo "$out"
+          pass=$(printf '%s\n' "$out" | grep -oE '^ [0-9]+ pass' | grep -oE '[0-9]+' | head -1)
+          if [ -z "$pass" ] || [ "$pass" -eq 0 ]; then
+            echo "FAIL: the suite reported no passing tests. A green run that asserts nothing is not green."
+            echo "Fix: check whether tests failed to register, or whether every test is skipped."
+            exit 1
+          fi
+          echo "OK: $pass passing tests"

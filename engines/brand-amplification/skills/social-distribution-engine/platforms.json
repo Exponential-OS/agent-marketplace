@@ -1,31 +1,31 @@
 {
-  "_comment": "Platform posting constraints. Update here — post_validator.py reads this at runtime.",
+  "_comment": "Platform posting constraints. Update here \u2014 post_validator.py reads this at runtime.",
   "_version": "1.1.0",
   "_hashtag_selection_protocol": {
     "_note": "How agents pick hashtags for any post. Follow slot-fill order exactly.",
     "slot_fill_order": [
-      "1. Brand tags — always first, in priority order. These build your owned highway over time. Never skip.",
-      "2. Campaign-specific tags — event or series tags relevant to THIS post (e.g. #ClawCamp, #AIInfraSummit). Include when the post is directly tied to that event/series.",
-      "3. Niche tags — most specific to the post topic, in priority order. Drives targeted discovery.",
-      "4. Highway tags — broadest reach, fill remaining slots, in priority order."
+      "1. Brand tags \u2014 always first, in priority order. These build your owned highway over time. Never skip.",
+      "2. Campaign-specific tags \u2014 event or series tags relevant to THIS post (e.g. #ClawCamp, #AIInfraSummit). Include when the post is directly tied to that event/series.",
+      "3. Niche tags \u2014 most specific to the post topic, in priority order. Drives targeted discovery.",
+      "4. Highway tags \u2014 broadest reach, fill remaining slots, in priority order."
     ],
     "detector_protocol": {
       "_note": "Before campaign ship, run a live hashtag audit. Update priority scores in _hashtag_banks if materially stale.",
       "steps": [
         "1. For each candidate tag: search the platform, note posts-in-last-7-days.",
         "2. Classify: >5000 recent posts = live highway; 200-5000 = active niche; <200 = dead road (skip unless brand-owned).",
-        "3. Rank within each category by engagement velocity (recent posts × estimated engagement rate).",
+        "3. Rank within each category by engagement velocity (recent posts \u00d7 estimated engagement rate).",
         "4. Pick top N within platform max using slot-fill order above.",
         "5. Log the audit result in the campaign-master surface coverage matrix with date."
       ],
       "freshness": "Re-run detector quarterly OR when a tag hasn't fired in 60+ days. Static lists decay."
     },
     "never_do": [
-      "Never pick randomly from the bank — always follow priority order.",
-      "Never exceed platform hashtag_max — spam classifier fires above limit.",
-      "Never put hashtags in body on LinkedIn — append at end of post only.",
+      "Never pick randomly from the bank \u2014 always follow priority order.",
+      "Never exceed platform hashtag_max \u2014 spam classifier fires above limit.",
+      "Never put hashtags in body on LinkedIn \u2014 append at end of post only.",
       "Never use a dead road tag (<200 recent posts) unless it's a brand tag you own.",
-      "Never put all slots in one category — always brand + at least one niche."
+      "Never put all slots in one category \u2014 always brand + at least one niche."
     ]
   },
   "_hashtag_banks": {
@@ -36,7 +36,7 @@
         {
           "tag": "#TheWhyCyborg",
           "priority": 1,
-          "note": "Primary personal brand — thesis tag. Always slot 1 for personal branding posts."
+          "note": "Primary personal brand \u2014 thesis tag. Always slot 1 for personal branding posts."
         },
         {
           "tag": "#{{PERSONAL_BRAND_HASHTAG}}",
@@ -63,36 +63,36 @@
         {
           "tag": "#AgenticAI",
           "priority": 2,
-          "note": "Current hot niche — agentic systems, multi-agent loops."
+          "note": "Current hot niche \u2014 agentic systems, multi-agent loops."
         },
         {
           "tag": "#AIInfra",
           "priority": 3,
-          "note": "Infrastructure angle — use for ClawCamp / technical posts."
+          "note": "Infrastructure angle \u2014 use for ClawCamp / technical posts."
         },
         {
           "tag": "#FutureOfWork",
           "priority": 4,
-          "note": "Broader niche — employer AI / digital twin posts."
+          "note": "Broader niche \u2014 employer AI / digital twin posts."
         },
         {
           "tag": "#ClawCamp",
           "priority": 5,
           "campaign": "clawcamp-2026-05-01",
-          "note": "Campaign-specific — ClawCamp event posts only."
+          "note": "Campaign-specific \u2014 ClawCamp event posts only."
         },
         {
           "tag": "#AIInfraSummit",
           "priority": 6,
           "campaign": "clawcamp-2026-05-01",
-          "note": "Campaign-specific — ClawCamp event posts only."
+          "note": "Campaign-specific \u2014 ClawCamp event posts only."
         }
       ],
       "highway": [
         {
           "tag": "#AILeadership",
           "priority": 1,
-          "note": "Best-fit highway — leaders + AI audience overlap with your ICP."
+          "note": "Best-fit highway \u2014 leaders + AI audience overlap with your ICP."
         },
         {
           "tag": "#GenAI",
@@ -102,7 +102,7 @@
         {
           "tag": "#ArtificialIntelligence",
           "priority": 3,
-          "note": "Classic broad highway. Large but competitive — use when 2 highway slots open."
+          "note": "Classic broad highway. Large but competitive \u2014 use when 2 highway slots open."
         },
         {
           "tag": "#TechLeadership",
@@ -248,7 +248,8 @@
     "max_blank_lines_note": "More than 2 consecutive blank lines create jarring visual gaps in the feed.",
     "max_blank_line_ratio": 0.35,
     "max_blank_line_ratio_note": "Blank line after every single line (markdown-style spacing) makes the post unreadable in the feed. Group related lines together with one blank line between sections.",
-    "trailing_space_warn": true
+    "trailing_space_warn": true,
+    "lint_profile": "feed_post"
   },
   "linkedin_group": {
     "display_name": "LinkedIn Group Post",
@@ -269,7 +270,8 @@
     "max_blank_lines_note": "More than 2 consecutive blank lines create jarring visual gaps.",
     "max_blank_line_ratio": 0.35,
     "max_blank_line_ratio_note": "Blank line after every single line (markdown-style spacing) makes the post unreadable. Group related lines together with one blank line between sections.",
-    "trailing_space_warn": true
+    "trailing_space_warn": true,
+    "lint_profile": "group_post"
   },
   "linkedin_article": {
     "display_name": "LinkedIn Article",
@@ -290,7 +292,7 @@
     "markdown_rendered": false,
     "emoji_ok": false,
     "max_blank_lines": 1,
-    "max_blank_lines_note": "Short message surface — multiple blank lines waste the 500-char limit."
+    "max_blank_lines_note": "Short message surface \u2014 multiple blank lines waste the 500-char limit."
   },
   "linkedin_connection": {
     "display_name": "LinkedIn Connection Request",
@@ -301,7 +303,7 @@
     "markdown_rendered": false,
     "emoji_ok": false,
     "max_blank_lines": 1,
-    "max_blank_lines_note": "Very short surface — blank lines waste the 300-char limit."
+    "max_blank_lines_note": "Very short surface \u2014 blank lines waste the 300-char limit."
   },
   "x_post": {
     "display_name": "X / Twitter Post",
@@ -353,7 +355,7 @@
     "markdown_rendered": true,
     "emoji_ok": true,
     "send_to_subscribers": true,
-    "send_to_subscribers_note": "IRREVERSIBLE — once sent, a second publish triggers a second subscriber email.",
+    "send_to_subscribers_note": "IRREVERSIBLE \u2014 once sent, a second publish triggers a second subscriber email.",
     "max_blank_lines": 3,
     "max_blank_lines_note": "Excessive blank lines create ugly gaps in the rendered Substack layout."
   },

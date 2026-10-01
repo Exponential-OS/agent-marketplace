@@ -32,6 +32,48 @@ Content distribution orchestrator for human-cyborg partnerships. Implements the 
 **Platform-specific publish gates**
 - `substack-publish-gate`, `linkedin-article-publish-gate`, `linkedin-post-on-article-gate`, `x-cta-resolution-gate`, `comment-hijack-gate`
 
+## Browser platform executables (XOS-310)
+
+Run from the engine root with Bun. An authenticated Chrome debugging endpoint
+(default `:9222`, override with `CDP_PORT`) is required for actual browser work.
+Substack Markdown conversion also requires pandoc.
+
+- `bun run platforms/substack.ts --help` — preserved Markdown/frontmatter,
+  `--section` and `--subtitle` CLI; always creates a fresh **draft**, never publishes.
+- `bun run platforms/linkedin.ts --help` — one cascade or group target per call;
+  stages by default, `--send` submits that single target. Article inspection and
+  editing commands are listed in help. Existing article edits require an explicit
+  `--allow-destructive-reuse` argument and exact target ID.
+- `platforms/_cdp.ts` — shared transport, target capabilities, checked clicks and
+  fail-hard precondition/action/postcondition wrapper. Silent no-ops never retry.
+
+Importable primitives accept injected CDP/target clients for offline testing.
+Run `bun install`, then `bun test ./tests`; the platform tests include a TypeScript
+compile check of single-target signatures. Help commands never contact a browser.
+
+Source audit: all still-live primitives in `surface_driver.py`, plus the standalone
+CDP/click and single-target cascade/group flows, were ported. Duplicate click/CDP
+implementations were consolidated. Raw WebSocket framing is replaced by Bun's
+native WebSocket. Dropped fixed screen coordinates, implicit tab attachment,
+campaign-specific copy/paths, first-word group matching, automatic modal dismissal,
+silent parse fallbacks, weak body-text send checks and the external Python linter
+import. Its nine live-composer checks are TypeScript with explicit surface profiles.
+Substack's redundant select-all/delete is dropped because a fresh draft must be empty.
+The five source Python files listed in the spec are retired; unrelated engine Python
+modules are outside this migration. No runtime Python dependency is introduced.
+
+Review record (2026-09-29, XOS-310, Codex implementation): Gemini 3.8 Flash (Low)
+and Gemini 3.1 Pro (High) reviewed the source and tests through `judge-panel`.
+Confirmed findings fixed: paragraph inter-tag whitespace, optional hub-URL trailing
+slash, and lint assertions that now compare the complete ordered rule/severity set.
+The file-chooser-hang claim was rejected against the [CDP contract](https://github.com/ChromeDevTools/devtools-protocol/blob/master/json/browser_protocol.json):
+interception suppresses the native dialog, and setting files accepts the input's
+object ID. Read-only inspection intentionally needs no destructive capability;
+WeakMap/WeakSet do not retain their keys. Substack's verified clipboard flow is
+preserved and its postconditions reject silent no-ops. Offline DOM tests verify
+the orchestration and emitted scripts, not live ProseMirror behavior. The panel's
+GPT-5.4 lane exited with an error; this is not a full-panel passing verdict.
+
 ## Required environment
 
 - `$CAREER_HOME` — customer's workspace root. Plugin reads:

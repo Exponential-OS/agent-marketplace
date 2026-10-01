@@ -141,7 +141,7 @@ LinkedIn has two completely different content surfaces with different algorithmi
 
 Three reasons, all load-bearing:
 
-1. **URL dependency:** Post Hub's first-comment MUST link to Article SEO Hub URL. Article must exist before Post publishes. If Post publishes first, first-comment has no URL → either blank (wasted conversion slot) or Substack link (external link penalty).
+1. **URL dependency (updated 2026-09-10):** Post Hub's first-comment links to the **Honey Pot** URL, which exists as soon as Substack publishes — so this dependency is now satisfied early. Note the Article and Post publish as ONE action on LinkedIn ("Next" → Create post modal, Article auto-attached), so the old "Article must exist before Post" sequencing is handled by the platform itself.
 2. **Follower notification timing:** Article's follower notification fires on publish and warms the audience. By the time Post Hub goes live, some followers have already read the Article. Post's CTA "deep dive below" is immediately credible and linkable.
 3. **Chain integrity:** Substack URL → Article URL → Post URL — each must exist before the next node in the chain publishes. Work backward from Substack.
 
@@ -160,7 +160,9 @@ Three reasons, all load-bearing:
 **Anti-patterns:**
 - ❌ Calling Post Hub "the hub" without qualifier → agents assume Article is just a spoke and may skip it
 - ❌ Calling Article "inner hub" without "SEO" → agents don't understand why it's separate from Post; may treat them as interchangeable
-- ❌ Post first-comment → Substack directly → external link reach penalty; correct chain is Post → Article → Substack
+- ⭐ **UPDATED 2026-09-10:** Post first-comment → **Honey Pot** is now CORRECT (Anand, from lessons).
+  The Article is auto-attached to the Post as a card, so a first-comment pointing at it is redundant.
+  ~~❌ Post first-comment → Substack directly → external link reach penalty~~ (superseded)
 - ❌ Publishing Post before Article → no Article URL for Post's first-comment; follower notification timing breaks
 - ❌ External spokes linking to Article instead of Post Hub → Article doesn't get algorithm boost; Post Hub misses juice; engagement splits
 - ❌ Skipping the Article entirely → lose all Google SEO compounding; Post decays in 48h with no long-tail residual
@@ -168,7 +170,7 @@ Three reasons, all load-bearing:
 **Litmus test:**
 - "Where does campaign juice accumulate?" → Post Hub. Any spoke pointing elsewhere is wrong.
 - "Where does Google SEO compound?" → Article SEO Hub. If no Article exists, you're leaving search traffic on the table permanently.
-- "Does Post's first-comment link to Article (not Substack)?" → If Substack: external link penalty. Fix.
+- "Does Post's first-comment link to the **Honey Pot**?" → If it links to the Article: redundant with the auto-attached card. Fix. (Updated 2026-09-10; was the reverse.)
 - "Did Article publish before Post?" → If Post published first: first-comment timing is broken. Fix before any spokes fire.
 
 ---
@@ -282,12 +284,58 @@ That's it. X, Instagram, spoke comments are amplification. Not required for laun
 
 **Why this order:** Article SEO Hub must publish before Post Hub because Post Hub's first-comment needs the Article URL. Article's follower notification fires and warms the audience. By the time Post Hub goes live, some followers have already read the Article — Post's CTA "deeper dive below" is immediately credible. URL chain: Substack URL → Article URL → Post URL — each must exist before the next node publishes.
 
-**Post Hub first-comment rule:** Post Hub self-comment links to **Article SEO Hub** (within-platform — no external link reach penalty). Article body links to Substack. Correct 3-tier chain: Post Hub → Article SEO Hub → Substack. Linking Post directly to Substack is wrong — Substack is an external link even in comments and takes the algorithmic reach penalty.
+**Post Hub first-comment rule — ⭐ UPDATED 2026-09-10, supersedes the 2026-05-05 rule below:**
+
+> **Post Hub's first comment links to the HONEY POT (Substack), not to the Article.**
+> Anand, 2026-09-10: *"the first comment link should be to honeypot. not to the article."*
+> Asked whether the older rule still stood: *"that was way long back. my recent comments are
+> from lessons."*
+
+⭐ **REASON 1 — the primary one. Indirection kills conversion.** Anand, verbatim:
+*"too indirect is not leading to subscriptions on honey pot."*
+
+The old chain made a reader take three hops to subscribe: Post → Article → Substack. **Every
+hop sheds people.** The observed outcome was the one that matters — subscriptions were not
+happening. The 2026-05-05 rule optimised the REACH metric (avoid the external-link penalty)
+and quietly paid for it in the CONVERSION metric, which is the one the honey pot exists to
+serve. Reach that never converts is juice with no seed extraction.
+
+⚠️ This is the general principle, not a LinkedIn quirk: **put the conversion link at the
+shallowest hop you can afford.** Each additional hop between attention and the subscribe
+button is a multiplicative loss, and reach optimisations that add hops are usually a bad
+trade against an owned-audience goal.
+
+⭐ **REASON 2 — the enabling condition. The Article now rides inside the Post.** Anand:
+*"we found a way to wrap the article inside the post; so, no need to link article in the
+first comment also."*
+
+Confirmed while publishing campaign 20 (2026-09-10): publishing a LinkedIn Article and its
+Post is **ONE action** — the editor's "Next" opens a *Create post modal* and LinkedIn
+**auto-attaches the Article as a rich card** on the Post. The Article is therefore already
+one click away without spending the comment on it.
+
+Reason 2 is what makes Reason 1 FREE: the comment slot was the Article's only route, and now
+it is not. Pointing it at the honey pot costs the Article nothing and buys the conversion
+path the Post otherwise lacks.
+
+**Current chain:** Post Hub (Article rides as the attached card) · Post first-comment →
+**Honey Pot** · Article body "adapted from" → Honey Pot.
+
+---
+
+<details><summary>SUPERSEDED (codified 2026-05-05) — kept for context, do not apply</summary>
+
+~~Post Hub self-comment links to **Article SEO Hub** (within-platform — no external link reach
+penalty). Article body links to Substack. Correct 3-tier chain: Post Hub → Article SEO Hub →
+Substack. Linking Post directly to Substack is wrong — Substack is an external link even in
+comments and takes the algorithmic reach penalty.~~
+
+</details>
 
 **Full amplification chain (for campaigns with dedicated spokes — optional):**
 1. Substack publishes (no email yet)
 2. **Article SEO Hub** publishes — follower notification fires, body links to Substack
-3. **Post Hub** publishes — hook only, first self-comment → Article SEO Hub URL
+3. **Post Hub** publishes (same action as the Article) — hook only, first self-comment → **Honey Pot** URL
 4. Spoke comments on 2-3 existing LinkedIn posts — link to Post Hub (not Article; Post is the juice surface)
 5. X thread — links to Post Hub in Reply 2
 6. Instagram — bio link → Post Hub; Post Hub funnels to Article SEO Hub
@@ -916,7 +964,7 @@ The thread-reply is lower-risk and higher-authenticity than the @tag: you are no
 
 **3-tier LinkedIn chain (codified 2026-05-05 — Cyborg Way campaign):**
 - **Spokes (X, Instagram, existing LinkedIn posts — comments)** → Link to the **LinkedIn Hub Post** (The Juice). NOT the article. Concentrate all engagement signal on one viral surface.
-- **LinkedIn Hub Post** → first comment links to **LinkedIn Article** (within-platform, no external penalty).
+- **LinkedIn Hub Post** → first comment links to the **Honey Pot (Substack)**. ⭐ Updated 2026-09-10 — the Article is auto-attached to the Post as a card, so the comment slot goes to the one destination the Post does not already carry. (Was: → LinkedIn Article.)
 - **LinkedIn Article** → body links to **Substack** (The Honey Pot). Articles allow external links freely.
 - **Goal:** LinkedIn posts build virality signal on LinkedIn. Article converts readers to Substack subscribers.
 
@@ -926,7 +974,7 @@ The thread-reply is lower-risk and higher-authenticity than the @tag: you are no
 - **Post = hook only. Never summarize.** The visual (table/diagram) does the explaining. The copy creates urgency and cliffhanger. If they can get the full insight from the post, they won't click through to the article.
 - **Visual-first:** Image posts get 2-3x reach over text. The comparison table (Digital Twin vs Cyborg, or equivalent) is the shareable artifact — not the copy.
 - **Hook ending:** Stop before resolution. End with the unanswered tension that makes the article feel necessary. "The table says the rest." "The article breaks down why this isn't just philosophical — it's architectural."
-- **No links in body.** Link to LinkedIn Article in first comment only.
+- **No links in body.** First comment → **Honey Pot** (updated 2026-09-10; the Article rides along as the Post's attached card).
 
 ### LinkedIn Article Adaptation Pattern (codified 2026-05-05)
 When publishing a LinkedIn Article that adapts a Substack piece:

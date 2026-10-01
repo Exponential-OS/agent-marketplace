@@ -58,6 +58,65 @@ _HASHTAG_RE = re.compile(r"#[\w]+", re.UNICODE)
 _URL_RE = re.compile(r"https?://\S+", re.IGNORECASE)
 
 
+# ── XOS-328: the LinkedIn conventions linter, finally invoked ───────────────
+#
+# linkedin_post_lint.py encoded nine checks for conventions Anand had already taught, and
+# NOTHING CALLED IT. Its own header is the indictment, and it names this file:
+#
+#   "the only thing that runs unprompted at draft time is the validator, and the validator
+#    never learns. So the next campaign repeats the mistake and the human catches it again."
+#
+#   "⭐ THE FAILURE IS NOT 'WE DIDN'T WRITE IT DOWN'. IT IS THAT WRITING IT DOWN FEELS LIKE
+#    CODIFYING AND ISN'T."
+#
+# It sat in a WIP folder, executable and tested and never invoked, for three weeks. Same
+# shape as the dark gates in XOS-314 and XOS-323: a working enforcement primitive that
+# nothing reaches.
+#
+# ⚠️ TWO THINGS DELIBERATELY NOT DONE, because both are how a linter earns being ignored:
+#
+#   1. RULES THIS FILE ALREADY ENFORCES ARE SKIPPED (see _LINT_ALREADY_ENFORCED). The linter
+#      and the validator independently check markdown bleed, body links and hashtag counts.
+#      Reporting each twice, in two voices, trains the reader to skim past both.
+#
+#   2. SURFACES ARE OPTED IN BY DATA, never inferred. Only platforms carrying an explicit
+#      "lint_profile" in platforms.json are linted. The linter's own header records its
+#      hashtag rule false-positiving THREE TIMES IN ONE SESSION because rules written for a
+#      feed post were applied to every surface. There are five LinkedIn surfaces here and
+#      the linter has three validated profiles, so any automatic mapping would be a guess.
+#      Absence of lint_profile means NOT LINTED, which fails toward silence rather than
+#      toward crying wolf on a DM.
+try:
+    from linkedin_post_lint import lint as _linkedin_lint
+except ImportError:  # pragma: no cover - the linter ships beside this file
+    _linkedin_lint = None
+
+# Rules the linter owns that this validator ALREADY covers. Skipped to avoid double-voicing.
+_LINT_ALREADY_ENFORCED = frozenset({"markdown_bleed", "body_links", "hashtags"})
+
+
+def _apply_linkedin_lint(spec: dict, text: str, violations: list, warnings: list) -> dict | None:
+    """Run the conventions linter when the surface has opted in. Returns its raw result.
+
+    Severity maps straight through: BLOCK -> violations (fails the gate), WARN -> warnings.
+    That is the linter's own calibration and this function does not second-guess it.
+    """
+    profile = spec.get("lint_profile")
+    if not profile or _linkedin_lint is None:
+        return None
+
+    result = _linkedin_lint(text, profile)
+    for finding in result.get("findings", []):
+        if finding.get("rule") in _LINT_ALREADY_ENFORCED:
+            continue
+        line = f"[{finding['rule']}] {finding['detail']} FIX: {finding['fix']}"
+        if finding.get("severity") == "BLOCK":
+            violations.append(line)
+        else:
+            warnings.append(line)
+    return result
+
+
 def _load_platforms() -> dict:
     try:
         return json.loads(PLATFORMS_JSON.read_text())
@@ -208,12 +267,28 @@ def validate(platform_key: str, text: str, hashtags: list[str] | None = None) ->
         )
 
     # ── Verdict ────────────────────────────────────────────────────────────
+    # XOS-328: conventions linter runs here, BEFORE the verdict, so its BLOCK findings
+    # actually fail the gate rather than being advice appended after the decision.
+    lint_result = _apply_linkedin_lint(spec, text, violations, warnings)
+
     verdict = "fail" if violations else ("warn" if warnings else "pass")
 
     return {
         "verdict": verdict,
         "platform": platform_key,
         "display_name": spec["display_name"],
+        # XOS-328: report whether the linter ran. Without this, "linted and clean" and
+        # "never linted" are indistinguishable in the output, which is the XOS-315 defect
+        # class — and it is how this linter stayed dark for three weeks in the first place.
+        "lint": (
+            {"ran": True, "profile": lint_result["profile"], "blocking": lint_result["blocking"],
+             "findings": len(lint_result["findings"]), "stats": lint_result["stats"]}
+            if lint_result is not None
+            else {"ran": False,
+                  "reason": "no lint_profile for this platform"
+                            if _linkedin_lint is not None
+                            else "linkedin_post_lint not importable"}
+        ),
         "violations": violations,
         "warnings": warnings,
         "stats": {

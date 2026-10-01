@@ -8,6 +8,8 @@
     "test:all": "bun test ./tests"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "happy-dom": "^20.14.5",
+    "typescript": "^7.0.2"
   }
 }
