@@ -1,0 +1,111 @@
+# CI for agent-marketplace. XOS-316.
+#
+# This repo had ZERO workflows. Nothing checked it, ever.
+#
+# That matters more here than in any engine repo, because this is the DISTRIBUTION
+# CHOKEPOINT: every session on every machine installs from this catalog, and nobody runs a
+# plugin from a source checkout. A malformed catalog or a version mismatch reaches every
+# machine at once. Two drift incidents are already on record (brand-amplification vendored
+# 0.63.0 against source 0.59.0; super-developer 0.12.0 against 0.7.0) and a repo with no CI
+# is a repo where that shortcut costs nothing at the moment someone takes it.
+#
+# ⚠️ WHAT THIS DOES NOT COVER, stated plainly rather than implied away:
+# it does NOT compare vendored trees against their SOURCE repos, which is the half that
+# would have caught both incidents above at push time. Seven of the ten homepages are
+# PRIVATE, so that comparison needs a read token this workflow deliberately does not assume.
+# See "the missing half" at the bottom for exactly what to add once someone provisions one.
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Catalog structure, source paths, and version agreement
+        run: python3 scripts/validate-marketplace.py
+
+      - name: Every engines/ package is advertised by the catalog
+        # The validator walks the catalog outward. This walks the directory inward, so a
+        # package vendored into the repo but never added to the catalog is caught too --
+        # it ships bytes nobody can install and nothing else would notice it.
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, sys
+          from pathlib import Path
+
+          catalog = json.loads(Path(".claude-plugin/marketplace.json").read_text())
+          advertised = {
+              Path(p["source"].lstrip("./")).name
+              for p in catalog.get("plugins", [])
+              if isinstance(p.get("source"), str)
+          }
+          on_disk = {d.name for d in Path("engines").iterdir() if d.is_dir()} if Path("engines").is_dir() else set()
+
+          orphans = sorted(on_disk - advertised)
+          if orphans:
+              print("WHAT: these packages are vendored but advertised by NO catalog entry:")
+              for o in orphans:
+                  print(f"  engines/{o}")
+              print("  HOW: a vendored tree nobody can install is dead weight that still gets")
+              print("       cloned by every consumer. Add a catalog entry, or delete the tree.")
+              sys.exit(1)
+
+          if not on_disk:
+              print("WHAT: engines/ holds no packages, but this job exists to check them.")
+              print("  HOW: either the directory moved or the packages were deleted; both are")
+              print("       regressions, and 'checked nothing' must not read as 'all clear'.")
+              sys.exit(1)
+
+          print(f"OK: {len(on_disk)} vendored package(s), all advertised by the catalog")
+          PY
+
+      - name: The validator itself must still reject a known-bad catalog
+        # A validator that silently stops validating is this repo's whole problem one level
+        # up. Mutate a copy, confirm it is rejected, and never touch the real catalog.
+        run: |
+          set -euo pipefail
+          cp .claude-plugin/marketplace.json /tmp/catalog.bak
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path(".claude-plugin/marketplace.json")
+          d = json.loads(p.read_text())
+          d["plugins"][0]["version"] = "0.0.0-ci-mutation-probe"
+          p.write_text(json.dumps(d, indent=2))
+          PY
+          if python3 scripts/validate-marketplace.py; then
+            cp /tmp/catalog.bak .claude-plugin/marketplace.json
+            echo ""
+            echo "WHAT: the validator PASSED a catalog whose version was deliberately corrupted."
+            echo "  HOW: it has stopped checking version agreement. Fix it before trusting any"
+            echo "       green run on this repo -- a gate that cannot fail is not a gate."
+            exit 1
+          fi
+          cp /tmp/catalog.bak .claude-plugin/marketplace.json
+          python3 scripts/validate-marketplace.py >/dev/null
+          echo "OK: validator rejects a corrupted catalog, and the real one is restored"
+
+# ── the missing half ────────────────────────────────────────────────────────
+# Vendored-vs-SOURCE comparison is what catches "vendored without landing in source", the
+# failure that actually happened twice. It is not here because seven of the ten homepage
+# repos are private and this workflow assumes no credentials.
+#
+# To add it, provision a read-only token with access to the Exponential-OS engine repos,
+# expose it as a secret, and for each catalog entry: clone the entry's `homepage` at its
+# default branch, then assert the source plugin.json version is NOT BEHIND the vendored one.
+# Ahead is fine (source moves first); behind means someone vendored a build that never
+# landed in source, which is the exact drift.
+#
+# Provisioning that token is a privileged action and a human decision, so it is written up
+# rather than assumed. Tracked on XOS-316.
