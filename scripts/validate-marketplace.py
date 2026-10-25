@@ -26,6 +26,7 @@ It checks everything resolvable INSIDE this repo, with no credentials:
   - the catalog version and the vendored plugin.json version AGREE
   - plugin names are unique (a duplicate silently shadows an install)
   - the engines/ directory and the catalog do not disagree about what exists
+  - every vendored package ships at least one file outside .claude-plugin/
 
 ⚠️ It does NOT compare vendored trees against their SOURCE repos, which is the half that
 would have caught the two incidents above at push time. Seven of the ten homepages are
@@ -49,6 +50,19 @@ CATALOG = REPO / ".claude-plugin" / "marketplace.json"
 # Fields an install actually depends on. Keep this honest: adding a field here makes it
 # mandatory for every plugin, so it belongs only if an install breaks without it.
 REQUIRED_FIELDS = ("name", "source", "version")
+
+# Packages that are advertised but ship no code at all: only .claude-plugin/plugin.json,
+# so installing one gets you an empty plugin. Both of these predate this check and are
+# GRANDFATHERED rather than failed, so main does not go red over a pre-existing condition.
+#
+# This is a ratchet, not an exemption. A NEW empty package fails. Removing a name from
+# this set is how you record that it was fixed; adding one is how you record, in the diff,
+# that the catalog now advertises something that does nothing. Either way it is a visible
+# decision instead of a silent state.
+#
+# Tracked: XOS-346. knowledge-graph and content-adapt are placeholders whose source repos
+# do not exist (404 under Exponential-OS).
+KNOWN_EMPTY_PACKAGES = {"knowledge-graph", "content-adapt"}
 
 
 def fail(problems: list[str], what: str, how: str) -> None:
@@ -135,6 +149,30 @@ def main() -> int:
         except json.JSONDecodeError as e:
             fail(problems, f"{label}: vendored plugin.json is not valid JSON ({e}).", "re-vendor from source.")
             continue
+
+        # Does this package actually ship anything? A tree containing only its own
+        # manifest installs cleanly and delivers nothing, which no other check here
+        # notices: the source path exists, the manifest parses, the versions agree.
+        substantive = [
+            f for f in pkg_dir.rglob("*")
+            if f.is_file() and ".claude-plugin" not in f.relative_to(pkg_dir).parts
+        ]
+        if not substantive:
+            if name in KNOWN_EMPTY_PACKAGES:
+                print(
+                    f"  note: {label} ships no code (only .claude-plugin/). Grandfathered "
+                    f"via KNOWN_EMPTY_PACKAGES, tracked in XOS-346."
+                )
+            else:
+                fail(
+                    problems,
+                    f"{label}: vendored tree contains nothing but .claude-plugin/.",
+                    "this entry installs cleanly and delivers an empty plugin, which looks "
+                    "to the user like the plugin is broken rather than absent. Vendor the "
+                    "real package, remove the catalog entry, or — if it is a deliberate "
+                    "placeholder — add its name to KNOWN_EMPTY_PACKAGES with a tracking "
+                    "ticket, so that choice is recorded in the diff.",
+                )
 
         catalog_version = plugin.get("version")
         if vendored != catalog_version:
