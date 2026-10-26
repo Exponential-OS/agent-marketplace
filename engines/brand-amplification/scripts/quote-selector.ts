@@ -8,8 +8,16 @@ import { mkdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, resolve } from "node:path";
 
-export const DEFAULT_DECK_PATH =
-  "~/anand-career-os/WIP/branding-product/cyborg-quotes.md";
+// XOS-349: this defaulted to a path inside one specific maintainer's private workspace,
+// in a plugin published through a PUBLIC marketplace. Env override first, then the
+// plugin's own state dir -- the same shape DEFAULT_STATE_DIR below already uses. The
+// old literal is not repeated here; a comment restating it republishes what this removes.
+export const DECK_PATH_ENV = "BAE_QUOTE_DECK";
+export const DEFAULT_DECK_PATH = "~/.brand-amplification-state/cyborg-quotes.md";
+
+export function defaultDeckPath(): string {
+  return process.env[DECK_PATH_ENV] || DEFAULT_DECK_PATH;
+}
 export const DEFAULT_STATE_DIR = "~/.brand-amplification-state";
 export const DEFAULT_LOG_FILENAME = "quote-flywheel-log.jsonl";
 export const DEFAULT_DEDUP_DAYS = 30;
@@ -131,7 +139,7 @@ export function getDeckPath(env: NodeJS.ProcessEnv = process.env): string {
   const configured = env.CYBORG_QUOTES_DECK?.trim();
   return configured && configured.length > 0
     ? configured
-    : DEFAULT_DECK_PATH;
+    : defaultDeckPath();
 }
 
 export function getStateDir(env: NodeJS.ProcessEnv = process.env): string {

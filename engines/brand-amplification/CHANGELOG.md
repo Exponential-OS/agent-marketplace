@@ -1,6 +1,21 @@
 <!-- product-vs-solution: example -->
 # Changelog
 
+## [0.65.0] — 2026-10-25 — XOS-349: plugin defaults no longer point at a maintainer's private workspace
+
+- `rules/reddit-prepost-viability/check.py` — `DEFAULT_LEDGER_PATH` and `DEFAULT_RESEARCH_PATH` resolved to a directory inside one specific maintainer's private workspace. This plugin ships through a PUBLIC marketplace, so on every other machine both files are absent and the gate degraded to WARN while printing a path from a tree the reader has never seen. Now: `BAE_REDDIT_LEDGER` / `BAE_REDDIT_RESEARCH` env overrides, else the plugin's own state dir for the ledger and the rule's own directory for the citation index. Same shape `lesson_store.py` and `gate_ledger.py` already use here.
+- `scripts/quote-selector.ts` — same defect, same fix: `BAE_QUOTE_DECK`, else `~/.brand-amplification-state/`.
+- The replaced literals are **not** repeated in the new comments. Restating a path in a comment republishes exactly what the change removes, and a guard written for this change caught that on the first attempt.
+- Behaviour verified rather than assumed: with no env set, a first run now reports its own `~/.career-os-state/...` and the rule-local research path; with the env vars set, both are honoured. All 5 Python suites and all Bun suites pass.
+- Found while auditing leak-gate coverage: 4 of the org's public repos exist and the gate is wired into 1. `plugin-user-content-gate` was built to catch exactly this class and is unwired, on a legacy `HOW.sh`, and scanning `plugins/` when the marketplace vendors to `engines/`. Tracked on XOS-349 — this entry fixes the product bug, not the gate.
+
+## [0.64.0] — 2026-10-24 — XOS-328: LinkedIn conventions linter wired into the publish path
+
+- **Changelog entry added retroactively on 2026-10-25.** 0.64.0 shipped and was vendored to the marketplace without one, so the released version was invisible in this file. Recording it rather than renumbering, since the version is already published.
+- `post_validator.py` — `_apply_linkedin_lint()` runs the 11-check LinkedIn conventions linter inline on the publish path. It had existed as a standalone script wired into nothing.
+- `_LINT_ALREADY_ENFORCED` marks the three checks the validator already enforced (`markdown_bleed`, `body_links`, `hashtags`) so they are not double-reported.
+- The result object carries `"lint": {"ran": ...}` — a linter that silently does not run must not be indistinguishable from one that ran and found nothing.
+
 ## [0.63.0] — 2026-08-16 — XOS-240: flywheel-ship-gate, in TypeScript, in ONE place
 
 - `rules/flywheel-ship-gate/` — per-STEP execution gate. `campaign-preflight` gates the PLAN; this gates EXECUTION. Every in-scope surface must carry a terminal status AND a recorded URL AND that URL must resolve. "It shipped" without a URL is unfalsifiable — a surface with no URL is not shipped, it is remembered.

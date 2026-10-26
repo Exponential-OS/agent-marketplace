@@ -18,13 +18,51 @@ No network calls are made. See README.md for the verified Reddit 403 finding.
 from __future__ import annotations
 
 import json
+import os
 import pathlib
 import re
 import sys
 from typing import Any
 
-DEFAULT_LEDGER_PATH = pathlib.Path.home() / "anand-career-os/brand-amplification/reddit-surface-history.json"
-DEFAULT_RESEARCH_PATH = pathlib.Path.home() / "anand-career-os/brand-amplification/research/50-subreddits-ai-citation-index-2026.md"
+# XOS-349: these two defaulted to a path inside one specific maintainer's private
+# workspace, in a plugin published through a PUBLIC marketplace. On anyone else's machine
+# both files are absent, so the gate degrades to WARN and prints a path from a directory
+# tree the reader has never heard of. The literal path is deliberately not repeated here
+# -- restating it in a comment would republish the same thing this change removes.
+#
+# Resolution follows the convention lesson_store.py and gate_ledger.py already use in
+# this repo: explicit env override, else the plugin's own state dir.
+LEDGER_ENV = "BAE_REDDIT_LEDGER"
+RESEARCH_ENV = "BAE_REDDIT_RESEARCH"
+STATE_DIR_ENV = "CLAUDE_PLUGIN_DATA"
+DEFAULT_STATE_DIR = "~/.career-os-state"
+LEDGER_NAME = "reddit-surface-history.json"
+RESEARCH_NAME = "50-subreddits-ai-citation-index-2026.md"
+
+
+def _state_dir() -> pathlib.Path:
+    base = os.environ.get(STATE_DIR_ENV) or DEFAULT_STATE_DIR
+    return pathlib.Path(base).expanduser()
+
+
+def default_ledger_path() -> pathlib.Path:
+    override = os.environ.get(LEDGER_ENV)
+    if override:
+        return pathlib.Path(override).expanduser()
+    return _state_dir() / LEDGER_NAME
+
+
+def default_research_path() -> pathlib.Path:
+    """The citation index is reference data, not per-user state.
+
+    It does not currently ship with the plugin, so the honest default is beside this
+    rule, where it WOULD live if bundled. A reader who hits the WARN is then pointed at
+    a path inside the plugin they installed rather than at someone else's home directory.
+    """
+    override = os.environ.get(RESEARCH_ENV)
+    if override:
+        return pathlib.Path(override).expanduser()
+    return pathlib.Path(__file__).resolve().parent / RESEARCH_NAME
 
 ANNOUNCING_SIGNALS = (
     ("i_built", re.compile(r"\bi\s+(?:built|made|created)\b", re.IGNORECASE), 3),
@@ -88,7 +126,7 @@ def check_surface_history(ctx: dict[str, Any], subreddit: str, key: str) -> dict
                 remediation="Pass submission_history as an array of {subreddit,date,outcome,removed_by,title} entries.",
             )
     else:
-        path = pathlib.Path(str(ctx.get("ledger_path") or DEFAULT_LEDGER_PATH)).expanduser()
+        path = pathlib.Path(str(ctx.get("ledger_path") or default_ledger_path())).expanduser()
         source = str(path)
         if not path.is_file():
             return _result(
@@ -189,7 +227,7 @@ def parse_top50_markdown(markdown: str) -> list[dict[str, Any]]:
 
 
 def check_top50(ctx: dict[str, Any], subreddit: str, key: str) -> dict[str, Any]:
-    path = pathlib.Path(str(ctx.get("research_path") or DEFAULT_RESEARCH_PATH)).expanduser()
+    path = pathlib.Path(str(ctx.get("research_path") or default_research_path())).expanduser()
     if not path.is_file():
         return _result(
             "top50_citation_index",
