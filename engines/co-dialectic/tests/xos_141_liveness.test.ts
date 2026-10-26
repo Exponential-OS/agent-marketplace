@@ -306,12 +306,43 @@ describe("UserPromptSubmit deterministic self-resurrection (XOS-141)", () => {
       },
       "4.26.0",
       new Date("2026-06-29T10:01:00Z"),
+      // staleSecs passed EXPLICITLY. Without it this reads process.env.CODI_STALE_SECS and
+      // falls back to DEFAULT_STALE_SECS = 21600 (6h). The fixture's protocol timestamp is
+      // only 1h before `now`, so under the default it is NOT stale and the whole scenario
+      // inverts: degraded false, and the test fails.
+      //
+      // It passed for anyone whose shell exported CODI_STALE_SECS below 3600 (mine is 2700)
+      // and failed for everyone else -- including CI, the moment the suite was actually run
+      // there. A test whose verdict depends on the author's shell is not a test of the code;
+      // it is a test of the machine. 900 matches what the other suites in this repo pin.
+      900,
     );
 
     expect(liveness.degraded).toBe(true); // from STALE (protocol-before-session), not skew
     expect(liveness.stale).toBe(true);
     expect(liveness.skew).toBe(true); // still computed (informational), no longer gates degraded
-    expect(buildDegradationNudge(liveness)).toBe(
+
+    // XOS-308 changed this nudge and this assertion was not updated with it, so the suite
+    // carried a real failure. It went unnoticed because `test:all` appeared to hang at the
+    // time, so the full suite was never seen green and the change shipped on a single
+    // file's results. That is the cost of working around a broken suite instead of fixing
+    // it, and it is why XOS-309 mattered beyond the inconvenience.
+    //
+    // Asserting the PROPERTY, not the sentence. The old version pinned the exact string,
+    // which is why a legitimate wording improvement read as a regression. What actually
+    // matters -- and what XOS-308 fixed -- is that the nudge NAMES THE HEADER THE GATE
+    // ACCEPTS. A nudge that says "render the required status header" without saying which
+    // one is the original deadlock: the agent renders the live header, the gate rejects it,
+    // and the heartbeat never advances.
+    const nudge = buildDegradationNudge(liveness);
+    expect(nudge).toContain("CODI DEGRADED");
+    expect(nudge).toContain("⚠ Codi DEGRADED · [HH:MM]"); // the literal the Stop hook accepts
+    expect(nudge).toContain("no score numbers"); // the half that disqualified the live header
+    expect(nudge).toMatch(/Stop hook stamps the heartbeat/i);
+
+    // Pins the regression itself: the pre-XOS-308 wording named no header at all. If the
+    // nudge ever reverts to describing the header instead of quoting it, this fails.
+    expect(nudge).not.toBe(
       "⚠ CODI DEGRADED — re-fire Protocol 0/1 NOW: render the required status header; the Stop hook will stamp the heartbeat after verifying the transcript.",
     );
   });
