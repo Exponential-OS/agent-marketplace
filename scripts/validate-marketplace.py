@@ -27,6 +27,7 @@ It checks everything resolvable INSIDE this repo, with no credentials:
   - plugin names are unique (a duplicate silently shadows an install)
   - the engines/ directory and the catalog do not disagree about what exists
   - every vendored package ships at least one file outside .claude-plugin/
+  - no NEW vendored file hardcodes a user-specific path (existing ones grandfathered)
 
 ⚠️ It does NOT compare vendored trees against their SOURCE repos, which is the half that
 would have caught the two incidents above at push time. Seven of the ten homepages are
@@ -41,6 +42,7 @@ Exit: 0 = pass, 1 = at least one violation. Every failure names WHAT and HOW.
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -63,6 +65,56 @@ REQUIRED_FIELDS = ("name", "source", "version")
 # Tracked: XOS-346. knowledge-graph and content-adapt are placeholders whose source repos
 # do not exist (404 under Exponential-OS).
 KNOWN_EMPTY_PACKAGES = {"knowledge-graph", "content-adapt"}
+
+# ── User-specific content in published packages (XOS-349) ────────────────────
+#
+# This catalog is PUBLIC and vendors code from PRIVATE source repos, so a vendored tree
+# is the moment private content becomes published. A plugin that hardcodes one person's
+# home directory is both a leak and a product bug: installed anywhere else the path does
+# not exist, and the resulting error shows the reader a directory tree they have never
+# seen. Observed live -- brand-amplification shipped three such defaults (fixed in 0.65.0).
+#
+# Deliberately GENERATIVE rather than a list of one username. An absolute path under
+# /Users/<name>/ or /home/<name>/ is user-specific whoever the user is, which is the
+# property that matters; a hardcoded name only catches the person who already made the
+# mistake. PRIVATE_TREES additionally names workspace roots that are private by
+# convention even when written in ~ form.
+USER_PATH_PATTERNS = (
+    re.compile(r"/Users/[A-Za-z0-9._-]+/"),
+    re.compile(r"/home/[A-Za-z0-9._-]+/"),
+)
+PRIVATE_TREES = ("anand-career-os",)
+
+# Files carrying user-specific content TODAY. Grandfathered so this check can land
+# without a 21-file cleanup blocking it; a NEW one fails. Shrinking this list is how the
+# cleanup gets recorded, and nothing can be added to it without showing up in a diff.
+# Tracked on XOS-349.
+KNOWN_USER_CONTENT = {
+    "engines/brand-amplification/platforms/substack.ts",
+    "engines/brand-amplification/rules/reddit-prepost-viability/README.md",
+    "engines/brand-amplification/skills/quote-flywheel/SKILL.md",
+    "engines/career-intelligence/CHANGELOG.md",
+    "engines/career-intelligence/CLAUDE.md",
+    "engines/career-intelligence/docs/MEMORY-ACCESS.md",
+    "engines/career-intelligence/rules/biographical-claim-precheck/README.md",
+    "engines/career-intelligence/tests/test_outreach_dedup.py",
+    "engines/co-dialectic/ARCHITECTURE-DECISIONS.md",
+    "engines/co-dialectic/CHANGELOG.md",
+    "engines/co-dialectic/hooks/codify-scan-on-md-edit.ts",
+    "engines/co-dialectic/hooks/task-completed-judge-gate.ts",
+    "engines/coordination/.claude-plugin/plugin.json",
+    "engines/coordination/CHANGELOG.md",
+    "engines/coordination/com.thewhyman.proactive-daemon.plist.template",
+    "engines/coordination/hooks/quote-harvester.ts",
+    "engines/coordination/proactive-daemon.ts",
+    "engines/coordination/test/linear-bus.test.ts",
+    "engines/exponential-developer/rules/cost-routing-gate/README.md",
+    "engines/exponential-developer/rules/sdlc-worktree-isolation/SPEC.md",
+    "engines/xos/commands/swarm-sync.md",
+}
+
+# Extensions worth scanning. Binaries and lockfiles are noise.
+SCANNED_SUFFIXES = {".md", ".ts", ".js", ".py", ".sh", ".json", ".yaml", ".yml", ".template"}
 
 
 def fail(problems: list[str], what: str, how: str) -> None:
@@ -184,6 +236,55 @@ def main() -> int:
                 "forever. Re-vendor and bump both together.",
             )
         checked += 1
+
+    # ── user-specific content sweep (XOS-349) ────────────────────────────
+    engines_dir = REPO / "engines"
+    scanned = 0
+    new_offenders: list[tuple[str, str]] = []
+    if engines_dir.is_dir():
+        for f in sorted(engines_dir.rglob("*")):
+            if not f.is_file() or f.suffix not in SCANNED_SUFFIXES:
+                continue
+            try:
+                text = f.read_text(encoding="utf-8", errors="ignore")
+            except OSError:
+                continue
+            scanned += 1
+            rel = f.relative_to(REPO).as_posix()
+            hit = None
+            for pat in USER_PATH_PATTERNS:
+                m = pat.search(text)
+                if m:
+                    hit = m.group(0)
+                    break
+            if hit is None:
+                for tree in PRIVATE_TREES:
+                    if tree in text:
+                        hit = tree
+                        break
+            if hit and rel not in KNOWN_USER_CONTENT:
+                new_offenders.append((rel, hit))
+
+        if scanned == 0:
+            fail(
+                problems,
+                "engines/ exists but not one file was scanned for user-specific content.",
+                "every candidate was filtered out by SCANNED_SUFFIXES, which means this "
+                "check silently verified nothing. Treated as a failure rather than a pass.",
+            )
+
+    for rel, hit in new_offenders:
+        fail(
+            problems,
+            f"{rel}: contains user-specific content ({hit!r}).",
+            "this catalog is PUBLIC and installs on other people's machines, so a path "
+            "inside one person's home directory is both a leak and a product bug: it does "
+            "not exist for anyone else, and the resulting error shows them a directory "
+            "tree they have never seen. Resolve it from an env var with a generic "
+            "fallback (see lesson_store.py in brand-amplification for the shape). If it "
+            "is genuinely unavoidable, add the path to KNOWN_USER_CONTENT with a reason, "
+            "so the decision is recorded in a diff rather than made silently.",
+        )
 
     # A gate that silently checks nothing is worse than no gate (XOS-315).
     if checked == 0:
