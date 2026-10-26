@@ -180,18 +180,52 @@ repo: <repo-path>
 - Out:
 
 ## Acceptance criteria
-- [ ] <specific, testable criterion>
+<!-- EVERY criterion names the command that proves it. See the rule below. -->
+- [ ] <specific, observable criterion>
+      verify: `<exact command>` → <the output that proves it>
 
-## Test plan
-- [ ] <test/eval that will prove the feature works>
+## Unverifiable criteria
+<!-- Criteria that genuinely cannot be reduced to a command (taste, tone, "does this feel
+     right"). Listing one here is allowed. Hiding one above is not. These are what a human
+     actually has to look at, and keeping them in their own short list is what makes the
+     human review small instead of a full re-read of the diff. -->
+- [ ] <criterion> — needs a human because <why no command can decide it>
 
 ## Rollback
 <how to undo safely>
 ```
 
+### Every acceptance criterion carries its own proof (XOS-351)
+
+The `verify:` line is mandatory. A criterion with no command is not a criterion, it is a
+hope — and it is exactly what forces a human to re-read the diff at merge time, which is
+how review became the bottleneck rather than the build.
+
+This replaces the old separate `## Test plan` section. A parallel list of tests does not
+tell you *which* criterion each test proves, so nothing catches a criterion that no test
+covers. Pairing them makes that gap structural instead of a judgement call.
+
+**Why this is load-bearing now:** Gate B defaults to auto-merge, so for most work these
+commands are the only thing standing between the spec and `main`. That is the intended
+trade — review moves from the end (serial, expensive) to the front (cheap, parallel) — but
+it only holds if the commands are real. Two consequences:
+
+- **A gate whose green verdict replaces a human must be mutation-tested** — shown to
+  REJECT a known-bad input, not just to accept a good one. Every guard written in this
+  workspace that was not mutation-tested turned out to be vacuous, including one that
+  reported OK on a catalog shipping two empty packages. See
+  `cyborg/best-practices/gate-authoring.md`.
+- **Prefer a command that fetches and asserts the artifact** over one that checks a
+  reference to it. A readiness gate once greened a PR whose visual review linked 404
+  images because it checked presence, not resolution.
+
 Reasoning validation, when warranted, is covered by the cross-family jury (Stage 6).
 
 **GATE A — STOP:** present the spec path and ask for human approval before proceeding.
+
+Gate A is the load-bearing human gate in this pipeline, and more so than it used to be.
+Approving a spec whose criteria have no `verify:` commands is approving a promise that
+someone will check later — which, with auto-merge on, means nobody does.
 
 ---
 
