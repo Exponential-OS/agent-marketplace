@@ -43,6 +43,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -317,6 +318,33 @@ def main() -> int:
 
     # ── user-specific content sweep (XOS-349) ────────────────────────────
     engines_dir = REPO / "engines"
+
+    # Scan what git TRACKS, not what is on disk (XOS-349 follow-up; same lesson as the
+    # vendor-completeness gate, which reads committed trees for exactly this reason).
+    #
+    # A publish-boundary check must answer "what will be published", and that is the
+    # tracked set. Walking the filesystem makes a local run disagree with CI: an untracked
+    # scratch file (observed: engines/career-intelligence/NEXT_SESSION_HANDOFF.md) fails
+    # locally and is invisible in Actions. A gate whose verdict depends on the untracked
+    # state of the machine it runs on is a gate nobody can trust or reproduce.
+    tracked: set[str] = set()
+    try:
+        tracked = {
+            line.strip()
+            for line in subprocess.run(
+                ["git", "-C", str(REPO), "ls-files", "engines"],
+                capture_output=True, text=True, check=True,
+            ).stdout.splitlines()
+            if line.strip()
+        }
+    except (OSError, subprocess.CalledProcessError) as e:
+        fail(
+            problems,
+            f"could not list git-tracked files ({e}).",
+            "this check must read the tracked set, not the filesystem, or its verdict "
+            "depends on untracked scratch files. Run it inside the repository.",
+        )
+
     scanned = 0
     new_offenders: list[tuple[str, str]] = []
     if engines_dir.is_dir():
@@ -324,6 +352,8 @@ def main() -> int:
             if not f.is_file() or f.suffix not in SCANNED_SUFFIXES:
                 continue
             if not is_shipped_surface(f.relative_to(engines_dir).parts[:-1], f.name):
+                continue
+            if f.relative_to(REPO).as_posix() not in tracked:
                 continue
             try:
                 text = f.read_text(encoding="utf-8", errors="ignore")
