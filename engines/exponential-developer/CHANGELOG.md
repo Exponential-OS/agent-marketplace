@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.0] — 2026-10-25 — XOS-351: every acceptance criterion carries its own proof
+
+- **Stage 2 spec template:** each acceptance criterion now requires a `verify:` line naming the exact command that proves it, and the output that counts as proof. A criterion with no command is not a criterion, it is a hope — and it is precisely what forces a human to re-read the diff at merge, which is how review became the bottleneck rather than the build.
+- **Replaces the separate `## Test plan` section.** A parallel list of tests never said *which* criterion each test proved, so nothing caught a criterion no test covered. Pairing them makes that gap structural instead of a judgement call. Nothing depended on the old section — the only other reference was a test fixture, and the design-review gate never required it (checked before removing).
+- **New `## Unverifiable criteria` section.** Taste, tone, "does this feel right" genuinely cannot be reduced to a command. Listing one there is allowed; hiding one among the verifiable is not. This is the list a human actually reads, and keeping it separate is what makes that review small rather than a full diff re-read.
+- **Gate A is now explicitly the load-bearing human gate.** With Gate B defaulting to auto-merge, these commands are the only thing between an approved spec and `main` for most work. Approving a spec whose criteria have no commands is approving a promise that someone checks later — which, with auto-merge on, means nobody does.
+- Carries two warnings into the template from this workspace's own failures: a gate whose green verdict replaces a human must be **mutation-tested** (shown to reject known-bad input — every unmutated guard here turned out vacuous), and prefer a command that **fetches and asserts the artifact** over one that checks a reference to it (a readiness gate once greened a PR whose visual review linked 404 images).
+
 ## [1.3.0] — 2026-07-10 — THE-541: cross-family judge → canonical `jury`
 
 - Stage 6 (+ cost-routing, Gate-A.5, visual verdict) now invoke the canonical **`jury`** skill (cross/jury) instead of co-dialectic `judge-panel` — retiring the near-duplicate (XOS-217). jury v0.2.0 is OAuth-only, self-updating (agy-models discovery wins), effort-laddered, with per-lane model+version transparency. Same rubric/verdict interface; receipt marker unchanged.
