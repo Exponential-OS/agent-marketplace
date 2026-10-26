@@ -79,42 +79,120 @@ KNOWN_EMPTY_PACKAGES = {"knowledge-graph", "content-adapt"}
 # property that matters; a hardcoded name only catches the person who already made the
 # mistake. PRIVATE_TREES additionally names workspace roots that are private by
 # convention even when written in ~ form.
+# XOS-349: these MIRROR cyborg/rules/plugin-product-ship-gate (PERSONAL + EXTERNAL).
+#
+# Two gates, one definition. The ship gate runs in the OWNING repo before a plugin is
+# published; this runs at the publish boundary, where vendored code becomes public. The
+# boundary check must be at least as wide, or a plugin that skips its own gate lands here
+# unexamined.
+#
+# Measured before widening: the narrow version below caught 2 of the 5 leak CLASSES that
+# the ship gate finds, so roughly 30 of 38 real findings would have passed this boundary
+# while reporting clean (XOS-353).
+#
+# ⚠️ These are duplicated across repos on purpose: this file runs in GitHub Actions where
+# the private cyborg tree does not exist, so it cannot import the real list. If you change
+# one, change the other — and the drift check at the bottom of this block is the only thing
+# that will tell you if nobody does.
 USER_PATH_PATTERNS = (
-    re.compile(r"/Users/[A-Za-z0-9._-]+/"),
-    re.compile(r"/home/[A-Za-z0-9._-]+/"),
+    re.compile(r"/Users/[A-Za-z][A-Za-z0-9._-]*/[A-Za-z]"),
+    re.compile(r"/home/[A-Za-z][A-Za-z0-9._-]*/[A-Za-z]"),
+    re.compile(r"~/anand"),
+    re.compile(r"brain/identity"),
+    re.compile(r"brain/network"),
+    re.compile(r"brain/projects"),
+    re.compile(r"WIP/[a-z]"),
+    re.compile(r"cyborg/references"),
+    re.compile(r"cyborg/best-practices"),
 )
 PRIVATE_TREES = ("anand-career-os",)
+
+# Lines that look like hits but are not — mirrored from the ship gate's isExcluded().
+# `author:` is attribution and SHOULD name a person; `{context.` and `{workspace_root}`
+# are the templating that exists so a plugin can refer to a workspace path WITHOUT
+# hardcoding one, so flagging them would punish the correct fix.
+EXCLUDED_LINE_RE = re.compile(r"author:|^\s*#|\{context\.|\{workspace_root\}")
 
 # Files carrying user-specific content TODAY. Grandfathered so this check can land
 # without a 21-file cleanup blocking it; a NEW one fails. Shrinking this list is how the
 # cleanup gets recorded, and nothing can be added to it without showing up in a diff.
 # Tracked on XOS-349.
 KNOWN_USER_CONTENT = {
+    "engines/brand-amplification/README.md",
     "engines/brand-amplification/platforms/substack.ts",
+    "engines/brand-amplification/rules/analytics-sync-watch/AUDIT.py",
+    "engines/brand-amplification/rules/analytics-sync-watch/WATCH.py",
     "engines/brand-amplification/rules/reddit-prepost-viability/README.md",
+    "engines/brand-amplification/skills/linkedin-distribution-module/SKILL.md",
     "engines/brand-amplification/skills/quote-flywheel/SKILL.md",
-    "engines/career-intelligence/CHANGELOG.md",
+    "engines/brand-amplification/skills/reddit-distribution-module/SKILL.md",
+    "engines/brand-amplification/skills/social-distribution-engine/campaign_tracker.py",
+    "engines/brand-amplification/skills/social-distribution-engine/campaigns_index.py",
+    "engines/brand-amplification/skills/social-distribution-engine/content-flywheel.md",
     "engines/career-intelligence/CLAUDE.md",
+    "engines/career-intelligence/README.md",
+    "engines/career-intelligence/dev/spec-feature/SKILL.md",
     "engines/career-intelligence/docs/MEMORY-ACCESS.md",
+    "engines/career-intelligence/hooks/scripts/_workspace-gate.sh",
+    "engines/career-intelligence/hooks/scripts/init-repo.sh",
     "engines/career-intelligence/rules/biographical-claim-precheck/README.md",
-    "engines/career-intelligence/tests/test_outreach_dedup.py",
+    "engines/career-intelligence/rules/biographical-claim-precheck/manifest.json",
+    "engines/career-intelligence/rules/company-flags-filter/HOW.py",
+    "engines/career-intelligence/rules/outreach-people-file-commit/AUDIT.py",
+    "engines/career-intelligence/rules/warm-contact-outreach-dedup/handler.ts",
+    "engines/career-intelligence/skills/application-qa/SKILL.md",
+    "engines/career-intelligence/skills/career-intelligence-onboarding/SKILL.md",
+    "engines/career-intelligence/skills/cover-letter/SKILL.md",
+    "engines/career-intelligence/skills/interview-prep/SKILL.md",
+    "engines/career-intelligence/skills/interviewer-research/SKILL.md",
+    "engines/career-intelligence/skills/job-search-scheduler/SKILL.md",
+    "engines/career-intelligence/skills/job-search-scheduler/scan-prompt-v11.md",
+    "engines/career-intelligence/skills/mission-control/SKILL.md",
+    "engines/career-intelligence/skills/organize/SKILL.md",
+    "engines/career-intelligence/skills/outreach-composer/SKILL.md",
+    "engines/career-intelligence/skills/outreach-fact-check/SKILL.md",
+    "engines/career-intelligence/skills/outreach-fact-check/example-verdict-insufficient-evidence.json",
+    "engines/career-intelligence/skills/outreach-fact-check/example-verdict-match.json",
+    "engines/career-intelligence/skills/outreach-fact-check/example-verdict-mismatch.json",
+    "engines/career-intelligence/skills/outreach-fact-check/example-verdict-unknown.json",
+    "engines/career-intelligence/skills/resume-engine/SKILL.md",
     "engines/co-dialectic/ARCHITECTURE-DECISIONS.md",
-    "engines/co-dialectic/CHANGELOG.md",
+    "engines/co-dialectic/fish/hooks/claude-code.ts",
     "engines/co-dialectic/hooks/codify-scan-on-md-edit.ts",
     "engines/co-dialectic/hooks/task-completed-judge-gate.ts",
-    "engines/coordination/.claude-plugin/plugin.json",
-    "engines/coordination/CHANGELOG.md",
+    "engines/co-dialectic/hooks/unit-of-work-check.ts",
     "engines/coordination/com.thewhyman.proactive-daemon.plist.template",
     "engines/coordination/hooks/quote-harvester.ts",
     "engines/coordination/proactive-daemon.ts",
-    "engines/coordination/test/linear-bus.test.ts",
-    "engines/exponential-developer/rules/cost-routing-gate/README.md",
+    "engines/coordination/scripts/session-start-sync.sh",
     "engines/exponential-developer/rules/sdlc-worktree-isolation/SPEC.md",
+    "engines/exponential-developer/skills/ship-feature/SKILL.md",
     "engines/xos/commands/swarm-sync.md",
 }
 
-# Extensions worth scanning. Binaries and lockfiles are noise.
+# What counts as SHIPPED SURFACE, and why it differs from the ship gate in both directions.
+#
+# The ship gate scans SKILL.md / plugin.json / hooks.json / *.sh only. That is too narrow:
+# the real customer-facing bugs fixed under XOS-349 were hardcoded defaults in `.py` and
+# `.ts` source (`DEFAULT_LEDGER_PATH`, `DEFAULT_DECK_PATH`) which it would never have seen.
+#
+# Scanning everything is too wide in the other direction: a CHANGELOG naming a path that
+# existed in 2026-05 is a historical record, not a live defect, and flagging it trains
+# people to add exemptions.
+#
+# So: shipped definitions + executable source, minus history and dev artifacts.
 SCANNED_SUFFIXES = {".md", ".ts", ".js", ".py", ".sh", ".json", ".yaml", ".yml", ".template"}
+# Mirrors the ship gate's SKIP set, plus history files it does not need because its
+# surface never included them.
+SKIP_DIRS = {"__pycache__", "tests", "test", "brain", "node_modules", ".git", "evals"}
+SKIP_FILENAMES = {"CHANGELOG.md"}
+
+
+def is_shipped_surface(rel_parts, name: str) -> bool:
+    """True if this file is something a customer actually receives and runs."""
+    if any(part in SKIP_DIRS or part.startswith(".") for part in rel_parts):
+        return False
+    return name not in SKIP_FILENAMES
 
 
 def fail(problems: list[str], what: str, how: str) -> None:
@@ -245,6 +323,8 @@ def main() -> int:
         for f in sorted(engines_dir.rglob("*")):
             if not f.is_file() or f.suffix not in SCANNED_SUFFIXES:
                 continue
+            if not is_shipped_surface(f.relative_to(engines_dir).parts[:-1], f.name):
+                continue
             try:
                 text = f.read_text(encoding="utf-8", errors="ignore")
             except OSError:
@@ -252,16 +332,21 @@ def main() -> int:
             scanned += 1
             rel = f.relative_to(REPO).as_posix()
             hit = None
-            for pat in USER_PATH_PATTERNS:
-                m = pat.search(text)
-                if m:
-                    hit = m.group(0)
-                    break
-            if hit is None:
-                for tree in PRIVATE_TREES:
-                    if tree in text:
-                        hit = tree
+            for line in text.split("\n"):
+                if EXCLUDED_LINE_RE.search(line):
+                    continue
+                for pat in USER_PATH_PATTERNS:
+                    m = pat.search(line)
+                    if m:
+                        hit = m.group(0)
                         break
+                if hit is None:
+                    for tree in PRIVATE_TREES:
+                        if tree in line:
+                            hit = tree
+                            break
+                if hit:
+                    break
             if hit and rel not in KNOWN_USER_CONTENT:
                 new_offenders.append((rel, hit))
 
