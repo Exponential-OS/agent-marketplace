@@ -93,6 +93,38 @@ jobs:
           "
 
 
+      - name: Skipped tests may not grow (XOS-315 ratchet)
+        # 13 tests are skipped today, all from test_brain_kernel_bootstrap.ts, because they
+        # depend on the `xos` repo being checked out as a sibling. That is a known, accepted
+        # gap -- not a reason to fail the build.
+        #
+        # What IS worth failing on is the gap GROWING. A skip is invisible in a green
+        # summary, so without a ratchet a suite can quietly stop running one file at a time
+        # and every run still reads as success. This grandfathers today's number and refuses
+        # tomorrow's.
+        #
+        # ⚠️ If you legitimately add skips, raise MAX deliberately in the same commit. Having
+        # to touch this number is the point: it makes "we now test less" a visible decision
+        # rather than a side effect.
+        run: |
+          set -euo pipefail
+          MAX=13
+          out=$(bun test ./tests 2>&1 || true)
+          skipped=$(printf '%s\n' "$out" | grep -oE '^ *[0-9]+ skip' | grep -oE '[0-9]+' | head -1)
+          skipped=${skipped:-0}
+          echo "skipped: $skipped (ceiling $MAX)"
+          if [ "$skipped" -gt "$MAX" ]; then
+            echo ""
+            echo "FAIL: $skipped tests skipped, ceiling is $MAX."
+            echo "  Tests did not fail -- they stopped running, which reads as green everywhere."
+            echo "  FIX: either restore whatever made them skip, or raise MAX in this workflow"
+            echo "       in the same commit, so the reduction in coverage is on the record."
+            exit 1
+          fi
+          if [ "$skipped" -lt "$MAX" ]; then
+            echo "NOTE: skips dropped to $skipped. Lower MAX to $skipped to keep the ratchet tight."
+          fi
+
       - name: Platform executables must print usage without touching a browser
         run: |
           bun run platforms/substack.ts --help

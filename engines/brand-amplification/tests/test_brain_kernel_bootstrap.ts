@@ -59,9 +59,31 @@ const BRAIN_KERNEL_PATH = join(
   "kernel.ts",
 );
 const BOOTSTRAP_PATH = join(import.meta.dir, "..", "brain-kernel-bootstrap.ts");
-const describeWithBrainKernel = existsSync(BRAIN_KERNEL_PATH)
-  ? describe
-  : describe.skip;
+// XOS-315: a conditional skip on a CROSS-REPO dependency.
+//
+// These 13 tests run only when the `xos` repo happens to be checked out as a SIBLING of
+// this one. It never is in CI, and it is not in any worktree -- so they have never run
+// there, and the only signal was "13 skip" in a summary nobody reads.
+//
+// Nothing here is broken. The guard is deliberate and correct: the dependency is genuinely
+// optional. The defect is entirely in the REPORTING -- a conditional skip is
+// indistinguishable from a pass in every surface that matters, which is this gate class's
+// whole failure mode.
+//
+// So the skip stays (breaking local runs for a missing optional dep would be worse), but it
+// now ANNOUNCES ITSELF with the path it wanted and the consequence. A reader who sees the
+// count can now find out why without reading the source.
+const brainKernelPresent = existsSync(BRAIN_KERNEL_PATH);
+if (!brainKernelPresent) {
+  console.warn(
+    `\n⚠ SKIPPING 13 brain-kernel bootstrap tests.\n` +
+      `  wanted: ${BRAIN_KERNEL_PATH}\n` +
+      `  why:    the xos repo is not checked out as a sibling of this one.\n` +
+      `  effect: the bootstrap path is UNTESTED in this run, including in CI.\n` +
+      `  fix:    clone Exponential-OS/xos beside this repo, or accept the gap knowingly.\n`,
+  );
+}
+const describeWithBrainKernel = brainKernelPresent ? describe : describe.skip;
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
