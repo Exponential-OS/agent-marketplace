@@ -25,19 +25,19 @@ The Dolt SQL substrate (v0.20.0–v0.23.0, Apr 15 → Apr 25 2026) was rolled ba
 
 ```bash
 # Health: count brain-layer files
-ls ~/anand-career-os/brain/network/people/*.md | wc -l
+ls $CAREER_HOME/brain/network/people/*.md | wc -l
 
 # Roles in top tier
-grep -lE "^tier: FULL_INVEST" ~/anand-career-os/brain/projects/job-search/roles/*.md
+grep -lE "^tier: FULL_INVEST" $CAREER_HOME/brain/projects/job-search/roles/*.md
 
 # Applications in active section
-grep -lE "^status: active" ~/anand-career-os/brain/projects/job-search/applications/*.md
+grep -lE "^status: active" $CAREER_HOME/brain/projects/job-search/applications/*.md
 
 # Stories tagged for a competency
-grep -lE "^tags:.*leadership" ~/anand-career-os/brain/stories/*.md
+grep -lE "^tags:.*leadership" $CAREER_HOME/brain/stories/*.md
 
 # People above a warmth floor
-grep -lE "^warmth: [4-5]" ~/anand-career-os/brain/network/people/*.md
+grep -lE "^warmth: [4-5]" $CAREER_HOME/brain/network/people/*.md
 ```
 
 ### Python — pyyaml + pathlib
@@ -48,7 +48,7 @@ import yaml
 
 def list_roles(min_score: int = 85, tier: str | None = None) -> list[dict]:
     roles = []
-    base = Path("~/anand-career-os/brain/projects/job-search/roles/").expanduser()
+    base = Path("$CAREER_HOME/brain/projects/job-search/roles/").expanduser()
     for path in base.glob("*.md"):
         text = path.read_text()
         if not text.startswith("---\n"):
@@ -81,7 +81,7 @@ Each skill is the **sole writer** for its owned `.md` files (see `schemas/shared
 | `job-match-scorer` | `brain/job-pipeline-match-tracker.md` |
 | `skills-update` | `brain/skills-matrix.md` |
 | `story-capture` | `brain/stories/**/*.md`, `STORY_INDEX.md` |
-| `network-intelligence` | `~/anand-career-os/brain/network/people/<name>.md` (SSOT per ADR-001) |
+| `network-intelligence` | `$CAREER_HOME/brain/network/people/<name>.md` (SSOT per ADR-001) |
 | `interview-prep` | `brain/interview-prep/prep-*.md` |
 | `pipeline-sync` | `brain/job-pipeline.md`, `brain/tasks/Tasks.md` |
 | `cruise-control` | `brain/tasks/Tasks.md`, per-batch logs |
@@ -114,7 +114,7 @@ Skills that draft content destined for real humans (`outreach-composer`, `resume
 ```bash
 bash ~/cyborg/rules/biographical-claim-precheck/HOW.sh "$(jq -nc \
   --arg draft "/path/to/in-progress-draft.md" \
-  --arg canonical "$HOME/anand-career-os/brain/identity/experience-history.md" \
+  --arg canonical "$CAREER_HOME/brain/identity/experience-history.md" \
   '{draft_path:$draft, canonical_sources:[$canonical], stakes:"T4"}')"
 ```
 
@@ -130,16 +130,16 @@ Verdict `BLOCK` means a claim has no canonical anchor; fix the draft, do not byp
 
 ## Troubleshooting
 
-- **"I see stale data" →** `git -C ~/anand-career-os pull --ff-only`. Sibling agents may have committed updates not yet pulled (GIT-NATIVE COORDINATION invariant).
-- **"My grep returns nothing" →** check the canonical path with `ls ~/anand-career-os/brain/`. Brain reorganized 2026-04-26 (cyborg → xHumanOS migration); old paths under `~/cyborg/people/` and `~/cyborg/projects/` are now under `~/anand-career-os/brain/network/people/` and `~/anand-career-os/brain/projects/`.
+- **"I see stale data" →** `git -C "$CAREER_HOME" pull --ff-only`. Sibling agents may have committed updates not yet pulled (GIT-NATIVE COORDINATION invariant).
+- **"My grep returns nothing" →** check the canonical path with `ls $CAREER_HOME/brain/`. Brain reorganized 2026-04-26 (cyborg → xHumanOS migration); old paths under `~/cyborg/people/` and `~/cyborg/projects/` are now under `$CAREER_HOME/brain/network/people/` and `$CAREER_HOME/brain/projects/`.
 - **"Frontmatter parse error" →** the file is missing `---\n...---\n` markers, or YAML inside is malformed. Fix the file; do NOT add silent fallback to the reader.
 - **"AdapterDeprecated raised" →** you're calling `cyborg-db.py` or `memory_adapter.py`. Migrate to direct file reads per the examples above.
 
 ## References
 
 - Schema definitions: `schemas/shared-structures.md`
-- Brain layer root: `~/anand-career-os/brain/`
-- Constitution memory rules: `~/cyborg/CONSTITUTION.md` § Multi-Agent (P15) + Shared-State Hydration Invariant
+- Brain layer root: `$CAREER_HOME/brain/`
+- Memory rules: see this plugin's README § Skill-side memory access
 - Biographical-claim rule: `~/cyborg/rules/biographical-claim-precheck/`
 - Migration archives (historical, do not run): `~/cyborg/brain-db/migrate_career_os.py` + `migrations/v0.19.1-to-v0.20.0.sh` etc.
 

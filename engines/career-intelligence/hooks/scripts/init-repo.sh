@@ -189,7 +189,7 @@ Do NOT create skill files, kernel files, or hook scripts in this workspace.
 All skills are defined in the plugin repo and versioned through its CI pipeline.
 
 If you find a bug or want to change skill behavior:
-1. Write a spec or bug report to the relevant WIP folder (e.g., `WIP/career-os-product/`)
+1. Write a spec or bug report to the specs folder named by `$CAREER_SPECS`
 2. NEVER modify plugin source from this workspace
 3. Implementation happens in the plugin repo, not here
 CLAUDEMD

@@ -2,6 +2,23 @@
 <!-- this file is the historical changelog. Entries reference the original author/user as provenance, not runtime data. -->
 # Changelog
 
+## [1.0.1] — 2026-10-27 — personal-workspace references removed from shipped files
+
+Three migration scripts printed, as the **customer's own instructions**, a GitHub
+repo and workspace paths belonging to one maintainer. Two more advertised
+`/plugin install career-os@thewhyman`, which is not the current marketplace name.
+All now resolve through `$CAREER_HOME` / `$CAREER_ISSUES_REPO` / `$CAREER_SPECS`.
+
+`rules/biographical-claim-precheck/README.md` carried a real third party's name
+and an `INPUT/` path as a worked example — **a private individual named in a
+shipped README**. The ship gate could not see it: its scan scope is `SKILL.md` /
+`plugin.json` / `hooks.json` / `*.sh`, and `README.md` is none of those
+(XOS-357). Found by grepping by hand after the gate reported PASS.
+
+**Version note.** The fix merged at 1.0.0, the version already installed
+everywhere, so no customer would have received it — a change that cannot be
+delivered is not shipped. This bump is what makes it reachable.
+
 ## [1.0.0] - 2026-08-17 - Career Intelligence 1.0
 
 First 1.0. Two things change: the upgrade path is repaired and simplified, and the product is called by its own name everywhere.

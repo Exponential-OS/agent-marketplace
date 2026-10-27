@@ -29,12 +29,12 @@ Read from the current working directory (which should be $CAREER_HOME):
 - brain/tasks/ (if exists) — current priorities
 - CLAUDE.md (if exists) — workspace rules
 
-Product specs live in a subdirectory: WIP/career-os-product/ (i.e., $CAREER_SPECS).
+Product specs live in the directory named by `$CAREER_SPECS`.
 
 ### Single feature
 1. Identify feature name from user request
-2. Read WIP/career-os-product/PRD.md and WIP/career-os-product/PRODUCT_SPEC.md for feature context
-3. Generate WIP/career-os-product/work-orders/{feature-name}-SKILL.md with:
+2. Read $CAREER_SPECS/PRD.md and $CAREER_SPECS/PRODUCT_SPEC.md for feature context
+3. Generate $CAREER_SPECS/work-orders/{feature-name}-SKILL.md with:
    - YAML frontmatter: name, description, triggers, phase
    - Behavior spec: what it does, inputs, outputs
    - Dependencies on other skills
@@ -42,8 +42,8 @@ Product specs live in a subdirectory: WIP/career-os-product/ (i.e., $CAREER_SPEC
 4. Report what was created
 
 ### All pending
-1. Read WIP/career-os-product/PRODUCT_SPEC.md — extract all planned skills from the Skill Inventory table
-2. List existing work orders in WIP/career-os-product/work-orders/
+1. Read $CAREER_SPECS/PRODUCT_SPEC.md — extract all planned skills from the Skill Inventory table
+2. List existing work orders in $CAREER_SPECS/work-orders/
 3. List implemented skills in $CAREER_OS_PLUGIN/skills/
 4. Diff: planned minus (already specced + already implemented) = pending
 5. Generate work orders for all pending features

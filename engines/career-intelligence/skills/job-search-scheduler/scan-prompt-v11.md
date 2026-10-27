@@ -328,7 +328,7 @@ Save to: `career-intelligence/projects/job-search/scans/{SCAN_DATE}/scan-{SCAN_T
 
 ## Search Mode: {from config}
 
-**Candidate:** Anand Vallamsetla
+**Candidate:** {{CANDIDATE_NAME}}
 **Scan type:** Automated daily scan (v11 — plugin path format)
 **Reference:** Previous scan {date} {time} — delta tracked below.
 **Agent:** {agent-id}

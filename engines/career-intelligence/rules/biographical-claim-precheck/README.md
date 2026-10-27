@@ -23,7 +23,7 @@ When any T4 outreach draft is about to land in front of a real human, run:
 ```bash
 bash ~/cyborg/rules/biographical-claim-precheck/HOW.sh '{
   "draft_path": "/path/to/draft.md",
-  "canonical_sources": ["~/anand-career-os/brain/identity/experience-history.md"],
+  "canonical_sources": ["$CAREER_HOME/brain/identity/experience-history.md"],
   "stakes": "T4"
 }'
 ```
@@ -77,12 +77,12 @@ Verdict: PASS for the substantive content (false positives on the v1→v2 compar
 
 ```bash
 bash ~/cyborg/rules/biographical-claim-precheck/HOW.sh '{
-  "draft_path": "~/anand-career-os/INPUT/matt-kleinman-email-2026-04-26.md",
+  "draft_path": "$CAREER_HOME/INPUT/outreach-draft.md",
   "stakes": "T4"
 }' | jq .
 ```
 
-Expected: JSON output with `verdict`, `claims_total`, `claims_anchored`, `claims_unanchored[]`. Default canonical = `~/anand-career-os/brain/identity/experience-history.md` (defaulted when caller omits `canonical_sources`).
+Expected: JSON output with `verdict`, `claims_total`, `claims_anchored`, `claims_unanchored[]`. Default canonical = `$CAREER_HOME/brain/identity/experience-history.md` (defaulted when caller omits `canonical_sources`).
 
 **Audit check:**
 
