@@ -2,15 +2,16 @@
 
 ## Problem (observed 2026-06-09)
 Two interactive sessions both ran mutating git operations against the SAME primary checkout
-(one HEAD/one index). Result: bilateral data loss — one session's CONSTITUTION.md
-edit was reverted by the other's `git checkout`; a live `.git/index.lock` race blocked staging.
+(one HEAD/one index). Result: bilateral data loss — one session's edit to a shared
+governance file was reverted by the other's `git checkout`; a live `.git/index.lock` race
+blocked staging.
 
-Superset already isolates the *task* repo (`anand-career-os` has 7 per-session worktrees).
+Where a per-session worktree tool is in use, the *task* repo is already isolated.
 The gap is the SHARED brain/infra repo, which has only its primary checkout — every
 session reaches into it directly. `sdlc-work-claim` coordinates *tickets*; this coordinates the
 *filesystem*.
 
-## The invariant (already in CONSTITUTION.md, SDLC WORK-CLAIM companion clause)
+## The invariant (SDLC WORK-CLAIM, filesystem companion clause)
 > Each session/machine MUST work in its OWN worktree/clone, never a shared checkout.
 
 ## Deliverable: a PreToolUse Bash hook + reusable handler (living-code triad)
@@ -76,5 +77,6 @@ the minimal shell the harness requires, living OUTSIDE rules/<slug>/ if a shell 
    exit(0) on PASS. Add a regression test to sdlc-work-claim/tests.ts.
 
 ## Out of scope
-- anand-career-os (Superset already isolates per session).
+- the task repo, WHEN a per-session worktree tool is in use (verify this for your own
+  setup; it is not true by default).
 - Auto-provisioning worktrees (the hook BLOCKS + instructs; auto-provision is a later enhancement).

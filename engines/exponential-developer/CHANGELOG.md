@@ -1,5 +1,30 @@
 # Changelog
 
+## [1.4.1] — 2026-10-26 — two shipped docs carried a maintainer's absolute paths
+
+`rules/cost-routing-gate/README.md` gave the hook registration as a copy-paste
+`hooks.json` block whose `command` was `/Users/anandvallam/.bun/bin/bun`, in three
+places. **Documentation meant to be pasted IS configuration**: anyone who followed
+it got a hook pointing at a home directory that is not theirs, and a PreToolUse
+hook whose binary does not resolve fails quietly — the gate simply never fires,
+and nothing says so.
+
+Now plain `bun`, plus the note that was actually missing: if the hook never fires,
+`bun` is not on the PATH hooks run with, and the fix is to run `command -v bun`
+yourself and paste the result. That is the real reason an absolute path was there, and it was
+never written down — so the hardcoded one read like a requirement rather than one
+person's workaround.
+
+`rules/sdlc-worktree-isolation/SPEC.md` named a specific workspace repo twice in
+an incident write-up, and pointed at `CONSTITUTION.md` for an invariant it quotes
+in full three lines below. That pointer sent a customer to a file this plugin does
+not ship; removing it loses nothing, because the text was already there.
+
+Found during the XOS-353 sweep. The ship gate caught the `/Users/` path and one
+repo name; the third absolute path, the `$(command -v bun)` gap and the dangling
+canon reference came from reading the files — `README.md` and `SPEC.md` are
+outside its scan scope (XOS-357).
+
 ## [1.4.0] — 2026-10-25 — XOS-351: every acceptance criterion carries its own proof
 
 - **Stage 2 spec template:** each acceptance criterion now requires a `verify:` line naming the exact command that proves it, and the output that counts as proof. A criterion with no command is not a criterion, it is a hope — and it is precisely what forces a human to re-read the diff at merge, which is how review became the bottleneck rather than the build.
