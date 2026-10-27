@@ -82,6 +82,31 @@ GPT-5.4 lane exited with an error; this is not a full-panel passing verdict.
   - `$CAREER_HOME/brand-amplification/identity/brand-spec.json` — brand schema (created by `sde-onboarding`)
   - `$CAREER_HOME/brand-amplification/campaigns/` — initiative + campaign storage
 
+### Per-surface identity (XOS-353)
+
+These used to be literals inside the shipped code, which meant the LinkedIn and
+Substack paths worked for exactly one person and failed for everyone else. They
+are configuration now, with no defaults — a wrong default is what caused the bug.
+
+- `BAE_LINKEDIN_ACTOR` — **required for LinkedIn.** Your display name, spelled
+  exactly as LinkedIn renders it in your post's actor block. The ownership check
+  looks for `<that name> • You` before it will act on a post; the "• You" badge
+  alone is deliberately not enough, so a post by someone else can never match.
+- `BAE_SUBSTACK_DOMAIN` — **required for Substack.** The hostname your
+  publication's editor is served from, exactly as the browser shows it:
+  `your-publication.substack.com`, or `www.example.com` if that is the custom
+  domain you see. A scheme and a trailing path are stripped and the value is
+  lowercased; **`www.` is otherwise left alone — never added, never removed.**
+  Two cross-family judges caught the first version doing both, which turns every
+  standard `<name>.substack.com` into a hostname that does not serve the editor.
+- `BAE_CAMPAIGN_DIRS` — *optional.* Extra campaign roots for the analytics sync,
+  colon-separated, absolute or relative to `$CAREER_HOME`. The default is the
+  plugin's own `brand-amplification/campaigns/` and nothing else; set this if you
+  keep campaigns anywhere in addition to it.
+
+Each one fails with the exact `export` line to run if it is missing, rather than
+guessing and acting on the wrong account.
+
 ## Install
 
 ```bash
@@ -99,4 +124,4 @@ For first-time customers, run `sde-onboarding` after install to populate the bra
 
 ## Provenance
 
-Extracted from career-intelligence-engine v0.61.0 to honor the xOS-vs-xHumanOS platform split per `WIP/xOS-platform/social-distribution-product/NEXT_SESSION_HANDOFF.md`.
+Extracted from career-intelligence-engine v0.61.0 to honor the xOS-vs-xHumanOS platform split.

@@ -2,8 +2,10 @@
 """
 campaign_tracker.py — per-campaign URL capture, analytics, and file structure enforcer.
 
-Each campaign lives at:
-  WIP/branding-product/articles/NN-slug-YYYY-MM-DD/
+Each campaign lives in one folder under the campaigns root, named
+  <NN>-<slug>-<YYYY-MM-DD>/
+See "$CAMPAIGN_HOME" in social-distribution-engine/content-flywheel.md for where
+that root is configured.
 
 This script reads/writes campaign.json in that folder — the machine-readable
 source of truth for live URLs, post status, and analytics snapshots.

@@ -13,7 +13,7 @@ why: >
 customer-config: "$CAREER_HOME/brand-amplification/identity/brand-patterns.md"
 related:
   - content-flywheel.md
-  - CONSTITUTION.md slugs: learning-velocity, signal-curation, zero-flattery, learning-flywheel, signal-amplification, feedback-loop, complementary-composition
+  - governance slugs (your workspace's own constitution): learning-velocity, signal-curation, zero-flattery, learning-flywheel, signal-amplification, feedback-loop, complementary-composition
 ---
 
 
@@ -135,7 +135,7 @@ Every agent working on branded artifacts operates in **draft-first mode**:
   [one-sentence reason]; redline it or tell me to pivot." Never end with
   "what would you like me to do?"
 - **Irreversibles still ask.** Publishing, sending outreach, pushing to
-  public repos — these still get explicit approval. Drafts into `WIP/` or
+  public repos — these still get explicit approval. Drafts into `$CAMPAIGN_HOME` or
   `research/` never do.
 - **When the agent pivots mid-draft, it pivots — doesn't ask.** If mid-way
   through drafting v0.3 the agent realizes Part 3 should be first, it
@@ -178,7 +178,7 @@ The customer's specific worked examples (their actual articles and scoring) are 
 
 ## Reference artifacts this framework draws on
 
-- CONSTITUTION.md: P17 (learning velocity), P20 (signal curation), P22
+- governance principles: P17 (learning velocity), P20 (signal curation), P22
   (boundary-first qualification), Zero Flattery invariant.
 - Customer's `$CAREER_HOME/brand-amplification/identity/brand-patterns.md`:
   specific track targets, biographical shape, and worked examples for this customer.

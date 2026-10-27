@@ -12,14 +12,20 @@
  * insertHTML is verified; strip inter-tag whitespace or it creates blank blocks.
  * Cascade/group calls take ONE target by design: bulk loops changed the action's
  * authorization scope. Callers must not quietly turn a single send into a batch.
- * Ownership includes 'Anand Vallamsetla • You' inside GROUP actor blocks; their
+ * Ownership shows '<owner name> • You' inside GROUP actor blocks; their
  * title is a group name. Cascade -> platform HUB POST; hub FIRST COMMENT -> honey pot.
  * Source: flywheel-execution-lessons.md (campaigns 12/14/20), Python headers.
  * Dropped stale tab matching, fixed coordinates, hardcoded campaign text, first-word
  * group matching, silent parse fallbacks, auto-dismiss and body-text send guesses.
  */
-import { readFileSync, existsSync } from "node:fs";
-import { resolve } from "node:path";
+import { readFileSync, existsSync } from "fs";
+import { resolve } from "path";
+import {
+  resolveOwnerName,
+  requireOwnerName,
+  escapeRe,
+  requireHoneyPotDomain,
+} from "./_identity";
 import {
   type CDP,
   type BrowserTargets,
@@ -428,10 +434,21 @@ export async function verifyPersisted(
     "Wait for autosave, inspect CDN images across the whole document, then verify persistence without repeating edits.",
   );
 }
+/**
+ * XOS-353: `domain` defaulted to the maintainer's own newsletter, so a customer
+ * who omitted it got a honeypot check that passed only for someone else's
+ * subscribe link. It is REQUIRED now -- there is no correct default, and an
+ * incorrect one silently verifies the wrong funnel.
+ */
 export async function checkHoneypotChain(
   c: CDP,
   pieceUrl: string,
-  domain = "thewhyman.blog",
+  /**
+   * ⚠️ No default. This used to be `domain = "<honey-pot domain>"` — one person's
+   * publication, compiled into a shipped plugin, so every other user's
+   * honey-pot chain silently checked against a blog they do not own.
+   */
+  domain = requireHoneyPotDomain(),
 ) {
   return readArticle<any>(
     c,
@@ -477,10 +494,115 @@ export async function checkNamedReferences(
     "Link each named reference at its first mention and in the closing blocks.",
   );
 }
-export function assertOwnPost(urn: string, actor: string) {
-  if (!/Anand Vallamsetla\s*•?\s*You\b/.test(norm(actor)))
+/**
+ * ⛔ XOS-353: ONE person's display name was compiled into this check, so for
+ * every other customer `assertOwnPost` could never pass and the LinkedIn path
+ * was dead. It failed CLOSED, which is why nobody noticed -- a safety check
+ * that always says no looks like a safety check that works.
+ *
+ * The pairing it enforces is deliberate and is KEPT exactly as it was: the
+ * "• You" badge alone is not accepted, because "Someone Else • You" must still
+ * abort. Only the name itself moves, from a literal to configuration.
+ */
+
+export {
+  resolveOwnerName,
+  requireOwnerName,
+  resetIdentityCache as resetOwnerNameCache,
+} from "./_identity";
+
+/**
+ * Identity comes from `_identity.ts` (BRAND_OWNER_NAME, else the brand-spec the
+ * onboarding skill already writes). The PATTERN below is this file's job, and
+ * the two are separate concerns: resolving WHO the owner is, and deciding what
+ * actor text proves a post is theirs. Four cross-family review passes went into
+ * the second one; none of them change the first.
+ */
+
+/**
+ * ⛔ A SECOND, OLDER DEFECT, surfaced by the cross-family panel while reviewing
+ * the fix above. The pattern had no leading anchor and was tested against the
+ * whole actor block flattened to one line, so it matched ANYWHERE in it:
+ *
+ *     owner "Test Owner"  vs  actor "Not Test Owner • You"   ->  ACCEPTED
+ *
+ * Reproduced before fixing. This is an AUTHORIZATION gate, and anyone whose
+ * display name merely ENDS with the owner's name passed it. The defect predates
+ * the hardcoded literal being removed -- `/Anand Vallamsetla\s*•?\s*You\b/`
+ * had exactly the same property -- so it shipped for as long as the check has
+ * existed, and making the name configurable would have carried it forward
+ * unchanged.
+ *
+ * ⭐ THE ANCHOR HAS TO BE PER LINE, NOT PER STRING. LinkedIn's actor block is
+ * "<group>\n<name> • You\n<age>", so `^` against the flattened string would
+ * reject every group post. Each LINE is normalized and anchored instead.
+ *
+ * ⛔ A LEADING ANCHOR ALONE WAS NOT ENOUGH EITHER. The panel came back a second
+ * time with two more bypasses, both reproduced before fixing:
+ *
+ *     owner "Test Owner"  vs  "Test Owner You Know • 2nd"      -> ACCEPTED
+ *     owner "Test Owner"  vs  "Test Owner • You (Admin) / x"   -> ACCEPTED
+ *
+ * The first works because the separator was OPTIONAL (`•?`), so a longer display
+ * name beginning with the owner's and containing the word "You" satisfies the
+ * whole pattern. The second works because nothing anchored the END, so arbitrary
+ * text could follow the badge.
+ *
+ * Both holes close the same way: the separator is REQUIRED, and the line must END
+ * after the badge or after a further separator-led segment (LinkedIn appends
+ * things like "• 2nd"). Accepted separators are the three LinkedIn actually
+ * renders.
+ *
+ * ⚠️ THIS FAILS CLOSED IF THE SEPARATOR EVER DISAPPEARS from the rendered actor
+ * block — every post would be refused rather than mis-attributed. For a check
+ * that gates acting on a post that is the correct direction, and the abort names
+ * exactly what it expected, so the fix is the selector rather than this regex.
+ */
+const ACTOR_SEPARATORS = "•·|";
+
+/**
+ * ⛔ AND THE TRAILING SEGMENT COULD NOT BE `.*` EITHER. A fourth panel pass:
+ *
+ *     owner "Test Owner"  vs  "Test Owner • You • Impostor • 2nd"  -> ACCEPTED
+ *
+ * LinkedIn display names may contain `•`, so an attacker named
+ * "Test Owner • You • Impostor" supplies the apparent badge themselves and the
+ * unrestricted suffix swallows the real connection badge that follows.
+ *
+ * ⭐ SO THE SUFFIX IS AN ALLOWLIST, NOT A WILDCARD. This is the same argument as
+ * every other gate in this tree: `.*` answers "what did I think of", an
+ * enumerated set answers "what does LinkedIn actually append". The badges below
+ * are short, closed and stable; anything else fails closed, which for a check
+ * that gates acting on a post is the right direction.
+ */
+const TRAILING_BADGES = "1st|2nd|3rd\\+?|Following|Premium";
+
+export function ownActorPattern(owner: string = requireOwnerName()): string {
+  const sep = `[${ACTOR_SEPARATORS}]`;
+  const trailing = `(?:\\s*${sep}\\s*(?:${TRAILING_BADGES}))*`;
+  return `^${escapeRe(owner)}\\s*${sep}\\s*You\\b${trailing}\\s*$`;
+}
+
+/** The actor block, one normalized line per line. The line structure IS the
+ *  signal here, so it must not be flattened away before matching. */
+export function actorLines(actor: string): string[] {
+  return actor
+    .split(/\r?\n/)
+    .map((l) => l.replace(/\s+/g, " ").trim())
+    .filter((l) => l.length > 0);
+}
+
+export function assertOwnPost(
+  urn: string,
+  actor: string,
+  owner: string = requireOwnerName(),
+) {
+  const expected = owner;
+  const re = new RegExp(ownActorPattern(owner));
+  if (!actorLines(actor).some((line) => re.test(line)))
     throw new Error(
-      `⛔ ABORT ${urn} — not his post. Fix: select Anand's own post and verify its actor block.`,
+      `⛔ ABORT ${urn} — actor block is not "${expected} • You", so this is not your post. ` +
+        `Fix: select your own post and verify its actor block.`,
     );
   return true;
 }
@@ -944,7 +1066,7 @@ export async function groupPost(target: GroupTarget, options: Execution = {}) {
         await gate();
         const posted = await page(
           c,
-          `return [...document.querySelectorAll('.feed-shared-update-v2')].some(p=>/Anand Vallamsetla\\s*•?\\s*You\\b/.test((p.querySelector('.update-components-actor')?.innerText||'').replace(/\\s+/g,' '))&&(p.querySelector('.update-components-text')?.innerText||'').replace(/\\s+/g,' ').trim()===${J(norm(target.paragraphs.join(" ")))});`,
+          `return [...document.querySelectorAll('.feed-shared-update-v2')].some(p=>{const re=new RegExp(${J(ownActorPattern())});const owned=(p.querySelector('.update-components-actor')?.innerText||'').split(/\\r?\\n/).map(l=>l.replace(/\\s+/g,' ').trim()).filter(l=>l.length>0).some(l=>re.test(l));return owned&&(p.querySelector('.update-components-text')?.innerText||'').replace(/\\s+/g,' ').trim()===${J(norm(target.paragraphs.join(" ")))};});`,
         );
         if (!posted)
           throw new Error("submission unconfirmed on fresh group page");

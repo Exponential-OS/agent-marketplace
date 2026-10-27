@@ -88,7 +88,7 @@ These signals are not visible to creators but carry the highest algorithmic weig
 - **WARN** if the bio link reference is generic ("link in bio") without specifying what the link goes to
 - **PASS** examples:
   - "Save this for your next distribution campaign. Send it to one person building their content flywheel."
-  - "Full methodology — link in bio (updated to the LinkedIn post). Follow @anandvallam for the series."
+  - "Full methodology — link in bio (updated to the LinkedIn post). Follow @{your-handle} for the series."
 
 ### Facebook (spoke)
 - **WARN** if the post is purely informational with no share ask

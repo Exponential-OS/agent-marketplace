@@ -4,7 +4,9 @@
  *
  * Push a flywheel article's content/substack.md into a Substack draft (title,
  * subtitle, section, full rich-text body) via the persistent authenticated
- * Chrome instance on :9222 (see ~/anand-career-os/scripts/launch-mcp-browser.sh).
+ * Chrome instance on :9222 (launch it with the bundled
+ * skills/brand-mcp-setup/launchers/launch-chrome-devtools-mcp.sh, or run the
+ * brand-mcp-setup skill). Override the port with CDP_PORT.
  * Creates a DRAFT only — never touches Publish/Send/Republish.
  *
  * Usage:
@@ -40,12 +42,66 @@
  */
 
 import { spawnSync } from "bun";
+import { requireHoneyPotDomain, escapeRe } from "./_identity";
 import { readFileSync, writeFileSync, unlinkSync } from "fs";
 import { randomUUID } from "crypto";
 import { type CDP, type BrowserTargets, createFreshDraftTarget, connectDraftTarget,
   assertWritable, assertClean, primitive, sleep } from "./_cdp";
 
 const CHUNK_MAX_CHARS = 6000;
+
+/**
+ * ⛔ XOS-353: ONE publication's domain was hardcoded in three places here -- the
+ * navigation target, the draft-page origin assertion, and the final-URL check --
+ * in a plugin published through a PUBLIC marketplace. Every customer who ran the
+ * Substack pusher was driven at the maintainer's newsletter, so this entire path
+ * was non-functional for everyone but him; and a customer who happened to hold
+ * write access there would have had a draft created on SOMEONE ELSE'S
+ * publication. The old literal is not repeated in this comment -- restating it
+ * would republish exactly what this change removes.
+ *
+ * NO DEFAULT, deliberately. A wrong default is what produced the bug, and an
+ * empty one would silently build "https://www./publish/post" and fail somewhere
+ * far less legible than here. Per FAIL-HARD a missing required config is broken,
+ * not absent: say WHAT is wrong and HOW to fix it, once, at the boundary.
+ */
+export { requireHoneyPotDomain } from "./_identity";
+
+/**
+ * WHERE the publication name comes from is `_identity.ts` (HONEY_POT_DOMAIN,
+ * else the brand-spec). WHAT SHAPE it must be is this function, and the two are
+ * separate: one answers "whose publication", the other "is that even a
+ * hostname, and is it the one the browser will report".
+ */
+export function substackDomain(raw: string = requireHoneyPotDomain()): string {
+  if (!raw?.trim())
+    throw new Error(
+      `No Substack publication is configured, so there is nothing to push a draft to. ` +
+        `Fix: set HONEY_POT_DOMAIN to the hostname your publication's editor is served ` +
+        `from, exactly as the browser shows it — e.g. your-publication.substack.com, or ` +
+        `www.example.com if that is the custom domain you see. It is used verbatim.`,
+    );
+  // ⚠️ Do NOT strip a leading `www.` and do NOT add one. Both were tried: the
+  // first version stripped it here and the caller prepended it, which is right
+  // only for a custom domain that uses www and WRONG for every standard
+  // `<name>.substack.com`. The hostname is used verbatim now -- whatever serves
+  // your publication's editor is what belongs here.
+  //
+  // Lowercased because the check downstream compares against `location.origin`,
+  // which the browser lowercases; a mixed-case value would pass this validator
+  // and then fail that comparison for a reason nothing would explain.
+  const host = raw
+    .trim()
+    .replace(/^https?:\/\//, "")
+    .replace(/\/.*$/, "")
+    .toLowerCase();
+  if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i.test(host))
+    throw new Error(
+      `Configured publication "${raw}" is not a hostname. ` +
+        `Fix: set HONEY_POT_DOMAIN to a bare domain such as your-publication.substack.com.`,
+    );
+  return host;
+}
 
 const USAGE = 'Usage: bun run platforms/substack.ts <path-to-content.md> [--section "Name"] [--subtitle "..."]';
 
@@ -319,6 +375,8 @@ export interface DraftOptions {
   browser?: BrowserTargets;
   connect?: (wsUrl: string) => Promise<CDP>;
   wait?: (ms: number) => Promise<void>;
+  /** Publication hostname. Falls back to BAE_SUBSTACK_DOMAIN; validated either way. */
+  domain?: string;
 }
 
 /** Port of the production pusher: native textarea setters and synchronous,
@@ -331,9 +389,19 @@ export async function pushDraft(content: DraftContent, options: DraftOptions = {
     throw new Error("Invalid draft content. Fix: provide a title and nonempty HTML chunks.");
   const { title, subtitle, section, chunks } = content;
   const wait = options.wait ?? sleep;
-  const target = await createFreshDraftTarget("https://www.thewhyman.blog/publish/post?type=newsletter", options.browser);
+  // Injected domains go through the SAME validator as the env var -- one code
+  // path, so a test can never exercise a shape production would reject.
+  // `!== undefined`, not truthiness: with `?` an injected empty string fell
+  // through to the configured value, so a caller passing `domain: ""` silently
+  // got somebody else's publication instead of the validation error promised
+  // above. Caught by the tiebreaker lane.
+  const domain = substackDomain(
+    options.domain !== undefined ? options.domain : requireHoneyPotDomain(),
+  );
+  const origin = `https://${domain}`;
+  const target = await createFreshDraftTarget(`${origin}/publish/post?type=newsletter`, options.browser);
   const cdp = await connectDraftTarget(target, options.connect);
-  const draftPage = `location.origin === 'https://www.thewhyman.blog' && /^\\/publish\\/post\\/[^/]+\\/?$/.test(location.pathname)`;
+  const draftPage = `location.origin === ${JSON.stringify(origin)} && /^\\/publish\\/post\\/[^/]+\\/?$/.test(location.pathname)`;
   try {
     await wait(4000); // Verified SPA redirect/editor mount delay, never an action retry.
     return await primitive("pushDraft", async () => {
@@ -386,7 +454,10 @@ export async function pushDraft(content: DraftContent, options: DraftOptions = {
       }, actual => actual === expected,
       "Inspect autosave and the reloaded draft; do not paste again or publish an unverified draft.");
       return await cdp.evalSync("window.location.href");
-    }, url => typeof url === "string" && /^https:\/\/www\.thewhyman\.blog\/publish\/post\/[^/]+\/?$/.test(url),
+    }, url => typeof url === "string" &&
+      // `domain` is validated to [a-z0-9.-] above, so `.` is the only regex
+      // metacharacter that can appear -- escaping it is provably sufficient here.
+      new RegExp(`^${origin.replace(/\./g, "\\.")}/publish/post/[^/]+/?$`).test(url),
     "Open a fresh, empty newsletter draft; preserve any existing content and inspect the page before continuing.");
   } finally {
     cdp.close();

@@ -5,7 +5,7 @@ HOW.py — reddit-prepost-viability enforcement (entry point).
 Delegates to check.py, logs result, exits with check.py's return code.
 
 Usage:
-  python3 HOW.py '{"subreddit":"r/Entrepreneur","body":"...","title":"...","handle":"thewhyman007"}'
+  python3 HOW.py '{"subreddit":"r/Entrepreneur","body":"...","title":"...","handle":"your-reddit-handle"}'
 """
 from __future__ import annotations
 

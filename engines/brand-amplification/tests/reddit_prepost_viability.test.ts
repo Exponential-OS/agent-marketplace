@@ -68,7 +68,7 @@ function makeFixture(): {
   const researchPath = join(dir, "50-subreddits-ai-citation-index-2026.md");
   writeFileSync(
     ledgerPath,
-    JSON.stringify({ handle: "thewhyman007", updated: "2026-08-13", entries: history }),
+    JSON.stringify({ handle: "your-reddit-handle", updated: "2026-08-13", entries: history }),
   );
   writeFileSync(
     researchPath,
@@ -125,7 +125,7 @@ describe("reddit-prepost-viability", () => {
   test("bundled workspace seed preserves the five verified XOS-236 history rows", () => {
     const seed = JSON.parse(readFileSync(SEED_PATH, "utf8"));
 
-    expect(seed.handle).toBe("thewhyman007");
+    expect(seed.handle).toBe("your-reddit-handle");
     expect(seed.updated).toBe("2026-08-13");
     expect(seed.entries).toEqual([
       {
@@ -173,7 +173,7 @@ describe("reddit-prepost-viability", () => {
       body: answeringBody,
       ledger_path: fixture.ledgerPath,
       research_path: fixture.researchPath,
-      handle: "thewhyman007",
+      handle: "your-reddit-handle",
     });
 
     expect(result.stderr).toBe("");
@@ -194,7 +194,7 @@ describe("reddit-prepost-viability", () => {
       body: answeringBody,
       ledger_path: fixture.ledgerPath,
       research_path: fixture.researchPath,
-      handle: "thewhyman007",
+      handle: "your-reddit-handle",
     });
 
     expect(result.code).toBe(0);

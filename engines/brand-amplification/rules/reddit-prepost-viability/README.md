@@ -6,28 +6,30 @@ This rule is deliberately offline and deterministic. It never fetches Reddit.
 
 On 2026-08-13, both of these anonymous requests were verified to return HTTP 403:
 
-- `https://www.reddit.com/user/thewhyman007/submitted.json`
-- `https://old.reddit.com/user/thewhyman007/submitted.json`
+- `https://www.reddit.com/user/your-reddit-handle/submitted.json`
+- `https://old.reddit.com/user/your-reddit-handle/submitted.json`
 
 The XOS-236 premise that post history is available in one anonymous call is therefore false as of that date. A runtime fetch would make the gate fail on every run. History comes from `submission_history` in the input or from the workspace ledger instead.
 
 ## Workspace inputs
 
-Default ledger:
-
-`~/anand-career-os/brand-amplification/reddit-surface-history.json`
+Default ledger — `$BAE_REDDIT_LEDGER`, else
+`$CLAUDE_PLUGIN_DATA/reddit-surface-history.json` (`~/.career-os-state/` when
+`CLAUDE_PLUGIN_DATA` is unset):
 
 Schema:
 
 ```json
-{"handle":"thewhyman007","updated":"2026-08-13","entries":[{"subreddit":"r/LocalLLaMA","date":"2026-08-13","outcome":"removed","removed_by":"moderator","title":"Building got free, so the moat moved"}]}
+{"handle":"your-reddit-handle","updated":"2026-08-13","entries":[{"subreddit":"r/LocalLLaMA","date":"2026-08-13","outcome":"removed","removed_by":"moderator","title":"Building got free, so the moat moved"}]}
 ```
 
 A verified bootstrap copy is included as `reddit-surface-history.seed.json`. Copy it to the default workspace path when initializing the Career OS ledger. The gate does not silently fall back to the bundled seed: if the workspace ledger is absent, `surface_history` returns WARN and explains how to create it.
 
-Default citation research:
-
-`~/anand-career-os/brand-amplification/research/50-subreddits-ai-citation-index-2026.md`
+Default citation research — `$BAE_REDDIT_RESEARCH`, else
+`50-subreddits-ai-citation-index-2026.md` beside this rule. The index does not
+currently ship, so the honest default points at where it WOULD live rather than
+at a directory on one maintainer's machine; absent, `surface_history` returns
+WARN and says how to create it:
 
 The parser reads Markdown table rows shaped like:
 

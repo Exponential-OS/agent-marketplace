@@ -17,6 +17,10 @@ import {
   cascadeComment,
   groupPost,
   assertOwnPost,
+  requireOwnerName,
+  resolveOwnerName,
+  resetOwnerNameCache,
+  actorLines,
   assertGroup,
   checkSpokeLinkTarget,
   bodyHtml,
@@ -40,8 +44,21 @@ import {
   extractTitle,
   extractSubtitle,
   dropLeadingH1,
+  substackDomain,
 } from "../platforms/substack";
 const noWait = async () => {};
+// XOS-353: the owner's display name used to be compiled into linkedin.ts. These
+// tests now configure it, and deliberately use a name nobody holds -- if the
+// literal ever comes back, this suite keeps passing while production breaks for
+// every customer, which is exactly how the original bug survived three releases.
+const TEST_ACTOR = "Test Owner";
+const actorEnv = TEST_ACTOR; // the owner name, passed explicitly
+// cascadeComment/groupPost reach the ownership check through several layers and
+// read process.env there, the same way a real run does. Configuring it here is
+// how a customer configures it; the unconfigured path stays covered by the unit
+// tests below, which pass {} explicitly rather than relying on this being unset.
+process.env.BRAND_OWNER_NAME = TEST_ACTOR;
+resetOwnerNameCache();
 const hub = "https://www.linkedin.com/feed/update/urn:li:activity:999/";
 function browser(): BrowserTargets {
   let n = 0;
@@ -172,10 +189,15 @@ async function writable(c: CDP) {
   await connectDraftTarget(t, async () => c);
   return c;
 }
+// XOS-353: the Substack port used to hardcode one real publication. The domain
+// is injected now, and these tests use a reserved .test name so a passing suite
+// can never again be evidence that someone else's newsletter is reachable.
+const TEST_PUB = "example-publication.test";
 const options = (c: DomCDP) => ({
   browser: browser(),
   connect: async () => c,
   wait: noWait,
+  domain: TEST_PUB,
 });
 const article = (body: string) =>
   `<div contenteditable="true" aria-label="Article editor content">${body}</div>`;
@@ -190,7 +212,21 @@ function group(c: DomCDP, name = "Agentic AI Intelligence") {
     );
   });
 }
-function cascade(c: DomCDP, actor = "Anand Vallamsetla • You") {
+/**
+ * The actor block as a BROWSER builds it. The old fixture interpolated a literal
+ * `\n` into HTML source, where every engine collapses it to a space -- so the
+ * test was feeding `assertOwnPost` a flattened block that the real DOM never
+ * produces, and the line structure the ownership check relies on was invisible
+ * to the suite. innerText inserts the breaks between BLOCK ELEMENTS; verified
+ * against happy-dom before relying on it.
+ */
+function actorBlock(lines: string[]): string {
+  return lines.map((l) => `<div>${l}</div>`).join("");
+}
+function cascade(c: DomCDP, actorOrLines: string | string[] = `${TEST_ACTOR} • You`) {
+  const actor = actorBlock(
+    Array.isArray(actorOrLines) ? actorOrLines : actorOrLines.split("\n"),
+  );
   c.w.happyDOM.setURL(
     "https://www.linkedin.com/feed/update/urn:li:activity:123/",
   );
@@ -204,6 +240,16 @@ function cascade(c: DomCDP, actor = "Anand Vallamsetla • You") {
       );
   });
 }
+
+
+/**
+ * The suite used to assert a specific human's name. assertOwnPost reads the
+ * owner from config now and FAILS CLOSED when it is absent, so the tests
+ * configure one explicitly — which also proves the identity is not baked in.
+ * TEST_ACTOR above is that one constant; this alias keeps the tests that were
+ * written against the other branch readable.
+ */
+const TEST_OWNER = TEST_ACTOR;
 
 describe("shared safety", () => {
   test("fresh target returned differs from existing target", async () => {
@@ -350,20 +396,123 @@ describe("single target and destination gates", () => {
     );
   });
   test("foreign actor aborts", () => {
-    expect(() => assertOwnPost("123", "Someone Else • You")).toThrow(
-      "⛔ ABORT 123 — not his post. Fix: select Anand's own post and verify its actor block.",
+    expect(() => assertOwnPost("123", "Someone Else • You", actorEnv)).toThrow(
+      '⛔ ABORT 123 — actor block is not "Test Owner • You", so this is not your post.',
     );
   });
   test("name without You is insufficient", () => {
-    expect(() => assertOwnPost("123", "Anand Vallamsetla")).toThrow(
-      "⛔ ABORT 123 — not his post",
+    expect(() => assertOwnPost("123", TEST_ACTOR, actorEnv)).toThrow(
+      "⛔ ABORT 123 — actor block is not",
     );
+  });
+  test("a name that merely CONTAINS the owner's does not own the post", () => {
+    // Found by the cross-family panel, reproduced before fixing: the pattern had
+    // no leading anchor, so with owner "Test Owner" the actor block
+    // "Not Test Owner • You" was ACCEPTED. An authorization gate that anyone
+    // whose display name ends with yours can pass. Predates this PR -- the
+    // hardcoded literal had the same hole.
+    for (const impostor of [
+      "Not Test Owner • You",
+      "A Test Owner • You",
+      "The Real Test Owner • You",
+      "Agentic AI Intelligence\nNot Test Owner • You\n2h",
+    ])
+      expect(() => assertOwnPost("123", impostor, actorEnv)).toThrow(
+        "actor block is not",
+      );
+  });
+  test("a longer name containing the owner's AND the word You is rejected", () => {
+    // Second panel pass, reproduced before fixing. The separator was OPTIONAL,
+    // so "Test Owner You Know • 2nd" satisfied <name> + (no bullet) + "You".
+    expect(() =>
+      assertOwnPost("123", "Test Owner You Know • 2nd", actorEnv),
+    ).toThrow("actor block is not");
+  });
+  test("the SEPARATOR is what makes 'You' a badge rather than part of a name", () => {
+    // This case exists because mutating the separator back to optional left the
+    // suite green: the test above was failing through the END anchor instead.
+    // Here the line ends right after "You", so only the required separator can
+    // reject it — a display name of "<owner> You" is otherwise a clean match.
+    expect(() =>
+      assertOwnPost("123", `${TEST_ACTOR} You`, actorEnv),
+    ).toThrow("actor block is not");
+  });
+  test("text after the badge is rejected — the line must END there", () => {
+    // Same pass: nothing anchored the end, so anything could follow the badge.
+    for (const tail of [
+      "Test Owner • You (Admin) / extra text",
+      "Test Owner • You and also Someone Else",
+      "Test Owner • Youtube",
+    ])
+      expect(() => assertOwnPost("123", tail, actorEnv)).toThrow(
+        "actor block is not",
+      );
+  });
+  test("an attacker cannot supply their own badge and swallow the real one", () => {
+    // Fourth panel pass. LinkedIn display names may contain `•`, so a name of
+    // "Test Owner • You • Impostor" supplies the apparent badge itself and a
+    // wildcard suffix then consumes the genuine "• 2nd" that follows.
+    for (const a of [
+      "Test Owner • You • Impostor • 2nd",
+      "Test Owner • You • Someone Else",
+      "Test Owner • You • You • 2nd",
+    ])
+      expect(() => assertOwnPost("123", a, actorEnv)).toThrow(
+        "actor block is not",
+      );
+  });
+  test("LinkedIn's own trailing segments are still accepted", () => {
+    // "• 2nd" and friends are appended by LinkedIn, not by an attacker, and a
+    // gate that rejects them fails closed on every real post.
+    for (const ok of [
+      `${TEST_ACTOR} • You • 2nd`,
+      `${TEST_ACTOR} · You`,
+      `${TEST_ACTOR} | You`,
+      `${TEST_ACTOR} • You • 3rd+`,
+      `${TEST_ACTOR} • You • Following`,
+    ])
+      expect(assertOwnPost("123", ok, actorEnv)).toBe(true);
+  });
+  test("the owner's own post still passes, flat or inside a group block", () => {
+    for (const ok of [
+      `${TEST_ACTOR} • You`,
+      `${TEST_ACTOR} • You\n2h`,
+      `Agentic AI Intelligence\n${TEST_ACTOR} • You\n2h`,
+      `  ${TEST_ACTOR}   •   You  \nEdited`,
+    ])
+      expect(assertOwnPost("123", ok, actorEnv)).toBe(true);
+  });
+  test("the anchor is per LINE — a flat `^` would reject every group post", () => {
+    // Why actorLines() exists. norm() collapses the block to one line, so
+    // anchoring the flattened string would have failed closed on group posts,
+    // which is how a security fix becomes an outage.
+    expect(actorLines("Group\n  Test Owner • You  \n\n2h")).toEqual([
+      "Group",
+      "Test Owner • You",
+      "2h",
+    ]);
+  });
+  test("a regex metacharacter in a display name is a literal, not a pattern", () => {
+    const env = "A. (Test) Owner";
+    expect(assertOwnPost("123", "A. (Test) Owner • You", env)).toBe(true);
+    expect(() => assertOwnPost("123", "AX(Test) Owner • You", env)).toThrow(
+      "actor block is not",
+    );
+  });
+  test("owner name comes from config, not a hardcoded identity", () => {
+    process.env.BRAND_OWNER_NAME = "Totally Different Person";
+    resetOwnerNameCache();
+    expect(assertOwnPost("123", "Totally Different Person • You")).toBe(true);
+    expect(() => assertOwnPost("123", TEST_OWNER)).toThrow("not your post");
+    process.env.BRAND_OWNER_NAME = TEST_OWNER;
+    resetOwnerNameCache();
   });
   test("group actor title still recognizes owner pairing", () => {
     expect(
       assertOwnPost(
         "123",
-        "Agentic AI Intelligence\nAnand Vallamsetla • You\n2h",
+        `Agentic AI Intelligence\n${TEST_ACTOR} • You\n2h`,
+        actorEnv,
       ),
     ).toBe(true);
   });
@@ -417,7 +566,7 @@ describe("single target and destination gates", () => {
   });
   test("honey pot belongs to first comment, not cascade", () => {
     expect(() =>
-      checkSpokeLinkTarget("https://thewhyman.blog/p/article", hub),
+      checkSpokeLinkTarget(`https://${TEST_PUB}/p/article`, hub),
     ).toThrow("Cascade link skips the platform hub");
   });
   test("unowned post never opens composer or inserts text", async () => {
@@ -428,7 +577,7 @@ describe("single target and destination gates", () => {
         { urn: "123", hubUrl: hub, paragraphs: [`Read: ${hub}`] },
         options(c),
       ),
-    ).rejects.toThrow("⛔ ABORT 123 — not his post");
+    ).rejects.toThrow('⛔ ABORT 123 — actor block is not "Test Owner • You"');
     expect(c.commands.length).toBe(0);
     expect(c.inserts).toBe(0);
     expect(c.closed).toBe(true);
@@ -465,7 +614,7 @@ describe("single target and destination gates", () => {
   });
   test("cascade stage accepts group actor, does not submit", async () => {
     const c = new DomCDP("");
-    cascade(c, "Agentic AI Intelligence\nAnand Vallamsetla • You");
+    cascade(c, `Agentic AI Intelligence\n${TEST_ACTOR} • You`);
     expect(
       await cascadeComment(
         { urn: "123", hubUrl: hub, paragraphs: ["First.", `Read: ${hub}`] },
@@ -589,21 +738,21 @@ describe("article primitives", () => {
   test("honeypot check requires THIS article, not any domain link", async () => {
     const c = new DomCDP(
       article(
-        '<p><a href="https://thewhyman.blog/p/previous">previous</a><a href="https://thewhyman.blog/subscribe">subscribe</a></p>',
+        `<p><a href="https://${TEST_PUB}/p/previous">previous</a><a href="https://${TEST_PUB}/subscribe">subscribe</a></p>`,
       ),
     );
     await expect(
-      checkHoneypotChain(c, "https://thewhyman.blog/p/current"),
+      checkHoneypotChain(c, `https://${TEST_PUB}/p/current`, TEST_PUB),
     ).rejects.toThrow("postcondition failed");
   });
   test("honeypot exact canonical + subscribe passes", async () => {
     const c = new DomCDP(
       article(
-        '<p><a href="https://thewhyman.blog/p/current">current</a><a href="https://thewhyman.blog/subscribe">subscribe</a></p>',
+        `<p><a href="https://${TEST_PUB}/p/current">current</a><a href="https://${TEST_PUB}/subscribe">subscribe</a></p>`,
       ),
     );
     expect(
-      (await checkHoneypotChain(c, "https://thewhyman.blog/p/current"))
+      (await checkHoneypotChain(c, `https://${TEST_PUB}/p/current`, TEST_PUB))
         .canonical,
     ).toBe(true);
   });
@@ -630,7 +779,7 @@ describe("Substack draft port", () => {
     const c = new DomCDP(
       '<textarea placeholder="Title"></textarea><textarea placeholder="Add a subtitle..."></textarea><div contenteditable="true"></div><button>Publish</button>',
     );
-    c.w.happyDOM.setURL("https://www.thewhyman.blog/publish/post/456");
+    c.w.happyDOM.setURL(`https://${TEST_PUB}/publish/post/456`);
     return c;
   }
   test("CLI shape and help remain browser free", () => {
@@ -706,7 +855,7 @@ describe("Substack draft port", () => {
         },
         options(c),
       ),
-    ).toBe("https://www.thewhyman.blog/publish/post/456");
+    ).toBe(`https://${TEST_PUB}/publish/post/456`);
     expect(c.pastes).toBe(2);
     expect(c.inserts).toBe(0);
     expect(publish).toBe(0);
@@ -1155,7 +1304,7 @@ describe("single-send result evidence", () => {
     c.onReload = () => {
       c.w.document.body.insertAdjacentHTML(
         "beforeend",
-        '<div class="feed-shared-update-v2"><div class="update-components-actor">Anand Vallamsetla • You</div><div class="update-components-text">An original thought.</div></div>',
+        `<div class="feed-shared-update-v2"><div class="update-components-actor"><div>${TEST_ACTOR} • You</div></div><div class="update-components-text">An original thought.</div></div>`,
       );
     };
     expect(await groupPost(target, { ...options(c), send: true })).toBe(
@@ -1215,4 +1364,94 @@ test("hub URL slash is optional without weakening exact destination matching", (
   expect(() => checkSpokeLinkTarget(`${without}0`, without)).toThrow(
     "Cascade link skips the platform hub",
   );
+});
+
+// ── XOS-353 ────────────────────────────────────────────────────────────────
+// The Substack pusher hardcoded one real publication, so for 0.63.0-0.65.0 it
+// navigated every customer at the maintainer's newsletter. These tests exist to
+// make the FAILING shape explicit: with nothing configured the port must refuse
+// to act, not fall back. A default of any kind is what caused the bug.
+describe("Substack publication is configured, never assumed", () => {
+  test("unset refuses, and the error says what to set", () => {
+    expect(() => substackDomain("")).toThrow("No Substack publication is configured");
+    expect(() => substackDomain("")).toThrow(/HONEY_POT_DOMAIN/);
+    expect(() => substackDomain("")).toThrow("exactly as the browser shows it");
+  });
+  test("blank and whitespace-only are unset, not a hostname", () => {
+    for (const v of ["", "   ", "\t"])
+      expect(() => substackDomain(v)).toThrow(
+        "No Substack publication is configured",
+      );
+  });
+  test("a scheme and a path are stripped; the hostname is otherwise verbatim", () => {
+    for (const v of [
+      "example-publication.test",
+      "https://example-publication.test",
+      "https://example-publication.test/publish/post",
+      "EXAMPLE-Publication.test",
+    ])
+      expect(substackDomain(v)).toBe(
+        "example-publication.test",
+      );
+  });
+  test("www. is PRESERVED, never added and never stripped", () => {
+    // Two cross-family judges caught this independently. Stripping it here and
+    // prepending it at the call site is right only for a custom domain that
+    // uses www, and turns every standard <name>.substack.com into a hostname
+    // that does not serve the editor.
+    expect(substackDomain("www.example.test")).toBe(
+      "www.example.test",
+    );
+    expect(substackDomain("pub.substack.test")).toBe(
+      "pub.substack.test",
+    );
+  });
+  test("mixed case is lowered, because location.origin is", () => {
+    // The validator is case-insensitive; the browser lowercases location.origin.
+    // Returning the input verbatim passed validation and then failed the origin
+    // identity check with nothing to explain why.
+    expect(substackDomain("MyPub.Substack.Test")).toBe(
+      "mypub.substack.test",
+    );
+  });
+  test("the draft URL is the configured host, with nothing added", async () => {
+    const c = new DomCDP(
+      '<textarea placeholder="Title"></textarea><textarea placeholder="Add a subtitle..."></textarea><div contenteditable="true"></div>',
+    );
+    c.w.happyDOM.setURL("https://pub.substack.test/publish/post/9");
+    expect(
+      await pushDraft(
+        { title: "T", chunks: ["<p>A</p>"] },
+        { ...options(c), domain: "pub.substack.test" },
+      ),
+    ).toBe("https://pub.substack.test/publish/post/9");
+  });
+  test("things that are not hostnames are rejected, not passed through", () => {
+    for (const v of ["my publication", "localhost", "javascript:alert(1)", "/"])
+      expect(() => substackDomain(v)).toThrow(
+        "is not a hostname",
+      );
+  });
+  test("an injected EMPTY domain fails, it does not fall back to the env", async () => {
+    const c = new DomCDP(
+      '<textarea placeholder="Title"></textarea><div contenteditable="true"></div>',
+    );
+    await expect(
+      pushDraft(
+        { title: "T", chunks: ["<p>A</p>"] },
+        { ...options(c), domain: "" },
+      ),
+    ).rejects.toThrow("No Substack publication is configured");
+  });
+  test("an injected domain is validated by the same path as the env var", async () => {
+    const c = new DomCDP(
+      '<textarea placeholder="Title"></textarea><div contenteditable="true"></div>',
+    );
+    await expect(
+      pushDraft(
+        { title: "T", chunks: ["<p>A</p>"] },
+        { ...options(c), domain: "not a hostname" },
+      ),
+    ).rejects.toThrow("is not a hostname");
+  });
 });

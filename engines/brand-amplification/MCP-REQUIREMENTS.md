@@ -25,7 +25,7 @@ Run `brand mcp doctor` to verify.
   - Fits typical casual usage (~50-100 min/mo from setup + monthly publish).
 
 **Automatic fallback when browserbase quota exhausted:** `chrome-devtools-mcp` (FREE, UNLIMITED, local)
-  - Ships with `launchers/launch-chrome-devtools-mcp.sh` — detects Chrome Canary or regular Chrome, launches port 9222 + persistent profile (auth survives reboots).
+  - Ships with `skills/brand-mcp-setup/launchers/launch-chrome-devtools-mcp.sh` — detects Chrome Canary or regular Chrome, launches port 9222 + persistent profile (auth survives reboots).
   - Optional macOS LaunchAgent (auto-start on boot).
   - Trade: more setup pain, but unlimited free use.
 

@@ -6,7 +6,7 @@ Input JSON (via sys.argv[1]):
   "subreddit": "r/Entrepreneur",
   "body": "candidate post or comment text",
   "title": "optional post title",
-  "handle": "thewhyman007",
+  "handle": "your-reddit-handle",
   "ledger_path": "optional override",
   "research_path": "optional override",
   "submission_history": []

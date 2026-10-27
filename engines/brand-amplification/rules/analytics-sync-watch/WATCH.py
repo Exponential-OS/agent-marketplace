@@ -32,6 +32,89 @@ LIVE_STATUSES = {"published", "live", "sent"}
 DEFAULT_STALE_DAYS = 7
 CAREER_HOME_DEFAULT = os.environ.get("CAREER_HOME") or ""
 
+# XOS-353: the scan list hardcoded a second directory named after one
+# maintainer's personal folder layout, resolved against every customer's
+# career_home. Harmless on their disk (it simply does not exist) but it is their
+# campaigns that go unscanned when they keep campaigns anywhere else, and the
+# name itself shipped to them as if it were product vocabulary.
+#
+# The plugin's OWN namespace is now the only default. Anything else -- including
+# the original installation's WIP folder -- comes from BAE_CAMPAIGN_DIRS, a
+# colon-separated list of paths, absolute or relative to career_home.
+CAMPAIGN_DIRS_ENV = "BAE_CAMPAIGN_DIRS"
+OWNED_CAMPAIGNS_SUBDIR = "brand-amplification/campaigns"
+
+
+def default_campaign_dirs(career_home: str) -> list[str]:
+    home = pathlib.Path(career_home)
+    dirs = [str(home / OWNED_CAMPAIGNS_SUBDIR)]
+    for extra in os.environ.get(CAMPAIGN_DIRS_ENV, "").split(":"):
+        extra = extra.strip()
+        if not extra:
+            continue
+        p = pathlib.Path(extra).expanduser()
+        dirs.append(str(p if p.is_absolute() else home / p))
+    return dirs
+
+def no_data_reason(scan_dirs: list[str]) -> str:
+    """Why nothing was found, and what to do -- at the moment it happens.
+
+    XOS-353 narrowed the default scan list to the directory this plugin owns.
+    That is the right default, but an upgrade makes campaigns kept elsewhere
+    silently invisible, and a CHANGELOG entry is not something a cron run reads.
+    So the no-data verdict names the env var rather than only the empty dirs.
+    """
+    configured = os.environ.get(CAMPAIGN_DIRS_ENV)
+    if configured:
+        return (
+            f"No campaign.json files found in scan dirs: {scan_dirs} "
+            f"({CAMPAIGN_DIRS_ENV}={configured!r}). Fix: check those paths exist "
+            f"and contain campaign.json."
+        )
+    return (
+        f"No campaign.json files found in scan dirs: {scan_dirs}. If you keep "
+        f"campaigns somewhere else, set {CAMPAIGN_DIRS_ENV} to those roots "
+        f"(colon-separated, absolute or relative to CAREER_HOME). Before "
+        f"brand-amplification 0.66.0 a second directory was scanned by default; "
+        f"it is configuration now, so an upgrade can make existing campaigns "
+        f"invisible until you name them."
+    )
+
+
+def campaign_dirs_note(
+    scan_dirs: list[str] | None = None, career_home: str = ""
+) -> str | None:
+    """Say the default narrowed, on EVERY run, not only when nothing is found.
+
+    The first version put this on the no-data path only. A cross-family judge
+    pointed out the hole: if the directory this plugin owns has ANY campaigns,
+    the run looks healthy and campaigns kept elsewhere vanish from monitoring
+    with no signal at all. The quiet case is the one that needed the warning.
+
+    None once the operator has answered by setting the variable.
+    """
+    if os.environ.get(CAMPAIGN_DIRS_ENV):
+        return None
+    # A caller that passed campaigns_dirs explicitly already decided where to
+    # look, and telling them "scanning only <our subdir>" while scanning their
+    # roots is a false statement about the run -- worse than saying nothing.
+    # Compare against the career_home ACTUALLY IN USE. The first version read
+    # os.environ here while main() resolves it from ctx first, so a ctx-supplied
+    # home made every scan look "explicit" and suppressed the warning outright --
+    # caught by both lanes of the panel, which is the shape of bug that survives
+    # a reviewer who only checks whether the comparison looks reasonable.
+    if scan_dirs is not None and scan_dirs != default_campaign_dirs(career_home):
+        return None
+    return (
+        f"Scanning only {OWNED_CAMPAIGNS_SUBDIR}. Before brand-amplification "
+        f"0.66.0 a second directory was scanned by default; it is configuration "
+        f"now. If you keep campaigns anywhere else, set {CAMPAIGN_DIRS_ENV} "
+        f"(colon-separated, absolute or relative to CAREER_HOME) or they are not "
+        f"being monitored."
+    )
+
+
+
 
 def is_published(campaign):
     """Return True if any component is live/published."""
@@ -93,21 +176,18 @@ def main() -> int:
     stale_days = int(ctx.get("stale_days", DEFAULT_STALE_DAYS))
     today = date.today()
 
-    # Default scan dirs: brand-amplification/campaigns + WIP/branding-product/articles
-    default_dirs = [
-        str(pathlib.Path(career_home) / "brand-amplification/campaigns"),
-        str(pathlib.Path(career_home) / "WIP/branding-product/articles"),
-    ]
-    scan_dirs = ctx.get("campaigns_dirs", default_dirs)
+    scan_dirs = ctx.get("campaigns_dirs", default_campaign_dirs(career_home))
 
+    dirs_note = campaign_dirs_note(scan_dirs, career_home)
     campaign_files = find_campaign_files(scan_dirs)
     if not campaign_files:
         print(json.dumps({
             "verdict": "keep",
             "signal": "no_data",
-            "reason": f"No campaign.json files found in scan dirs: {scan_dirs}",
+            "reason": no_data_reason(scan_dirs),
             "stale_campaigns": [],
-            "schema_gap_found": False
+            "schema_gap_found": False,
+            **({"campaign_dirs_note": dirs_note} if dirs_note else {}),
         }))
         return 2
 
@@ -156,7 +236,8 @@ def main() -> int:
             "signal": "no_data",
             "reason": "No published campaigns found. Analytics monitoring starts after first campaign ships.",
             "stale_campaigns": [],
-            "schema_gap_found": schema_gap_found
+            "schema_gap_found": schema_gap_found,
+            **({"campaign_dirs_note": dirs_note} if dirs_note else {}),
         }))
         return 2
 
@@ -185,7 +266,8 @@ def main() -> int:
             "signal": "analytics_gap" if not schema_gap_found else "schema_and_analytics_gap",
             "reason": " | ".join(reason_parts),
             "stale_campaigns": stale_campaigns,
-            "schema_gap_found": schema_gap_found
+            "schema_gap_found": schema_gap_found,
+            **({"campaign_dirs_note": dirs_note} if dirs_note else {}),
         }))
         return 1
 
@@ -194,7 +276,8 @@ def main() -> int:
         "signal": "healthy",
         "reason": f"All {published_count} published campaign(s) have analytics data. Learning loop is closed.",
         "stale_campaigns": [],
-        "schema_gap_found": False
+        "schema_gap_found": False,
+        **({"campaign_dirs_note": dirs_note} if dirs_note else {}),
     }))
     return 0
 

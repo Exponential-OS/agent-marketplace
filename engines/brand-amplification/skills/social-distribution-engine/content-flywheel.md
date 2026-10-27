@@ -705,7 +705,11 @@ Every campaign lives in `$CAMPAIGN_HOME/<NN>-<slug>-<date>/` and MUST contain:
     └── 08-comment-cascade.md      ← flywheel amplification
 ```
 
-`$CAMPAIGN_HOME` is declared in the customer's instance config. Default: `$CAREER_HOME/WIP/branding-product/articles/`.
+`$CAMPAIGN_HOME` is declared in the customer's instance config. Default:
+`$CAREER_HOME/brand-amplification/campaigns/` — the namespace this plugin owns.
+Keeping campaigns somewhere else is fine: list those roots in `BAE_CAMPAIGN_DIRS`
+(colon-separated, absolute or relative to `$CAREER_HOME`) and the analytics
+sync will scan them too.
 
 **Why two formats:** `campaign.json` is the machine layer — schema-validated, grep-able, validator-enforceable, agent-readable state tracker. The `.md` files are the human layer — actual copyable content, review notes, publishing instructions. Agents read both; humans edit `.md` and set booleans in `campaign.json`. The split eliminates the pattern of "agent tries to parse publishing instructions from prose" — the JSON is the state machine, the MD files are the content payload.
 

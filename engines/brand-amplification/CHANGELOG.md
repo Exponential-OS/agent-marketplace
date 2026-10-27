@@ -1,6 +1,211 @@
 <!-- product-vs-solution: example -->
 # Changelog
 
+## [0.66.0] — 2026-10-26 — XOS-353: the plugin no longer ships one person's identity as product behaviour
+
+The ship gate found 5 personal-path violations here. Fixing those first turned up
+a worse class the gate cannot see, because its scope is `SKILL.md` / `plugin.json`
+/ `hooks.json` / `*.sh` and these are in `.ts`: **two shipped code paths had a
+specific person's identity compiled into them, so they could never work for a
+customer.**
+
+- `platforms/substack.ts` — one publication's domain was hardcoded in THREE places
+  (the navigation target, the draft-page origin assertion, and the final-URL
+  check). Every customer who ran the Substack pusher was driven at the
+  maintainer's newsletter. Now `BAE_SUBSTACK_DOMAIN`, validated to a hostname,
+  with **no default** — a wrong default is what produced the bug.
+- `platforms/linkedin.ts` — `assertOwnPost` matched one person's display name, so
+  for everyone else the ownership check could never pass and the LinkedIn path
+  was dead. It failed CLOSED, which is why nothing surfaced it: a safety check
+  that always says no is indistinguishable from one that works. Now
+  `BAE_LINKEDIN_ACTOR`. The pairing it enforces is unchanged — `"Someone Else •
+  You"` still aborts, because the "• You" badge alone was never the test.
+- `platforms/linkedin.ts` — `checkHoneypotChain(..., domain)` defaulted to the
+  maintainer's newsletter, so an omitted argument verified the wrong funnel and
+  passed. Required now; there is no correct default.
+
+Three documents described defaults that **0.65.0 had already changed**, which is
+the blast radius of that release rather than a new bug — and worse than the
+original leak, because a reader following them configures a path the code no
+longer reads:
+
+- `skills/quote-flywheel/SKILL.md` claimed the deck default was a private
+  workspace file; it is `~/.brand-amplification-state/cyborg-quotes.md`, and
+  `BAE_QUOTE_DECK` was shipped undocumented.
+- `rules/reddit-prepost-viability/README.md` likewise, for both the ledger and
+  the citation index.
+
+Pointers that went nowhere:
+
+- Both `## Lessons Repository` sections told the agent to update a markdown file
+  that exists in no installation. They now point at `lesson_store.py`, which is
+  what the repo actually built for this. `linkedin_post_lint.py` already documents
+  why: of 13 lessons written to prose docs, 1 became something that ran.
+- `MCP-REQUIREMENTS.md` pointed at `launchers/` at the repo root; it is nested
+  under `skills/brand-mcp-setup/`.
+- `platforms/substack.ts` pointed at a browser launcher in a private workspace
+  rather than the one this plugin ships.
+
+Other personal content removed: the maintainer's Reddit handle from a schema
+example, a seed file, two docstrings and a skill; their social handle from a
+PASS example in `flywheel-cta-quality-check`; an internal WIP handoff path from
+the README's provenance line.
+
+**One behaviour change to be aware of on upgrade.** `analytics-sync-watch` scanned
+two campaign roots, the second named after one maintainer's folder layout and
+joined to *every* customer's `$CAREER_HOME`. The default is now the plugin's own
+`brand-amplification/campaigns/` alone. If you keep campaigns anywhere else,
+including that original `WIP/branding-product/articles` path, set
+`BAE_CAMPAIGN_DIRS` (colon-separated, absolute or `$CAREER_HOME`-relative) or the
+sync will stop seeing them.
+
+**Three defects in this change were caught by the cross-family judge panel**, two
+of them by both families independently, and are fixed here rather than shipped:
+
+- `substackDomain()` stripped a leading `www.` and `pushDraft` unconditionally
+  prepended one. Correct only for a custom domain that happens to use `www`, and
+  wrong for every standard `<name>.substack.com` — the shape most customers have.
+  The hostname is now used verbatim.
+- The validator is case-insensitive but `location.origin` is lowercased by the
+  browser, so a mixed-case value passed validation and then failed the origin
+  identity check with nothing to explain why. Lowercased on the way in.
+- Narrowing the scan list was documented here and in the README, and a cron run
+  reads neither. The no-data verdict now names `BAE_CAMPAIGN_DIRS` and says the
+  default changed in 0.66.0, at the moment monitoring goes quiet.
+
+One finding was reviewed and not acted on: colon-separated `BAE_CAMPAIGN_DIRS`
+would split a Windows drive letter. True, and out of scope — this plugin is
+macOS/Linux throughout (`~/` paths, shell launchers, a local Chrome on :9222) and
+claims no Windows support anywhere.
+
+### Second judge pass — a pre-existing authorization bypass
+
+Re-submitting the corrected diff surfaced a defect **older than this PR**, in the
+check it was already touching:
+
+- `assertOwnPost`'s pattern had **no leading anchor** and was tested against the
+  actor block flattened to one line, so it matched anywhere in it. With owner
+  `Test Owner`, the actor block `Not Test Owner • You` was **ACCEPTED**.
+  Reproduced before fixing. Anyone whose display name merely *ends* with the
+  owner's passed an authorization gate. `/Anand Vallamsetla\s*•?\s*You\b/` had
+  exactly the same property, so this shipped for as long as the check has existed
+  and making the name configurable would have carried it forward untouched.
+  The owner's name must now START a line of the block.
+- The anchor has to be per LINE: the actor block is `<group>\n<name> • You\n<age>`,
+  so anchoring the flattened string would have rejected every group post — a
+  security fix that becomes an outage. `actorLines()` keeps the structure.
+- **The fixture was hiding this.** It interpolated a literal `\n` into HTML
+  source, which every engine collapses to a space, so the suite was feeding the
+  check a flattened block the real DOM never produces. It builds block elements
+  now, and `innerText`'s line behaviour was verified rather than assumed.
+- The migration note was on the no-data path only. If the owned directory has any
+  campaigns the run looks healthy while campaigns elsewhere vanish — the quiet
+  case was the one that needed the warning. It is on every verdict now, and
+  silent once `BAE_CAMPAIGN_DIRS` is set.
+
+- The tiebreaker lane caught one more: `options.domain ? … : process.env` is a
+  truthiness test, so an injected empty string fell through to the environment's
+  publication instead of failing validation the way the comment above it claims.
+  `!== undefined` now.
+
+### Third judge pass — the leading anchor was not enough either
+
+With the panel's own JSON extractor repaired (XOS-335), both lanes returned real
+verdicts for the first time, and both found the ownership fix still bypassable:
+
+```
+owner "Test Owner"  vs  "Test Owner You Know • 2nd"     -> ACCEPTED
+owner "Test Owner"  vs  "Test Owner • You (Admin) / x"  -> ACCEPTED
+```
+
+The first worked because the separator was **optional** (`•?`), so a longer
+display name beginning with the owner's and containing the word "You" satisfied
+the whole pattern. The second because nothing anchored the **end**, so arbitrary
+text could follow the badge. Both reproduced before fixing. The separator is
+required now (`•`, `·` or `|` — the three LinkedIn renders) and the line must end
+after the badge or after a further separator-led segment such as `• 2nd`.
+
+This fails closed if the separator ever disappears from the rendered block: every
+post refused rather than mis-attributed. For a check that gates acting on a post
+that is the correct direction, and the abort names exactly what it expected.
+
+Also from that pass: the in-page copy in `groupPost` did not filter blank lines
+the way `actorLines` does, so the two checks differed — the stricter one is
+decorative the moment they disagree. And `campaign_dirs_note()` ignored an
+explicit `campaigns_dirs` from the caller, so a run scanning someone's own roots
+was told "Scanning only brand-amplification/campaigns". Both fixed.
+
+### Merged with PR #22 — two sessions built this fix in the same hour
+
+A second session shipped `fix/xos360-configurable-owner-identity` 51 minutes after
+this PR opened, touching 14 of the same 16 files. Nobody had claimed XOS-353 on
+Linear, so neither session saw the other. Reconciled here rather than picking a
+winner, because **neither branch was correct alone**:
+
+**Taken from #22** — `platforms/_identity.ts`, a shared resolver for owner name
+and publication domain that reads `BRAND_OWNER_NAME` / `HONEY_POT_DOMAIN` and
+then the brand-spec `sde-onboarding` already writes. Strictly better than this
+branch's two separate env reads: a customer who completed onboarding is
+configured for free. Also its `checkHoneypotChain(domain = requireHoneyPotDomain())`
+over this branch's required parameter.
+
+**Kept from here** — the ownership pattern, because #22 made the name
+configurable while keeping every bypass intact. Verified against its actual code:
+with owner `Jane Doe` it accepted `Not Jane Doe • You`, `Jane Doe You Know • 2nd`,
+`Jane Doe • You (Admin) / x` and `Jane Doe • You • Impostor • 2nd`. Four passes of
+the cross-family panel were needed to close those, and that work is the only thing
+separating the two branches on the security question.
+
+Also kept: the hostname handling. #22 builds `https://www.${domain}`, the same
+`www.`-prepend two judge families independently flagged here — it turns every
+standard `<name>.substack.com` into a hostname that does not serve the editor.
+
+**Split cleanly along the seam:** `_identity.ts` answers *who the owner is*;
+`linkedin.ts`/`substack.ts` answer *what proves a post is theirs* and *is that
+even a hostname*. Those are different questions and they now live in different
+files. A duplicate `escapeRe` in both was removed — TypeScript caught it, which
+is the argument for the compiler-output test #22 also preserved.
+
+### Fourth judge pass — and where I stopped
+
+- The trailing segment was `.*`, so an attacker whose display name contains `•`
+  could supply the apparent badge themselves and let the wildcard swallow the
+  real one: `Test Owner • You • Impostor • 2nd` was **ACCEPTED** for owner
+  `Test Owner`. The suffix is an **allowlist** now (`1st`, `2nd`, `3rd(+)`,
+  `Following`, `Premium`) rather than a wildcard — the same denylist-vs-allowlist
+  argument every other gate in this tree lost once already.
+- Both lanes caught `campaign_dirs_note()` comparing against the *environment's*
+  `CAREER_HOME` while `main()` resolves it from `ctx` first, so a ctx-supplied
+  home suppressed the migration warning entirely. It compares against the home
+  actually in use now.
+
+**Stopped here deliberately, with one finding open.** The OpenAI lane also showed
+that `assertOwnPost` accepts **any line** of the actor block, so a LinkedIn group
+whose *name* is `<owner> • You` satisfies the check on someone else's post. That
+is real and pre-existing — every version of this check has had it — and it cannot
+be fixed from a regex: after `innerText`, the group title and the author line are
+both just lines. The fix is to read the author's name from its own DOM node, and
+guessing that selector makes the gate throw on every legitimate post. Filed as
+**XOS-358** with the exact attack and the steps to close it, rather than shipped
+as a guess or left inside a PR description where it would read as resolved.
+
+Reviewed and **rejected with evidence**: a claimed regex-injection through
+`new RegExp(J(ownActorPattern()))`. Built the page expression and compared — the
+page-constructed regex is identical to the in-process one. Also rejected:
+`escapeRe` not escaping `/`. The
+pattern reaches page JS through `JSON.stringify`, which escapes quotes,
+backslashes and newlines, and `/` is not a metacharacter in a `RegExp` built from
+a string. No injection path.
+
+Verified rather than asserted: 134 Bun tests pass (was 115) and the ship gate
+reports PASS where it reported BLOCK. The four new guards were mutation-tested —
+re-introducing a default owner, accepting the "• You" badge without a name,
+re-introducing a default publication, and disabling hostname validation each
+fail the suite. The tests deliberately use a name and a `.test` domain nobody
+holds, so a returning literal cannot keep them green. The judge panel itself was
+down when this change was first submitted to it — all three lanes dead on stale
+model pins — and was repaired under XOS-335 before this review could run.
+
 ## [0.65.0] — 2026-10-25 — XOS-349: plugin defaults no longer point at a maintainer's private workspace
 
 - `rules/reddit-prepost-viability/check.py` — `DEFAULT_LEDGER_PATH` and `DEFAULT_RESEARCH_PATH` resolved to a directory inside one specific maintainer's private workspace. This plugin ships through a PUBLIC marketplace, so on every other machine both files are absent and the gate degraded to WARN while printing a path from a tree the reader has never seen. Now: `BAE_REDDIT_LEDGER` / `BAE_REDDIT_RESEARCH` env overrides, else the plugin's own state dir for the ledger and the rule's own directory for the citation index. Same shape `lesson_store.py` and `gate_ledger.py` already use here.

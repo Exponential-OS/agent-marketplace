@@ -124,7 +124,7 @@ def _render_table(index: dict) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Master index of all campaigns.")
-    parser.add_argument("--articles-dir", required=True, help="Path to articles root (e.g. WIP/branding-product/articles/)")
+    parser.add_argument("--articles-dir", required=True, help="Path to the campaigns root ($CAMPAIGN_HOME)")
     parser.add_argument("--format", choices=["json", "table"], default="json")
     args = parser.parse_args()
 

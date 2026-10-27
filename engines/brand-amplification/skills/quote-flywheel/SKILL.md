@@ -54,9 +54,10 @@ bun scripts/quote-selector.ts select
 
 Configuration:
 
-- `CYBORG_QUOTES_DECK` overrides the deck path.
+- `CYBORG_QUOTES_DECK` overrides the deck path (highest precedence).
+- `BAE_QUOTE_DECK` is the fallback override, matching the other `BAE_*` paths.
 - Default deck:
-  `~/anand-career-os/WIP/branding-product/cyborg-quotes.md`.
+  `~/.brand-amplification-state/cyborg-quotes.md`.
 - `QUOTE_FLYWHEEL_LOG` overrides the JSONL state log path.
 - `QUOTE_FLYWHEEL_STATE_DIR` overrides the state directory.
 - Default log:

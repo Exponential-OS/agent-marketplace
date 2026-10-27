@@ -31,7 +31,7 @@ python3 "$(ls -v ~/.claude/plugins/cache/xos/brand-amplification/*/rules/reddit-
   "subreddit": "r/Entrepreneur",
   "body": "<planned framing before drafting, or exact final body before posting>",
   "title": "<optional post title>",
-  "handle": "thewhyman007"
+  "handle": "<your-reddit-handle>"
 }'
 ```
 
@@ -56,4 +56,16 @@ When distributing to Reddit, this module operates completely independently:
 After posting, immediately update the campaign tracker with the exact time, URL, and status.
 
 ## Lessons Repository
-Update `WIP/career-os-product/reddit-algo-lessons.md` if any new algorithmic insight or moderation action is discovered during distribution.
+Record the outcome in the **campaign lesson store**, not in a prose file:
+`lesson_store.record_asset(..., surface="reddit")` from the
+social-distribution-engine skill. A removal or moderation action is an outcome row
+(`outcomes={"removed": True, "removed_by": "automod"}`), which is also what
+feeds the reddit-prepost-viability gate's surface history.
+
+The store is `$BAE_LESSON_STORE`, defaulting to
+`$CLAUDE_PLUGIN_DATA/campaign-lessons.jsonl` (`~/.career-os-state/` when unset).
+
+Why not a markdown lessons file: `linkedin_post_lint.py` documents the audit that
+settled this. Of 13 lessons written to prose docs, 1 became something that
+actually ran. A note only helps if someone remembers to read it; a row in the
+store reaches the next campaign's digest whether anyone remembers or not.

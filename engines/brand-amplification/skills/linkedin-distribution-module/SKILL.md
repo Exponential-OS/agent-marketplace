@@ -97,4 +97,15 @@ Exit 0 = PASS. Exit 1 = BLOCK (with next available date).
 After posting, immediately update the campaign tracker (e.g., `[campaign-name]-distribution-stats.md`) with the exact time, URL, and status.
 
 ## Lessons Repository
-Update `WIP/career-os-product/linkedin-algo-lessons.md` if any new algorithmic insight is discovered during distribution.
+Record the outcome in the **campaign lesson store**, not in a prose file:
+`lesson_store.record_asset(..., surface="linkedin")` from the
+social-distribution-engine skill. Record `effort` too -- the goal is reallocating hours, and you
+cannot reallocate time you never wrote down.
+
+The store is `$BAE_LESSON_STORE`, defaulting to
+`$CLAUDE_PLUGIN_DATA/campaign-lessons.jsonl` (`~/.career-os-state/` when unset).
+
+Why not a markdown lessons file: `linkedin_post_lint.py` documents the audit that
+settled this. Of 13 lessons written to prose docs, 1 became something that
+actually ran. A note only helps if someone remembers to read it; a row in the
+store reaches the next campaign's digest whether anyone remembers or not.
