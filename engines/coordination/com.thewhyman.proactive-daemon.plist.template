@@ -49,7 +49,7 @@
   - Claude Code CLI: npm install -g @anthropic-ai/claude-code
   - agent-marketplace repo cloned to the WorkingDirectory path below
   - LINEAR_API_KEY set in EnvironmentVariables (never hardcode personal key)
-  - cyborg and anand-career-os repos available at ~/cyborg and ~/anand-career-os
+  - your cyborg/substrate repo and your workspace repo, at paths you set below
     (or override via CYBORG_REPO and CAREER_OS_REPO env vars)
 
   macOS power settings required for always-on
@@ -120,9 +120,9 @@
     <key>CYBORG_REPO</key>
     <string>/Users/YOUR_USERNAME/cyborg</string>
 
-    <!-- Path to the workspace repo (for .agents/.cyborg-last-remote-sha). Default: ~/anand-career-os. -->
+    <!-- Path to YOUR workspace repo (for .agents/.cyborg-last-remote-sha). No default. -->
     <key>CAREER_OS_REPO</key>
-    <string>/Users/YOUR_USERNAME/anand-career-os</string>
+    <string>/Users/YOUR_USERNAME/YOUR_WORKSPACE_REPO</string>
 
     <!-- Optional: Linear issue ID to post heartbeat comments on (format: "ISSUE_ID_STRING").
          Get from: linear.app/thewhyman/issue/XOS-???  -->

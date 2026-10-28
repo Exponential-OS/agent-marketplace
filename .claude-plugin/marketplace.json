@@ -80,7 +80,7 @@
       "license": "Proprietary",
       "source": "./engines/coordination",
       "description": "xOS Coordination Engine v0.5.0 — XOS-140 auto-harvest quotable insights (Stop hook: transcript scan, Gemini Flash extraction, 3 safety-gated sections with keyword HOLD net, idempotent, fail-safe). v0.4.0: solo-session-roles + heartbeat liveness (XOS-120).",
-      "version": "0.5.0",
+      "version": "0.5.1",
       "category": "coordination",
       "homepage": "https://github.com/Exponential-OS/agent-marketplace"
     },

@@ -4,8 +4,9 @@
  *
  * Reads the session transcript via `transcript_path` in the Stop hook payload,
  * extracts aphoristic statements, routes them to one of three safety-gated
- * sections in ~/anand-career-os/WIP/branding-product/cyborg-quotes.md, and
- * deduplicates against existing entries.
+ * sections in the quote deck (see resolveQuoteDeck below -- it is the same deck
+ * brand-amplification's quote-flywheel selects from), and deduplicates against
+ * existing entries.
  *
  * Safety routing (CRITICAL):
  *   §1 POST FREELY  — universal wisdom, safe to post now
@@ -47,10 +48,36 @@ import { dirname, join, resolve } from "node:path";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-const QUOTES_PATH = join(
+/**
+ * ⛔ XOS-349: this defaulted to a path inside one maintainer's private workspace,
+ * in a plugin published through a PUBLIC marketplace. On anyone else's machine
+ * the harvester wrote into a directory tree that does not exist. The old literal
+ * is not repeated in this comment -- restating it republishes what this removes.
+ *
+ * ⭐ THE DEFAULT IS THE DECK brand-amplification ACTUALLY READS. This hook is the
+ * WRITE half of a two-plugin loop: it harvests quotes, and quote-flywheel selects
+ * from them. Picking a tidy coordination-owned path would have left the two
+ * halves pointed at different files, so the harvester would run, succeed, and
+ * feed nothing -- which looks exactly like working. Matching BAE_QUOTE_DECK and
+ * its default is the coupling made explicit instead of accidental.
+ *
+ * Resolution: COORDINATION_QUOTE_DECK (this hook specifically) -> BAE_QUOTE_DECK
+ * (the shared deck) -> the flywheel's own default.
+ */
+export const QUOTE_DECK_ENV = "COORDINATION_QUOTE_DECK";
+export const SHARED_DECK_ENV = "BAE_QUOTE_DECK";
+export const DEFAULT_QUOTE_DECK = join(
   homedir(),
-  "anand-career-os/WIP/branding-product/cyborg-quotes.md",
+  ".brand-amplification-state/cyborg-quotes.md",
 );
+
+export function resolveQuoteDeck(env: NodeJS.ProcessEnv = process.env): string {
+  const pick = (env[QUOTE_DECK_ENV] ?? env[SHARED_DECK_ENV] ?? "").trim();
+  if (!pick) return DEFAULT_QUOTE_DECK;
+  return pick.startsWith("~/") ? join(homedir(), pick.slice(2)) : pick;
+}
+
+const QUOTES_PATH = resolveQuoteDeck();
 
 const WATERMARK_PATH = join(
   homedir(),

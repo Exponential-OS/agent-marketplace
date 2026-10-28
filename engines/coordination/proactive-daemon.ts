@@ -27,8 +27,9 @@
  *   DAEMON_LOG_PATH           Log file             Default: ~/.cyborg-state/daemon/daemon.log
  *   DAEMON_LOG_MAX_BYTES      Log rotation limit   Default: 1_000_000 (1 MB)
  *   LINEAR_API_KEY            Required for Linear queries
- *   CYBORG_REPO               Path to cyborg repo  Default: ~/cyborg
- *   CAREER_OS_REPO            Path for SHA cache   Default: ~/anand-career-os
+ *   CYBORG_REPO               Path to cyborg repo  Default: $CYBORG_ROOT, else unset
+ *   WORKSPACE_REPO            Path for SHA cache   Default: $WORKSPACE_ROOT, else cwd
+ *                             (CAREER_OS_REPO still honoured for existing installs)
  *
  * Fail-safe invariants
  * --------------------
@@ -75,8 +76,25 @@ function resolveConfig(): DaemonConfig {
   const logPath =
     process.env.DAEMON_LOG_PATH ?? join(home(), ".cyborg-state", "daemon", "daemon.log");
   const logMaxBytes = parseInt(process.env.DAEMON_LOG_MAX_BYTES ?? "1000000", 10);
-  const cyborgRepo = resolve(process.env.CYBORG_REPO ?? join(home(), "cyborg"));
-  const careerOsRepo = resolve(process.env.CAREER_OS_REPO ?? join(home(), "anand-career-os"));
+  // XOS-349/XOS-346: both of these defaulted to directories named after one
+  // maintainer's machine. On anyone else's they resolve to paths that do not
+  // exist, so the daemon silently cached nothing and logged a miss forever --
+  // the kind of failure that looks like "quiet" rather than "broken".
+  //
+  // CAREER_OS_REPO is still read first so existing installs keep working; the
+  // new names are what the docs teach.
+  // ⚠️ EMPTY MEANS DISABLED, NOT "HERE". resolve("") returns the CWD, and this
+  // value is handed to a `git fetch` with a mutating refspec -- an unset var
+  // would fetch into whatever repo the daemon happened to start in. Kept empty
+  // and guarded at the call site instead.
+  const cyborgRepoRaw = (process.env.CYBORG_REPO ?? process.env.CYBORG_ROOT ?? "").trim();
+  const cyborgRepo = cyborgRepoRaw ? resolve(cyborgRepoRaw) : "";
+  const careerOsRepo = resolve(
+    process.env.WORKSPACE_REPO ??
+      process.env.CAREER_OS_REPO ??
+      process.env.WORKSPACE_ROOT ??
+      process.cwd(),
+  );
 
   return {
     pollMs: Number.isFinite(pollMs) && pollMs >= 60_000 ? pollMs : 300_000,
@@ -191,6 +209,12 @@ export async function readRemoteSubstrateSha(
   cyborgRepo: string,
   careerOsRepo: string,
 ): Promise<string | null> {
+  // No substrate repo configured -> this feature is off. Returning null is the
+  // documented fail-open result, and it is the only safe answer: the live-fetch
+  // path below runs a MUTATING refspec, so guessing a repo here would write
+  // refs into one the operator never named.
+  if (!cyborgRepo) return null;
+
   const remoteShaFile = join(careerOsRepo, ".agents", ".cyborg-last-remote-sha");
   try {
     if (existsSync(remoteShaFile)) {

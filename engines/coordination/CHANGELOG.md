@@ -19,6 +19,36 @@
 
 # Changelog
 
+## [0.5.1] — 2026-10-27 — personal paths out of a plugin that ships live hooks
+
+This engine wires a `UserPromptSubmit` hook and a `Stop` hook, so its defaults
+run on every prompt of every install. Four of them named one maintainer's
+machine.
+
+- **`hooks/quote-harvester.ts`** wrote harvested quotes into a path inside a
+  private workspace. The new default is the deck `brand-amplification`'s
+  quote-flywheel actually reads (`BAE_QUOTE_DECK`, else
+  `~/.brand-amplification-state/cyborg-quotes.md`), because this hook is the
+  WRITE half of a two-plugin loop — a tidy coordination-owned path would have
+  left the halves pointed at different files, so the harvester would run,
+  succeed, and feed nothing. `COORDINATION_QUOTE_DECK` overrides.
+- **`proactive-daemon.ts`** defaulted `CYBORG_REPO` and `CAREER_OS_REPO` into
+  named private directories. `CAREER_OS_REPO` is still read first so existing
+  installs keep working; `WORKSPACE_REPO` / `$WORKSPACE_ROOT` / cwd is the new
+  chain, and `CYBORG_REPO` / `$CYBORG_ROOT` has **no** default.
+- **⚠️ The fix for that introduced a worse bug, caught by running it.**
+  `resolve("")` returns the CWD, and `cyborgRepo` is passed to a `git fetch`
+  with a **mutating refspec** — so an unset variable would have fetched refs
+  into whatever repository the daemon happened to start in. Empty now means
+  *disabled*: `readRemoteSubstrateSha` returns `null` before spawning git,
+  which is the same fail-open result it already documented.
+- **`com.thewhyman.proactive-daemon.plist.template`** and the catalog
+  description taught a directory layout named after one machine.
+
+101 tests pass. Verified by execution rather than inspection: all four deck
+resolution cases, the legacy/new/cwd daemon chain, and that an unset substrate
+repo returns `null` without running git at all.
+
 ## 0.4.0 (XOS-120)
 
 - **Solo-session roles:** a session with no live siblings automatically covers
