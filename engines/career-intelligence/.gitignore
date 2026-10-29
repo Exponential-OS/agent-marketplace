@@ -33,3 +33,4 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .superset/
+.venv-t/

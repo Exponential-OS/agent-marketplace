@@ -167,9 +167,9 @@ The task list is a living artifact, not a static queue. During execution:
 When Cruise Control completes its part of a task but a human must act:
 
 ```
-Task: "Apply to Affirm — Director"
+Task: "Apply to {Company} — Director"
   ✅ [completed] Resume customized (cover letter opt-in only — WO-044)
-  ⏳ [blocked:human] Submit application at affirm.com/careers (requires login)
+  ⏳ [blocked:human] Submit application at {company}.com/careers (requires login)
 ```
 
 The completed portion is saved. The human portion is clearly marked with
@@ -183,8 +183,8 @@ in the queue. It never freezes the entire queue waiting for one answer.
 Blocked tasks are collected and presented at the end:
 ```
 ⏳ BLOCKED (needs your input):
-  3. Affirm application — needs manual submission at affirm.com/careers
-  7. Scale AI outreach — need to confirm: should we mention Director path?
+  3. {Company} application — needs manual submission at {company}.com/careers
+  7. {Company} outreach — need to confirm: should we mention Director path?
 ```
 
 ### Skill Orchestration
@@ -225,10 +225,10 @@ shipping violates P10 (Visual-First) and P8 (Feedback Loops).
 | # | Task | Status | Files Changed | Needs Input? |
 |---|------|--------|---------------|-------------|
 | 1 | Score 3/31 scan roles | ✅ | job-pipeline-match-tracker.json | No |
-| 2 | Apply: Visa Director | ✅ | job-pipeline.json, issue #142 closed | No |
-| 3 | Apply: Sierra AI EM | ✅ | job-pipeline.json, issue #143 closed | No |
-| 4 | Apply: Affirm (submit) | ⏳ | Resume generated | Yes — manual submit |
-| 5 | Draft outreach: Ron Deang | ✅ | (console output) | Review before sending |
+| 2 | Apply: {Company A} Director | ✅ | job-pipeline.json, issue #142 closed | No |
+| 3 | Apply: {Company B} EM | ✅ | job-pipeline.json, issue #143 closed | No |
+| 4 | Apply: {Company C} (submit) | ⏳ | Resume generated | Yes — manual submit |
+| 5 | Draft outreach: {contact name} | ✅ | (console output) | Review before sending |
 
 Completed: 3/5 | Blocked: 1 | Needs Review: 1
 

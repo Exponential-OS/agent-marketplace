@@ -9,7 +9,7 @@
 
 **Reads go directly against markdown + frontmatter. Writes go to `.md` files. No DB, no container, no migrate step.**
 
-The Dolt SQL substrate (v0.20.0–v0.23.0, Apr 15 → Apr 25 2026) was rolled back on 2026-04-26 in favor of a file-only architecture. The migration scripts remain on disk at `~/cyborg/brain-db/` for reference if/when a queryable runtime substrate (semantic retrieval / vector store / graph DB) ships under the OpenClaw memory standard. Don't run them.
+The Dolt SQL substrate (v0.20.0–v0.23.0, Apr 15 → Apr 25 2026) was rolled back on 2026-04-26 in favor of a file-only architecture. The migration scripts are retained in the maintainer's private workspace for reference if/when a queryable runtime substrate (semantic retrieval / vector store / graph DB) ships under the OpenClaw memory standard. Don't run them.
 
 ## Why file-only
 
@@ -112,26 +112,26 @@ Deprecated as of v0.24.0. They remain in-tree for reference but raise `AdapterDe
 Skills that draft content destined for real humans (`outreach-composer`, `resume-engine`) MUST run the biographical-claim pre-check rule before output:
 
 ```bash
-bash ~/cyborg/rules/biographical-claim-precheck/HOW.sh "$(jq -nc \
+bun run "${CLAUDE_PLUGIN_ROOT}/rules/biographical-claim-precheck/handler.ts" "$(jq -nc \
   --arg draft "/path/to/in-progress-draft.md" \
   --arg canonical "$CAREER_HOME/brain/identity/experience-history.md" \
   '{draft_path:$draft, canonical_sources:[$canonical], stakes:"T4"}')"
 ```
 
-Verdict `BLOCK` means a claim has no canonical anchor; fix the draft, do not bypass. Origin: Matt Kleinman + Amanesh Goyal hallucinations (2026-04-26). See `~/cyborg/rules/biographical-claim-precheck/README.md`.
+Verdict `BLOCK` means a claim has no canonical anchor; fix the draft, do not bypass. Origin: two T4 outreach drafts in which tenure, headcount, compensation and job-title claims were generated unanchored to any canonical record, both caught seconds before send (2026-04-26). See `rules/biographical-claim-precheck/README.md`.
 
 ## Anti-patterns
 
 - ❌ Don't build a new adapter layer to wrap markdown reads. Direct grep + frontmatter parse is faster to write, faster to debug, and one less thing to maintain.
 - ❌ Don't add silent fallbacks (`.md` if DB down`). The DB is gone; there's nothing to fall back FROM.
-- ❌ Don't bypass the biographical-claim-precheck for "small" outreach. Casual peer-to-peer DMs produced the originating Amanesh hallucination.
+- ❌ Don't bypass the biographical-claim-precheck for "small" outreach. One of the two originating incidents was a casual peer-to-peer DM.
 - ❌ Don't introduce new write surfaces without updating `schemas/shared-structures.md`. P9 coherence violation.
-- ❌ Don't run `~/cyborg/brain-db/migrate_career_os.py`. The substrate is rolled back; the migration script is reference-only.
+- ❌ Don't look for the rolled-back migration scripts. They are not shipped with this plugin. The substrate is rolled back; the migration script is reference-only.
 
 ## Troubleshooting
 
 - **"I see stale data" →** `git -C "$CAREER_HOME" pull --ff-only`. Sibling agents may have committed updates not yet pulled (GIT-NATIVE COORDINATION invariant).
-- **"My grep returns nothing" →** check the canonical path with `ls $CAREER_HOME/brain/`. Brain reorganized 2026-04-26 (cyborg → xHumanOS migration); old paths under `~/cyborg/people/` and `~/cyborg/projects/` are now under `$CAREER_HOME/brain/network/people/` and `$CAREER_HOME/brain/projects/`.
+- **"My grep returns nothing" →** check the canonical path with `ls "$CAREER_HOME/brain/"`. Brain layout changed on 2026-04-26; people and project records now live under `$CAREER_HOME/brain/network/people/` and `$CAREER_HOME/brain/projects/`.
 - **"Frontmatter parse error" →** the file is missing `---\n...---\n` markers, or YAML inside is malformed. Fix the file; do NOT add silent fallback to the reader.
 - **"AdapterDeprecated raised" →** you're calling `cyborg-db.py` or `memory_adapter.py`. Migrate to direct file reads per the examples above.
 
@@ -140,8 +140,8 @@ Verdict `BLOCK` means a claim has no canonical anchor; fix the draft, do not byp
 - Schema definitions: `schemas/shared-structures.md`
 - Brain layer root: `$CAREER_HOME/brain/`
 - Memory rules: see this plugin's README § Skill-side memory access
-- Biographical-claim rule: `~/cyborg/rules/biographical-claim-precheck/`
-- Migration archives (historical, do not run): `~/cyborg/brain-db/migrate_career_os.py` + `migrations/v0.19.1-to-v0.20.0.sh` etc.
+- Biographical-claim rule: `${CLAUDE_PLUGIN_ROOT}/rules/biographical-claim-precheck/`
+- Migration archives (historical, not shipped): retained in the maintainer's private workspace only.
 
 ## Origin
 

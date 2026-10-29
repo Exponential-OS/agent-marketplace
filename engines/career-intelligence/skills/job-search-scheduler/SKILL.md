@@ -314,7 +314,8 @@ from the company's LinkedIn People tab.
 3. **Filter via URL parameters** instead of click-filter-screenshot:
    - 1st connections: `/company/{slug}/people/?facetNetwork=%5B"F"%5D`
    - 2nd connections: `/company/{slug}/people/?facetNetwork=%5B"S"%5D`
-   - Alumni: `/company/{slug}/people/?keywords=Berkeley`
+   - Alumni: `/company/{slug}/people/?keywords={alma_mater}` (read the user's schools
+     from their canonical education record; never hardcode a school)
 
 4. **Rate limiting:** Wait 2-3 seconds between companies to avoid LinkedIn throttling.
 
@@ -341,12 +342,13 @@ from the company's LinkedIn People tab.
 |------------------------|----------|--------|
 | In people/ with 🔥 ACTIVE status | Very strong | Ask mutual for direct intro |
 | In people/ with any status | Strong | Reach out to mutual, mention shared connection |
-| Berkeley Haas EMBA cohort | Strong | Alumni warm outreach |
+| Shared school or program cohort | Strong | Alumni warm outreach |
 | LinkedIn 1st but not in people/ | Medium | Connect first, then ask |
-| Poker gang / social circle | Very strong | Text/WhatsApp ask |
+| Close personal or social circle | Very strong | Text/WhatsApp ask |
 
 #### 3c: Alumni Network Detection
-- Navigate to People tab with `?keywords=Berkeley` (or "Haas")
+- Navigate to People tab with `?keywords={alma_mater}` (one query per school in the
+  user's canonical education record)
 - Extract count and names via DOM
 - 3+ alumni = alumni network tag (medium strength)
 
@@ -491,7 +493,7 @@ Save to `career-intelligence/projects/job-search/scans/{YYYY-MM-DD}/enrich-{HH}-
 |------|------|----------|--------|
 | {Name} (1st, {Title}) | Direct referral | Very strong | Ask to refer |
 | {Name} (2nd via {Mutual}) | 2nd-degree intro | Strong | Ask {Mutual} for intro |
-| {N} Haas alumni | Alumni network | Medium | Alumni outreach |
+| {N} {alma_mater} alumni | Alumni network | Medium | Alumni outreach |
 
 ## Priority Actions (sorted by strength)
 | # | Company | Contact | Action | Strength |

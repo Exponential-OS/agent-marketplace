@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # AUDIT.sh — was the biographical-claim-precheck rule followed in the last N actions?
 #
-# Consumes the enforcement log written by HOW.sh, surfaces:
+# Consumes the enforcement log written by handler.ts (tagged script_type=HOW), surfaces:
 #   - shipped count (records with verdict PASS)
 #   - blocked count (verdict BLOCK)
 #   - bypassed count (T4 outreach drafts in INPUT/ that have NO matching log entry —

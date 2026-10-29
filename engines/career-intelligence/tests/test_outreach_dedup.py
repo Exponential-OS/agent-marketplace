@@ -161,9 +161,9 @@ class TestJsonFormat:
 
     def test_json_content_name_match_blocks(self, tmp_path):
         # filename slug differs from query; match must come from the JSON "name" field
-        p = _write_person_json(tmp_path, "Iuliia Melnychuk", last_contact=_date(2))
+        p = _write_person_json(tmp_path, "Jamie Carter", last_contact=_date(2))
         p.rename(tmp_path / "contact-0042.json")
-        r = _call({"contact_name": "Iuliia Melnychuk"}, tmp_path)
+        r = _call({"contact_name": "Jamie Carter"}, tmp_path)
         assert r["verdict"] == "BLOCK"
 
     def test_json_summary_from_interaction_log(self, tmp_path):

@@ -27,11 +27,11 @@ Input JSON:
         "follow_up": "2026-05-08",
         "conversation_history": {
           "last_message_sent": "2026-05-05",
-          "last_message_summary": "Asked for intro to Dilip at MongoDB re: #232"
+          "last_message_summary": "Asked for intro to a hiring manager at Northwind re: #232"
         },
         "commitments_made": "Sent blurb + resume PDF"
       },
-      "commit_message": "outreach: sandeep-reddy — mongodb #232 intro ask [unit-of-work]"
+      "commit_message": "outreach: jordan-reyes — northwind #232 intro ask [unit-of-work]"
     }
 
 Exit: 0 = committed, 1 = BLOCK (validation failed), 2 = WARN (committed with issues)

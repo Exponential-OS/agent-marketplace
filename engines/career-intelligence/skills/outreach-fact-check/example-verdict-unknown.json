@@ -12,10 +12,10 @@
     "claim_class": "metric",
     "verdict": "unknown",
     "canonical_source": "$CAREER_HOME/brain/identity/experience-history.md",
-    "canonical_excerpt": "Led 14-vendor global evaluation for Data Center Visitor Management.\n[No uptime figure for visitor management system found in canonical]",
-    "diff": "The visitor management system is referenced in canonical (§ 4.3 Platform Engineering section) but no uptime metric is recorded for it. Canonical does contain uptime-adjacent metrics for other systems (system-A: 400% performance improvement; system-B: 51,840,000% efficiency gain) but none matching '99.99% uptime' for visitor management. Cannot confirm or deny from available canonical files.",
+    "canonical_excerpt": "Led a multi-vendor global evaluation for the visitor management system.\n[No uptime figure for visitor management system found in canonical]",
+    "diff": "The visitor management system is referenced in canonical (platform engineering section) but no uptime metric is recorded for it. Canonical does contain uptime-adjacent metrics for other systems (system-A and system-B each carry a recorded efficiency figure) but none matching '99.99% uptime' for visitor management. Cannot confirm or deny from available canonical files.",
     "confidence": "LOW",
-    "remediation": "One of three options: (1) Remove the specific uptime figure until the user can confirm it from memory and add it to experience-history.md. (2) Replace with the verifiable canonical metric: 'Led the 14-vendor global evaluation for the Data Center Visitor Management system.' (3) Provide source documentation and request canonical update before ship. Do NOT ship the 99.99% figure without canonical anchor.",
+    "remediation": "One of three options: (1) Remove the specific uptime figure until the user can confirm it from memory and add it to experience-history.md. (2) Replace with the verifiable canonical metric: 'Led the multi-vendor global evaluation for the visitor management system.' (3) Provide source documentation and request canonical update before ship. Do NOT ship the 99.99% figure without canonical anchor.",
     "blast_radius_note": null
   }
 }

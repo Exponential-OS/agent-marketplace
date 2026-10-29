@@ -121,7 +121,7 @@ brain.write("network/people/{slug}.md", content, {
 | Level | Score | Definition | Approach |
 |-------|-------|-----------|----------|
 | **Inner Circle** | 5 | Worked together closely, personal relationship | Direct ask — they'll go out of their way |
-| **Warm Offline** | 4 | Social connection outside work (neighbors, kids, poker) | Casual ask over drinks/text — leverage personal trust |
+| **Warm Offline** | 4 | Social connection outside work (neighbors, kids, sports) | Casual ask over drinks/text — leverage personal trust |
 | **Warm Professional** | 3 | Former colleague, conference contact, shared project | LinkedIn/email with shared work context |
 | **Network** | 2 | LinkedIn connection, mutual friends, same alma mater | Needs a hook — shared connection or proof-of-work |
 | **Cold** | 1 | No existing relationship | Proof-of-work required — article, project, mutual interest |
@@ -175,7 +175,7 @@ Voice-first friendly — the user describes contacts naturally, the skill extrac
 
 ### Step 1: Listen
 
-Accept unstructured input: "I know Piyush from Google — he's now CEO of Aida, an AI sales startup. We play poker on Thursdays with Pravir."
+Accept unstructured input, e.g.: "I know Jordan from my last company — they're now CEO of a small AI sales startup. We play basketball on Thursdays with Sam."
 
 ### Step 2: Extract
 
@@ -183,11 +183,11 @@ Pull structured fields from the description:
 
 | Field | Example |
 |-------|---------|
-| Name | Piyush Prahladka |
-| Current company | Aida (CEO) |
-| Company history | Google (ex), Glean (founding staff) |
-| Relationship | Close friend, poker group |
-| Shared context | Thursday poker with Pravir |
+| Name | Jordan Reyes |
+| Current company | Northwind AI (CEO) |
+| Company history | Contoso (ex), Initech (founding staff) |
+| Relationship | Close friend, weekly sports group |
+| Shared context | Thursday basketball with Sam |
 | Connection strength | 5 (Inner Circle — personal + professional) |
 | Channel preference | WhatsApp (inferred from "friend" — confirm with user) |
 | Inbound content attribution | `source: post`, `post_id: {post_id}` when the user attributes an inbound DM to a post |
@@ -196,10 +196,10 @@ Pull structured fields from the description:
 
 After saving, check against pipeline:
 ```
-Saved Piyush's profile. Cross-referencing with your pipeline...
+Saved Jordan's profile. Cross-referencing with your pipeline...
 
-💡 Piyush was at Glean — and you have no Glean contacts yet.
-   Glean is hiring EM roles. Want me to check if he knows anyone there?
+💡 Jordan was at Initech — and you have no Initech contacts yet.
+   Initech is hiring EM roles. Want me to check if they know anyone there?
 ```
 
 ### Step 4: Write/Update Profile
@@ -208,13 +208,13 @@ Write via `brain.write("network/people/{slug}.md", content, { provenance: { who:
 
 ```yaml
 ---
-name: Piyush Prahladka
-company: Aida
+name: Jordan Reyes
+company: Northwind AI
 role: CEO
 connection_strength: 5
 channel: whatsapp
-companies: [Google, Glean, Aida]
-relationship: Close friend, Thursday poker group
+companies: [Contoso, Initech, Northwind AI]
+relationship: Close friend, Thursday sports group
 last_contact: {date if known}
 # Optional for inbound recruiter DMs attributed to content
 source: post
@@ -381,17 +381,17 @@ Outreach Gate intact.
 ```
 ━━━ Network Map: {Company} ━━━
 
-You ──[5]── Pravir (Google Cloud) ──[?]── {Company}
-You ──[3]── Drew (Anthropic) ──[direct]── {Company}
-You ──[4]── Reid (OpenAI) ──[?]── {Company}
+You ──[5]── Sam (cloud infra) ──[?]── {Company}
+You ──[3]── Alex (AI lab) ──[direct]── {Company}
+You ──[4]── Robin (AI lab) ──[?]── {Company}
 
 Legend:
   [N] = connection strength (1-5)
   [direct] = currently works there
   [?] = unknown if they know someone there — worth asking
 
-Strongest path: Drew (score 3, works there directly)
-Best warm path: Pravir (score 5, may know people) — ask over beers
+Strongest path: Alex (score 3, works there directly)
+Best warm path: Sam (score 5, may know people) — ask informally
 ```
 
 ### Phase 2 (Visual — Future)
@@ -424,10 +424,10 @@ Your network map needs contacts to work with.
 
 Tell me about 3-5 people in your network:
 - Former colleagues at companies you admire
-- Friends in tech (neighbors, parents from school, poker buddies)
+- Friends in tech (neighbors, parents from school, sports or hobby groups)
 - Conference contacts or mentors
 
-Just talk naturally: "I know Pravir from Google, he's VP at Cloud now..."
+Just talk naturally: "I know Sam from my last job, they're a VP in cloud now..."
 I'll extract the details and start mapping paths to your target companies.
 ```
 
@@ -488,10 +488,10 @@ Write or update via `brain.write("network/people/{slug}.md", ...)` with engine_i
 
 ```yaml
 relationship_origin:
-  company: Texas Guaranteed          # shared employer (or "unknown")
-  period: 2009-2010                  # overlapping date range
-  context: Oracle consulting engagement
-  connected: 2010-10-15              # LinkedIn connection date
+  company: Contoso                   # shared employer (or "unknown")
+  period: 2012-2013                  # overlapping date range
+  context: shared consulting engagement
+  connected: 2013-10-15              # LinkedIn connection date
 relationship_tier: former-colleague-warm
 conversation_history:
   last_message_sent: 2019-06-19
@@ -537,27 +537,27 @@ For each unset-origin candidate in the window: run a quick relationship origin s
 
 ```yaml
 cohort:
-  name: texas-guaranteed-2009
-  members: [sandeep-reddy, rob-[surname], sambasiva-[surname]]
-  origin_company: Texas Guaranteed
-  period: 2009-2010
+  name: contoso-2012
+  members: [jordan-reyes, sam-okafor, riley-nakamura]
+  origin_company: Contoso
+  period: 2012-2013
 ```
 
 ### Step 4: Present cohort map
 
 ```
-━━━ Cohort: Texas Guaranteed (~2009-2010) ━━━
+━━━ Cohort: Contoso (~2012-2013) ━━━
 
 3 connections from this era:
-  Sandeep Reddy  — Director GTM Tech Ops, MongoDB  ← TARGET COMPANY ⭐
-  Rob [Surname]  — [Current Role]
-  Sambasiva      — [Current Role]
+  Jordan Reyes    — Director GTM Tech Ops, {Target Co}  ← TARGET COMPANY ⭐
+  Sam Okafor      — [Current Role]
+  Riley Nakamura  — [Current Role]
 
-Strategy: one opener referencing Texas Guaranteed reaches all three.
-Sandeep → MongoDB referral path (direct). Rob/Sambasiva → general warm reconnects.
+Strategy: one opener referencing Contoso reaches all three.
+Jordan → direct referral path. Sam/Riley → general warm reconnects.
 
-→ "write outreach for Sandeep referencing Texas Guaranteed"
-→ "cohort message for texas-guaranteed-2009" — draft one message for all three
+→ "write outreach for Jordan referencing Contoso"
+→ "cohort message for contoso-2012" — draft one message for all three
 ```
 
 ---
@@ -568,10 +568,10 @@ Full frontmatter schema for `network/people/{slug}.md`:
 
 ```yaml
 ---
-name: Sandeep Reddy
+name: Jordan Reyes
 companies:
-  - MongoDB (current — Director GTM Tech Ops)
-  - Amazon (prior — Sr TPM)
+  - Northwind AI (current — Director GTM Tech Ops)
+  - Contoso (prior — Sr TPM)
 relationship: former-colleague
 relationship_tier: former-colleague-warm
 warmth: 3
@@ -584,15 +584,15 @@ post_id: linkedin-post-2026-06-28
 
 # NEW in v0.30.0 — relationship origin detection
 relationship_origin:
-  company: Texas Guaranteed
-  period: 2009-2010
-  context: Oracle consulting engagement
-  connected: 2010-10-15
+  company: Contoso
+  period: 2012-2013
+  context: shared consulting engagement
+  connected: 2013-10-15
 cohort:
-  name: texas-guaranteed-2009
-  members: [sandeep-reddy, rob-surname, sambasiva-surname]
-  origin_company: Texas Guaranteed
-  period: 2009-2010
+  name: contoso-2012
+  members: [jordan-reyes, sam-okafor, riley-nakamura]
+  origin_company: Contoso
+  period: 2012-2013
 conversation_history:
   last_message_sent: 2019-06-19
   last_message_received: 2019-06-19

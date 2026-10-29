@@ -6,6 +6,6 @@
   "product_home": "career-os-plugin",
   "description": "Before suggesting or drafting outreach to a named contact for a job referral, check their people file for existing recent outreach (default lookback: 14 days). BLOCK if outreach was already sent.",
   "litmus": "Run HOW.py with contact_name + people_dir — exit 0 = no recent outreach (safe to suggest), exit 1 = duplicate (check for reply instead)",
-  "origin_incident": "2026-05-04: suggested drafting outreach to Iuliia Melnychuk and Ravi Duddukuru without reading their people files first; both had messages sent earlier the same session.",
+  "origin_incident": "2026-05-04: suggested drafting outreach to a contact who had already been reached on three channels, and a follow-up to a contact whose people file recorded same-day outreach",
   "dispatch_slug": "warm-contact-outreach-dedup"
 }

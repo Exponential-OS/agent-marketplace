@@ -159,13 +159,13 @@ describe("warm path query", () => {
       name: "Alice Example",
       companies: ["OriginCo"],
       role: "Engineering Manager",
-      cohort: "Texas Guaranteed 2009",
+      cohort: "Contoso 2012",
     });
     writePerson(peopleDir, "bob", {
       name: "Bob Target",
       companies: ["TargetCo"],
       role: "Staff Engineer",
-      cohort: "Texas Guaranteed 2009",
+      cohort: "Contoso 2012",
     });
 
     const graph = loadWarmPathGraph(peopleDir, { now: NOW });
@@ -177,8 +177,8 @@ describe("warm path query", () => {
 
     expect(edge?.relationship_kind).toBe("ask_candidate");
     expect(edge?.strength_label).toBe("weak");
-    expect(edge?.evidence).toContain("ask candidate: shared cohort: texas guaranteed 2009");
-    expect(edge?.evidence).not.toContain("shared cohort: texas guaranteed 2009");
+    expect(edge?.evidence).toContain("ask candidate: shared cohort: contoso 2012");
+    expect(edge?.evidence).not.toContain("shared cohort: contoso 2012");
     expect(depth2?.strength_label).toBe("weak");
   });
 
@@ -212,10 +212,10 @@ describe("warm path query", () => {
         label: "Inner Circle",
       },
       cohort: {
-        name: "texas-guaranteed-2009",
+        name: "contoso-2012",
         members: ["alice", "bob"],
-        origin_company: "Texas Guaranteed",
-        period: "2009-2010",
+        origin_company: "Contoso",
+        period: "2012-2013",
       },
     });
     writePerson(peopleDir, "bob", {
@@ -223,9 +223,9 @@ describe("warm path query", () => {
       companies: ["TargetCo"],
       role: "Staff Engineer",
       cohort: {
-        name: "texas-guaranteed-2009",
-        origin_company: "Texas Guaranteed",
-        period: "2009-2010",
+        name: "contoso-2012",
+        origin_company: "Contoso",
+        period: "2012-2013",
       },
     });
 
@@ -243,7 +243,7 @@ describe("warm path query", () => {
     expect(direct?.strength_label).toBe("very_strong");
     expect(direct?.evidence).toContain("relationship strength: 5");
     expect(cohortEdge?.relationship_kind).toBe("ask_candidate");
-    expect(cohortEdge?.evidence).toContain("ask candidate: shared cohort: texas-guaranteed-2009");
+    expect(cohortEdge?.evidence).toContain("ask candidate: shared cohort: contoso-2012");
     expect(depth2?.warmth_score).toBe(2);
     expect(depth2?.strength_label).toBe("weak");
   });

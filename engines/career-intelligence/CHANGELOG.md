@@ -2,6 +2,59 @@
 <!-- this file is the historical changelog. Entries reference the original author/user as provenance, not runtime data. -->
 # Changelog
 
+## [1.0.2] — 2026-10-29 — third-party names and private career data removed from shipped files
+
+1.0.1 claimed `rules/biographical-claim-precheck/README.md` was fixed. It fixed
+the **path** and left the **names**. Two real private individuals were still
+named in that README alongside the specific false claims drafted about them,
+including a compensation floor and job titles at named employers. The same two
+names also shipped in `docs/MEMORY-ACCESS.md`, in `WATCH.sh`, and — as a separate
+pair of real contacts with relationship details — in `skills/outreach-composer`
+and `skills/network-intelligence`. Five real people in total, each verifiable
+against a people file, shipping to every customer.
+
+**Worse than a leak: the product was wrong for every customer.**
+`skills/outreach-fact-check/SKILL.md` hardcoded one person's resume as its
+canonical anchors — exact tenure, employer, internal job level, direct-report
+count, award names, school, speaking venues, and internal project codenames with
+their ROI dollar figures. A customer installing this plugin got a fact-checker
+that would flag *their own correct claims* as MISMATCH against a stranger's
+career. Every "Key anchors" block is now a pointer to the installing user's own
+canonical files, with synthetic worked examples.
+
+Also fixed: `docs/MEMORY-ACCESS.md` instructed customers to run a MUST-run
+pre-check command at a path that exists on no machine, including the
+maintainer's — `HOW.sh` under a private workspace directory. It now invokes the
+plugin's own `handler.ts` through `${CLAUDE_PLUGIN_ROOT}`. Every remaining
+private-workspace path in that document is gone.
+
+`skills/job-search-scheduler` carried one maintainer's alumni program and social
+group as rows in a customer-facing connection-strength table; both are now
+generic categories.
+
+**Why the gate missed all of it:** the ship gate scans for path and handle
+patterns. It has no detector for "this is a real person's name" or "this is
+somebody's actual salary", so every one of these read as ordinary prose. Filed
+as a gate gap, not a one-off fix.
+
+A cross-family judge panel (Gemini + Codex, both FAIL at 95/98 confidence) then
+caught ten further misses in the first pass, all fixed here:
+
+- The "synthetic" candidate kept the real person's **exact fingerprint** — same
+  dates, same tenure to the month, same report count, with only the employer
+  renamed. That is not a redaction. All figures are now invented.
+- The maintainer's school and degree program survived in four more places because
+  the first sweep searched for the two-word phrase and not each word separately.
+- `handler.ts` did not emit `script_type`, which is what `AUDIT.sh` and
+  `WATCH.sh` filter on. Repointing the docs from `HOW.sh` to `handler.ts` would
+  have left the audit **silently reporting a clean run over zero records**.
+- A rewritten activation command interpolated `$CAREER_HOME` inside single-quoted
+  JSON, so any path containing a space produced invalid JSON.
+- `example-verdict-mismatch.json` was missed entirely and still carried the real
+  tenure, title and report count.
+
+Tests: 21 pytest, 130 bun, all green.
+
 ## [1.0.1] — 2026-10-27 — personal-workspace references removed from shipped files
 
 Three migration scripts printed, as the **customer's own instructions**, a GitHub
@@ -1080,7 +1133,7 @@ Trigger: `"onboard me to career intelligence"` / `"career setup"` / `"set up job
   Before surfacing any action suggestion for a named contact, Mission Control MUST: (1) read
   `brain/network/people/<slug>.md` in full; (2) check the Interaction Log for evidence the action
   is already done and SUPPRESS if so; (3) check `last_contact` staleness and annotate.
-  Origin: 2026-05-05 gate failure where "verify IC title with Paul" was suggested after paul-hessey.md
+  Origin: 2026-05-05 gate failure where verifying a contact's title was suggested after a contact's people file
   already showed the confirmation had been sent via email on 2026-05-04.
 - Pre-Dashboard Checks step 5: explicit mandate to apply Contact Action Pre-Flight for every warm
   contact before dashboard render.

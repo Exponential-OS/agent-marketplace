@@ -25,15 +25,15 @@ Prevents biographical hallucinations from shipping in T4 (irreversible, external
 artifacts — outreach emails, LinkedIn DMs, cover letters, applications, public posts,
 any communication sent to a real human that makes a factual claim about the user's career.
 
-**Origin (2026-04-26 — [Recipient] near-miss):** An agent inherited a draft saying
-"last 4 as Google L6" and built a send-ready Gmail compose URL from it. Canonical source
-(`experience-history.md`) says: January 2019 – May 2025 = **6 years 5 months** at Google.
-Multi-dim sweep then surfaced three more silent errors in the same draft class:
-"50+ reports" (canonical: up to 16), "$200K floor" — canonical has NO compensation anchor
-(verdict: unknown, not mismatch — the skill correctly returns unknown on this class because
-there is no canonical figure to diff against), "99.99% uptime" attributed to wrong company.
-All four would have reached real humans in a PANIC-mode warm-path. User caught pre-send.
-This skill is the mechanical gate that prose verification failed to enforce.
+**Origin (2026-04-26):** An agent inherited a draft that understated a tenure by
+more than two years and built a send-ready compose URL from it. A multi-dimension
+sweep then surfaced three further silent errors in the same draft: an inflated
+direct-report count, a compensation floor with no canonical anchor at all, and a
+reliability statistic attributed to the wrong employer. All four were on a path to
+a real recipient on a warm introduction, and were caught by the user seconds before
+send. Each error was individually plausible, which is exactly why self-review
+missed them. This skill is the mechanical gate that prose verification failed to
+enforce.
 
 **Co-dialectic Protocol 8 dispatch target:** When Protocol 8 classifies an artifact as
 T4 AND detects a biographical claim pattern → dispatches to this skill. The skill returns
@@ -58,12 +58,13 @@ structured verdict. The caller decides what to do with it.
 
 ### Mode 2 — Pre-Send Check (PreToolUse hook on outgoing tools)
 
-> ⚠️ **FORWARD SPEC — implementation pending.** This section documents the
-> intended Mode 2 behavior for the v0.27.0 ship. The `preflight.sh` script
-> referenced in the wiring example below is **NOT YET SHIPPED in v0.26.0**.
-> Until v0.27.0 ships, Mode 1 (on-demand verification) is the only functional
-> mode. The agent MUST invoke the skill explicitly before T4 outreach. Mode 2
-> closes that bypass-loophole; until then, the verifier remains advisory.
+> ⚠️ **FORWARD SPEC — NOT IMPLEMENTED.** This section documents an intended
+> Mode 2 design. The `preflight.sh` script in the wiring example below has
+> never shipped, and the wiring is illustrative only — do not copy it into a
+> settings file expecting it to run. Mode 1 (on-demand verification) is the
+> only functional mode: the agent MUST invoke this skill explicitly before T4
+> outreach. Until Mode 2 exists, the verifier remains advisory and the
+> bypass-loophole it would close is still open.
 
 When wired as a PreToolUse hook on outgoing-message tools (`mcp__claude_ai_Gmail__create_draft`,
 LinkedIn DM tools, etc.), the skill runs automatically on every outgoing message body —
@@ -170,7 +171,7 @@ per migration v4, 2026-04-27). Career-os plugin skills access these directly —
 |------|--------------|
 | `experience-history.md` | Employment dates, titles, levels (L5/L6/etc.), team size, direct reports, scope, compensation ranges (when present), ROI figures, specific achievements per role |
 | `awards-education-speaking.md` | Degrees, certifications, hackathon wins, awards with citations, speaking engagements with event names + dates |
-| `identity.md` | Personal brand statement, coaching identity ("AI-native EM coach"), values, mission, career arc, persona |
+| `identity.md` | Personal brand statement, coaching identity, values, mission, career arc, persona |
 | `handles.md` | Social/professional handles — LinkedIn URL, GitHub, Substack, X/Twitter, personal site |
 
 **Why `brain/identity/`, NOT a shared config path:** Instance-specific biographical content lives at
@@ -191,29 +192,44 @@ note `"canonical_source": "UNAVAILABLE — {reason}"`. Never fabricate canonical
 
 **Canonical source:** `experience-history.md` — `Period:` field per role section
 
-**Key anchors (as of last canonical update):**
-- Google: January 2019 – May 2025 = **6 years 5 months** (NOT "4 years", NOT "6 years",
-  NOT "5 years" — exact phrase "6 years 5 months")
-- Resilience AI: June 2025 – February 2026 = 9 months
+**Where the anchor lives:** every `Period:` line in the user's
+`experience-history.md`. Compute the span from the canonical start and end dates;
+never accept a tenure figure stated in the draft as its own evidence.
 
-**Example claims to catch:**
-- "last 4 as Google L6" → MISMATCH: canonical is 6 years 5 months total at Google
-- "6 years at Google" → LOW-confidence match (close, but omits the 5 months — flag)
-- "joined Google in 2018" → MISMATCH: canonical start is January 2019
+**Match rule:** the drafted span must equal the canonical span to the month.
+
+A draft that rounds a partial year DOWN is a `mismatch`, not a low-confidence
+`match`. This matters mechanically, not pedantically: the verdict table above
+ALLOWs `match` silently and keys on the verdict alone, never on confidence — so
+anything emitted as `match` ships unseen no matter how low its confidence. Any
+claim that should reach a human must carry `mismatch` or `unknown`.
+
+**Example claims to catch** (synthetic candidate: Northwind, Apr 2014 to Oct 2019;
+these figures are invented and match no real record):
+- "last 3 years at Northwind" → MISMATCH: canonical span is 5 years 7 months
+- "5 years at Northwind" → MISMATCH: understates 5 years 7 months. Emit mismatch,
+  not a low-confidence match, or it ships silently.
+- "joined Northwind in 2013" → MISMATCH: canonical start is April 2014
 
 ### 2. Title / Role Claims
 **Pattern:** "as a [Title]", "[Level] [Role]", "Senior Director of", "L[N] [role]"
 
 **Canonical source:** `experience-history.md` — `Level:` and `LinkedIn title:` fields
 
-**Key anchors:**
-- Google: **L6 AE Manager II** / LinkedIn title: "Senior Software Engineering Manager"
-  (NOT "L6 SDM", NOT "Director of Engineering", NOT "Engineering Director")
-- Resilience AI: Founder & Applied AI Product Engineering Lead
+**Where the anchor lives:** the `Level:` and `LinkedIn title:` fields per role in
+the user's `experience-history.md`.
 
-**Example claims to catch:**
-- "last 4 as Google L6 SDM" → MISMATCH: title is AE Manager II, not SDM (SDM is Amazon)
-- "Director of Engineering at Google" → MISMATCH: title was SWE Manager, not Director
+**Match rule:** internal level ladders differ between employers, and a title that
+is ordinary at one company can imply a different scope at another. Treat any
+title not present verbatim in canonical as a MISMATCH, including a seniority
+upgrade that merely sounds equivalent.
+
+**Example claims to catch** (canonical: `Senior Engineering Manager`, Northwind):
+- "Director of Engineering at Northwind" → MISMATCH: canonical title is Senior
+  Engineering Manager; director implies a layer the record does not support
+- "Principal SDM at Northwind" → MISMATCH: SDM belongs to a different employer's
+  ladder and appears nowhere in canonical
+- "Engineering lead at Northwind" → MISMATCH: paraphrase, not the canonical title
 
 ### 3. Team Size / Scope Claims
 **Pattern:** "led [N] engineers", "team of [N]", "managed [N] reports",
@@ -221,15 +237,21 @@ note `"canonical_source": "UNAVAILABLE — {reason}"`. Never fabricate canonical
 
 **Canonical source:** `experience-history.md` — scope/leadership sections
 
-**Key anchors (Google):**
-- "Managed up to **16** engineers and contractors" (line in § 4.3 Leadership section)
-- "5-16 reports managed" (range per performance review notes in § 4.3)
-- Pod model: 10 contractors (EPAM) embedded — not the same as 16 direct reports
+**Where the anchor lives:** the scope and leadership sections per role in the
+user's `experience-history.md`.
 
-**Example claims to catch:**
-- "managed 50+ reports" → MISMATCH: canonical max is 16
-- "led 20 engineers" → MISMATCH: canonical says "up to 16"
-- "team of 4 managers" → INSUFFICIENT_EVIDENCE: not mentioned in canonical; flag
+**Match rule:** use the canonical maximum, and keep the distinction the canonical
+record makes between direct reports, embedded contractors and total org size. A
+draft that merges those into one larger number is a MISMATCH even when the total
+is arithmetically correct.
+
+**Example claims to catch** (canonical: "managed up to 9 engineers and
+contractors"):
+- "managed 40+ reports" → MISMATCH: canonical maximum is 9
+- "managed 9 direct reports" → INSUFFICIENT_EVIDENCE: canonical gives a combined
+  headcount of employees and contractors and never states how it splits, so the
+  direct-report count is not established either way. Do not infer it.
+- "managed 3 team leads" → INSUFFICIENT_EVIDENCE: no management layer in canonical
 
 ### 4. Compensation / Financial Claims
 **Pattern:** "$[N]K base", "$[N]K RSUs", "total comp of $[N]", "earning $[N]",
@@ -242,39 +264,44 @@ note `"canonical_source": "UNAVAILABLE — {reason}"`. Never fabricate canonical
   confidence: LOW, remediation: "Remove specific dollar figure or confirm with the user."
 
 **Example claims to catch:**
-- "$200K floor" → cross-reference canonical; if no explicit anchor → unknown / flag
-- "$320K total comp" → verify exact figure exists in canonical or mark unknown
+- Any dollar figure with no matching figure in canonical → `unknown`, flag for the user
+- A figure that is close to but not identical with canonical → `mismatch`, never round
 
 ### 5. Recognition / Award Claims
 **Pattern:** "[N] hackathon wins", "[Award name] winner", "received [Award]",
   "[Prize] from [Company]"
 
-**Canonical source:** `experience-history.md` (hackathon details in § 4.3) +
+**Canonical source:** `experience-history.md` (recognition entries per role) +
   `awards-education-speaking.md`
 
-**Key anchors:**
-- GCP Customer Empathy Award — from Thomas Kurian (CEO, Google Cloud) — Aug 12, 2024
-- iSCaaS+ 2023 SCOT Hackathon: blockchain team 2nd prize (Product Excellence Award);
-  AI team finalist (Op & Eng Excellence Award)
-- NOT a hackathon: gPals (gHacks24) — category-defining prototype but no stated prize
+**Where the anchor lives:** the user's `awards-education-speaking.md`, plus award
+mentions inside role sections of `experience-history.md`.
+
+**Match rule:** count only entries the canonical record states as a win. A
+finalist placing, a shortlist, or a well-received project with no stated prize
+does not increment a win count. Award names must match verbatim.
 
 **Example claims to catch:**
-- "10 hackathon wins" → MISMATCH: verify exact count from canonical; do not round up
-- "won the Google Innovation Award" → verify exact award name against canonical
+- An aggregate win count higher than the canonical entries support → MISMATCH
+- A finalist entry counted as a win → MISMATCH
+- An award name paraphrased rather than quoted → MISMATCH
 
 ### 6. Education Claims
-**Pattern:** "MBA from [school]", "MS in [field] from [school]", "Berkeley [degree]",
+**Pattern:** "MBA from [school]", "MS in [field] from [school]", "[school] [degree]",
   "graduated from [school] in [year]"
 
 **Canonical source:** `awards-education-speaking.md`
 
-**Key anchors (from canonical):**
-- UC Berkeley Haas — EMBA program (verify exact graduation year from canonical)
-- Cross-check school name, degree type, year claimed
+**Where the anchor lives:** the user's `awards-education-speaking.md`.
+
+**Match rule:** school, degree type, program variant and year must each match
+canonical independently. A correct school with the wrong program variant is still
+a MISMATCH.
 
 **Example claims to catch:**
-- "Harvard MBA" → MISMATCH: Berkeley Haas
-- "BS in Computer Science from Stanford" → verify against canonical
+- Any institution not present in canonical → MISMATCH
+- Correct school, wrong degree or program variant → MISMATCH
+- A graduation year not stated in canonical → INSUFFICIENT_EVIDENCE
 
 ### 7. Speaking / Publication Claims
 **Pattern:** "spoke at [Event]", "keynote at [Conference]", "published in [Publication]",
@@ -283,13 +310,16 @@ note `"canonical_source": "UNAVAILABLE — {reason}"`. Never fabricate canonical
 **Canonical source:** `awards-education-speaking.md` + `experience-history.md`
   (speaking engagements within role sections)
 
-**Key anchors:**
-- HealthTech Summit 2026 — AIify.io — San Francisco — Jan 14-16, 2026 — keynote speaker
-  (talk: "Intelligence Systems for Health, Performance, and Resilience")
+**Where the anchor lives:** the user's `awards-education-speaking.md`, plus
+speaking entries inside role sections of `experience-history.md`.
+
+**Match rule:** the venue, the year and the speaking role must all anchor. Panel
+participation is not a keynote; an accepted talk is not a published paper.
 
 **Example claims to catch:**
-- "keynote at CES 2026" → MISMATCH or UNKNOWN: not in canonical
-- "published in HBR" → verify against canonical; no such entry → unknown
+- A venue with no canonical entry → UNKNOWN, flag
+- A canonical panel appearance drafted as a keynote → MISMATCH
+- A publication with no canonical entry → UNKNOWN
 
 ### 8. Identity / Brand Claims
 **Pattern:** personal brand name, coaching identity label, online persona descriptor,
@@ -298,9 +328,18 @@ note `"canonical_source": "UNAVAILABLE — {reason}"`. Never fabricate canonical
 **Canonical source:** `identity.md` (brand statement, coaching identity) +
   `handles.md` (handle correctness)
 
+**Where the anchor lives:** the brand statement and positioning line in the user's
+`identity.md`, and the per-platform handle entries in `handles.md`.
+
+**Match rule:** handles must match character for character, including case and
+platform. A positioning descriptor must appear in canonical as written; a
+paraphrase that sounds equivalent is a `mismatch`, because the brand line is the
+claim. A platform with no handle entry is `unknown`, not an invitation to guess.
+
 **Example claims to catch:**
-- Wrong handle (misspelled or outdated) → diff against `handles.md`
-- Incorrect positioning descriptor → diff against `identity.md`
+- Draft writes `@jordan_reyes` where canonical records `@jordanreyes` → MISMATCH
+- Draft cites a handle on a platform absent from `handles.md` → UNKNOWN
+- Draft paraphrases the canonical positioning line into a different claim → MISMATCH
 
 ### 9. Uptime / Metric Claims
 **Pattern:** "[N]% uptime", "[N]x performance improvement", "$[N]M savings",
@@ -312,15 +351,18 @@ note `"canonical_source": "UNAVAILABLE — {reason}"`. Never fabricate canonical
   If claim doesn't anchor to a specific system → `insufficient_evidence`.
   If anchored but company is wrong → `mismatch`.
 
-**Key anchors (Google):**
-- P6/Spring Tide: 400% performance improvement, $6.3M/yr savings
-- iSCaaS+ hackathon: 51,840,000% efficiency gain (supply chain recall)
-- $500M+ ROI across 6 GDC engineering tracks
-- $51M ROI: DC Security/VM over 5 years; $31M savings: PLM-IMS for MRP over 5 years
+**Where the anchor lives:** the ROI and metric lines inside each role section of
+the user's `experience-history.md`.
+
+**Match rule:** a metric must anchor to the same system AND the same employer as
+canonical. Carrying a real figure across to the wrong employer is the most common
+version of this error and reads as entirely plausible, so check the company on
+every metric even when the number verifies.
 
 **Example claims to catch:**
-- "99.99% uptime at Google" → verify in canonical; if not present → unknown; if attributed
-  to wrong company → mismatch
+- A reliability or savings figure with no canonical anchor → UNKNOWN
+- A real canonical figure attributed to the wrong employer → MISMATCH
+- A metric stated without naming its system → INSUFFICIENT_EVIDENCE
 
 ### 10. Comparative Claims
 **Pattern:** "more [X] than [Y]", "one of the top [N]", "first [descriptor]",
@@ -332,8 +374,10 @@ note `"canonical_source": "UNAVAILABLE — {reason}"`. Never fabricate canonical
 
 **Example claims to catch:**
 - "more AI experience than most EMs" → INSUFFICIENT_EVIDENCE: no canonical anchor
-- "first GCP supply chain hackathon" → HIGH match — exact phrase in canonical:
-  "First-ever GCP supply chain hackathon in Google's history" (§ 4.3)
+- A superlative stated verbatim in canonical, e.g. "first such event at the company"
+  → HIGH match, but ONLY for the exact scope canonical states. A draft that widens
+  it (adding a product area, a market, or an industry the canonical phrase never
+  claimed) is a MISMATCH, not a match.
 
 ---
 
@@ -352,14 +396,18 @@ AND the Protocol 8 biographical-claim detector fires, Protocol 8:
 
 ```bash
 # Example invocation from outreach-composer or Protocol 8 dispatch
-# Protocol 8 calls the career-os:outreach-fact-check skill directly by name.
-# The HOW.sh below is the cyborg-side enforcement primitive that MANDATES this dispatch —
-# it does NOT perform verification itself; it calls THIS skill.
-career-os:outreach-fact-check "$(jq -n -c \
-  --arg claim "6 years at Google as L6 SDM" \
+# Protocol 8 invokes the career-intelligence:outreach-fact-check SKILL by name.
+# A skill identifier is not a shell executable. The block below shows the JSON
+# payload the skill receives, built with jq; it is not a runnable command line.
+# The pre-check rule (rules/biographical-claim-precheck/handler.ts) is a
+# separate, coarser gate: it greps the draft for unanchored claim patterns and
+# BLOCKs T4 ship. It does not replace this skill's per-claim verdicts.
+# payload passed to career-intelligence:outreach-fact-check
+jq -n -c \
+  --arg claim "5 years at Northwind as a senior engineering manager" \
   --arg artifact_type "email" \
   --arg recipient "[Recipient]" \
-  '{claim:$claim, artifact_type:$artifact_type, recipient:$recipient}')"
+  '{claim:$claim, artifact_type:$artifact_type, recipient:$recipient}'
 
 # Enforcement gate (separate concern — enforces that dispatch is mandatory):
 # biographical-claim-precheck/HOW.py blocks T4 ship if this skill
@@ -450,7 +498,7 @@ Future incarnations follow the same architecture, different canonical paths:
 
 | Product | Skill name | Canonical sources |
 |---------|-----------|-------------------|
-| xHumanOS (this instance) | `career-os:outreach-fact-check` (this skill) | `$CAREER_HOME/brain/identity/` |
+| xHumanOS (this instance) | `career-intelligence:outreach-fact-check` (this skill) | `$CAREER_HOME/brain/identity/` |
 | xTeamOS | `team-claim-verifier` | `~/[team-instance]/brain/identity/` |
 | xFamilyOS | `family-claim-verifier` | `~/[family-instance]/brain/identity/` |
 | xCommunityOS | `community-claim-verifier` | `~/[community-instance]/brain/identity/` |

@@ -7,7 +7,7 @@ check their people file for existing recent outreach. BLOCK if outreach was
 sent within the lookback window (default 14 days).
 
 Input JSON via $1 or stdin (when $1 == '-'):
-  contact_name   - full or partial name of the contact (e.g. "Iuliia Melnychuk")
+  contact_name   - full or partial name of the contact (e.g. "Jamie Carter")
   people_dir     - absolute path to the people directory
                    (default: $CAREER_HOME/network/people)
   lookback_days  - how many days to treat as "recent" (default: 14)

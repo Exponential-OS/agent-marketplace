@@ -8,7 +8,12 @@ import { homedir } from "os";
 import { join, resolve } from "path";
 
 const SLUG = "biographical-claim-precheck";
-const LOG_PATH = join(homedir(), ".career-os-enforcement-log.jsonl");
+// Must resolve exactly as AUDIT.sh and WATCH.sh do, or they read a different file
+// and report a clean run over an empty log.
+const LOG_PATH =
+  process.env.CAREER_OS_ENFORCEMENT_LOG ||
+  process.env.CYBORG_ENFORCEMENT_LOG ||
+  join(homedir(), ".career-os-enforcement-log.jsonl");
 
 const CAREER_HOME =
   process.env.CAREER_HOME ??
@@ -123,13 +128,28 @@ interface Output {
 function log(extra: Record<string, unknown>): void {
   const ts = new Date().toISOString().replace(/\.\d+Z$/, "Z");
   try {
-    appendFileSync(LOG_PATH, JSON.stringify({ ts, rule_slug: SLUG, ...extra }) + "\n");
+    // script_type "HOW" is what AUDIT.sh and WATCH.sh filter on. handler.ts is the
+    // canonical enforcement primitive that replaced HOW.sh, so it must keep emitting
+    // that tag or the audit silently reports a clean run over zero records.
+    appendFileSync(LOG_PATH, JSON.stringify({ ts, rule_slug: SLUG, script_type: "HOW", ...extra }) + "\n");
   } catch { /* fail-open */ }
 }
 
 function emit(output: Output, exitCode: number): never {
   process.stdout.write(JSON.stringify(output) + "\n");
-  log({ verdict: output.verdict, fired: true });
+  // AUDIT.sh and WATCH.sh read stakes, draft_path and the claims_* counters off
+  // each record. Logging only {verdict, fired} made every record fail AUDIT.sh's
+  // tier filter (.stakes // "T0" >= T4), so the audit silently reported a clean
+  // run over zero records \u2014 a pass that proved nothing.
+  log({
+    verdict: output.verdict,
+    fired: true,
+    stakes: output.tier,
+    draft_path: output.draft_path,
+    claims_total: output.claims_total,
+    claims_anchored: output.claims_anchored,
+    claims_unanchored: output.claims_unanchored?.length ?? 0,
+  });
   process.exit(exitCode);
 }
 

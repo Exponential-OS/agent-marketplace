@@ -13,7 +13,7 @@
     "verdict": "insufficient_evidence",
     "canonical_source": "$CAREER_HOME/brain/identity/experience-history.md",
     "canonical_excerpt": "[Comparative claim — both sides of the comparison need quantification; only one side ('Jane's AI experience') is partially in canonical. The other side ('typical EM AI experience') has no canonical anchor.]",
-    "diff": "Comparative claims require BOTH components to be quantified against the same yardstick. Canonical does record Jane's AI experience (§ 4.3 mentions applied-AI work on multiple systems) but does NOT contain a population-level statistic on 'typical EM AI experience' — that figure isn't in any brain file because it can't be (Jane never had access to that distribution). Cannot diff a known value against an unknowable one.",
+    "diff": "Comparative claims require BOTH components to be quantified against the same yardstick. Canonical does record Jane's AI experience (the role section mentions applied-AI work on multiple systems) but does NOT contain a population-level statistic on 'typical EM AI experience' — that figure isn't in any brain file because it can't be (Jane never had access to that distribution). Cannot diff a known value against an unknowable one.",
     "confidence": "LOW",
     "remediation": "Reframe to a specific quantifiable claim that diffs against canonical: 'I shipped applied AI in 4 production systems during my tenure (visitor management, system-A, system-B, system-C).' Or remove the comparative framing: 'My tenure included extensive applied-AI work across [N] production systems.' Do NOT ship the comparative claim — it cannot be defended if [Recipient] asks 'how do you know that?'",
     "blast_radius_note": null

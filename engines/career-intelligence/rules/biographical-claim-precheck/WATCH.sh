@@ -51,13 +51,13 @@ PATTERN_COUNTS=$(jq -s '[.[] | select(.rule_slug=="biographical-claim-precheck" 
   }' "$LOG" 2>/dev/null || echo '{}')
 
 # --- EXPERIMENT 3: pattern-effectiveness (catch rate) ---
-# Of the 2 known T4 hallucinations from 2026-04-26 (Matt + Amanesh), how
-# many would current HOW.sh have caught? Replay synthetic test drafts
+# Of the 2 known T4 hallucinations from 2026-04-26, how
+# many would the current handler have caught? Replay synthetic test drafts
 # stored at rules/biographical-claim-precheck/EXPERIMENTS/.
 # Stub: synthetic replay is the v1.1 backlog item; for now, assert the
 # 2026-04-26 origin incidents are documented in README.md.
 EXP3_VERDICT="documented"
-EXP3_FINDING="origin incidents (Matt/Amanesh 2026-04-26) recorded in README.md; synthetic replay = v1.1 backlog"
+EXP3_FINDING="origin incidents (2026-04-26) recorded in README.md; synthetic replay = v1.1 backlog"
 
 # --- Cadence ladder ---
 # default: per-T4-artifact (fires on every T4 outreach draft).

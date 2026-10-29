@@ -559,7 +559,7 @@ Set initial version in `~/.career-os-state/version`.
 
 ## PROTOCOL: Contact Action Pre-Flight (MANDATORY)
 
-**Origin:** 2026-05-05 gate failure — Mission Control suggested "verify IC title with Paul" without reading paul-hessey.md, where the interaction log showed this had already been confirmed via email 2026-05-04. The action was already done; the suggestion created false noise and eroded trust.
+**Origin:** 2026-05-05 gate failure — Mission Control suggested "verify IC title with {contact}" without reading {contact-slug}.md, where the interaction log showed this had already been confirmed via email 2026-05-04. The action was already done; the suggestion created false noise and eroded trust.
 
 **Rule:** Before surfacing ANY action suggestion for a named contact — follow-up, ping, verify, outreach, intro request, thank-you, or any other contact-directed action — Mission Control MUST read the contact's people file first.
 

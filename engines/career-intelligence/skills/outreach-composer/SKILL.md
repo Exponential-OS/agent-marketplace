@@ -133,7 +133,7 @@ Check for a reply instead of re-contacting.
 
 **Skip-rule: NONE.** Every trigger (`write outreach for`, `follow up with`, `linkedin message to`, `thank you note for`, `reach out to`, `message for`, `draft email to`) must invoke this check. The question "has outreach already gone out?" must be answered by data, not memory.
 
-**Origin (2026-05-04):** Two back-to-back failures — drafted WhatsApp for a contact (Amanesh) who had already been reached via LinkedIn + phone + email; drafted follow-up for a contact (Ravi) whose people file showed same-day outreach. Neither would have happened if this gate had run. User: *"i thought you codified this in the plugin and shipped."*
+**Origin (2026-05-04):** Two back-to-back failures — a WhatsApp message drafted for a contact who had already been reached on three other channels, and a follow-up drafted for a contact whose own people file recorded outreach the same day. Both were duplicate contacts that the recorded data already ruled out. Neither would have happened if this gate had run.
 
 ---
 
@@ -152,7 +152,8 @@ Read the output bundle. Key signals to extract:
 
 **Calibration rules:**
 - Contact with `championing → projects/interview-prep` → lead with that project progress, not a generic ask
-- Contact with `works_at → companies/ai-fund` → frame against xOS mission, not job search
+- Contact who works at a company the user has a non-hiring relationship with → frame
+  against that shared mission, not job search
 - Contact with `involved_in` on a blocked project → acknowledge the blocker, offer to help
 
 **If `brain/assembler.py` not found:** skip this step and proceed. The assembler is context enrichment, not a blocker — outreach-composer works without it.
@@ -399,7 +400,7 @@ After user describes the contact:
 A draft shown is NOT a message sent (see protocol 1 above). This section fires ONLY on confirmed send. When the user confirms a message was sent (or you send it via browser automation after explicit per-message approval), immediately call:
 
 ```bash
-python3 $(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/outreach-people-file-commit/HOW.py 2>/dev/null | tail -1) "$(jq -nc \
+python3 "${CLAUDE_PLUGIN_ROOT}/rules/outreach-people-file-commit/HOW.py" "$(jq -nc \
   --arg people_file "$CAREER_HOME/network/people/{slug}.json" \
   --arg career_home "$CAREER_HOME" \
   --arg last_contact "$(date +%Y-%m-%d)" \
@@ -413,7 +414,7 @@ python3 $(ls -v ~/.claude/plugins/cache/xos/career-intelligence/*/rules/outreach
 - Call this in the SAME turn as the send confirmation — NEVER defer to session end
 - If the user kills the session after send but before this script runs, state is lost
 - Exit 0 = committed (show SHA). Exit 1 = BLOCK (surface error, do not proceed). Exit 2 = WARN (committed with issues)
-- Slug = the people file basename without extension (e.g., `sandeep-reddy`)
+- Slug = the people file basename without extension (e.g., `jordan-reyes`)
 - follow_up_date = today + 3 days for LinkedIn DM, today + 5 days for email (unless user specifies)
 
 ---

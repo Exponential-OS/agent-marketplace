@@ -2,7 +2,7 @@
 """
 HOW.py — biographical-claim pre-write hook (Python entry point).
 
-Replaces HOW.sh.
+Superseded by handler.ts.
 
 Fires BEFORE any draft destined for a real human (T4 outreach, biographical
 pitch, resume blurb, warm-intro packet, public artifact making claims about

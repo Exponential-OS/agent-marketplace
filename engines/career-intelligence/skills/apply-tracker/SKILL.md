@@ -308,7 +308,7 @@ Follow-up reminder set for {date + 10 business days}.
 ## BEHAVIOR: Batch Update
 
 When user says "batch update" or provides multiple status changes at once
-(e.g., "got rejected from Microsoft and Anthropic, interview at Affirm"):
+(e.g., "got rejected from {Company A} and {Company B}, interview at {Company C}"):
 
 1. Parse all updates from the user's message
 2. Show a confirmation table before applying:
@@ -318,9 +318,9 @@ When user says "batch update" or provides multiple status changes at once
 
 | # | Company | Current Status | New Status | Action |
 |---|---------|---------------|------------|--------|
-| 1 | Microsoft | Waiting (Applied 3/25) | ❌ Rejected | Close |
-| 2 | Anthropic EM FS | Waiting (Applied 3/20) | ❌ Rejected | Close |
-| 3 | Affirm | Screen completed | Interview scheduled | Advance |
+| 1 | {Company A} | Waiting (Applied 3/25) | ❌ Rejected | Close |
+| 2 | {Company B} EM FS | Waiting (Applied 3/20) | ❌ Rejected | Close |
+| 3 | {Company C} | Screen completed | Interview scheduled | Advance |
 
 Apply all? (y/n/pick numbers)
 ```
