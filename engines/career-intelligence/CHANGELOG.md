@@ -2,6 +2,17 @@
 <!-- this file is the historical changelog. Entries reference the original author/user as provenance, not runtime data. -->
 # Changelog
 
+## [2.0.0] — 2026-11-17 — single-source job scanning
+
+Breaking: the project-scoped scanner resolves career data from workspace root;
+legacy career-home environment variables no longer root scanner paths. The migration
+verifies the job-search directory without moving data; runtime state stays plugin-owned.
+
+SKILL.md now owns the scan procedure. Triggers invoke the skill by name. Added
+membership-based company exclusions (cleared wins), reported first-run bootstrap,
+30-day staleness warnings, mandatory yield validation, and profile diagnosis before
+query tuning. Bun tests now gate CI alongside outreach dedup tests.
+
 ## [1.0.2] — 2026-10-29 — third-party names and private career data removed from shipped files
 
 1.0.1 claimed `rules/biographical-claim-precheck/README.md` was fixed. It fixed

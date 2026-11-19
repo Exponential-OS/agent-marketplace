@@ -34,3 +34,9 @@ __pycache__/
 .pytest_cache/
 .superset/
 .venv-t/
+
+# Personal Claude Code config — machine-specific hook paths belong to the
+# developer, not the repo. The tracked copy pointed at a script that existed on
+# no machine (wrong root AND migrated .sh -> .ts).
+.claude/settings.json
+.claude/settings.local.json
