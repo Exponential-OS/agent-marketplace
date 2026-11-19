@@ -12,6 +12,9 @@
  * treats as BLOCK — an unavailable model never waves Stage 4 through.
  * OAuth CLI only: *_API_KEY env vars are stripped (sanitizedEnv) so the reviewer
  * runs on the flat-fee subscription, never pay-per-token API billing.
+ * DESIGN_REVIEW_TIMEOUT_MS defaults to 300_000; DESIGN_REVIEW_TOTAL_BUDGET_MS
+ * defaults to 540_000. Raising these beyond the documented 600s Bash cap requires
+ * an invocation path with a larger outer timeout (including the 900_000 call ceiling).
  */
 
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
@@ -21,6 +24,7 @@ import { fileURLToPath } from "url";
 
 export type ReviewVerdict = "GREEN" | "YELLOW" | "RED";
 export type RecordedVerdict = ReviewVerdict | "UNREACHABLE" | "SKIPPED";
+export type UnreachableReason = "timeout" | "cli_missing" | "nonzero_exit" | "unparseable" | "budget_exhausted" | "unknown";
 export type AdjustmentClass = "A" | "B";
 
 export interface Finding {
@@ -39,6 +43,10 @@ export interface ReviewerCliResult {
   stdout: string;
   stderr?: string;
   exitCode?: number | null;
+  timedOut?: boolean;
+  signal?: string | null;
+  elapsedMs?: number;
+  reason?: UnreachableReason;
   model?: string;
   family?: string;
 }
@@ -79,6 +87,11 @@ export interface DesignReviewRecord {
   rule?: string;
   adjustments?: AdjustmentRecord[];
   escalation_artifact?: string;
+  reason?: UnreachableReason;
+  elapsed_ms?: number | null;
+  signal?: string | null;
+  exit_code?: number | null;
+  stderr_tail?: string;
 }
 
 export interface RunResult {
@@ -93,6 +106,7 @@ export interface RunOptions {
   reviewer?: ReviewerCommand;
   crossFamilyReviewer?: ReviewerCommand;
   now?: Date;
+  monotonicNow?: () => number;
   env?: Record<string, string | undefined>;
   tier?: string;
   sidecarPath?: string;
@@ -104,6 +118,13 @@ interface CommandRunnerOptions {
   env: Record<string, string>;
   cwd?: string;
   timeout?: number;
+  /**
+   * Injectable clock, mirroring RunOptions.monotonicNow. The timeout classification
+   * below depends on MEASURED elapsed time, so a test cannot exercise it with a mock
+   * that returns instantly -- it would have to burn the real budget (285s) to reach
+   * the threshold. Threading the clock keeps that path testable in milliseconds.
+   */
+  monotonicNow?: () => number;
 }
 
 interface ManifestSummary {
@@ -121,7 +142,110 @@ const GEMINI_MODEL = "gemini-2.5-flash";
 const REVIEW_BLOCK_HEADING = "## Design-review verdict (Gate-A.7)";
 const CLASS_A_HEADING = "## Design-review Class-A adjustments (Gate-A.7)";
 const ESCALATION_HEADING = "## Design-review escalation (Gate-A.7)";
-const API_KEY_ENV = new Set(["OPENAI_API_KEY", "GEMINI_API_KEY", "GOOGLE_API_KEY"]);
+const EXTRA_AUTH_ENV = new Set(["ANTHROPIC_AUTH_TOKEN"]);
+
+/**
+ * Successful reviewer calls took 87-190s across three sessions, so a budget under ~90s
+ * cannot plausibly complete the observed workload.
+ *
+ * This is the clamp MINIMUM for both budgets, not merely a runtime floor, and that is
+ * deliberate. When it was only a runtime floor the two numbers disagreed: the per-call
+ * clamp allowed 30_000 while the floor demanded 90_000, so `DESIGN_REVIEW_TIMEOUT_MS=30000`
+ * -- a legal, in-range value -- placed a call that could not finish and then reported
+ * reason:"timeout". A confident wrong label is the exact defect (D1) this module exists to
+ * remove, so a budget too small to work is now unconfigurable rather than merely guarded.
+ */
+const MIN_USABLE_CALL_MS = 90_000;
+
+/**
+ * The `command -v` availability probe's budget. ONE constant, read by both the admission
+ * check and the spend, because the defect this module just fixed was precisely two
+ * numbers that had to agree being held in two places: the floor guarded `remaining` while
+ * the call spent `min(perCall, remaining)`. Guarded quantity and spent quantity must be
+ * the same expression, not two literals that happen to match today.
+ */
+const PROBE_TIMEOUT_MS = 5_000;
+
+/** Marker proving `command -v` actually executed; see probeCommand. */
+const PROBE_SENTINEL = "XOSPROBE";
+
+/**
+ * Clamp minimum for the TOTAL budget. Deliberately ABOVE MIN_USABLE_CALL_MS rather than
+ * equal to it: the clock starts when ReviewBudget is constructed, and spec loading plus
+ * prompt construction both spend before the first reviewer call is admitted. (The 5s CLI
+ * probes do NOT -- they run in the cross-family leg, after the primary call has already
+ * returned. An earlier version of this comment said otherwise and was simply wrong.)
+ * A total of exactly 90_000 therefore guarantees `remaining < 90_000` at
+ * admission and budget_exhausts before placing any call -- a legal configuration that can
+ * never succeed. 120_000 is one usable call plus 30s of that overhead.
+ *
+ * Measured rather than guessed (2026-11-19): the elapsed time between construction and
+ * the first admission is 3.0 ms for a 25KB spec and 5.6 ms for a toy one -- the work is
+ * a handful of file reads and a string concat, and it does not scale meaningfully with
+ * spec size. 30s of headroom is ~5000x the observed cost. The margin is deliberately
+ * absurd because the failure it prevents (a legal config that can never place a call) is
+ * silent, and the cost of the margin is only that a sub-2-minute total budget is
+ * rejected -- which could not have completed a 87-190s review anyway.
+ */
+const MIN_TOTAL_BUDGET_MS = 120_000;
+
+function resolveBudgetMs(value: string | undefined, fallback: number, minimum: number, maximum: number): number {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+  return Math.min(maximum, Math.max(minimum, parsed));
+}
+
+export function resolveReviewerTimeoutMs(env: Record<string, string | undefined> = process.env): number {
+  return resolveBudgetMs(env.DESIGN_REVIEW_TIMEOUT_MS, 300_000, MIN_USABLE_CALL_MS, 900_000);
+}
+
+export function resolveTotalBudgetMs(env: Record<string, string | undefined> = process.env): number {
+  return resolveBudgetMs(env.DESIGN_REVIEW_TOTAL_BUDGET_MS, 540_000, MIN_TOTAL_BUDGET_MS, 3_600_000);
+}
+
+
+class ReviewBudget {
+  private readonly clock: () => number;
+  private readonly started: number;
+  private readonly perCall: number;
+  private readonly total: number;
+
+  constructor(options: RunOptions) {
+    this.clock = options.monotonicNow ?? (() => performance.now());
+    this.started = this.clock();
+    this.perCall = resolveReviewerTimeoutMs(options.env);
+    this.total = resolveTotalBudgetMs(options.env);
+  }
+
+  canProbe(): boolean {
+    return this.total - (this.clock() - this.started) >= PROBE_TIMEOUT_MS;
+  }
+
+  async call(invoke: (timeout: number) => ReviewerCliResult | Promise<ReviewerCliResult>): Promise<ReviewerCliResult> {
+    const elapsed = this.clock() - this.started;
+    const remaining = this.total - elapsed;
+    if (remaining < MIN_USABLE_CALL_MS) {
+      return { ok: false, stdout: "", exitCode: null, timedOut: false, elapsedMs: elapsed, reason: "budget_exhausted" };
+    }
+    return invoke(Math.min(this.perCall, remaining));
+  }
+}
+
+function unreachableDetails(result: ReviewerCliResult | null) {
+  let reason: UnreachableReason = "unknown";
+  if (result?.reason === "budget_exhausted") reason = "budget_exhausted";
+  else if (result?.timedOut) reason = "timeout";
+  else if (result?.exitCode === 127) reason = "cli_missing";
+  else if (typeof result?.exitCode === "number" && result.exitCode !== 0) reason = "nonzero_exit";
+  else if (result?.ok && !parseStructuredVerdict(result.stdout)) reason = "unparseable";
+  return {
+    reason,
+    elapsed_ms: result?.elapsedMs ?? null,
+    signal: result?.signal ?? null,
+    exit_code: result?.exitCode ?? null,
+    stderr_tail: (result?.stderr ?? "").slice(-2000),
+  };
+}
 
 export function resolvePrimaryReviewerModel(env: Record<string, string | undefined> = process.env): string {
   const configured = env[PRIMARY_MODEL_ENV]?.trim();
@@ -157,7 +281,7 @@ export function sanitizedEnv(env: Record<string, string | undefined> = process.e
   const clean: Record<string, string> = {};
   for (const [key, value] of Object.entries(env)) {
     if (value === undefined) continue;
-    if (API_KEY_ENV.has(key)) continue;
+    if (/_API_KEY$/.test(key) || EXTRA_AUTH_ENV.has(key)) continue;
     clean[key] = value;
   }
   return clean;
@@ -169,43 +293,111 @@ function decodePipe(pipe: Uint8Array | ArrayBuffer | undefined): string {
 }
 
 function defaultCommandRunner(command: string[], options: CommandRunnerOptions): ReviewerCliResult {
-  const result = Bun.spawnSync(command, {
-    env: options.env,
-    cwd: options.cwd,
-    stdout: "pipe",
-    stderr: "pipe",
-    timeout: options.timeout ?? 120_000,
-  });
-  return {
-    ok: result.exitCode === 0,
-    stdout: decodePipe(result.stdout),
-    stderr: decodePipe(result.stderr),
-    exitCode: result.exitCode,
-  };
+  const clock = options.monotonicNow ?? (() => performance.now());
+  const started = clock();
+  const timeout = options.timeout ?? resolveReviewerTimeoutMs(options.env);
+  try {
+    const result = Bun.spawnSync(command, {
+      env: options.env,
+      cwd: options.cwd,
+      stdout: "pipe",
+      stderr: "pipe",
+      timeout,
+    });
+    const elapsedMs = clock() - started;
+    return {
+      ok: result.exitCode === 0,
+      stdout: decodePipe(result.stdout),
+      stderr: decodePipe(result.stderr),
+      exitCode: result.exitCode,
+      timedOut: result.signalCode === "SIGTERM" && elapsedMs >= timeout * 0.95,
+      signal: result.signalCode ?? null,
+      elapsedMs,
+    };
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+    return { ok: false, stdout: "", stderr: String(error), exitCode: 127, timedOut: false, elapsedMs: clock() - started };
+  }
 }
 
-function defaultReviewer(prompt: string, context: ReviewerContext, options: RunOptions): ReviewerCliResult {
+async function defaultReviewer(prompt: string, context: ReviewerContext, options: RunOptions, budget: ReviewBudget): Promise<ReviewerCliResult> {
   const run = options.commandRunner ?? defaultCommandRunner;
-  const result = run(["claude", "--model", context.model, "-p", prompt], { env: sanitizedEnv(options.env), timeout: 120_000 });
+  const result = await budget.call(timeout => run(["claude", "--model", context.model, "-p", prompt], { env: sanitizedEnv(options.env), timeout, monotonicNow: options.monotonicNow }));
   return { ...result, model: context.model, family: context.family };
 }
 
-function commandAvailable(command: string, options: RunOptions): boolean {
+/**
+ * Probing a CLI has THREE outcomes, not two, and collapsing them is how this module keeps
+ * reproducing its own bug:
+ *
+ *   present      `command -v` found it
+ *   absent       `command -v` ran and reported nothing (exit 1) -- real evidence of absence
+ *   inconclusive the probe itself timed out or failed oddly -- we learned NOTHING
+ *
+ * `return result.ok` collapsed `absent` and `inconclusive` into one `false`, so a probe
+ * that timed out ended up asserting "no cross-family reviewer CLI available" -- a claim
+ * the code never obtained evidence for. Callers must handle all three.
+ */
+type ProbeOutcome = { outcome: "present" | "absent" | "inconclusive"; detail: string };
+
+function probeCommand(command: string, options: RunOptions): ProbeOutcome {
   const run = options.commandRunner ?? defaultCommandRunner;
-  const result = run(["sh", "-lc", "command -v " + command], { env: sanitizedEnv(options.env), timeout: 5_000 });
-  return result.ok;
+  // The sentinel separates "the probe RAN" from "what the probe FOUND". Testing the
+  // shell's own exit code conflates them: `sh -lc` sources a login profile first (observed
+  // on this machine printing to stdout), so a nonzero exit may come from the profile
+  // rather than from `command -v`, and POSIX specifies only a NONZERO not-found status --
+  // not 1. Keying absence on `exitCode === 1` was therefore an assumption about shell
+  // convention dressed as evidence. With the sentinel, absence is claimed only when
+  // `command -v` demonstrably ran and reported nothing.
+  const result = run(["sh", "-lc", `command -v ${command} >/dev/null 2>&1; printf '${PROBE_SENTINEL}:%s' "$?"`],
+                     { env: sanitizedEnv(options.env), timeout: PROBE_TIMEOUT_MS, monotonicNow: options.monotonicNow });
+  const match = new RegExp(`${PROBE_SENTINEL}:(\\d+)`).exec(result.stdout ?? "");
+  if (!match) {
+    // No sentinel: the probe never completed. A timeout, a profile that exits, a shell
+    // that died. We learned nothing, and must not pretend otherwise.
+    const why = result.timedOut ? "probe timed out" : `probe did not complete (exit ${result.exitCode ?? "null"})`;
+    return { outcome: "inconclusive", detail: `${command} ${why}` };
+  }
+  return match[1] === "0"
+    ? { outcome: "present", detail: command }
+    : { outcome: "absent", detail: `${command} not installed` };
 }
 
-function defaultCrossFamilyReviewer(prompt: string, context: ReviewerContext, options: RunOptions): ReviewerCliResult {
+async function defaultCrossFamilyReviewer(prompt: string, context: ReviewerContext, options: RunOptions, budget: ReviewBudget): Promise<ReviewerCliResult> {
   const run = options.commandRunner ?? defaultCommandRunner;
-  if (commandAvailable("gemini", options)) {
-    const result = run(["gemini", "-m", GEMINI_MODEL, "-p", prompt], { env: sanitizedEnv(options.env), timeout: 120_000 });
-    return { ...result, model: GEMINI_MODEL, family: "google" };
+  const candidates: Array<[string, string[], string, string]> = [
+    ["gemini", ["gemini", "-m", GEMINI_MODEL, "-p", prompt], GEMINI_MODEL, "google"],
+    ["codex", ["codex", "exec", prompt], "codex-local", "openai"],
+  ];
+  const undetermined: string[] = [];
+  const unavailable = (stderr: string, reason: UnreachableReason | undefined, exitCode: number | null) =>
+    ({ ok: false, stdout: "", stderr, exitCode, timedOut: false, reason, model: context.model, family: context.family });
+
+  for (const [bin, argv, model, family] of candidates) {
+    // Checked before EVERY probe, not once up front: a single leading check still leaves
+    // the second probe to be placed with nothing left.
+    if (!budget.canProbe()) {
+      return unavailable(`cross-family probe not attempted (${bin}): review budget exhausted`, "budget_exhausted", null);
+    }
+    const probe = probeCommand(bin, options);
+    if (probe.outcome === "present") {
+      const result = await budget.call(timeout => run(argv, { env: sanitizedEnv(options.env), timeout, monotonicNow: options.monotonicNow }));
+      return { ...result, model, family };
+    }
+    // An inconclusive probe is NOT a reason to abandon the remaining candidates. The point
+    // of this leg is a second training distribution's opinion; giving that up because the
+    // FIRST probe was flaky trades a real review for nothing. Remember it and keep going.
+    if (probe.outcome === "inconclusive") undetermined.push(probe.detail);
+    // outcome === "absent": real evidence. Keep looking.
   }
-  if (commandAvailable("codex", options)) {
-    const result = run(["codex", "exec", prompt], { env: sanitizedEnv(options.env), timeout: 120_000 });
-    return { ...result, model: "codex-local", family: "openai" };
+  // Every candidate was tried. If any probe was inconclusive we cannot claim absence --
+  // one of those CLIs may well be installed and we simply failed to find out.
+  // No `reason` code: cross_family.reason is human-facing and the DETAIL is the point;
+  // "unknown" would be true but useless to whoever reads it.
+  if (undetermined.length > 0) {
+    return unavailable(`cross-family reviewer undetermined: ${undetermined.join("; ")}`, undefined, null);
   }
+  // Reached ONLY when every candidate was probed and each reported a definite absence.
   return { ok: false, stdout: "", stderr: "no cross-family reviewer CLI available", exitCode: 127, model: context.model, family: context.family };
 }
 
@@ -478,9 +670,12 @@ function buildPrompt(args: {
 async function callPrimaryReviewer(
   prompt: string,
   options: RunOptions,
-  primaryModel: string
+  primaryModel: string,
+  budget: ReviewBudget
 ): Promise<{ verdict: StructuredVerdict | null; result: ReviewerCliResult | null; unreachable: boolean }> {
-  const reviewer = options.reviewer ?? ((p, c) => defaultReviewer(p, c, options));
+  const reviewer: ReviewerCommand = options.reviewer
+    ? (p, c) => budget.call(() => options.reviewer!(p, c))
+    : (p, c) => defaultReviewer(p, c, options, budget);
   for (let attempt = 1; attempt <= 2; attempt++) {
     const kind: ReviewerContext["kind"] = attempt === 1 ? "primary" : "retry";
     const result = await reviewer(prompt, { attempt, kind, model: primaryModel, family: DEFAULT_FAMILY });
@@ -501,15 +696,17 @@ function mergeVerdicts(primary: StructuredVerdict, cross: StructuredVerdict | nu
   return { verdict: "GREEN", findings };
 }
 
-async function maybeCrossFamily(prompt: string, primary: StructuredVerdict, options: RunOptions, required: boolean, spotCheck: boolean): Promise<{ final: StructuredVerdict; record: CrossFamilyRecord }> {
+async function maybeCrossFamily(prompt: string, primary: StructuredVerdict, options: RunOptions, required: boolean, spotCheck: boolean, budget: ReviewBudget): Promise<{ final: StructuredVerdict; record: CrossFamilyRecord }> {
   if (!required && !spotCheck) return { final: primary, record: { status: "not_required" } };
-  const reviewer = options.crossFamilyReviewer ?? ((p, c) => defaultCrossFamilyReviewer(p, c, options));
+  const reviewer: ReviewerCommand = options.crossFamilyReviewer
+    ? (p, c) => budget.call(() => options.crossFamilyReviewer!(p, c))
+    : (p, c) => defaultCrossFamilyReviewer(p, c, options, budget);
   const kind: ReviewerContext["kind"] = required ? "cross-family" : "spot-check";
   const result = await reviewer(prompt, { attempt: 1, kind, model: GEMINI_MODEL, family: "google" });
   if (!result.ok) {
     return {
       final: primary,
-      record: { status: "unavailable", reviewer: result.model ?? GEMINI_MODEL, reason: result.stderr || "cross-family reviewer unavailable" },
+      record: { status: "unavailable", reviewer: result.model ?? GEMINI_MODEL, reason: result.reason ?? (result.stderr || "cross-family reviewer unavailable") },
     };
   }
   const parsed = parseStructuredVerdict(result.stdout);
@@ -607,6 +804,7 @@ function writeEscalation(specPath: string, prior: DesignReviewRecord | null, cur
 }
 
 export async function runDesignReview(specPathInput: string, options: RunOptions = {}): Promise<RunResult> {
+  const budget = new ReviewBudget(options);
   const specPath = resolve(specPathInput);
   const sidecarPath = options.sidecarPath ?? sidecarPathForSpec(specPath);
   const prior = readPriorRecord(sidecarPath);
@@ -638,11 +836,12 @@ export async function runDesignReview(specPathInput: string, options: RunOptions
   const lenses = readFileSync(lensesPath, "utf8");
   const prompt = buildPrompt({ lenses, specText: reviewableSpec, manifestText, priorRed: prior?.verdict === "RED" ? prior : null });
   const primaryModel = resolvePrimaryReviewerModel(options.env);
-  const primary = await callPrimaryReviewer(prompt, options, primaryModel);
+  const primary = await callPrimaryReviewer(prompt, options, primaryModel, budget);
 
   if (primary.unreachable || !primary.verdict) {
     const record = writeRecord(specPath, sidecarPath, {
       verdict: "UNREACHABLE",
+      ...unreachableDetails(primary.result),
       findings: [],
       manifest_sha256: manifestSha,
       reviewer_model: primary.result?.model ?? primaryModel,
@@ -656,7 +855,7 @@ export async function runDesignReview(specPathInput: string, options: RunOptions
 
   const tier = tierRank(options.tier, manifestText);
   const spotCheck = primary.verdict.verdict === "GREEN" && primary.verdict.findings.length === 0 && cycle === 1 && nonTrivial(reviewableSpec, manifestText);
-  const cross = await maybeCrossFamily(prompt, primary.verdict, options, tier >= 3, spotCheck);
+  const cross = await maybeCrossFamily(prompt, primary.verdict, options, tier >= 3, spotCheck, budget);
   const finalVerdict = cross.final;
   let adjustments = adjustmentsFor(finalVerdict);
   if (finalVerdict.verdict === "YELLOW" && adjustments.length > 0 && adjustments.every((item) => item.class === "A")) {

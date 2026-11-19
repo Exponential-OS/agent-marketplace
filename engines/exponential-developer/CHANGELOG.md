@@ -1,5 +1,52 @@
 # Changelog
 
+## [1.5.0] — 2026-11-19 — Gate-A.7 blocks for a reason it can name (XOS-204)
+
+The gate fail-closes correctly, but the record it wrote could not say WHY. A reviewer
+killed by our own timeout, a model that does not exist, a CLI that is not installed, and
+a reviewer that answered in prose all produced the identical `UNREACHABLE` sidecar. So
+everyone who hit it read that next to `claude-fable-5`, reached for XOS-56, and concluded
+the model was gone. **This bug was filed five separate times across 4.5 months**, and four
+of those sessions each spent real time disproving the model theory first.
+
+The information was never missing, only discarded: `Bun.spawnSync` distinguishes a
+timeout (`exitCode:null` + `SIGTERM`) from a real failure (`exitCode:3`), and
+`defaultCommandRunner` collapsed both into `ok: exitCode === 0`.
+
+**UNREACHABLE now records** `reason` / `elapsed_ms` / `exit_code` / `signal` /
+`stderr_tail`. `unknown` is the INITIAL value, never a terminal `else` — an unrecognized
+failure must not wear a confident wrong label.
+
+**The 120s budget is now configurable and fits the work.** It was hardcoded at three call
+sites against a measured 87-190s workload, so `defaultCommandRunner`'s own `?? 120_000`
+was dead code. Worse, it scaled against spec quality: the same model returned a real
+YELLOW in 101s, then UNREACHABLE at 120s after the spec grew by 60 lines *this gate had
+itself demanded*. Two budgets, one resolver:
+
+* `DESIGN_REVIEW_TIMEOUT_MS` — per call, default `300_000`
+* `DESIGN_REVIEW_TOTAL_BUDGET_MS` — whole run, default `540_000`
+
+Neither can be configured below `MIN_USABLE_CALL_MS` (90s), because a budget too small to
+complete a measured review would place a doomed call and then report `timeout`.
+
+**`sanitizedEnv` now strips what its own header always claimed.** `ANTHROPIC_API_KEY` was
+absent from the strip list while the primary reviewer is `claude -p` — the one key that
+can divert it to pay-per-token billing was the only one left in the environment. Both
+existing tests asserted `OPENAI_API_KEY`, a key that reviewer never reads. Now a
+`/_API_KEY$/` pattern plus an explicit extras set, so a future provider's key is covered
+without anyone editing a list.
+
+**Cross-family probing is tri-state.** A probe that timed out is not evidence a CLI is
+absent, and absence is no longer keyed on `exitCode === 1` (POSIX specifies only
+*nonzero*). A sentinel proves `command -v` actually ran. "No cross-family reviewer CLI
+available" is claimed only when every candidate demonstrably ran and found nothing.
+
+**SKILL.md's documented invocation now carries an explicit Bash timeout.** The tool
+default is 120s, so the documented call died before the new budget was reachable — writing
+no sidecar at all, which is strictly worse than the bug.
+
+Fail-closed is unchanged: every UNREACHABLE path still exits 1.
+
 ## [1.4.1] — 2026-10-26 — two shipped docs carried a maintainer's absolute paths
 
 `rules/cost-routing-gate/README.md` gave the hook registration as a copy-paste
