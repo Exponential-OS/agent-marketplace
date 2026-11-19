@@ -1,3 +1,27 @@
+## [1.6.0] — 2026-11-19 — Gate-A.7's mandatory reviewer walks a candidate ladder (XOS-413)
+
+Gate-A.7 pinned ONE model for the MANDATORY primary reviewer with no fallback, while the
+OPTIONAL cross-family reviewer already walked a `gemini -> codex` ladder. Any account that
+could not reach the pin got `UNREACHABLE -> BLOCK` with no route forward.
+
+Measured first: `claude-fable-5`, `claude-fable-5-1`, `claude-sonnet-5` and
+`claude-haiku-4-5` all resolve. The pin is live, so this was a resilience defect rather
+than a dead-model one — changing the string would only have relocated the single point of
+failure.
+
+- `DESIGN_REVIEW_MODEL`, when set, is honoured exactly and alone. An operator who names a
+  model gets one honest attempt at it, never a silent substitution.
+- Otherwise a descending ladder is walked, advancing ONLY on `nonzero_exit`. A `timeout`
+  proves the model IS reachable and the work is slow, so advancing would turn one slow
+  review into N; `unparseable` means the model already answered.
+- Budget is shared across the ladder, admission checked before EVERY candidate.
+- Fail-closed preserved: every candidate failing still BLOCKS, with the final attempt's
+  own reason rather than a generic label.
+- `models_tried` is recorded on SUCCESS as well as on UNREACHABLE, so a GREEN produced
+  after a silent capability downgrade is visible rather than indistinguishable.
+
+45 pass / 0 fail in the design-review suite; CI floor raised 247 -> 259.
+
 # Changelog
 
 ## [1.5.0] — 2026-11-19 — Gate-A.7 blocks for a reason it can name (XOS-204)

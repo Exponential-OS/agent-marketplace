@@ -92,6 +92,7 @@ export interface DesignReviewRecord {
   signal?: string | null;
   exit_code?: number | null;
   stderr_tail?: string;
+  models_tried?: string[];
 }
 
 export interface RunResult {
@@ -136,6 +137,7 @@ interface ManifestSummary {
 
 export const MECHANICAL_SKIP_FILE_THRESHOLD = 5;
 const DEFAULT_MODEL = "claude-fable-5";
+const DEFAULT_MODEL_LADDER: readonly string[] = [DEFAULT_MODEL, "claude-sonnet-5", "claude-haiku-4-5"];
 const PRIMARY_MODEL_ENV = "DESIGN_REVIEW_MODEL";
 const DEFAULT_FAMILY = "anthropic";
 const GEMINI_MODEL = "gemini-2.5-flash";
@@ -253,6 +255,16 @@ export function resolvePrimaryReviewerModel(env: Record<string, string | undefin
   return configured ? configured : DEFAULT_MODEL;
 }
 
+export function resolveReviewerCandidates(env: Record<string, string | undefined> = process.env): string[] {
+  return env[PRIMARY_MODEL_ENV]?.trim()
+    ? [resolvePrimaryReviewerModel(env)]
+    : [...DEFAULT_MODEL_LADDER];
+}
+
+function advancesLadder(reason: UnreachableReason | undefined): boolean {
+  return reason === "nonzero_exit";
+}
+
 function here(): string {
   return dirname(fileURLToPath(import.meta.url));
 }
@@ -320,9 +332,9 @@ function defaultCommandRunner(command: string[], options: CommandRunnerOptions):
   }
 }
 
-async function defaultReviewer(prompt: string, context: ReviewerContext, options: RunOptions, budget: ReviewBudget): Promise<ReviewerCliResult> {
+async function defaultReviewer(prompt: string, context: ReviewerContext, options: RunOptions, timeout: number): Promise<ReviewerCliResult> {
   const run = options.commandRunner ?? defaultCommandRunner;
-  const result = await budget.call(timeout => run(["claude", "--model", context.model, "-p", prompt], { env: sanitizedEnv(options.env), timeout, monotonicNow: options.monotonicNow }));
+  const result = run(["claude", "--model", context.model, "-p", prompt], { env: sanitizedEnv(options.env), timeout, monotonicNow: options.monotonicNow });
   return { ...result, model: context.model, family: context.family };
 }
 
@@ -670,22 +682,41 @@ function buildPrompt(args: {
 async function callPrimaryReviewer(
   prompt: string,
   options: RunOptions,
-  primaryModel: string,
+  candidates: string[],
   budget: ReviewBudget
-): Promise<{ verdict: StructuredVerdict | null; result: ReviewerCliResult | null; unreachable: boolean }> {
-  const reviewer: ReviewerCommand = options.reviewer
-    ? (p, c) => budget.call(() => options.reviewer!(p, c))
-    : (p, c) => defaultReviewer(p, c, options, budget);
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    const kind: ReviewerContext["kind"] = attempt === 1 ? "primary" : "retry";
-    const result = await reviewer(prompt, { attempt, kind, model: primaryModel, family: DEFAULT_FAMILY });
-    if (!result.ok) return { verdict: null, result, unreachable: true };
-    const parsed = parseStructuredVerdict(result.stdout);
-    if (parsed) return { verdict: parsed, result, unreachable: false };
-    if (attempt === 1) continue;
-    return { verdict: null, result, unreachable: true };
+): Promise<{ verdict: StructuredVerdict | null; result: ReviewerCliResult | null; unreachable: boolean; modelsTried: string[] }> {
+  const modelsTried: string[] = [];
+  let lastResult: ReviewerCliResult | null = null;
+  for (const model of candidates) {
+    // Preserve the existing parse retry on the SAME model; it is not a ladder advance.
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      const kind: ReviewerContext["kind"] = attempt === 1 ? "primary" : "retry";
+      const context: ReviewerContext = { attempt, kind, model, family: DEFAULT_FAMILY };
+      // Admission runs before EVERY candidate/retry through the shared budget. Only
+      // the admitted callback records an attempt, so budget denial cannot invent one.
+      const result = await budget.call(async timeout => {
+        if (attempt === 1) modelsTried.push(model);
+        const response = options.reviewer
+          ? await options.reviewer(prompt, context)
+          : await defaultReviewer(prompt, context, options, timeout);
+        return { ...response, model: response.model ?? model, family: response.family ?? DEFAULT_FAMILY };
+      });
+      lastResult = { ...result, model: result.model ?? modelsTried.at(-1) };
+      const parsed = result.ok ? parseStructuredVerdict(result.stdout) : null;
+      if (parsed) return { verdict: parsed, result: lastResult, unreachable: false, modelsTried };
+      if (result.ok && attempt === 1) continue;
+      if (!advancesLadder(unreachableDetails(result).reason) || candidates.length === 1) {
+        return { verdict: null, result: lastResult, unreachable: true, modelsTried };
+      }
+      break;
+    }
   }
-  return { verdict: null, result: null, unreachable: true };
+  return {
+    verdict: null,
+    result: lastResult,
+    unreachable: true,
+    modelsTried,
+  };
 }
 
 function mergeVerdicts(primary: StructuredVerdict, cross: StructuredVerdict | null): StructuredVerdict {
@@ -836,12 +867,13 @@ export async function runDesignReview(specPathInput: string, options: RunOptions
   const lenses = readFileSync(lensesPath, "utf8");
   const prompt = buildPrompt({ lenses, specText: reviewableSpec, manifestText, priorRed: prior?.verdict === "RED" ? prior : null });
   const primaryModel = resolvePrimaryReviewerModel(options.env);
-  const primary = await callPrimaryReviewer(prompt, options, primaryModel, budget);
+  const primary = await callPrimaryReviewer(prompt, options, resolveReviewerCandidates(options.env), budget);
 
   if (primary.unreachable || !primary.verdict) {
     const record = writeRecord(specPath, sidecarPath, {
       verdict: "UNREACHABLE",
       ...unreachableDetails(primary.result),
+      models_tried: primary.modelsTried,
       findings: [],
       manifest_sha256: manifestSha,
       reviewer_model: primary.result?.model ?? primaryModel,
@@ -868,6 +900,11 @@ export async function runDesignReview(specPathInput: string, options: RunOptions
     manifest_sha256: manifestSha,
     reviewer_model: primary.result?.model ?? primaryModel,
     reviewer_family: primary.result?.family ?? DEFAULT_FAMILY,
+    // Carried on SUCCESS too, not only on UNREACHABLE. reviewer_model alone names who
+    // reviewed; it does not reveal that two stronger candidates refused first. A GREEN
+    // produced after a silent capability downgrade is operationally different from a
+    // GREEN produced by the first-choice model, and the operator needs to see which.
+    models_tried: primary.modelsTried.length > 1 ? primary.modelsTried : undefined,
     cross_family: cross.record,
     cycle,
     timestamp,

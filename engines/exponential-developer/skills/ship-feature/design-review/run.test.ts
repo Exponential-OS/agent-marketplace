@@ -6,6 +6,7 @@ import {
   classifyAdjustment,
   parseStructuredVerdict,
   resolvePrimaryReviewerModel,
+  resolveReviewerCandidates,
   runDesignReview,
   sanitizedEnv,
   sha256Text,
@@ -337,11 +338,15 @@ test("unreachable reasons are distinguishable", async () => {
   // A signal alone cannot establish why a process terminated, and neither can
   // elapsed time alone. Claiming "timeout" on an external kill is a confident wrong
   // label, which is the exact defect (D1) this whole change exists to remove.
-  for (const [exitCode, signalCode, advance, expected] of [
-    [null, "SIGTERM", 300_000, "timeout"],
-    [null, "SIGTERM", 1_000, "unknown"],
-    [127, undefined, 40, "cli_missing"],
-    [3, undefined, 900, "nonzero_exit"],
+  // expected calls == 1 + retries; only nonzero_exit advances the ladder (XOS-413).
+  // The count is a PROPERTY OF THE REASON, not a constant: a timeout proves the model is
+  // reachable and the work is slow, so advancing would multiply wall-clock rather than
+  // find a working model.
+  for (const [exitCode, signalCode, advance, expected, calls] of [
+    [null, "SIGTERM", 300_000, "timeout", 1],
+    [null, "SIGTERM", 1_000, "unknown", 1],
+    [127, undefined, 40, "cli_missing", 1],
+    [3, undefined, 900, "nonzero_exit", 3],
   ] as const) {
     let now = 0;
     const spawn = spyOn(Bun, "spawnSync").mockImplementation((() => {
@@ -353,7 +358,7 @@ test("unreachable reasons are distinguishable", async () => {
       expect(run.record.reason).toBe(expected);
       expect(run.record.signal).toBe(signalCode ?? null); // evidence preserved either way
       expect(run.exitCode).toBe(1);
-      expect(spawn).toHaveBeenCalledTimes(1); // failed calls never retry
+      expect(spawn).toHaveBeenCalledTimes(calls);
     } finally { spawn.mockRestore(); }
   }
 });
@@ -636,4 +641,214 @@ test("usable floor rejects a retry just below 90s and admits its boundary", asyn
     expect(run.record.reason).toBe(remaining < 90000 ? "budget_exhausted" : undefined);
     expect(run.exitCode).toBe(remaining < 90000 ? 1 : 0);
   }
+});
+
+// XOS-413: primary reviewer availability ladder. All commands are injected; no network.
+test("explicit model", () => {
+  for (const model of ["x", "claude-fable-5", "claude-sonnet-5"]) {
+    expect(resolveReviewerCandidates({ DESIGN_REVIEW_MODEL: model })).toEqual([model]);
+  }
+  expect(resolveReviewerCandidates({ DESIGN_REVIEW_MODEL: "  x  " })).toEqual(["x"]);
+});
+
+test("explicit model never retries", async () => {
+  const model = "claude-fable-5";
+  const spawn = spyOn(Bun, "spawnSync").mockImplementation((() => ({
+    exitCode: 3,
+    stdout: new Uint8Array(),
+    stderr: new Uint8Array(),
+  })) as typeof Bun.spawnSync);
+  try {
+    const run = await runDesignReview(fixture().specPath, {
+      env: { DESIGN_REVIEW_MODEL: model },
+      monotonicNow: () => 0,
+    });
+    expect(run.record.reason).toBe("nonzero_exit");
+    expect(run.exitCode).toBe(1);
+    expect(spawn).toHaveBeenCalledTimes(1);
+    expect(spawn.mock.calls[0][0].slice(0, 3)).toEqual(["claude", "--model", model]);
+    expect(run.record.models_tried).toHaveLength(1);
+    expect(run.record.models_tried).toEqual([model]);
+  } finally { spawn.mockRestore(); }
+});
+
+test("ladder order", () => {
+  const expected = ["claude-fable-5", "claude-sonnet-5", "claude-haiku-4-5"];
+  for (const env of [{}, { DESIGN_REVIEW_MODEL: "" }, { DESIGN_REVIEW_MODEL: "   " }]) {
+    expect(resolveReviewerCandidates(env)).toEqual(expected);
+  }
+  const candidates = resolveReviewerCandidates({});
+  candidates.reverse();
+  expect(resolveReviewerCandidates({})).toEqual(expected);
+});
+
+test("advances on nonzero_exit", async () => {
+  const models: string[] = [];
+  const fx = fixture();
+  const run = await runDesignReview(fx.specPath, {
+    env: {}, monotonicNow: () => 0,
+    commandRunner: cmd => {
+      expect(cmd[0]).toBe("claude");
+      models.push(cmd[2]);
+      return models.length === 1
+        ? { ok: false, stdout: "", stderr: "model unavailable", exitCode: 3 }
+        : { ok: true, stdout: yellowOutput, exitCode: 0 };
+    },
+  });
+  expect(models).toEqual(["claude-fable-5", "claude-sonnet-5"]);
+  expect(run.exitCode).toBe(0);
+  expect(run.record.verdict).toBe("YELLOW");
+  expect(run.record.reviewer_model).toBe("claude-sonnet-5");
+  expect(run.record.reason).toBeUndefined();
+  expect(JSON.parse(readFileSync(fx.sidecarPath, "utf8"))).toEqual(run.record);
+  expect(hasValidVerdict(fx.specPath).ok).toBe(true);
+});
+
+test("timeout does not advance", async () => {
+  const models: string[] = [];
+  const fx = fixture();
+  const run = await runDesignReview(fx.specPath, {
+    env: {}, monotonicNow: () => 0,
+    commandRunner: cmd => {
+      models.push(cmd[2]);
+      return { ok: false, stdout: "", exitCode: 143, timedOut: true, elapsedMs: 300000 };
+    },
+  });
+  expect(models).toEqual(["claude-fable-5"]);
+  expect(run.exitCode).toBe(1);
+  expect(run.record).toMatchObject({ verdict: "UNREACHABLE", reason: "timeout", models_tried: models });
+  expect(hasValidVerdict(fx.specPath).ok).toBe(false);
+});
+
+test("unparseable does not advance", async () => {
+  const models: string[] = [];
+  const fx = fixture();
+  const run = await runDesignReview(fx.specPath, {
+    env: {}, monotonicNow: () => 0,
+    commandRunner: cmd => {
+      models.push(cmd[2]);
+      return { ok: true, stdout: "not a verdict", exitCode: 0 };
+    },
+  });
+  // The pre-existing parse retry stays on the same candidate.
+  expect(models).toEqual(["claude-fable-5", "claude-fable-5"]);
+  expect(run.exitCode).toBe(1);
+  expect(run.record).toMatchObject({ verdict: "UNREACHABLE", reason: "unparseable", models_tried: ["claude-fable-5"] });
+  expect(hasValidVerdict(fx.specPath).ok).toBe(false);
+});
+
+test("cli_missing aborts", async () => {
+  const models: string[] = [];
+  const fx = fixture();
+  const run = await runDesignReview(fx.specPath, {
+    env: {}, monotonicNow: () => 0,
+    commandRunner: cmd => {
+      models.push(cmd[2]);
+      return { ok: false, stdout: "", exitCode: 127 };
+    },
+  });
+  expect(models).toEqual(["claude-fable-5"]);
+  expect(run.exitCode).toBe(1);
+  expect(run.record).toMatchObject({ verdict: "UNREACHABLE", reason: "cli_missing", models_tried: models });
+  expect(hasValidVerdict(fx.specPath).ok).toBe(false);
+});
+
+test("all exhausted", async () => {
+  const models: string[] = [];
+  const fx = fixture();
+  const run = await runDesignReview(fx.specPath, {
+    env: {}, monotonicNow: () => 0,
+    commandRunner: cmd => {
+      models.push(cmd[2]);
+      return { ok: false, stdout: "", stderr: `${cmd[2]} unavailable`, exitCode: 3 };
+    },
+  });
+  expect(models).toEqual(["claude-fable-5", "claude-sonnet-5", "claude-haiku-4-5"]);
+  expect(run.exitCode).toBe(1);
+  expect(run.record).toMatchObject({
+    verdict: "UNREACHABLE", reason: "nonzero_exit", models_tried: models,
+    reviewer_model: "claude-haiku-4-5", exit_code: 3, stderr_tail: "claude-haiku-4-5 unavailable",
+  });
+  expect(JSON.parse(readFileSync(fx.sidecarPath, "utf8"))).toEqual(run.record);
+  expect(hasValidVerdict(fx.specPath).ok).toBe(false);
+});
+
+test("explicit model failure", async () => {
+  for (const model of ["x", "claude-fable-5"]) {
+    const models: string[] = [];
+    const fx = fixture();
+    const run = await runDesignReview(fx.specPath, {
+      env: { DESIGN_REVIEW_MODEL: model }, monotonicNow: () => 0,
+      commandRunner: cmd => {
+        models.push(cmd[2]);
+        return { ok: false, stdout: "", exitCode: 3 };
+      },
+    });
+    expect(models).toEqual([model]);
+    expect(run.exitCode).toBe(1);
+    expect(run.record).toMatchObject({ verdict: "UNREACHABLE", reason: "nonzero_exit", models_tried: [model] });
+    expect(hasValidVerdict(fx.specPath).ok).toBe(false);
+  }
+});
+
+test("budget shared across ladder", async () => {
+  let clock = 0;
+  const calls: Array<[string, number | undefined]> = [];
+  const run = await runDesignReview(fixture().specPath, {
+    env: { DESIGN_REVIEW_TOTAL_BUDGET_MS: "240000", DESIGN_REVIEW_TIMEOUT_MS: "200000" },
+    monotonicNow: () => clock,
+    commandRunner: (cmd, options) => {
+      calls.push([cmd[2], options.timeout]);
+      clock += calls.length === 1 ? 60000 : 45000;
+      return calls.length < 3
+        ? { ok: false, stdout: "", exitCode: 3 }
+        : { ok: true, stdout: yellowOutput, exitCode: 0 };
+    },
+  });
+  expect(calls).toEqual([["claude-fable-5", 200000], ["claude-sonnet-5", 180000], ["claude-haiku-4-5", 135000]]);
+  expect(run.exitCode).toBe(0);
+  expect(run.record.verdict).toBe("YELLOW");
+  expect(run.record.reviewer_model).toBe("claude-haiku-4-5");
+});
+
+test("budget exhausted mid-ladder", async () => {
+  // Both full exhaustion and just below the usable-call floor deny the next candidate.
+  for (const spent of [110001, 200000]) {
+    let clock = 0;
+    const models: string[] = [];
+    const fx = fixture();
+    const run = await runDesignReview(fx.specPath, {
+      env: { DESIGN_REVIEW_TOTAL_BUDGET_MS: "200000" }, monotonicNow: () => clock,
+      commandRunner: cmd => {
+        models.push(cmd[2]);
+        clock += spent;
+        return { ok: false, stdout: "", exitCode: 3 };
+      },
+    });
+    expect(models).toEqual(["claude-fable-5"]);
+    expect(run.exitCode).toBe(1);
+    expect(run.record).toMatchObject({
+      verdict: "UNREACHABLE", reason: "budget_exhausted", models_tried: models,
+      elapsed_ms: spent, exit_code: null,
+    });
+    expect(JSON.parse(readFileSync(fx.sidecarPath, "utf8"))).toEqual(run.record);
+    expect(hasValidVerdict(fx.specPath).ok).toBe(false);
+  }
+});
+
+test("fallback success records the candidates attempted", async () => {
+  // A GREEN produced by a downgraded reviewer must not look like a GREEN produced by the
+  // first choice. reviewer_model names WHO reviewed; models_tried shows what refused first.
+  let call = 0;
+  const reviewer = async (_p: string, c: ReviewerContext) => {
+    call += 1;
+    return call === 1
+      ? { ok: false, stdout: "", stderr: "refused", exitCode: 3, timedOut: false, model: c.model, family: c.family }
+      : { ok: true, stdout: JSON.stringify({ verdict: "GREEN", findings: [] }), stderr: "", exitCode: 0, timedOut: false, model: c.model, family: c.family };
+  };
+  const run = await runDesignReview(fixture().specPath, { env: {}, reviewer });
+  expect(run.exitCode).toBe(0);
+  expect(run.record.verdict).toBe("GREEN");
+  expect(run.record.reviewer_model).toBe("claude-sonnet-5");       // who actually reviewed
+  expect(run.record.models_tried).toEqual(["claude-fable-5", "claude-sonnet-5"]); // and what refused
 });
