@@ -47,6 +47,7 @@ Pick the cheapest agent + smallest model that does the job WELL. **If you're uns
 | Behavior-preserving simplify pass (Stage 5.6) | Codex / existing Claude Code **`/simplify`** skill | Quality-only: reuse/simplification/efficiency/altitude cleanups. Fall back to Codex-routed simplify only if `/simplify` is not invokable in-pipeline |
 | Media generation (image/video) | agy | gemini-3-pro-image / Veo |
 | UI / frontend / visual design / UX / styling / layout | **Claude (design persona — Jony Ive caliber)** | **Claude — UI is design judgment, NOT mechanical. Route UI/visual work to Claude, never Codex or agy.** |
+| **Claude-native artifact authoring** — `SKILL.md` frontmatter, `hooks.json` + hook handlers, `plugin.json`/`marketplace.json`, `commands/*.md`, rule manifests, `.claude/settings.json` | **Claude** + the built-in authoring skills: `skill-creator`, `superpowers:writing-skills`, `hookify` (hook rules), `update-config` (settings/hooks/permissions), `claude-api` (model ids, params) | **Claude — these are Anthropic-specific contracts, NOT general code. Route to Claude, never Codex or agy.** A `description` field IS a skill's trigger mechanism; a hook's event name and JSON contract are exact. Codex produces plausible, well-formed, confidently WRONG versions of these — the worst failure mode, because they pass review by anyone who also does not know the contract. |
 | FREQUENT structural/semantic gates (codification-verification, named-person, content/path gates — fire every Write/Edit; ambiguity/structure, not deep reasoning) | their handler's LLM judge | **Haiku** (`CYBORG_SEMANTIC_JUDGE_MODEL`, default `claude-haiku-4-5`) — cheap, high-frequency |
 | Brainstorm, spec, eval-design, gates, hallucination-catch, synthesis | Claude (whale, Opus) | the only Opus-justified work |
 
@@ -304,7 +305,26 @@ Runs after Gate-A.5 and before Stage 4. This is the design-time twin of Gate-A.5
 
 **This stage is `TeamCreate` work by default — run it via `superpowers:subagent-driven-development` + `superpowers:dispatching-parallel-agents`.** Decompose the change into INDEPENDENT workstreams; spin up an implementation team with **one teammate per workstream, each in its OWN git worktree** (`superpowers:using-git-worktrees` — never the shared primary checkout). Each teammate delegates the actual code to Codex (`codex exec`). Dependent edits stay serialized inside one teammate. Merge when all workstreams are green. Running independent workstreams SERIALLY here is the exact failure this skill exists to prevent.
 
-Codex owns repo investigation and ALL code changes (the teammates route to it):
+**Route by SHIPPED-ARTIFACT-CLASS before dispatching** — the same classification Stage 5.8 and Stage 9 already use, so the three stages cannot drift into different definitions of one concept. Build was the only artifact-blind stage; it no longer is.
+
+- **Claude-native surfaces → CLAUDE, never Codex.** `**/SKILL.md`, `**/hooks.json` and hook handlers, `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `commands/*.md`, `rules/*/manifest.json` and rule handler contracts, `.claude/settings.json`. Use the built-in authoring skills rather than freehand: `skill-creator` and `superpowers:writing-skills` for skills, `hookify` for hook rules, `update-config` for settings/hooks/permissions, `claude-api` for model ids and params.
+- **Everything else → Codex, unchanged.** Ordinary implementation code is still Codex work, *including* ordinary TypeScript that happens to live inside a plugin repo. Cost routing is narrowed by exception here, not abandoned.
+
+**Granularity is the FILE.** The common case is one ticket touching both — a plugin change usually edits a `SKILL.md` AND handler TypeScript. Split the workstream by surface and route each half: Claude authors the Claude-native files, Codex the rest, in the same run. Do NOT send a whole mixed ticket to one side; whole-ticket routing is what made this stage artifact-blind in the first place. **A file that mixes a Claude Code contract with ordinary logic — a hook handler is the usual case — goes to CLAUDE whole.** Do not try to split one file between two agents: there is no sane way to say who authors which region, in what order, or who owns the merge, and a rule nobody can execute is not a rule. The tie goes to Claude because the two mistakes are not symmetric — a wrong contract fails SILENTLY at activation, while wrong logic fails LOUDLY in tests.
+
+**The boundary is the CONTRACT, not the file extension.** A hook handler is TypeScript and still Claude-native, because its stdin/stdout shape, its exit-code semantics and its blocking behaviour are Claude Code contracts. The test is portability, not language:
+
+> **Would this file be identical if Claude Code did not exist?**
+> **Yes** → ordinary code → **Codex.** `design-review/run.ts` is a reviewer that shells out to a CLI; it would look the same anywhere.
+> **No** → it declares or implements a Claude Code contract → **Claude.** Frontmatter, manifest schema, hook I/O shape, exit-code semantics, trigger strings.
+
+A handler's *contract surface* is what makes the whole FILE classify as Claude-native, even when most of the logic inside it is ordinary. The seam explains the CLASSIFICATION; it is not a routing split. Pure library code the handler imports is a separate file and classifies on its own.
+
+**The list above is not exhaustive and must not be read as such** (Rumsfeld Matrix: an exhaustive list is the bug). It also covers agent definitions (`agents/*.md`, `.claude/agents/*.md` — frontmatter `model`/`tools`/`description`-as-trigger), output-style files, and `CLAUDE.md` / memory rule files. Any new Anthropic-specific surface is Claude-native on arrival without this list being edited first.
+
+**Litmus:** "If this file is wrong, does it fail because the LOGIC is wrong, or because a Claude Code CONTRACT was mis-stated?" Contract → Claude. Logic → Codex. When genuinely ambiguous, treat it as Claude-native: a wrong contract fails SILENTLY at activation, while wrong logic fails LOUDLY in tests — so the asymmetry of the two mistakes decides the tie.
+
+Subject to that routing, Codex owns repo investigation and code changes (the teammates route to it):
 
 ```bash
 # each teammate, in its own worktree:

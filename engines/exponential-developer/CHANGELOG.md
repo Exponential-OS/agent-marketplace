@@ -1,3 +1,25 @@
+## [1.7.0] — 2026-11-20 — Stage 4 routes Claude-native artifact authoring to Claude (XOS-420)
+
+Stage 4 said "Codex owns repo investigation and ALL code changes" with no condition, while
+the same file already used SHIPPED-ARTIFACT-CLASS at Stage 5.8 and Stage 9. The pipeline
+consulted artifact class to VERIFY and to PUBLISH a plugin, and never to BUILD one — build
+was the single artifact-blind stage. The cost-routing table already proved it could express
+the exception, carrying exactly one carve-out ("UI is design judgment, NOT mechanical").
+
+- Claude-native surfaces route to **Claude**: `SKILL.md`, `hooks.json` and hook handlers,
+  `plugin.json`/`marketplace.json`, `commands/*.md`, rule manifests, `.claude/settings.json`,
+  agent definitions, output-style files, `CLAUDE.md`/memory rules. The list is explicitly
+  NON-exhaustive; the litmus is the rule.
+- The built-in authoring skills are **named**, not described: `skill-creator`,
+  `superpowers:writing-skills`, `hookify`, `update-config`, `claude-api`. The last four
+  appeared ZERO times before this; `skill-creator` appeared four times, all evaluation.
+- Everything else still goes to Codex. The boundary is portability, not language: *would
+  this file be identical if Claude Code did not exist?* A hook handler is TypeScript and
+  still Claude-native; `design-review/run.ts` is ordinary and stays Codex work.
+- Granularity is the FILE. A mixed ticket splits per-file; a mixed FILE goes to Claude whole.
+
+Six Gate-A.7 cycles, converging GREEN with zero findings.
+
 ## [1.6.0] — 2026-11-19 — Gate-A.7's mandatory reviewer walks a candidate ladder (XOS-413)
 
 Gate-A.7 pinned ONE model for the MANDATORY primary reviewer with no fallback, while the
