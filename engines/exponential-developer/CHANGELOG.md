@@ -1,3 +1,25 @@
+## [1.8.0] - 2026-11-20 - close stdin on every codex exec dispatch, guarded by a test (XOS-418)
+
+`codex exec` reads stdin even when the prompt is an argument; its first line is literally
+"Reading additional input from stdin...". With stdin inherited it waits on a pipe that
+never closes: alive, 0% CPU, zero output, and it never times out. Three sessions measured
+it; the worst ran 10h45m on a 39-byte log. The wrapper had already returned exit 0 from
+its own echo, so the orchestrator reported success while the build never started.
+
+- `< /dev/null` on every documented dispatch in this plugin: SKILL.md x4, plus the
+  cost-routing-gate BLOCK remediation message, README and manifest. The handler message
+  mattered most: it is what an agent reads at the moment the gate tells it to use codex.
+- Two anti-instructions recorded so they are not re-derived. Do NOT add
+  `--skip-git-repo-check` (different check; the discriminator is git-repo presence, not
+  path, and a worktree satisfies it on its own). Do NOT grep for the stdin line to detect
+  a stall (it prints on every run, healthy included).
+- Shipped WITH a standing guard rather than as prose, since the defect's own thesis is
+  that prose regresses silently. Two tests that DISCOVER files by walking the plugin and
+  excluding non-instruction surfaces by category, mutation-verified to bite.
+
+20 pass cost-routing-gate, 45 pass design-review, CI floor 259 -> 261.
+`jury` has the same exposure; filed as XOS-425 rather than bundled.
+
 ## [1.7.0] — 2026-11-20 — Stage 4 routes Claude-native artifact authoring to Claude (XOS-420)
 
 Stage 4 said "Codex owns repo investigation and ALL code changes" with no condition, while

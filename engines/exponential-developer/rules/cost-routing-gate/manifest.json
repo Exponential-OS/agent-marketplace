@@ -6,7 +6,7 @@
   "created": "2026-07-04",
   "type": "gate",
   "canonical": "handler.ts",
-  "description": "PreToolUse Edit/Write/Bash gate that enforces /ship-feature cost routing during a fresh live run. In-session source writes inside the run worktree BLOCK and route to out-of-process codex exec. Conservative deploy/poll-loop Bash inside the run worktree BLOCKs and routes to out-of-process claude --model haiku -p. No fresh marker, stale markers, unscopable markers, unrelated worktrees, ordinary Bash, crashes, and COST_ROUTING_GATE_OFF=1 PASS/fail open.",
+  "description": "PreToolUse Edit/Write/Bash gate that enforces /ship-feature cost routing during a fresh live run. In-session source writes inside the run worktree BLOCK and route to out-of-process codex exec ... < /dev/null. Conservative deploy/poll-loop Bash inside the run worktree BLOCKs and routes to out-of-process claude --model haiku -p. No fresh marker, stale markers, unscopable markers, unrelated worktrees, ordinary Bash, crashes, and COST_ROUTING_GATE_OFF=1 PASS/fail open.",
   "enforcement": {
     "how": "handler.ts",
     "audit": "AUDIT.ts",
@@ -27,7 +27,10 @@
     },
     "fail_hard": {
       "block_exits_nonzero": true,
-      "block_message_requires": ["WHAT:", "HOW:"]
+      "block_message_requires": [
+        "WHAT:",
+        "HOW:"
+      ]
     },
     "fail_open": {
       "on_handler_crash": true,
@@ -35,18 +38,35 @@
     }
   },
   "hook_type": "PreToolUse",
-  "hook_target_tools": ["Edit", "Write", "Bash"],
+  "hook_target_tools": [
+    "Edit",
+    "Write",
+    "Bash"
+  ],
   "cadence": "per-tool-call",
   "last_update": "2026-07-04",
   "last_watch_run": null,
   "live_run_detection": {
     "marker_dir": "~/.ship-feature/active",
     "fresh_threshold_seconds": 1800,
-    "fresh_fields": ["heartbeat", "heartbeat_at", "heartbeatAt", "last_heartbeat", "lastHeartbeat"],
-    "scope_fields": ["worktree", "cwd", "repo"],
+    "fresh_fields": [
+      "heartbeat",
+      "heartbeat_at",
+      "heartbeatAt",
+      "last_heartbeat",
+      "lastHeartbeat"
+    ],
+    "scope_fields": [
+      "worktree",
+      "cwd",
+      "repo"
+    ],
     "unscopable_marker_behavior": "PASS"
   },
-  "allowed_in_session_paths": ["docs/**", "*.md"],
+  "allowed_in_session_paths": [
+    "docs/**",
+    "*.md"
+  ],
   "blocked_edit_write": "non-docs, non-markdown paths inside a fresh marker's valid worktree/cwd/repo",
   "blocked_bash": [
     "railway up or railway redeploy paired with while/until+sleep or repeated status/watch polling",

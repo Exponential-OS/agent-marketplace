@@ -5,7 +5,7 @@
 Inside that live worktree:
 
 - Edit/Write to `docs/**` and `*.md` PASS.
-- Edit/Write to source/config files BLOCK and route to `codex exec`.
+- Edit/Write to source/config files BLOCK and route to `codex exec ... < /dev/null` (stdin must be closed; see XOS-418).
 - Conservative deploy/poll-loop Bash BLOCKs and routes to `claude --model haiku -p`.
 - No fresh marker, stale markers, missing cwd, unscopable markers, unrelated worktrees, ordinary Bash, crashes, and `COST_ROUTING_GATE_OFF=1` PASS/fail open.
 

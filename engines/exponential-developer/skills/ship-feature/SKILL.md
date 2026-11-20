@@ -26,10 +26,10 @@ Runs Stage 0 (claim) + the 9 core stages, including the Gate-A.5 change-manifest
 ## Cost routing
 
 - **Claude (whale, Opus):** brainstorm, spec, eval-design, gate decisions, synthesis, catch hallucinations. Reads conclusions, never re-executes. Delegates cheap orchestration (deploy/git/poll) to a **Haiku sub-agent**, and cross-family review to the **`jury` skill** — Opus is the last resort, not the default.
-- **Codex teammates:** all implementation, tests, repo investigation. Run via `codex exec` from Bash. Parallel where independent. Codex writes ALL code.
+- **Codex teammates:** all implementation, tests, repo investigation. Run via `codex exec ... < /dev/null` from Bash — **stdin MUST be closed or the dispatch hangs forever with no output and no timeout** (XOS-418). Parallel where independent. Codex writes ALL code.
 - **Gemini/agy:** browser, smoke tests, large-file review via `agy`/Gemini. 50x cheaper. NEVER handed secrets.
 
-Cost routing is now CODIFIED, not prose-only: `rules/cost-routing-gate` is the hard PreToolUse Edit/Write/Bash enforcement layer for fresh `/ship-feature` runs, blocking in-session source writes and deploy/poll loops in the live worktree and routing them out-of-process to `codex exec` or `claude --model haiku -p`; it complements the codi v4.34.0 advisory nudge rather than replacing it.
+Cost routing is now CODIFIED, not prose-only: `rules/cost-routing-gate` is the hard PreToolUse Edit/Write/Bash enforcement layer for fresh `/ship-feature` runs, blocking in-session source writes and deploy/poll loops in the live worktree and routing them out-of-process to `codex exec ... < /dev/null` or `claude --model haiku -p`; it complements the codi v4.34.0 advisory nudge rather than replacing it.
 
 Note: `gemini-delegate.ts` now invokes `agy` (Antigravity, Ultra quota). Treat legacy `agly` references as migrated to `agy`.
 
@@ -40,7 +40,7 @@ Pick the cheapest agent + smallest model that does the job WELL. **If you're uns
 | Task class | Agent | Model / size |
 |---|---|---|
 | Deploy (railway up, push, poll, curl), file moves, git plumbing — needs an orchestrator to run + watch, but ZERO Opus judgment | **Haiku sub-agent** (`claude --model haiku -p` or Agent `model: haiku`) | **Haiku — ~20x cheaper than whale.** Whale NEVER babysits deploy/poll loops |
-| Code implementation / tests / repo investigation | Codex (`codex exec`) | default; raise reasoning only for genuinely hard logic |
+| Code implementation / tests / repo investigation | Codex (`codex exec ... < /dev/null`) | default; raise reasoning only for genuinely hard logic. **stdin MUST be closed** (XOS-418) |
 | Browser-driving, prod smoke, large-file reads, media review | agy/Gemini | **Flash (Low/Medium)** — cheap, mechanical |
 | E2E + VISUAL verification (Stage 5.5 screenshots, console, flows) | **Claude + agy/Gemini-vision** | **Claude owns UI/visual design-lane judgment; agy reviews the ACTUAL rendered screenshots, not diffs.** Use Playwright/dev-server; use `chrome-devtools-mcp` when authenticated state matters |
 | Cross-family review / adjudication | **`jury` skill (cross/jury — the canonical cross-family reviewer)** (fish cascade → 1 tiebreaker) | Flash/nano fish first; whale only if panel escalates AND stays conflicted |
@@ -303,7 +303,7 @@ Runs after Gate-A.5 and before Stage 4. This is the design-time twin of Gate-A.5
 
 ## Stage 4 — Implement in git worktree (as a TEAM)
 
-**This stage is `TeamCreate` work by default — run it via `superpowers:subagent-driven-development` + `superpowers:dispatching-parallel-agents`.** Decompose the change into INDEPENDENT workstreams; spin up an implementation team with **one teammate per workstream, each in its OWN git worktree** (`superpowers:using-git-worktrees` — never the shared primary checkout). Each teammate delegates the actual code to Codex (`codex exec`). Dependent edits stay serialized inside one teammate. Merge when all workstreams are green. Running independent workstreams SERIALLY here is the exact failure this skill exists to prevent.
+**This stage is `TeamCreate` work by default — run it via `superpowers:subagent-driven-development` + `superpowers:dispatching-parallel-agents`.** Decompose the change into INDEPENDENT workstreams; spin up an implementation team with **one teammate per workstream, each in its OWN git worktree** (`superpowers:using-git-worktrees` — never the shared primary checkout). Each teammate delegates the actual code to Codex (`codex exec ... < /dev/null` — see the non-negotiables below; an inherited stdin hangs the dispatch silently and indefinitely). Dependent edits stay serialized inside one teammate. Merge when all workstreams are green. Running independent workstreams SERIALLY here is the exact failure this skill exists to prevent.
 
 **Route by SHIPPED-ARTIFACT-CLASS before dispatching** — the same classification Stage 5.8 and Stage 9 already use, so the three stages cannot drift into different definitions of one concept. Build was the only artifact-blind stage; it no longer is.
 
@@ -343,8 +343,11 @@ Use Codex for:
 
 Claude reads Codex conclusions and diffs only; Claude never re-executes implementation work.
 
-**Codex invocation — write-sandbox, effort-ladder, completion guarantee (XOS-221, foundation-first).** The build agent is Stage 4's load-bearing block; a silent partial build undermines the whole pipeline. Three non-negotiables:
-- **`codex exec --sandbox workspace-write`** — codex `exec` defaults to a READ-ONLY sandbox, so a builder without this flag plans, tries to `apply_patch`, hits "writing is blocked by read-only sandbox," and stops with no edits. The builder MUST get `workspace-write`. (Judge/review lanes stay `read-only` — a reviewer must not write the workspace it reviews.)
+**Codex invocation — stdin, write-sandbox, effort-ladder, completion guarantee (XOS-221, XOS-418, foundation-first).** The build agent is Stage 4's load-bearing block; a silent partial build undermines the whole pipeline. Four non-negotiables:
+- **`< /dev/null` on EVERY `codex exec` — the one that fails silently (XOS-418).** `codex exec` reads stdin even when the prompt is passed as an argument; its literal first line is `Reading additional input from stdin...`. Dispatched from a background Bash call with stdin inherited, it waits on a pipe that never closes: alive, 0% CPU, zero output, **and it never times out.** Measured: one dispatch sat **10h45m** on a 39-byte log before a human noticed. An unattended overnight run produces nothing and reports fine. Close stdin and it completes normally.
+  - **Do NOT add `--skip-git-repo-check` to "fix" this.** It is a different check and it is not the problem. The discriminator is git-repo presence, not path: a `git worktree add` target satisfies the check on its own, including under `/tmp`; only a directory that is *not a repo* refuses. Adding the flag everywhere would globally disable a safety mechanism, forever, to fix a symptom something else produced — and everything would appear to work afterwards. Verified independently by two sessions, including the non-repo negative case.
+  - **Do NOT build a stall detector that greps for the stdin line.** That line is printed by **every** run, healthy ones included — a 255KB successful build and a 39-byte dead one are indistinguishable by that string. Such a detector fires on 100% of successful builds, gets disabled within a day, and then nothing watches for the real hang. The discriminator is **absence of output growth** after the line. With `< /dev/null` in place no watchdog is needed; the watchdog was always the workaround.
+- **`codex exec --sandbox workspace-write ... < /dev/null`** — codex `exec` defaults to a READ-ONLY sandbox, so a builder without this flag plans, tries to `apply_patch`, hits "writing is blocked by read-only sandbox," and stops with no edits. The builder MUST get `workspace-write`. (Judge/review lanes stay `read-only` — a reviewer must not write the workspace it reviews.)
 - **Model + effort by the resilience rule** (see the universal model-routing principle): inherit codex's config model (`gpt-5.6-sol`; NEVER `gpt-5.6-codex` — API-only, rejected on ChatGPT accounts), pass `-c model_reasoning_effort=high`, and on an "at capacity" error step DOWN a tier (high→medium→low); on a `400 … Supported values are […]` parse+retry. Do not pin `ultra`/`xhigh` — the top tiers are capacity-walled.
 - **The orchestrator VERIFIES completion — never trusts "launched."** A build agent that fires a background task and returns "launched," or returns partial work, is NOT done. After it returns, the orchestrator confirms the acceptance criteria against the worktree: the requested changes are actually present (non-empty diff + targeted greps for each required edit) AND `bun build`/typecheck is clean. Incomplete → resume or re-dispatch; do not advance to Stage 5 on an unverified build. (Amendment D's "never open-and-wander," applied to the builder — see XOS-221.)
 

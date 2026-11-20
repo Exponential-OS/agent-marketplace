@@ -1,5 +1,5 @@
 import { afterEach, expect, test } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, utimesSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, readdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, utimesSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { dirname, join } from "path";
 import { processInput, type ProcessOptions } from "./handler";
@@ -316,4 +316,80 @@ test("logs PASS and BLOCK decisions to injected JSONL path", () => {
   expect(rows.map((row) => row.verdict)).toEqual(["PASS", "BLOCK"]);
   expect(rows.every((row) => row.rule_slug === "cost-routing-gate")).toBe(true);
   expect(rows.every((row) => typeof row.tool === "string")).toBe(true);
+});
+
+// ── XOS-418: the stdin fix must not regress silently ────────────────────────
+//
+// This ticket's own thesis is that a prose instruction nobody executes does not
+// fire. Shipping "remember to write `< /dev/null`" as prose would repeat exactly
+// that mistake, so the negative assertion is a STANDING check.
+//
+// It DISCOVERS files rather than enumerating them. An enumerated list guards the
+// four files that were wrong on the day it was written and lets a dispatch added
+// in a NEW file regress silently — which is the same prose-regression class, one
+// level up. (Rumsfeld Matrix: an exhaustive list is the bug.)
+//
+// Asserted negatively on purpose: a count of correct lines passes while a new
+// site is missed. During this very change a `grep -c "< /dev/null" >= 3` reported
+// PASS with four occurrences while three dispatch sites still lacked it.
+const PLUGIN_ROOT = join(import.meta.dir, "../..");
+
+// Surfaces that are NOT live dispatch instructions, and must keep the bare string:
+//   - gate detectors + any test/audit/watch file (their JOB is to match it)
+//   - docs/plans and CHANGELOG (HISTORICAL records of what past versions said —
+//     rewriting them would falsify history, and nobody executes a changelog)
+const NON_INSTRUCTION_SURFACE =
+  /(^|\/)(tests|AUDIT|WATCH)\.ts$|(^|\/)design-review-gate(\/|$)|(^|\/)docs\/plans(\/|$)|(^|\/)CHANGELOG\.md$/;
+
+// Lines that MENTION codex exec without instructing a dispatch: prohibitions,
+// back-references, and this ticket's own two anti-instructions.
+const NOT_A_DISPATCH = /hand-roll|before any Stage-4|Do NOT add|Do NOT build|skip-git-repo-check/i;
+
+function discoverDispatchFiles(dir: string, found: string[] = []): string[] {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name);
+    const rel = full.slice(PLUGIN_ROOT.length + 1);
+    if (entry.isDirectory()) {
+      if (entry.name === "node_modules" || entry.name.startsWith(".")) continue;
+      discoverDispatchFiles(full, found);
+      continue;
+    }
+    if (!/\.(md|ts|json|sh)$/.test(entry.name)) continue;
+    if (NON_INSTRUCTION_SURFACE.test(rel)) continue;
+    if (readFileSync(full, "utf8").includes("codex exec")) found.push(full);
+  }
+  return found;
+}
+
+test("XOS-418: no documented codex exec dispatch omits `< /dev/null`", () => {
+  const files = discoverDispatchFiles(PLUGIN_ROOT);
+  // Discovery must actually find something; a regex typo that matched everything
+  // would otherwise make this test vacuously green.
+  expect(files.length).toBeGreaterThan(0);
+
+  const offenders: string[] = [];
+  for (const file of files) {
+    readFileSync(file, "utf8").split("\n").forEach((line, i) => {
+      if (!line.includes("codex exec")) return;
+      if (NOT_A_DISPATCH.test(line)) return;
+      if (line.includes("/dev/null")) return;
+      offenders.push(`${file.slice(PLUGIN_ROOT.length + 1)}:${i + 1}`);
+    });
+  }
+  expect(offenders).toEqual([]);
+});
+
+test("XOS-418: the fix is not cargo-culted into --skip-git-repo-check", () => {
+  // The flag is a DIFFERENT check and was never the cause: a `git worktree add`
+  // target satisfies it on its own, including under /tmp. Adding it to a dispatch
+  // would globally disable a safety mechanism to fix a symptom it never produced.
+  const offenders: string[] = [];
+  for (const file of discoverDispatchFiles(PLUGIN_ROOT)) {
+    readFileSync(file, "utf8").split("\n").forEach((line, i) => {
+      if (line.includes("codex exec") && line.includes("--skip-git-repo-check")) {
+        offenders.push(`${file.slice(PLUGIN_ROOT.length + 1)}:${i + 1}`);
+      }
+    });
+  }
+  expect(offenders).toEqual([]);
 });

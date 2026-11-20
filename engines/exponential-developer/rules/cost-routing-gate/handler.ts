@@ -288,7 +288,7 @@ function sourceBlockMessage(target: string, root: string): string {
     target +
     " is inside " +
     root +
-    ". HOW: route implementation out-of-process with `codex exec` from Bash, then have this session read the diff/conclusions and continue gating/synthesis."
+    ". HOW: route implementation out-of-process with `codex exec ... < /dev/null` from Bash (stdin MUST be closed — an inherited stdin hangs the dispatch silently and forever, XOS-418), then have this session read the diff/conclusions and continue gating/synthesis."
   );
 }
 
