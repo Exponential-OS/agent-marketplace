@@ -360,6 +360,12 @@ function collectContainerEntries(container: unknown, map: Map<string, string>): 
 
   for (const [key, value] of Object.entries(obj)) {
     if (VERSION_KEYS.includes(key) || NAME_KEYS.includes(key)) continue;
+    // `$`-prefixed keys are JSON Schema reserved words ($schema, $id, $ref), never plugin
+    // names. The real catalog's envelope is {$schema, name, owner, metadata, plugins}, and
+    // scanning it collected "$schema" as a plugin whose version was the schema URL. The gate
+    // then BLOCKed every run on a plugin that does not exist. Invisible until XOS-444 fixed
+    // the path -- the gate had never successfully resolved a catalog to misparse.
+    if (key.startsWith("$")) continue;
     addMarketplaceEntry(map, key, versionFromUnknown(value));
     if (value && typeof value === "object" && !Array.isArray(value)) {
       addMarketplaceEntry(map, nameFromUnknown(value), versionFromUnknown(value));

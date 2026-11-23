@@ -1,3 +1,28 @@
+## [1.10.1] - 2026-11-23 - the catalog envelope is not a plugin (XOS-444)
+
+Found by DOGFOODING the installed 1.10.0 against the real catalog, which is the only place it
+could be found. The gate BLOCKed on every run:
+
+```
+⚠ STALE: $schema installed missing < marketplace
+         https://anthropic.com/claude-code/marketplace.schema.json
+```
+
+A real marketplace root is an ENVELOPE — `{$schema, name, owner, metadata, plugins}` — and the
+parser scanned it for plugin entries, turning a JSON Schema reserved key into a plugin whose
+version was the schema URL and which can never be installed. `$`-prefixed keys are now skipped.
+
+This bug is OLDER than 1.10.0 and was unreachable until it: the gate had never successfully
+resolved a catalog, so it had never had one to misparse. Fixing the path did not cause the
+defect, it exposed it — and it would have made the gate block permanently the first time
+anyone wired it.
+
+The gate's remaining BLOCK on this machine is a TRUE POSITIVE: `jury` is catalogued at 0.2.0
+and is not installed.
+
+284 passing, 0 failures, 6/6 rule suites. CI floor 282 -> 284. Mutation-verified: removing the
+envelope guard fails both new tests, one at the parse and one at the verdict.
+
 ## [1.10.0] - 2026-11-23 - the publish gate stops reporting PASS having checked nothing, and starts checking SESSIONS (XOS-444)
 
 Reported by a peer session that shipped co-dialectic 4.47.5, never posted a reload bulletin,

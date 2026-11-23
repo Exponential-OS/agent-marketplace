@@ -375,3 +375,42 @@ test("the marketplace is found as a SIBLING of the repo, not a child of it", () 
   expect(result.target).toBe(sibling);
   expect(result.checked).toHaveLength(1);
 });
+
+test("the catalog envelope is not a plugin", () => {
+  // Found by DOGFOODING the installed 1.10.0 against the real catalog, not by a unit test:
+  // the gate BLOCKed with `⚠ STALE: $schema installed missing < marketplace
+  // https://anthropic.com/claude-code/marketplace.schema.json`. The root object is an
+  // envelope -- {$schema, name, owner, metadata, plugins} -- and scanning it turned a JSON
+  // Schema reserved key into a plugin that can never be installed, so every run blocked.
+  // Latent until XOS-444 fixed path resolution: the gate had never resolved a catalog to
+  // misparse one.
+  const parsed = marketplaceVersionsFromJson(
+    JSON.stringify({
+      $schema: "https://anthropic.com/claude-code/marketplace.schema.json",
+      name: "agent-marketplace",
+      owner: { name: "Exponential-OS" },
+      plugins: [{ name: "exponential-developer", version: "1.10.0" }],
+    }),
+  );
+
+  expect([...parsed.keys()]).toEqual(["exponential-developer"]);
+  expect(parsed.get("exponential-developer")).toBe("1.10.0");
+});
+
+test("a catalog envelope does not make the gate block", () => {
+  // The end-to-end shape of the same bug: verdict, not just the parse.
+  const fx = fixture();
+  writeMarketplace(fx, {
+    $schema: "https://anthropic.com/claude-code/marketplace.schema.json",
+    name: "agent-marketplace",
+    plugins: [{ name: "exponential-developer", version: "1.0.0" }],
+  });
+  install(fx, "exponential-developer", "1.0.0");
+  install(fx, "co-dialectic", "4.47.5");
+  session(fx, SELF, "4.47.5", 1);
+
+  const result = processInput({}, sessionOptions(fx, SELF));
+
+  expect(result.verdict).toBe("PASS");
+  expect(result.stale).toEqual([]);
+});
