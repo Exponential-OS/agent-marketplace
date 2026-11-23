@@ -1,7 +1,7 @@
 import { afterEach, expect, test } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
-import { dirname, join } from "path";
+import { dirname, join, resolve } from "path";
 import {
   classifyAdjustment,
   parseStructuredVerdict,
@@ -216,6 +216,7 @@ test("second RED writes escalation artifact and parks", async () => {
 
 test("skip-rule fires on mechanical manifest", async () => {
   const mechanical = [
+    MECHANICAL_CLAIM,
     "+ added     docs/usage.md          - docs only",
     "~ modified  CHANGELOG.md           - version note",
     "~ modified  .claude-plugin/plugin.json - version bump",
@@ -241,7 +242,7 @@ test("skip-rule does not fire on a feature manifest", () => {
     "behavior_flag: true",
   ].join("\n");
 
-  expect(shouldSkip(featureManifest)).toEqual({ skip: false });
+  expect(shouldSkip(featureManifest)).toMatchObject({ skip: false });
 });
 
 // XOS-204: source-bound diagnostics and budget regressions.
@@ -851,4 +852,183 @@ test("fallback success records the candidates attempted", async () => {
   expect(run.record.verdict).toBe("GREEN");
   expect(run.record.reviewer_model).toBe("claude-sonnet-5");       // who actually reviewed
   expect(run.record.models_tried).toEqual(["claude-fable-5", "claude-sonnet-5"]); // and what refused
+});
+
+// XOS-415: affirmative claims replace both rejected prose detectors.
+import * as reviewModule from "./run";
+import { MECHANICAL_CLAIM, extractChangeManifest, manifestSummary } from "./run";
+import { BENIGN_MANIFESTS, CODE_MANIFESTS, ACCEPTED_FALSE_NEGATIVES, asManifest, OWN_SPEC_MANIFEST } from "./manifest-corpus";
+
+const marked = (body: string) => `${MECHANICAL_CLAIM}\n${body}`;
+const skipContract = { skip: true, rule: "mechanical-manifest:file_count<=5" };
+const noClaim = { skip: false, blockedBy: "no_mechanical_claim" };
+
+test("reported case requires review", async () => {
+  const body = CODE_MANIFESTS[0][1];
+  expect(shouldSkip(body)).toEqual(noClaim);
+  let calls = 0;
+  const result = await runDesignReview(fixture(body).specPath, {
+    reviewer: () => {
+      calls++;
+      return { ok: true, stdout: yellowOutput, exitCode: 0 };
+    },
+  });
+  expect(calls).toBe(1);
+  expect(result.record.verdict).toBe("YELLOW");
+});
+
+test("unmarked docs require review: all 22 BENIGN cases", () => {
+  expect(BENIGN_MANIFESTS.length).toBe(22);
+  for (const [, body] of BENIGN_MANIFESTS) expect(shouldSkip(body)).toEqual(noClaim);
+});
+
+test("marked docs skip: all 22 BENIGN cases", () => {
+  for (const [, body] of BENIGN_MANIFESTS) expect(shouldSkip(marked(body))).toEqual(skipContract);
+});
+
+test("unmarked CODE and former accepted false negatives require review", () => {
+  expect(CODE_MANIFESTS.length).toBe(9);
+  for (const [, body] of [...CODE_MANIFESTS, ...ACCEPTED_FALSE_NEGATIVES]) {
+    expect(shouldSkip(body)).toEqual(noClaim);
+  }
+  expect(shouldSkip({ paths: ["README.md"], description: MECHANICAL_CLAIM })).toEqual(noClaim);
+  expect(shouldSkip("")).toEqual(noClaim);
+});
+
+test("necessary not sufficient: all four guards survive a claim", () => {
+  const guards = [
+    ["~ modified README.md\nfile_count: 6", "file_count"],
+    ["~ modified README.md\nbehavior_flag: true", "declared_flag"],
+    ["~ modified README.md\nnew_public_surface: true", "declared_flag"],
+    ["no listed files", "no_paths"],
+    ["~ modified src/feature.ts", "non_mechanical_path"],
+    [Array.from({ length: 6 }, (_, i) => `~ modified docs/file${i}.md`).join("\n"), "file_count"],
+  ];
+  for (const [body, blockedBy] of guards) {
+    expect(shouldSkip(marked(body))).toEqual({ skip: false, blockedBy });
+  }
+  for (const [id, body] of CODE_MANIFESTS) {
+    if (id.startsWith("path/")) {
+      // `path/explicit_sh` yields "no_paths", NOT "non_mechanical_path": install.sh matches
+      // no path pattern, so the manifest reads as EMPTY rather than non-mechanical. That is
+      // a REAL DEFECT, not a contract -- install.sh + README.md skips review outright. It is
+      // pre-existing (origin/main does the same) and tracked in XOS-442, which owns the
+      // extractor redesign. Asserted here so the current behaviour is on the record rather
+      // than discovered again. DO NOT "fix" this by widening the regex; five review rounds
+      // established that enumerating path shapes loses.
+      expect(shouldSkip(marked(body))).toEqual({ skip: false, blockedBy: id === "path/explicit_sh" ? "no_paths" : "non_mechanical_path" });
+    }
+    for (const flag of ["file_count: 6", "new_public_surface: true", "behavior_flag: true"]) {
+      expect(shouldSkip(marked(`${body}\n${flag}`)).skip).toBe(false);
+    }
+  }
+});
+
+test("no shipped test reaches outside the plugin root", () => {
+  // STRUCTURAL GUARD for the class, not the instance. This plugin SHIPS: it is vendored into
+  // the marketplace at engines/<plugin>/ and installed into the plugin cache, both of which
+  // are SHALLOWER than its path in the source repo. A test that climbs out of the plugin
+  // root resolves somewhere real in the source tree and somewhere wrong everywhere else, so
+  // the source suite passes and the shipped suite fails -- which is what happened here
+  // (56/0 in-repo, 55/1 vendored, ENOENT on ../../../../../../docs/plans/).
+  // A test that reaches outside the plugin is testing the repo, not the plugin.
+  const pluginRoot = resolve(import.meta.dir, "../../..");
+  const offenders: string[] = [];
+  const walk = (dir: string) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        if (entry.name === "node_modules" || entry.name === ".git") continue;
+        walk(full);
+      } else if (/\.(test|tests)\.ts$|^tests\.ts$/.test(entry.name)) {
+        const text = readFileSync(full, "utf8");
+        for (const m of text.matchAll(/import\.meta\.dir,\s*"([^"]+)"/g)) {
+          const target = resolve(dirname(full), m[1]);
+          if (!target.startsWith(pluginRoot)) offenders.push(`${full.slice(pluginRoot.length + 1)} -> ${m[1]}`);
+        }
+      }
+    }
+  };
+  walk(pluginRoot);
+  expect(offenders).toEqual([]);
+});
+
+test("mentioning is not claiming: this change documents the marker", () => {
+  // This change's SKILL.md entry, with the exact spelling it documents. Isolate it
+  // so unrelated guards cannot mask an accidental substring-match skip.
+  // Fixture, NOT a file read. The path this used -- ../../../../../../docs/plans/ -- is
+  // correct in the source repo and escapes the marketplace entirely once vendored, so the
+  // shipped suite failed 55/1 where source passed 56/0. A plugin carries its own fixtures.
+  const plan = OWN_SPEC_MANIFEST;
+  const ownManifest = extractChangeManifest(plan);
+  expect(ownManifest).toContain("SKILL.md");
+  expect(shouldSkip(ownManifest)).toEqual(noClaim);
+  const documentation = `~ modified SKILL.md — document the mechanical-only marker \`${MECHANICAL_CLAIM}\``;
+  expect(shouldSkip(documentation)).toEqual(noClaim);
+  expect(shouldSkip(marked(documentation))).toEqual(skipContract);
+  for (const mention of [`> ${MECHANICAL_CLAIM}`, `\`${MECHANICAL_CLAIM}\``, ` ${MECHANICAL_CLAIM}`, `${MECHANICAL_CLAIM} `]) {
+    expect(shouldSkip(`${mention}\n~ modified README.md`)).toEqual(noClaim);
+  }
+});
+
+test("line endings are not part of the claim", () => {
+  // A bare split("\n") welds \r to the line, so a CRLF-authored spec could never claim at
+  // all -- the affirmative path was unreachable for an entire class of author, and the
+  // failure looked exactly like "they forgot to claim". The guards must see the same text.
+  // CRLF: the claim line carries a trailing \r and must still count.
+  expect(shouldSkip(`${MECHANICAL_CLAIM}\r\n~ modified  README.md\r\n~ modified  CHANGELOG.md`)).toEqual(skipContract);
+  expect(shouldSkip(`${MECHANICAL_CLAIM}\r\n~ modified  design-review/run.ts`)).toEqual({
+    skip: false,
+    blockedBy: "non_mechanical_path",
+  });
+  expect(shouldSkip(`${MECHANICAL_CLAIM}\r\nnew-public-surface: true\r\n~ modified  README.md`)).toEqual({
+    skip: false,
+    blockedBy: "declared_flag",
+  });
+  // A trailing \r on a PATH line must not corrupt extraction -- asserted on the PATH SET,
+  // not the verdict, because a verdict is identical whether the path is read correctly or
+  // mangled into something else that is also non-mechanical.
+  expect(manifestSummary(`~ modified  README.md\r`).paths).toEqual(["README.md"]);
+  expect(manifestSummary(`~ modified  src/feature.ts\r`).paths).toEqual(["src/feature.ts"]);
+  expect(shouldSkip(`${MECHANICAL_CLAIM}\n~ modified  README.md\r`)).toEqual(skipContract);
+  // THE BYPASS THIS FIX MUST NOT REINTRODUCE. Normalising \r globally turns an inline \r
+  // into a line break, promoting a mention into a standalone claim. Only trailing \r goes.
+  expect(shouldSkip(`x\r${MECHANICAL_CLAIM}\n~ modified  README.md`)).toEqual(noClaim);
+  expect(shouldSkip(`> ${MECHANICAL_CLAIM}\r\n~ modified  README.md`)).toEqual(noClaim);
+});
+
+test("a claim inside the manifest's fenced block is a claim, by contract", () => {
+  // SKILL.md documents the claim as valid "inside or outside its fenced block", so fencing
+  // is NOT the use-vs-mention discriminator here and must not be stripped. Pinned because
+  // stripping fences would silently revoke the documented position; quoting forms are
+  // rejected by exactness instead (see the mention cases above).
+  const skill = readFileSync(join(import.meta.dir, "../SKILL.md"), "utf8");
+  expect(skill).toContain("inside or outside its fenced block");
+  // Compose the REAL pipeline -- extractChangeManifest feeds shouldSkip in runDesignReview,
+  // so asserting them separately would not prove the composed path works.
+  const inside = asManifest(`${MECHANICAL_CLAIM}\n~ modified  README.md`);
+  expect(shouldSkip(extractChangeManifest(inside))).toEqual(skipContract);
+  // ...and the OUTSIDE position SKILL.md equally promises, which nothing covered before.
+  const outside = `## Change manifest\n\n${MECHANICAL_CLAIM}\n\n\`\`\`\n~ modified  README.md\n\`\`\`\n`;
+  expect(shouldSkip(extractChangeManifest(outside))).toEqual(skipContract);
+  // Both positions still stop at the guards.
+  const guarded = asManifest(`${MECHANICAL_CLAIM}\n~ modified  src/feature.ts`);
+  expect(shouldSkip(extractChangeManifest(guarded))).toEqual({ skip: false, blockedBy: "non_mechanical_path" });
+});
+
+test("only the documented spelling counts", () => {
+  const skill = readFileSync(join(import.meta.dir, "../SKILL.md"), "utf8");
+  expect(MECHANICAL_CLAIM).toBe("I claim this change is mechanical-only.");
+  expect(skill).toContain(`\n${MECHANICAL_CLAIM}\n`);
+  for (const claim of [MECHANICAL_CLAIM.toLowerCase(), MECHANICAL_CLAIM.toUpperCase(), MECHANICAL_CLAIM.slice(0, -1)]) {
+    expect(shouldSkip(`${claim}\n~ modified README.md`)).toEqual(noClaim);
+  }
+});
+
+test("skip contract unchanged", () => {
+  expect(shouldSkip(marked("~ modified README.md"))).toEqual(skipContract);
+});
+
+test("no detectors: codeWorkSignals is not exported", () => {
+  expect(Object.hasOwn(reviewModule, "codeWorkSignals")).toBe(false);
 });

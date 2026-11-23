@@ -449,6 +449,7 @@ function pathMatches(line: string): string[] {
   return matches ?? [];
 }
 
+
 function extractPathsFromManifestText(manifest: string): string[] {
   const paths = new Set<string>();
   for (const line of manifest.split("\n")) {
@@ -486,7 +487,14 @@ function pathsFromUnknown(value: unknown): string[] {
   return paths;
 }
 
-function manifestSummary(manifest: string | Record<string, unknown>): ManifestSummary {
+/**
+ * Exported for tests (XOS-415). Path extraction had TWO wrong-identity bugs in this ticket
+ * alone -- install.sh matching nothing, and a verb stripped without a word boundary turning
+ * `added_file.ts` into `_file.ts` -- and neither was observable through shouldSkip, whose
+ * verdict is identical whether the extracted path is right or merely wrong in the same
+ * direction. A guard you cannot ask "what did you see?" cannot be tested, only trusted.
+ */
+export function manifestSummary(manifest: string | Record<string, unknown>): ManifestSummary {
   if (typeof manifest === "string") {
     const explicitCount = manifest.match(/\bfile[-_ ]count\s*[:=]\s*(\d+)/i);
     const paths = extractPathsFromManifestText(manifest);
@@ -522,12 +530,25 @@ function isMechanicalPath(path: string): boolean {
   return false;
 }
 
-export function shouldSkip(manifest: string | Record<string, unknown>): { skip: boolean; rule?: string } {
+// Exact standalone line in the Change manifest; mentioning the claim is not making it.
+export const MECHANICAL_CLAIM = "I claim this change is mechanical-only.";
+
+export function shouldSkip(manifest: string | Record<string, unknown>): { skip: boolean; rule?: string; blockedBy?: string } {
+  if (typeof manifest !== "string") return { skip: false, blockedBy: "no_mechanical_claim" };
+  // A bare split("\n") leaves \r welded to the line, so on CRLF the claim never matches
+  // and that author can never reach the affirmative path -- a failure indistinguishable
+  // from not having claimed. Only a TRAILING \r is stripped, per line: normalising \r
+  // globally would turn an inline \r into a line break and promote a mention
+  // ("x\rI claim...") into a standalone claim, which is a bypass, not a fix.
+  // A file with no \n at all stays one line and is reviewed. That is the fail-closed side.
+  if (!manifest.split("\n").some((line) => line.replace(/\r+$/, "") === MECHANICAL_CLAIM)) {
+    return { skip: false, blockedBy: "no_mechanical_claim" };
+  }
   const summary = manifestSummary(manifest);
-  if (summary.fileCount > MECHANICAL_SKIP_FILE_THRESHOLD) return { skip: false };
-  if (summary.newPublicSurface || summary.behaviorFlag) return { skip: false };
-  if (summary.paths.length === 0) return { skip: false };
-  if (!summary.paths.every(isMechanicalPath)) return { skip: false };
+  if (summary.fileCount > MECHANICAL_SKIP_FILE_THRESHOLD) return { skip: false, blockedBy: "file_count" };
+  if (summary.newPublicSurface || summary.behaviorFlag) return { skip: false, blockedBy: "declared_flag" };
+  if (summary.paths.length === 0) return { skip: false, blockedBy: "no_paths" };
+  if (!summary.paths.every(isMechanicalPath)) return { skip: false, blockedBy: "non_mechanical_path" };
   return { skip: true, rule: `mechanical-manifest:file_count<=${MECHANICAL_SKIP_FILE_THRESHOLD}` };
 }
 

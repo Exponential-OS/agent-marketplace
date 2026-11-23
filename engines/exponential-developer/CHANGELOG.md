@@ -1,3 +1,89 @@
+## [1.9.1] - 2026-11-23 - the shipped test suite must pass where it SHIPS (XOS-415)
+
+Found by running the VENDORED copy, which is the only place it reproduces: the source suite
+passed 56/0 and the vendored suite failed 55/1.
+
+```
+error: ENOENT: no such file or directory,
+  open '/Users/anandvallam/aiprojects/docs/plans/skip-rule-fail-closed.md'
+```
+
+A test read this plugin's own spec via `../../../../../../docs/plans/`. Six levels up is the
+repo root from `plugins/cross/exponential-developer/skills/ship-feature/design-review/`, and
+it is somewhere else entirely from `engines/exponential-developer/...` in the marketplace or
+from the installed plugin cache -- both are SHALLOWER. The path was right in exactly one
+layout and wrong in every layout a customer has.
+
+- The spec's Change-manifest section is now a verbatim FIXTURE in `manifest-corpus.ts`
+  (`OWN_SPEC_MANIFEST`), extracted programmatically rather than retyped, and asserted at
+  extraction time to not contain the claim line -- otherwise the test it feeds would silently
+  change meaning. A plugin that ships carries its own fixtures.
+- STRUCTURAL GUARD so the class cannot recur: `no shipped test reaches outside the plugin
+  root` walks every `*.test.ts` / `tests.ts` in the plugin, resolves every
+  `import.meta.dir, "..."` target, and fails naming any that escapes the plugin root.
+  Mutation-verified by reintroducing the exact offending path.
+
+A test that reaches outside the plugin is testing the repo, not the plugin -- and it reports
+green to the author while failing for everyone who installs it.
+
+273 passing, 0 failures, 6/6 rule suites, in the source repo AND from a vendored layout.
+CI floor 272 -> 273.
+
+## [1.9.0] - 2026-11-23 - Gate-A.7 skips only on an explicit claim (XOS-415)
+
+The skip rule read a change's own prose description to decide whether the change was
+mechanical. It waved through a rewrite of its own reviewer control flow because the manifest
+listed only `SKILL.md`. Two prose detectors were tried and both failed cross-family review in
+BOTH directions at once -- missing real code work while blocking editorial English like
+"fix typo(s) in the install section". Prose detection was the wrong design, not an
+undertuned one, and both detectors are deleted.
+
+**Skipping now requires an affirmative claim.** An exact standalone line in the
+`## Change manifest` section, inside or outside its fenced block:
+
+```text
+I claim this change is mechanical-only.
+```
+
+Omission is an accident; an affirmative claim is reviewable. No claim means review, older
+specs included, and no migration is needed because nothing moves from blocking to passing.
+The claim is NECESSARY, NEVER SUFFICIENT -- the four existing guards still run after it
+(<=5 files, no declared public surface or behavior change, >=1 path, all paths mechanical).
+
+Line endings are not part of the claim. A bare `split("\n")` left `\r` welded to the line, so
+a CRLF-authored spec could never claim at all and the failure looked identical to not having
+claimed. Only a TRAILING `\r` is stripped, per line: normalising `\r` globally was tried first
+and is a BYPASS, because it turns an inline `\r` into a line break and promotes a mention
+("x\rI claim...") into a standalone claim.
+
+`manifestSummary` is now EXPORTED so tests can assert WHICH paths were extracted, not just
+the resulting verdict. `shouldSkip` returns the same verdict whether a path is read correctly
+or mangled into something else that is also non-mechanical, so a verdict assertion cannot
+tell a working extractor from a broken one -- a mutation removing a path-parsing guard
+survived an entire suite until path identity became assertable.
+
+Corpus discipline: `manifest-corpus.ts` holds 22 BENIGN and 9 CODE cases plus one pinned
+accepted false negative, written BEFORE the implementation and never edited to pass. It is
+what caught the over-blocking in the rejected attempts.
+
+**NOT fixed in this release, and deliberately not papered over.** While hardening the above,
+six review rounds established that the PATH GUARD cannot see several classes of file, so
+`paths.every(isMechanicalPath)` passes vacuously on an empty set. Each of these, paired with
+a mechanical `README.md`, SKIPS review today and also skips on every prior version:
+
+    install.sh   .env   .env.local   a.sh   Jenkinsfile   CODEOWNERS
+    VERSION_check -> reported as "VERSION", a different and mechanical file
+    docs/../src/auth.ts -> traversal defeats the docs/ prefix check
+    "... handle (none) token case" -> `(none)` anywhere drops the whole line
+
+An attempt to fix these by extending the path patterns was made and REVERTED in full: each
+round closed the shapes it was given and opened new ones, including bypasses introduced by
+the fixes themselves. Enumerating path shapes is the same losing approach as prose detection,
+one level down. XOS-442 (P1) owns the redesign -- a strict grammar that refuses an unparsed
+line, or reading real `git diff` paths instead of scraping the manifest.
+
+272 passing, 0 failures, 6/6 rule suites. CI floor 261 -> 272.
+
 ## [1.8.0] - 2026-11-20 - close stdin on every codex exec dispatch, guarded by a test (XOS-418)
 
 `codex exec` reads stdin even when the prompt is an argument; its first line is literally
@@ -67,6 +153,19 @@ failure.
 45 pass / 0 fail in the design-review suite; CI floor raised 247 -> 259.
 
 # Changelog
+
+## [1.6.0] — 2026-11-20 — Explicit mechanical claim; silence means review (XOS-415)
+
+Replace both rejected prose-detector attempts with an exact standalone claim in the Change
+manifest, documented in SKILL.md. Unmarked manifests now require review, including older
+specs. The claim is necessary, never sufficient: all four existing guards still run.
+The skip-side contract stays unchanged; no-skip results add `no_mechanical_claim`.
+
+Delete codeWorkSignals and its three regexes. Preserve the adversarial corpus verbatim,
+repurposed for marked/unmarked behavior and guard preservation. Remove 13 tests from the
+rejected attempts, replacing their detector/default-skip assumptions with nine contract
+tests. Preserve all 33 original tests, adding the required claim to the mechanical-skip
+fixture and retaining the authorized toMatchObject assertion for no-skip diagnostics.
 
 ## [1.5.0] — 2026-11-19 — Gate-A.7 blocks for a reason it can name (XOS-204)
 

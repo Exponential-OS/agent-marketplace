@@ -291,7 +291,15 @@ Every bucket MUST be present. An empty bucket is written explicitly as `− remo
 
 Runs after Gate-A.5 and before Stage 4. This is the design-time twin of Gate-A.5 and Stage 6: A.5 checks that removals/migrations are accounted for, Stage 6 reviews built code, and A.7 reviews the spec + Change Manifest reasoning where most defects are born.
 
-**Stakes routing.** T0/T1 mechanical changes may skip only by the objective skip-rule in `skills/ship-feature/design-review/run.ts`: small file count, all paths in the mechanical allowlist, no new public surface, and no behavior flag. Never skip because the orchestrator self-declared a low tier. T2 runs the Fable reviewer alone. T3+ adds a cross-family reviewer when available; if unavailable, the verdict records `cross_family: unavailable`.
+**Stakes routing.** T0/T1 mechanical changes may skip only when the author affirmatively claims the change is mechanical. Put this exact, case-sensitive, unindented standalone line in the `## Change manifest` section (inside or outside its fenced block):
+
+```text
+I claim this change is mechanical-only.
+```
+
+No leading/trailing spaces, prefixes, or quotes are accepted. Merely documenting or quoting the sentence in prose does not claim it. Object manifests have no claim position and require review. Use the claim only for genuinely mechanical work: it is a reviewable assertion, not verification against a diff. No claim means review (`blockedBy: no_mechanical_claim`), including older specs; no migration is needed.
+
+The claim is necessary, NEVER sufficient: the existing guards still require at most five files, no declared public surface or behavior change, at least one listed path, and all paths in the mechanical allowlist. Never skip because the orchestrator self-declared a low tier. T2 runs the Fable reviewer alone. T3+ adds a cross-family reviewer when available; if unavailable, the verdict records `cross_family: unavailable`.
 
 **Verdicts.** `GREEN` proceeds. `YELLOW` proceeds only when adjustments are Class A, or when any Class-B finding is left unapplied and Stage 4 builds the original reviewed spec. Class A is additive/clarifying with no scope, behavior, or DoD change. Class B changes scope, removes/alters a requirement, or changes user-visible behavior/DoD; it is never auto-applied and goes to Gate B for human judgment. `RED` stops. Max two RED cycles: scoped re-review asks only whether prior findings were addressed; a second RED writes escalation and parks the run.
 
