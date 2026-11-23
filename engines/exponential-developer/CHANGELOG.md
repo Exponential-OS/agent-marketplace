@@ -1,3 +1,87 @@
+## [1.10.0] - 2026-11-23 - the publish gate stops reporting PASS having checked nothing, and starts checking SESSIONS (XOS-444)
+
+Reported by a peer session that shipped co-dialectic 4.47.5, never posted a reload bulletin,
+and found the gate had not stopped it. Anand found the stale install himself. Three defects,
+each verified against the installed 1.9.1 before being credited.
+
+**1. It was never wired.** The plugin had no `hooks/` directory at all; the gate ran only if
+an agent remembered to run it. (Still unwired — see "What is NOT in this release".)
+
+**2. It looked for the marketplace in the wrong place.** `join(cwd, "agent-marketplace/...")`
+treats the catalog as a CHILD of the caller. It is a SIBLING of the source repo, and Stage 9
+legitimately runs from the source repo, so resolution could not succeed. Now an ancestor walk
+plus `~/aiprojects`, which works from a worktree too instead of hardcoding one layout.
+
+**3. And then it reported PASS anyway.** That is what made (2) lethal rather than merely
+annoying:
+
+```
+verdict: PASS
+checked: []
+target:  <a path that does not exist>
+```
+
+Six separate paths returned PASS when the gate could not check: marketplace absent, catalog
+empty, handler crash, invalid JSON, crash before emit. A publish gate that cannot find its
+reference data reporting PASS is a FAIL-HARD violation in load-bearing code, and it is
+quotable as evidence that the fleet is current.
+
+There is now a third verdict, `UNKNOWN`, carrying WHAT and HOW. PASS additionally requires at
+least one plugin to have actually been compared. "I could not check" and "I checked and it is
+clean" are different answers and no longer share a word.
+
+### Anand's reframe, which is the larger half
+
+> "there should be a gate that verifies that it has loaded itself and others loaded as well.
+> that is the codification of the prose."
+
+Even with the path fixed, the gate answered the wrong question. It compares FILES — catalog
+version against installed version. The prose promises an outcome about SESSIONS. Both files
+can agree perfectly while the whole fleet runs old code, because a plugin binds once at
+session start and never rebinds (XOS-405). Merged != installed != LOADED.
+
+Measured while writing this, with 4.47.5 installed and the catalog agreeing:
+
+```
+4.47.5   0.7m ago        4.47.0   0.9m ago
+4.47.4   3.2m ago        4.36.0   0.2m ago   <- nine releases back, touched 12 seconds earlier
+```
+
+Four versions live at once, every file in agreement. No new telemetry was needed:
+`~/.codialectic/sessions/<id>.json` already records the version a session actually LOADED,
+and mtime already separates live from abandoned.
+
+- **SELF is a BLOCK.** If the session running the publish has not loaded the installed plugin,
+  the gate blocks and names that session's own `claude --resume <id>` line rather than advising
+  that someone should reload. It blocks the session that wrote it, which is how it was tested.
+- **PEERS are REPORTED, never gated on** — see below.
+- Session ids must be UUIDs. Benchmarking has twice left synthetic ids (`verify-1`) in that
+  directory, and a retracted claim on XOS-436 came from counting them.
+- "Live" is 30 minutes, matching the SDLC WORK-CLAIM invariant rather than inventing a second
+  definition of live for the same swarm.
+- Only `co-dialectic` records a per-session loaded version today. That is a named limit, not an
+  assumption: any other plugin would have to write its own session state for this to widen.
+
+### What is NOT in this release, and why
+
+**Peer staleness does not block.** Blocking Anand's release because somebody else's terminal is
+old is a product call he owns. The handler surfaces stale peers in `sessions.stalePeers` and
+keeps the verdict PASS. A test pins that boundary so a future change to it has to be deliberate.
+
+**The gate is still unwired.** What event should fire a *publish* gate is a design question with
+real blast radius, and wiring it into `~/.claude/settings.json` is a latency decision that is
+Anand's, not an agent's.
+
+**A customer machine with no marketplace now gets UNKNOWN rather than PASS.** Whether that
+should become a BLOCK interacts with XOS-414 (making `/ship-feature` inert for a non-Anand
+buyer), so it is deliberately left as UNKNOWN.
+
+282 passing, 0 failures, 6/6 rule suites. CI floor 273 -> 282. Eight mutants; two survived the
+first run and both were MY tests asserting weaker properties than they advertised — the
+"sibling" test passed through a home-directory fallback and never exercised the walk. Both
+fixed and killed. One guard is documented in-code as defense-in-depth and explicitly NOT
+counted as tested, because removing it alone fails nothing.
+
 ## [1.9.1] - 2026-11-23 - the shipped test suite must pass where it SHIPS (XOS-415)
 
 Found by running the VENDORED copy, which is the only place it reproduces: the source suite

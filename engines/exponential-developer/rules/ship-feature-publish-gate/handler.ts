@@ -23,18 +23,36 @@
 
 import { appendFileSync, existsSync, readFileSync, readdirSync, statSync } from "fs";
 import { homedir } from "os";
-import { join, resolve } from "path";
+import { dirname, join, resolve } from "path";
 
 export const SLUG = "ship-feature-publish-gate";
 
 const LOG_PATH = join(homedir(), ".cyborg-enforcement-log.jsonl");
 const DEFAULT_CACHE_ROOT = join(homedir(), ".claude", "plugins", "cache", "xos");
+/** The only plugin that records its loaded version per session today. Named rather than
+ *  assumed: every other plugin would need to write its own session state for this to widen. */
+const SESSION_VERSIONED_PLUGIN = "co-dialectic";
+
+function sessionsDir(options: ProcessOptions): string {
+  const env = options.env ?? process.env;
+  return options.sessionsDir ?? cleanString(env["CODIALECTIC_SESSIONS_DIR"]) ?? join(options.homeDir ?? homedir(), ".codialectic", "sessions");
+}
+
+function selfSessionId(options: ProcessOptions): string | null {
+  const env = options.env ?? process.env;
+  return options.sessionId ?? cleanString(env["CLAUDE_SESSION_ID"]) ?? null;
+}
 const MARKETPLACE_RELATIVE_PATH = join("agent-marketplace", ".claude-plugin", "marketplace.json");
 const INSTALL_REMEDIATION_SUFFIX = "&& /reload-plugins";
 const VERSION_KEYS = ["version", "latest", "latestVersion", "currentVersion", "current_version"];
 const NAME_KEYS = ["name", "id", "slug", "pluginName", "plugin_name"];
 
-type Verdict = "PASS" | "BLOCK";
+// XOS-444: UNKNOWN exists because PASS was being returned by SIX different "I could not
+// check" paths. A publish gate reporting PASS with `checked: []` is quotable as evidence
+// that the fleet is current, which is the exact XOS-315 shape this plugin keeps fixing:
+// a check whose failure is indistinguishable from success. UNKNOWN is not a softer BLOCK —
+// it is the honest third answer, and PASS now requires at least one plugin ACTUALLY compared.
+type Verdict = "PASS" | "BLOCK" | "UNKNOWN";
 type CheckStatus = "current" | "stale" | "missing_install" | "newer_installed" | "marketplace_missing";
 
 interface HandlerInput {
@@ -68,6 +86,10 @@ export interface HandlerOutput {
   message: string;
   stale: PluginCheck[];
   checked: PluginCheck[];
+  /** XOS-444. Present when session liveness was evaluated. Stale PEERS are REPORTED, not
+   *  gated on: blocking a release because somebody else's terminal is old is a product call
+   *  Anand owns, not one this handler makes silently. */
+  sessions?: SessionLiveness;
 }
 
 export interface ProcessOptions {
@@ -82,14 +104,20 @@ export interface ProcessOptions {
   readText?: (path: string) => string;
   readDir?: (path: string) => string[];
   isDirectory?: (path: string) => boolean;
+  mtimeMs?: (path: string) => number;
   appendText?: (path: string, text: string) => void;
+  sessionsDir?: string;
+  sessionId?: string;
 }
+
+type FileSystemLike = FsOps;
 
 interface FsOps {
   exists(path: string): boolean;
   readText(path: string): string;
   readDir(path: string): string[];
   isDirectory(path: string): boolean;
+  mtimeMs(path: string): number;
   appendText(path: string, text: string): void;
 }
 
@@ -102,6 +130,15 @@ function fsOps(options: ProcessOptions): FsOps {
     exists: options.exists ?? existsSync,
     readText: options.readText ?? ((path: string) => readFileSync(path, "utf8")),
     readDir: options.readDir ?? readdirSync,
+    mtimeMs:
+      options.mtimeMs ??
+      ((path: string) => {
+        try {
+          return statSync(path).mtimeMs;
+        } catch {
+          return 0;
+        }
+      }),
     isDirectory:
       options.isDirectory ??
       ((path: string) => {
@@ -177,8 +214,22 @@ function defaultMarketplacePath(input: NormalizedInput, options: ProcessOptions,
   if (explicit) return explicit;
 
   const home = options.homeDir ?? homedir();
+  // XOS-444: the marketplace is a SIBLING of the source repo, never a child of it. The old
+  // list only tried `cwd/agent-marketplace/...`, so Stage 9 -- which legitimately runs from
+  // the source repo -- resolved a path that cannot exist, found nothing, and (with the
+  // fail-open below) returned PASS having checked nothing. Walking ancestors covers the
+  // sibling at any depth and keeps working from a worktree, instead of hardcoding one layout.
+  const ancestors: string[] = [];
+  let dir = resolve(input.cwd);
+  for (let i = 0; i < 8; i += 1) {
+    ancestors.push(join(dir, MARKETPLACE_RELATIVE_PATH));
+    const parent = dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
   const candidates = [
-    join(input.cwd, MARKETPLACE_RELATIVE_PATH),
+    ...ancestors,
+    join(home, "aiprojects", MARKETPLACE_RELATIVE_PATH),
     join(home, "cyborg", MARKETPLACE_RELATIVE_PATH),
     join(home, MARKETPLACE_RELATIVE_PATH),
   ];
@@ -402,12 +453,111 @@ function checkPlugin(cacheRoot: string, plugin: string, marketplaceVersion: stri
   return { plugin, installedVersion, marketplaceVersion, status: "current" };
 }
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// XOS-444 — SESSION LIVENESS. Anand, 2026-11-23: "there should be a gate that verifies
+// that it has loaded itself and others loaded as well. that is the codification of the prose."
+//
+// The checks above compare FILES: catalog version vs installed version. The prose promises an
+// outcome about SESSIONS. Both files can agree perfectly while the fleet runs week-old code,
+// because a plugin binds at session start and never rebinds (XOS-405). Measured 2026-11-23
+// with 4.47.5 installed and the catalog agreeing: FOUR versions live at once — 4.47.5, 4.47.4,
+// 4.47.0 and a 4.36.0 session touched twelve seconds earlier. merged != installed != LOADED.
+//
+// ~/.codialectic/sessions/<id>.json already carries `version` (what that session actually
+// loaded) and mtime (whether anyone is still there), so this needs no new telemetry.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** A session id must be a UUID. Benchmarking has twice polluted this directory with synthetic
+ *  ids (verify-1/2/3), and a gate that counts those reports a fleet that does not exist. */
+const SESSION_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Matches the SDLC WORK-CLAIM invariant's existing staleness threshold rather than inventing
+ *  a second one — a session untouched for 30 minutes is already "not live" everywhere else. */
+const SESSION_LIVE_WINDOW_MS = 30 * 60 * 1000;
+
+export interface SessionState {
+  sessionId: string;
+  version: string | null;
+  ageMs: number;
+}
+
+export interface SessionLiveness {
+  self: SessionState | null;
+  selfStale: boolean;
+  installedVersion: string | null;
+  stalePeers: SessionState[];
+  livePeers: number;
+}
+
+export function readSessions(dir: string, fs: FileSystemLike, now: number): SessionState[] {
+  if (!fs.exists(dir)) return [];
+  const out: SessionState[] = [];
+  for (const name of fs.readDir(dir)) {
+    if (!name.endsWith(".json")) continue;
+    const sessionId = name.slice(0, -5);
+    if (!SESSION_ID_PATTERN.test(sessionId)) continue;
+    const full = join(dir, name);
+    let version: string | null = null;
+    try {
+      const parsed = JSON.parse(fs.readText(full)) as Record<string, unknown>;
+      version = cleanVersion(parsed["version"]);
+    } catch {
+      version = null;
+    }
+    out.push({ sessionId, version, ageMs: now - fs.mtimeMs(full) });
+  }
+  return out;
+}
+
+export function assessSessions(
+  sessions: SessionState[],
+  installedVersion: string | null,
+  selfSessionId: string | null,
+): SessionLiveness {
+  const self = selfSessionId ? (sessions.find((entry) => entry.sessionId === selfSessionId) ?? null) : null;
+  const behind = (entry: SessionState) =>
+    installedVersion !== null && entry.version !== null && compareVersions(entry.version, installedVersion) < 0;
+  const live = sessions.filter((entry) => entry.ageMs <= SESSION_LIVE_WINDOW_MS && entry.sessionId !== selfSessionId);
+  return {
+    self,
+    selfStale: self !== null && behind(self),
+    installedVersion,
+    stalePeers: live.filter(behind).sort((a, b) => a.ageMs - b.ageMs),
+    livePeers: live.length,
+  };
+}
+
+export function sessionRemediation(entry: SessionState, installedVersion: string | null): string {
+  return `⚠ ${entry.sessionId} loaded ${entry.version ?? "unknown"} < installed ${installedVersion} — claude --resume ${entry.sessionId}`;
+}
+
 function staleLine(check: PluginCheck): string {
   const installed = check.installedVersion ?? "missing";
   return `⚠ STALE: ${check.plugin} installed ${installed} < marketplace ${check.marketplaceVersion} — claude plugin install ${check.plugin} ${INSTALL_REMEDIATION_SUFFIX}`;
 }
 
+function unknown(target: string, what: string, how: string): HandlerOutput {
+  return {
+    verdict: "UNKNOWN",
+    target,
+    reason: what,
+    message: [`WHAT: ${what}`, `HOW: ${how}`].join("\n"),
+    stale: [],
+    checked: [],
+  };
+}
+
 function pass(target: string, reason: string, checked: PluginCheck[] = []): HandlerOutput {
+  if (checked.length === 0) {
+    // DEFENSE IN DEPTH, and unreachable by any current input -- stated plainly rather than
+    // left to look load-bearing. Every present "cannot check" path calls unknown() directly,
+    // and removing this guard alone fails no test. It exists for the NEXT pass() call site:
+    // if someone adds one that has compared nothing, this converts it to UNKNOWN instead of
+    // minting the quotable green this ticket was filed for. Do not delete it as dead code;
+    // do not count it as tested either.
+    return unknown(target, "publish gate reported PASS without comparing any plugin", reason);
+  }
   return {
     verdict: "PASS",
     target,
@@ -438,7 +588,7 @@ function processInputUnsafe(raw: HandlerInput, options: ProcessOptions): Handler
   const target = resolve(marketplacePath);
 
   if (!fs.exists(marketplacePath)) {
-    const output = pass(target, "WARNING: marketplace catalog unavailable; publish gate fail-open");
+    const output = unknown(target, `marketplace catalog not found at ${marketplacePath}`, "the marketplace is a SIBLING of the source repo — clone/pull Exponential-OS/agent-marketplace, or pass XOS_MARKETPLACE_JSON=/abs/path/to/.claude-plugin/marketplace.json");
     log(output, options, { fail_open: true, marketplace_path: marketplacePath, cache_root: cacheRoot });
     return output;
   }
@@ -447,7 +597,7 @@ function processInputUnsafe(raw: HandlerInput, options: ProcessOptions): Handler
   const plugins = input.plugins ?? Array.from(marketplace.keys()).sort((a, b) => a.localeCompare(b));
 
   if (plugins.length === 0 || marketplace.size === 0) {
-    const output = pass(target, "WARNING: marketplace catalog had no plugin versions; publish gate fail-open");
+    const output = unknown(target, `marketplace catalog at ${marketplacePath} lists no plugin versions`, "the catalog parsed but is empty or malformed — check .claude-plugin/marketplace.json has a populated `plugins` array with `version` fields");
     log(output, options, { fail_open: true, marketplace_path: marketplacePath, cache_root: cacheRoot });
     return output;
   }
@@ -460,12 +610,40 @@ function processInputUnsafe(raw: HandlerInput, options: ProcessOptions): Handler
     return output;
   }
 
+  // XOS-444 SESSION LIVENESS. Files agreeing is necessary and not sufficient: a plugin binds
+  // at session start (XOS-405), so the catalog and the cache can both be current while the
+  // session doing the publishing is running code from nine releases ago.
+  const sessions = assessSessions(
+    readSessions(sessionsDir(options), fs, (options.now ?? new Date()).getTime()),
+    highestVersion(installedVersions(cacheRoot, SESSION_VERSIONED_PLUGIN, fs)),
+    selfSessionId(options),
+  );
+  if (sessions.selfStale) {
+    const output: HandlerOutput = {
+      verdict: "BLOCK",
+      target,
+      reason: `publishing session loaded ${sessions.self?.version} but ${sessions.installedVersion} is installed`,
+      message: [
+        "WHAT: the session running this publish has NOT loaded the installed plugin.",
+        "      The catalog and the cache can both be current while this session runs old code,",
+        "      because a plugin binds once at session start and never rebinds (XOS-405).",
+        "HOW:  reload, then re-run the publish:",
+        "      " + sessionRemediation(sessions.self!, sessions.installedVersion),
+      ].join("\n"),
+      stale: [],
+      checked,
+      sessions,
+    };
+    log(output, options, { marketplace_path: marketplacePath, cache_root: cacheRoot });
+    return output;
+  }
+
   const missingMarketplace = checked.filter((check) => check.status === "marketplace_missing");
   const reason =
     missingMarketplace.length > 0
       ? "no stale plugin installs detected; requested plugin(s) missing from marketplace: " + missingMarketplace.map((check) => check.plugin).join(", ")
       : "installed xos plugin cache is current with marketplace";
-  const output = pass(target, reason, checked);
+  const output = { ...pass(target, reason, checked), sessions };
   log(output, options, { marketplace_path: marketplacePath, cache_root: cacheRoot });
   return output;
 }
@@ -475,7 +653,7 @@ export function processInput(raw: HandlerInput, options: ProcessOptions = {}): H
     return processInputUnsafe(raw, options);
   } catch (err) {
     const target = options.marketplacePath ?? process.cwd();
-    const output = pass(resolve(target), "ship-feature-publish-gate crashed; fail-open: " + String(err instanceof Error ? err.message : err));
+    const output = unknown(resolve(target), "ship-feature-publish-gate crashed: " + String(err instanceof Error ? err.message : err), "this is a gate defect — file it against exponential-developer; do NOT read this as a clean publish");
     log(output, options, { fail_open: true, error: String(err instanceof Error ? err.message : err) });
     return output;
   }
@@ -483,7 +661,7 @@ export function processInput(raw: HandlerInput, options: ProcessOptions = {}): H
 
 function emit(output: HandlerOutput): void {
   process.stdout.write(JSON.stringify(output) + "\n");
-  if (output.verdict === "BLOCK") process.stderr.write(output.message + "\n");
+  if (output.verdict !== "PASS") process.stderr.write(output.message + "\n");
 }
 
 async function readInput(): Promise<string> {
@@ -503,7 +681,7 @@ export async function runCli(): Promise<void> {
   try {
     input = JSON.parse(raw) as HandlerInput;
   } catch (err) {
-    const output = pass("", "invalid JSON; fail-open: " + String(err));
+    const output = unknown("", "handler input was not valid JSON: " + String(err), "pass a JSON object, e.g. '{\"cwd\":\"/path/to/repo\"}', or no argument at all");
     log(output, {}, { fail_open: true });
     emit(output);
     process.exit(0);
@@ -516,7 +694,7 @@ export async function runCli(): Promise<void> {
 
 if (import.meta.main) {
   runCli().catch((err) => {
-    const output = pass("", "ship-feature-publish-gate crashed before emit; fail-open: " + String(err));
+    const output = unknown("", "ship-feature-publish-gate crashed before emit: " + String(err), "this is a gate defect — file it against exponential-developer; do NOT read this as a clean publish");
     log(output, {}, { fail_open: true, error: String(err) });
     emit(output);
     process.exit(0);
