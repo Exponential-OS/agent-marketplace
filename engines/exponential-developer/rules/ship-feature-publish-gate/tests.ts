@@ -1,7 +1,7 @@
 import { afterEach, expect, test } from "bun:test";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
-import { mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from "fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, utimesSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { marketplaceVersionsFromJson, processInput, type ProcessOptions } from "./handler";
 
@@ -306,18 +306,80 @@ test("a stale PEER is reported, never gated on", () => {
   expect(result.sessions?.stalePeers[0]?.version).toBe("4.36.0");
 });
 
-test("an abandoned session is not a stale peer", () => {
-  // 30 minutes, matching the SDLC WORK-CLAIM invariant's existing staleness threshold rather
-  // than inventing a second definition of "live" for the same swarm.
+test("the peer window is a day's work, not the work-claim's 30 minutes", () => {
+  // This was 30 minutes, copied from SDLC WORK-CLAIM. Sharing a word is not sharing a
+  // definition: that invariant answers "may I steal this ticket" (wrong => you reclaim from
+  // someone active, so SHORT is right), this answers "whose terminal runs stale code" (wrong
+  // => a peer runs old code all day unreported, so short is exactly backwards).
+  // Measured: of 14 stale sessions here, 30 minutes reported THREE. A peer sat at 23 minutes
+  // while mid-build -- the Stop hook stamps only when a turn COMPLETES, so reading rather
+  // than running tools looks identical to being dead.
   const fx = fixture();
   filesAgree(fx);
   session(fx, SELF, "4.47.5", 1);
-  session(fx, PEER, "4.36.0", 31);
+  session(fx, PEER, "4.36.0", 90); // would have been invisible at 30 minutes
+
+  const within = processInput({ plugin: "exponential-developer" }, sessionOptions(fx, SELF));
+  expect(within.sessions?.stalePeers.map((entry) => entry.sessionId)).toEqual([PEER]);
+});
+
+test("a session abandoned for more than a day is not a peer", () => {
+  // Unbounded is wrong too, which only the full population shows: 2,621 session files exist
+  // on this machine, 2,432 of them older than a week. Reporting those is noise, and parsing
+  // them is the 1,211ms this gate used to spend per invocation.
+  const fx = fixture();
+  filesAgree(fx);
+  session(fx, SELF, "4.47.5", 1);
+  session(fx, PEER, "4.36.0", 25 * 60);
 
   const result = processInput({ plugin: "exponential-developer" }, sessionOptions(fx, SELF));
 
   expect(result.sessions?.stalePeers).toEqual([]);
   expect(result.sessions?.livePeers).toBe(0);
+});
+
+test("SELF is exempt from the window entirely", () => {
+  // A session evaluating ITSELF is live by definition -- the window is about judging other
+  // people's terminals. A long-running session whose last turn completed days ago must still
+  // be told it is running stale code, which means it must be READ despite its mtime.
+  const fx = fixture();
+  filesAgree(fx);
+  session(fx, SELF, "4.47.0", 40 * 24 * 60); // 40 days of quiet, still this session
+
+  const result = processInput({ plugin: "exponential-developer" }, sessionOptions(fx, SELF));
+
+  expect(result.verdict).toBe("BLOCK");
+  expect(result.sessions?.selfStale).toBe(true);
+  expect(result.sessions?.self?.version).toBe("4.47.0");
+});
+
+test("files outside the window are never opened, only stat-ed", () => {
+  // The perf half, asserted structurally rather than by timing. 2,621 files were being read
+  // and JSON-parsed to use 19 -- the same load-everything shape as the gigabyte-transcript
+  // read fixed in the sibling plugin. A publish gate that costs a second per call is a reason
+  // not to wire it.
+  const fx = fixture();
+  filesAgree(fx);
+  session(fx, SELF, "4.47.5", 1);
+  session(fx, PEER, "4.36.0", 25 * 60);
+
+  const opened: string[] = [];
+  const base = sessionOptions(fx, SELF);
+  const result = processInput(
+    { plugin: "exponential-developer" },
+    {
+      ...base,
+      readText: (path: string) => {
+        opened.push(path);
+        return readFileSync(path, "utf8");
+      },
+    },
+  );
+
+  expect(result.verdict).toBe("PASS");
+  const sessionReads = opened.filter((path) => path.includes("sessions"));
+  expect(sessionReads.some((path) => path.includes(SELF))).toBe(true);
+  expect(sessionReads.some((path) => path.includes(PEER))).toBe(false);
 });
 
 test("a session file with no version is not counted as stale", () => {

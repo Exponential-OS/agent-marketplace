@@ -478,9 +478,31 @@ function checkPlugin(cacheRoot: string, plugin: string, marketplaceVersion: stri
  *  ids (verify-1/2/3), and a gate that counts those reports a fleet that does not exist. */
 const SESSION_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** Matches the SDLC WORK-CLAIM invariant's existing staleness threshold rather than inventing
- *  a second one — a session untouched for 30 minutes is already "not live" everywhere else. */
-const SESSION_LIVE_WINDOW_MS = 30 * 60 * 1000;
+/**
+ * 24 HOURS, and deliberately NOT the SDLC WORK-CLAIM 30 minutes this originally copied.
+ * Sharing a word with that invariant is not sharing a definition, and the costs point in
+ * opposite directions:
+ *
+ *   work-claim  "may I steal this ticket?"        wrong => reclaimed from someone active.
+ *                                                  A SHORT window is correct there.
+ *   this        "whose terminal runs stale code?"  wrong => a peer keeps running old code all
+ *                                                  day and nobody says so. Under-reporting is
+ *                                                  the only failure that hurts here, and a
+ *                                                  short window maximises exactly that.
+ *
+ * Measured rather than argued: of 14 stale sessions on this machine, a 30-minute window
+ * reported THREE. A peer was observed at 23 minutes while mid-build -- the Stop hook only
+ * stamps when a turn COMPLETES, so a session reading rather than running tools goes quiet
+ * while unambiguously alive, and 30 minutes would have called it dead.
+ *
+ * Unbounded is also wrong, which the full population shows and a sample does not: 2,621
+ * session files exist, 2,432 older than a week. A day's work is the natural boundary -- 19
+ * fall within 24h, and the 30m-to-2h bucket is EMPTY, so 30 minutes was not even cutting at
+ * a real edge.
+ *
+ * SELF is exempt entirely: a session evaluating itself is live by definition.
+ */
+const SESSION_LIVE_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 export interface SessionState {
   sessionId: string;
@@ -496,7 +518,23 @@ export interface SessionLiveness {
   livePeers: number;
 }
 
-export function readSessions(dir: string, fs: FileSystemLike, now: number): SessionState[] {
+/**
+ * STAT FIRST, PARSE ONLY WHAT IS IN SCOPE. This read and JSON-parsed every file in the
+ * directory and filtered afterwards: 2,621 files, 1,211ms, to use 19 of them. Same shape as
+ * the gigabyte-transcript read this plugin's sibling just fixed -- load everything, need
+ * almost none -- and a publish gate costing a second of wall clock per call is a reason not
+ * to wire it. mtime is a stat; version requires opening the file.
+ *
+ * `alwaysInclude` keeps SELF exempt from the window: a session evaluating itself is live by
+ * definition and must be read however old its last heartbeat looks.
+ */
+export function readSessions(
+  dir: string,
+  fs: FileSystemLike,
+  now: number,
+  opts: { maxAgeMs?: number; alwaysInclude?: string | null } = {},
+): SessionState[] {
+  const maxAgeMs = opts.maxAgeMs ?? SESSION_LIVE_WINDOW_MS;
   if (!fs.exists(dir)) return [];
   const out: SessionState[] = [];
   for (const name of fs.readDir(dir)) {
@@ -504,6 +542,8 @@ export function readSessions(dir: string, fs: FileSystemLike, now: number): Sess
     const sessionId = name.slice(0, -5);
     if (!SESSION_ID_PATTERN.test(sessionId)) continue;
     const full = join(dir, name);
+    const ageMs = now - fs.mtimeMs(full);
+    if (ageMs > maxAgeMs && sessionId !== opts.alwaysInclude) continue;
     let version: string | null = null;
     try {
       const parsed = JSON.parse(fs.readText(full)) as Record<string, unknown>;
@@ -511,7 +551,7 @@ export function readSessions(dir: string, fs: FileSystemLike, now: number): Sess
     } catch {
       version = null;
     }
-    out.push({ sessionId, version, ageMs: now - fs.mtimeMs(full) });
+    out.push({ sessionId, version, ageMs });
   }
   return out;
 }
@@ -612,7 +652,9 @@ function processInputUnsafe(raw: HandlerInput, options: ProcessOptions): Handler
   // at session start (XOS-405), so the catalog and the cache can both be current while the
   // session doing the publishing is running code from nine releases ago.
   const sessions = assessSessions(
-    readSessions(sessionsDir(options), fs, (options.now ?? new Date()).getTime()),
+    readSessions(sessionsDir(options), fs, (options.now ?? new Date()).getTime(), {
+      alwaysInclude: selfSessionId(options),
+    }),
     highestVersion(installedVersions(cacheRoot, SESSION_VERSIONED_PLUGIN, fs)),
     selfSessionId(options),
   );

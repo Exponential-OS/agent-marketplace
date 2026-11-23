@@ -1,3 +1,46 @@
+## [1.10.3] - 2026-11-23 - the peer liveness window was answering the wrong question, and reading 2,621 files to use 19 (XOS-444)
+
+A peer session pushed back on the 30-minute window within an hour of 1.10.2 shipping, and was
+right. I had copied the number from the SDLC WORK-CLAIM invariant because reusing an
+established threshold felt principled. Sharing a word is not sharing a definition:
+
+```
+work-claim  "may I steal this ticket?"        wrong => reclaimed from someone active.  SHORT is right.
+this        "whose terminal runs stale code?"  wrong => a peer runs old code all day unreported.
+```
+
+Under-reporting is the only failure that hurts here, and a short window maximises exactly that.
+Measured on this machine: **of 14 stale sessions, the 30-minute window reported THREE.** The
+peer was observed at 23 minutes while mid-build — the Stop hook stamps only when a turn
+COMPLETES, so a session reading rather than running tools looks identical to a dead one.
+
+Their proposal was to drop the window entirely. The full population says otherwise, and this is
+where a sample and a census disagree: **2,621 session files exist, 2,432 older than a week.**
+Unbounded means reporting years of dead terminals. A day's work is the real boundary — 19
+sessions fall within 24h, and the 30m-to-2h bucket is EMPTY, so 30 minutes was not even cutting
+at a real edge.
+
+Window is now **24 hours for peers**, and **SELF is exempt entirely** — a session evaluating
+itself is live by definition, and a long-running session whose last turn completed days ago
+still needs to be told it is running stale code.
+
+### And the measurement found a second defect I had shipped hours earlier
+
+`readSessions` read and JSON-parsed EVERY file in the directory and filtered afterwards:
+
+```
+before:  2,621 files opened, 1,211 ms
+after:      23 files opened,    14 ms
+```
+
+That is the same load-everything shape as the gigabyte-transcript read the sibling plugin fixed
+this morning, and a publish gate costing a second of wall clock per call is a reason not to wire
+it. mtime is a stat; version requires opening the file. Now it stats first and parses only what
+is in scope.
+
+288 passing, 0 failures, 6/6 rule suites. CI floor 285 -> 288. Four mutants, all killed: window
+back to 30m, window unbounded, self not exempt, and parse-everything restored.
+
 ## [1.10.2] - 2026-11-23 - a stale plugin no longer hides a stale session (XOS-444)
 
 Third defect found by dogfooding rather than by a test, and the third time in this ticket that
