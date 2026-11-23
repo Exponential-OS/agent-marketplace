@@ -1,3 +1,23 @@
+## [1.10.2] - 2026-11-23 - a stale plugin no longer hides a stale session (XOS-444)
+
+Third defect found by dogfooding rather than by a test, and the third time in this ticket that
+running the thing beat reasoning about it.
+
+Session liveness was computed AFTER the stale-plugin early return, so the moment any plugin was
+stale the session check silently did not run. Observed on a real invocation: `jury` missing from
+the cache, and `sessions` came back `undefined`. The caller would fix the plugin, re-run, and
+only then learn their session was stale too — one problem revealed per round trip.
+
+That is this ticket's own defect class wearing a different hat: a check that does not fire. It
+reported nothing false, which is exactly why nobody would have noticed.
+
+Session state is now computed once and rides along on EVERY outcome, including BLOCK. A real run
+on this machine now reports both in one pass: `jury` missing AND this session running co-dialectic
+4.47.0 against an installed 4.47.5.
+
+285 passing, 0 failures, 6/6 rule suites. CI floor 284 -> 285. Mutation-verified: moving the
+computation back below the early return fails the new test.
+
 ## [1.10.1] - 2026-11-23 - the catalog envelope is not a plugin (XOS-444)
 
 Found by DOGFOODING the installed 1.10.0 against the real catalog, which is the only place it

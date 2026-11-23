@@ -608,14 +608,6 @@ function processInputUnsafe(raw: HandlerInput, options: ProcessOptions): Handler
     return output;
   }
 
-  const checked = plugins.map((plugin) => checkPlugin(cacheRoot, plugin, marketplace.get(plugin) ?? null, fs));
-  const stale = checked.filter((check) => check.status === "stale" || check.status === "missing_install");
-  if (stale.length > 0) {
-    const output = block(target, `${stale.length} stale plugin install(s) detected`, checked);
-    log(output, options, { marketplace_path: marketplacePath, cache_root: cacheRoot });
-    return output;
-  }
-
   // XOS-444 SESSION LIVENESS. Files agreeing is necessary and not sufficient: a plugin binds
   // at session start (XOS-405), so the catalog and the cache can both be current while the
   // session doing the publishing is running code from nine releases ago.
@@ -624,6 +616,19 @@ function processInputUnsafe(raw: HandlerInput, options: ProcessOptions): Handler
     highestVersion(installedVersions(cacheRoot, SESSION_VERSIONED_PLUGIN, fs)),
     selfSessionId(options),
   );
+
+  const checked = plugins.map((plugin) => checkPlugin(cacheRoot, plugin, marketplace.get(plugin) ?? null, fs));
+  const stale = checked.filter((check) => check.status === "stale" || check.status === "missing_install");
+  if (stale.length > 0) {
+    // Session state rides along on EVERY outcome. It used to be computed after this early
+    // return, so whenever any plugin was stale the session check silently did not run -- and
+    // the caller fixed the plugin, re-ran, and only then learned their session was stale too.
+    // A gate that reveals one problem per round trip is the defect class this ticket is about.
+    const output = { ...block(target, `${stale.length} stale plugin install(s) detected`, checked), sessions };
+    log(output, options, { marketplace_path: marketplacePath, cache_root: cacheRoot });
+    return output;
+  }
+
   if (sessions.selfStale) {
     const output: HandlerOutput = {
       verdict: "BLOCK",

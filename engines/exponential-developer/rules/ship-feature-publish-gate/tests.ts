@@ -414,3 +414,30 @@ test("a catalog envelope does not make the gate block", () => {
   expect(result.verdict).toBe("PASS");
   expect(result.stale).toEqual([]);
 });
+
+test("a stale plugin does not hide a stale session", () => {
+  // Session state used to be computed AFTER the stale-plugin early return, so whenever any
+  // plugin was stale the session check silently did not run. The caller fixed the plugin,
+  // re-ran, and only then learned their session was stale too -- one problem per round trip,
+  // which is this ticket's own defect class wearing a different hat. Observed live: `jury`
+  // missing from the cache meant `sessions` came back undefined on a real run.
+  const fx = fixture();
+  writeMarketplace(fx, {
+    plugins: [
+      { name: "exponential-developer", version: "1.0.0" },
+      { name: "jury", version: "0.2.0" },
+    ],
+  });
+  install(fx, "exponential-developer", "1.0.0");
+  install(fx, "co-dialectic", "4.47.5");
+  // jury deliberately NOT installed -> stale, triggering the early return.
+  session(fx, SELF, "4.47.0", 1);
+
+  const result = processInput({}, sessionOptions(fx, SELF));
+
+  expect(result.verdict).toBe("BLOCK");
+  expect(result.stale.map((check) => check.plugin)).toEqual(["jury"]);
+  // ...and the session problem is reported in the SAME pass, not discovered on the next one.
+  expect(result.sessions?.selfStale).toBe(true);
+  expect(result.sessions?.self?.version).toBe("4.47.0");
+});
