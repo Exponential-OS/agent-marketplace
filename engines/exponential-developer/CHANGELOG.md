@@ -1,3 +1,21 @@
+## [1.10.4] - 2026-11-24 - the plugin now declares its own owner
+
+Ownership was recorded only in `anand-career-os/CLAUDE.md` and `AGENT_STATUS.yaml`, neither
+of which a session working in this repo loads — `~/aiprojects/xos` has no `CLAUDE.md`. The
+plugin itself named no owner anywhere a customer would look. Measured cost: 1.8.0 -> 1.10.3
+across five PRs from other sessions in three days, all of it good work by sessions that had
+no way to know the plugin was owned.
+
+- `README.md` gains an **Ownership** section; the manifest `description` gains an owner prefix
+  (that string is what shows in the marketplace catalog).
+- States the corrected intake: label **AND assign**. The coordination BUS queries
+  `viewer.assignedIssues` with no label filter, so a labelled-but-unassigned finding never
+  reaches the owner. XOS-417 sat invisible three days this way.
+- Points at the RECORD rather than naming a session, so it cannot go stale silently if
+  ownership is reassigned.
+
+Docs + manifest description only. No behaviour change.
+
 ## [1.10.3] - 2026-11-23 - the peer liveness window was answering the wrong question, and reading 2,621 files to use 19 (XOS-444)
 
 A peer session pushed back on the 30-minute window within an hour of 1.10.2 shipping, and was

@@ -4,6 +4,25 @@
 
 Install it through the xOS marketplace once registered. The plugin declares `workspace_binding.mode = "global"` so `/ship-feature` resolves from every cwd/repo; this is cross-xOS developer tooling, not a workspace-bound product plugin.
 
+## Ownership
+
+This plugin has a **designated owner session**. Findings go to the owner; they are not fixed
+in whichever session happened to notice them.
+
+| | |
+|---|---|
+| **Where ownership is recorded** | `anand-career-os/AGENT_STATUS.yaml` → `agents.exponential-developer`, anchored by Linear **XOS-412** |
+| **How to report a finding** | Linear team **XOS**, label **`exponential-developer`**, **and assign it** |
+| **Why "and assign it"** | The coordination BUS queries `viewer.assignedIssues` with no label filter. A labelled-but-unassigned finding is invisible to the owner. XOS-417 sat unseen for three days exactly this way. |
+
+**This points at the record rather than naming a session, deliberately.** Ownership can be
+reassigned; a name hardcoded here would go stale silently, which is the same class of defect
+as the stale paths XOS-353 removed from this plugin.
+
+**A bypass is a reportable finding, not a private shortcut.** If you did software work without
+`/ship-feature`, or skipped a stage, that is evidence of a product gap — this plugin is shipped
+to people who have no agent to improvise around it for them. File it.
+
 ## Prerequisites — read before installing
 
 `/ship-feature` **will not run without these.** Stage 0 exits 1 before any code is touched.

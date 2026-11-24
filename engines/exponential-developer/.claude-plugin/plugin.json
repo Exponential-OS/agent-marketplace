@@ -1,8 +1,8 @@
 {
   "name": "exponential-developer",
   "platform": "xHumanOS",
-  "version": "1.10.3",
-  "description": "Exponential Developer \u2014 the agentic-SDLC ship-feature pipeline (formerly super-developer). Commands scoped exponential-developer:ship-feature.",
+  "version": "1.10.4",
+  "description": "OWNED: findings go to the designated owner session \u2014 Linear team XOS, label `exponential-developer`, AND assign it (label alone is BUS-invisible). Ownership recorded in AGENT_STATUS.yaml, anchor XOS-412. Exponential Developer \u2014 the agentic-SDLC ship-feature pipeline (formerly super-developer). Commands scoped exponential-developer:ship-feature.",
   "workspace_binding": {
     "mode": "global",
     "_comment": "global so /ship-feature resolves in EVERY cwd/repo \u2014 fixes the loose-symlink resolution failure; this is cross-xOS dev tooling, not workspace-bound."
