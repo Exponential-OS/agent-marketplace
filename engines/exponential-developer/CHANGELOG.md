@@ -1,3 +1,49 @@
+## [1.11.0] - 2026-11-23 - the data picks the boundary; no liveness threshold left to pick (XOS-444)
+
+I moved this number twice in one day and then declared I would stop tuning it. A peer session
+showed the number was never doing the work, which is a better argument than either position.
+
+Real ages on this machine, minutes, youngest first:
+
+```
+0.3 1.5 2.3 4.8 7.5 7.6 8.2 8.3 9.1 9.5 10.5 | 305 306 307 310 362 429 ... 2423
+<7m = 8 · 7-30m = 2 · 30m-2h = ZERO · 2h-8h = 12 · 24h-7d = 170 · >7d = 2,432
+```
+
+**Every cutoff between 10 and 305 minutes produces an identical report.** 30m, 2h and 4h are
+the same number against this data. Moving 30m to 24h did not widen the net gradually — it did
+nothing at all until it crossed 305 and swallowed a second cluster whole, which is exactly why
+the report jumped 3 to 22 with no useful value in between. That is not tuning a dial; it is
+choosing which side of a chasm to stand on, by hand, forever.
+
+So the threshold is gone as a judgement. `findActivityGap` takes the largest multiplicative gap
+in the sorted ages (>=4x; the observed one is 29x) and cuts there. It holds whether the
+directory has 20 files or 20,000, and when no real gap exists it reports `gapFound: false`
+rather than silently falling back to a number nobody revisits. 24h survives only as a READ
+bound, because opening 2,600 files to answer a question about the recent ones is the cost fixed
+in 1.10.3.
+
+### The failure being designed against is not correctness
+
+`cyborg/rules/branch-hygiene` shipped with 12 tests and took a repo from 612 branches to 117 on
+its first run. It was DELETED on 2026-11-13 (bd5b0852c). The Constitution records why in its own
+words: *"accurate noise, reporting 164 local / 46 unpushed branches on every single turn whether
+or not anyone could act on it."* Anand: *"they are too annoying."*
+
+It did not die of being wrong. It died of reporting more than a reader could act on, every turn,
+forever. A 22-row peer list on every publish is that artifact. Verified both before building on
+them: the rule directory is gone and both quotes are in the kernel verbatim.
+
+**The generative form:** when a report's LENGTH tracks population size rather than how much is
+ACTIONABLE, it gets skimmed — and a skimmed report is worth exactly what a gate that passes
+having checked nothing is worth. Same bug, opposite costume.
+
+Real output now: 10 actionable rows and one summary line (`13 more dormant · 2,602 archived`),
+where the threshold produced 22 rows and no context.
+
+291 passing, 0 failures, 6/6 rule suites. CI floor 288 -> 291. Four mutants, all killed: gap
+detection disabled, gap always claimed found, archived count dropped, ratio lowered to 1x.
+
 ## [1.10.4] - 2026-11-24 - the plugin now declares its own owner
 
 Ownership was recorded only in `anand-career-os/CLAUDE.md` and `AGENT_STATUS.yaml`, neither
@@ -15,6 +61,7 @@ no way to know the plugin was owned.
   ownership is reassigned.
 
 Docs + manifest description only. No behaviour change.
+
 
 ## [1.10.3] - 2026-11-23 - the peer liveness window was answering the wrong question, and reading 2,621 files to use 19 (XOS-444)
 

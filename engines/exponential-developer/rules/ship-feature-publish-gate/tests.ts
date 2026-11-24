@@ -503,3 +503,69 @@ test("a stale plugin does not hide a stale session", () => {
   expect(result.sessions?.selfStale).toBe(true);
   expect(result.sessions?.self?.version).toBe("4.47.0");
 });
+
+test("the data picks the boundary, not a hand-chosen number", () => {
+  // Real ages here, in minutes: 0.3 1.5 2.3 4.8 7.5 7.6 8.2 8.3 9.1 9.5 10.5 | 305 306 ... 2423
+  // EVERY cutoff between 10 and 305 produces an identical report, so 30m and 2h and 4h were
+  // the same number. Moving 30m -> 24h did nothing until it crossed 305 and swallowed a whole
+  // second cluster, which is why the report jumped 3 -> 22 with nothing useful in between.
+  // That is choosing a side of a chasm by hand, and nobody revisits a hand-picked number.
+  const fx = fixture();
+  filesAgree(fx);
+  session(fx, SELF, "4.47.5", 1);
+  const near = ["aaaaaaaa-0000-4000-8000-000000000001", "aaaaaaaa-0000-4000-8000-000000000002"];
+  const far = ["bbbbbbbb-0000-4000-8000-000000000001", "bbbbbbbb-0000-4000-8000-000000000002"];
+  for (const id of near) session(fx, id, "4.36.0", 5);
+  for (const id of far) session(fx, id, "4.36.0", 300);
+
+  const result = processInput({ plugin: "exponential-developer" }, sessionOptions(fx, SELF));
+
+  expect(result.sessions?.gapFound).toBe(true);
+  // localeCompare, not bare .sort(): the default sorts by UTF-16 code unit, which is not the
+  // alphabetical order the assertion claims to check. Caught by SonarCloud S2871 as a
+  // reliability bug, and it is one -- a comparator-less sort works until the data changes.
+  expect(result.sessions?.stalePeers.map((entry) => entry.sessionId).sort((a, b) => a.localeCompare(b))).toEqual(near);
+  expect(result.sessions?.dormantCount).toBe(2);
+});
+
+test("when ages are continuous it says so instead of inventing a cut", () => {
+  // The honest-degradation half. If the gap ever closes, the report must admit there is no
+  // natural boundary rather than silently reverting to a threshold nobody revisits.
+  const fx = fixture();
+  filesAgree(fx);
+  session(fx, SELF, "4.47.5", 1);
+  const ids = [
+    "cccccccc-0000-4000-8000-000000000001",
+    "cccccccc-0000-4000-8000-000000000002",
+    "cccccccc-0000-4000-8000-000000000003",
+  ];
+  ids.forEach((id, i) => session(fx, id, "4.36.0", 10 + i * 5)); // 10, 15, 20 -- no 4x step
+
+  const result = processInput({ plugin: "exponential-developer" }, sessionOptions(fx, SELF));
+
+  expect(result.sessions?.gapFound).toBe(false);
+  expect(result.sessions?.stalePeers).toHaveLength(3);
+  expect(result.sessions?.dormantCount).toBe(0);
+});
+
+test("the report's length does not track the size of history", () => {
+  // ⛔ cyborg/rules/branch-hygiene shipped with 12 tests and took a repo from 612 branches to
+  // 117 on its first run. Deleted 2026-11-13 (bd5b0852c) because it was, in the Constitution's
+  // words, "accurate noise, reporting 164 local / 46 unpushed branches on every single turn
+  // whether or not anyone could act on it." Anand: "they are too annoying." It did not die of
+  // being WRONG. A report whose length tracks population rather than actionability gets
+  // skimmed, and a skimmed report is worth what a gate that checked nothing is worth.
+  const fx = fixture();
+  filesAgree(fx);
+  session(fx, SELF, "4.47.5", 1);
+  session(fx, PEER, "4.36.0", 5);
+  for (let i = 0; i < 60; i += 1) {
+    session(fx, `dddddddd-0000-4000-8000-${String(i).padStart(12, "0")}`, "4.36.0", 40 * 24 * 60);
+  }
+
+  const result = processInput({ plugin: "exponential-developer" }, sessionOptions(fx, SELF));
+
+  // One actionable row, and a COUNT for the 60 that are not.
+  expect(result.sessions?.stalePeers).toHaveLength(1);
+  expect(result.sessions?.archivedCount).toBe(60);
+});

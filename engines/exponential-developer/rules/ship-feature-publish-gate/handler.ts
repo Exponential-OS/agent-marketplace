@@ -479,30 +479,65 @@ function checkPlugin(cacheRoot: string, plugin: string, marketplaceVersion: stri
 const SESSION_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
- * 24 HOURS, and deliberately NOT the SDLC WORK-CLAIM 30 minutes this originally copied.
- * Sharing a word with that invariant is not sharing a definition, and the costs point in
- * opposite directions:
- *
- *   work-claim  "may I steal this ticket?"        wrong => reclaimed from someone active.
- *                                                  A SHORT window is correct there.
- *   this        "whose terminal runs stale code?"  wrong => a peer keeps running old code all
- *                                                  day and nobody says so. Under-reporting is
- *                                                  the only failure that hurts here, and a
- *                                                  short window maximises exactly that.
- *
- * Measured rather than argued: of 14 stale sessions on this machine, a 30-minute window
- * reported THREE. A peer was observed at 23 minutes while mid-build -- the Stop hook only
- * stamps when a turn COMPLETES, so a session reading rather than running tools goes quiet
- * while unambiguously alive, and 30 minutes would have called it dead.
- *
- * Unbounded is also wrong, which the full population shows and a sample does not: 2,621
- * session files exist, 2,432 older than a week. A day's work is the natural boundary -- 19
- * fall within 24h, and the 30m-to-2h bucket is EMPTY, so 30 minutes was not even cutting at
- * a real edge.
- *
- * SELF is exempt entirely: a session evaluating itself is live by definition.
+ * A READ BOUND, not a judgement. Files older than this are never opened, because parsing 2,621
+ * sessions to answer a question about the recent ones cost 1,211ms. Which sessions COUNT as
+ * live is decided by the data (see findActivityGap), not by this number.
  */
-const SESSION_LIVE_WINDOW_MS = 24 * 60 * 60 * 1000;
+const SESSION_READ_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+/** A gap must be this many times the age below it to count as a real boundary rather than
+ *  ordinary spacing. 4x is conservative: the observed gap is 29x (10.5m -> 305m). */
+const ACTIVITY_GAP_RATIO = 4;
+
+/**
+ * THE THRESHOLD WAS NEVER DOING THE WORK. Measured ages in minutes, youngest first:
+ *
+ *   0.3 1.5 2.3 4.8 7.5 7.6 8.2 8.3 9.1 9.5 10.5 | 305 306 307 310 362 429 ... 2423
+ *
+ * Buckets: <7m = 8 · 7-30m = 2 · 30m-2h = ZERO · 2h-8h = 12 · 24h-7d = 170 · >7d = 2,432.
+ *
+ * Every cutoff between 10 and 305 minutes produces an IDENTICAL report. 30m, 2h and 4h are the
+ * same number against this data. Moving 30m -> 24h did not widen the net gradually; it did
+ * nothing until it crossed 305 and swallowed a second cluster whole, which is why the report
+ * went 3 -> 22 with no useful value in between. That is not tuning a dial, it is choosing which
+ * side of a chasm to stand on — and whichever side you pick, you picked it by hand and nobody
+ * revisits it.
+ *
+ * So the number is gone. The data clusters itself: find the largest multiplicative gap and cut
+ * there. Stays correct whether the directory holds 20 files or 20,000, and when no real gap
+ * exists it SAYS SO (`gapFound: false`) rather than silently reverting to a threshold.
+ *
+ * ⛔ The failure this avoids is not hypothetical and not about correctness. `cyborg/rules/
+ * branch-hygiene` shipped with 12 tests and took a repo from 612 branches to 117 on its first
+ * run. Deleted 2026-11-13 (bd5b0852c). The Constitution records why in its own words: it was
+ * "accurate noise, reporting 164 local / 46 unpushed branches on every single turn whether or
+ * not anyone could act on it." Anand: "they are too annoying." It did not die of being wrong.
+ * A 22-row peer list on every publish is that same artifact. When a report's LENGTH tracks
+ * population size rather than how much is ACTIONABLE, it gets skimmed — and a skipped report
+ * is worth exactly what a gate that passes having checked nothing is worth.
+ */
+export function findActivityGap(ages: number[]): { cut: number; gapFound: boolean } {
+  // No non-null assertions: indexed access is checked rather than asserted away. `!` tells the
+  // compiler to stop looking; it does not make the access safe, and a gate is the wrong place
+  // to silence a check.
+  const noGap = { cut: Number.POSITIVE_INFINITY, gapFound: false };
+  const sorted = [...ages].sort((a, b) => a - b);
+  if (sorted.length < 2) return noGap;
+  let bestCut = Number.POSITIVE_INFINITY;
+  let bestRatio = 0;
+  for (let i = 0; i < sorted.length - 1; i += 1) {
+    const lower = sorted[i];
+    const upper = sorted[i + 1];
+    if (typeof lower !== "number" || typeof upper !== "number") continue;
+    if (lower <= 0) continue; // age 0 would divide by zero; it also cannot be a boundary
+    const ratio = upper / lower;
+    if (ratio > bestRatio) {
+      bestRatio = ratio;
+      bestCut = lower;
+    }
+  }
+  return bestRatio >= ACTIVITY_GAP_RATIO ? { cut: bestCut, gapFound: true } : noGap;
+}
 
 export interface SessionState {
   sessionId: string;
@@ -516,6 +551,14 @@ export interface SessionLiveness {
   installedVersion: string | null;
   stalePeers: SessionState[];
   livePeers: number;
+  /** True when the ages clustered cleanly. False means report the ages and say so, rather
+   *  than pretending a hand-picked cutoff found something. */
+  gapFound: boolean;
+  /** Sessions beyond the activity cluster but still within the read window. */
+  dormantCount: number;
+  /** Sessions never opened at all, counted by stat alone. Cheap, and it is the line that
+   *  tells a reader there is history they do NOT have to think about. */
+  archivedCount: number;
 }
 
 /**
@@ -533,17 +576,21 @@ export function readSessions(
   fs: FileSystemLike,
   now: number,
   opts: { maxAgeMs?: number; alwaysInclude?: string | null } = {},
-): SessionState[] {
-  const maxAgeMs = opts.maxAgeMs ?? SESSION_LIVE_WINDOW_MS;
-  if (!fs.exists(dir)) return [];
+): { sessions: SessionState[]; skipped: number } {
+  const maxAgeMs = opts.maxAgeMs ?? SESSION_READ_WINDOW_MS;
+  if (!fs.exists(dir)) return { sessions: [], skipped: 0 };
   const out: SessionState[] = [];
+  let skipped = 0;
   for (const name of fs.readDir(dir)) {
     if (!name.endsWith(".json")) continue;
     const sessionId = name.slice(0, -5);
     if (!SESSION_ID_PATTERN.test(sessionId)) continue;
     const full = join(dir, name);
     const ageMs = now - fs.mtimeMs(full);
-    if (ageMs > maxAgeMs && sessionId !== opts.alwaysInclude) continue;
+    if (ageMs > maxAgeMs && sessionId !== opts.alwaysInclude) {
+      skipped += 1;
+      continue;
+    }
     let version: string | null = null;
     try {
       const parsed = JSON.parse(fs.readText(full)) as Record<string, unknown>;
@@ -553,24 +600,30 @@ export function readSessions(
     }
     out.push({ sessionId, version, ageMs });
   }
-  return out;
+  return { sessions: out, skipped };
 }
 
 export function assessSessions(
   sessions: SessionState[],
   installedVersion: string | null,
   selfSessionId: string | null,
+  archivedCount = 0,
 ): SessionLiveness {
   const self = selfSessionId ? (sessions.find((entry) => entry.sessionId === selfSessionId) ?? null) : null;
   const behind = (entry: SessionState) =>
     installedVersion !== null && entry.version !== null && compareVersions(entry.version, installedVersion) < 0;
-  const live = sessions.filter((entry) => entry.ageMs <= SESSION_LIVE_WINDOW_MS && entry.sessionId !== selfSessionId);
+  const peers = sessions.filter((entry) => entry.sessionId !== selfSessionId);
+  const { cut, gapFound } = findActivityGap(peers.map((entry) => entry.ageMs));
+  const live = peers.filter((entry) => entry.ageMs <= cut);
   return {
     self,
     selfStale: self !== null && behind(self),
     installedVersion,
     stalePeers: live.filter(behind).sort((a, b) => a.ageMs - b.ageMs),
     livePeers: live.length,
+    gapFound,
+    dormantCount: peers.length - live.length,
+    archivedCount,
   };
 }
 
@@ -651,12 +704,14 @@ function processInputUnsafe(raw: HandlerInput, options: ProcessOptions): Handler
   // XOS-444 SESSION LIVENESS. Files agreeing is necessary and not sufficient: a plugin binds
   // at session start (XOS-405), so the catalog and the cache can both be current while the
   // session doing the publishing is running code from nine releases ago.
+  const read = readSessions(sessionsDir(options), fs, (options.now ?? new Date()).getTime(), {
+    alwaysInclude: selfSessionId(options),
+  });
   const sessions = assessSessions(
-    readSessions(sessionsDir(options), fs, (options.now ?? new Date()).getTime(), {
-      alwaysInclude: selfSessionId(options),
-    }),
+    read.sessions,
     highestVersion(installedVersions(cacheRoot, SESSION_VERSIONED_PLUGIN, fs)),
     selfSessionId(options),
+    read.skipped,
   );
 
   const checked = plugins.map((plugin) => checkPlugin(cacheRoot, plugin, marketplace.get(plugin) ?? null, fs));
