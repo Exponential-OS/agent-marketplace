@@ -349,8 +349,19 @@ test("missing LINEAR_API_KEY exits 1 with remediation", async () => {
   const output = JSON.parse(stdout.trim()) as { verdict: string; message: string };
   expect(exitCode).toBe(1);
   expect(output.verdict).toBe("BLOCK");
-  expect(output.message).toContain("export LINEAR_API_KEY=<key> (Linear → Settings → API → Personal API keys)");
-  expect(stderr).toContain("cross-machine claim coordination cannot work without it");
+  // XOS-414 (decision A: Linear stays REQUIRED). This message is the product's
+  // onboarding for every buyer without Linear — it is the first thing they see,
+  // before any docs they chose to read. Assertions updated from the previous copy,
+  // which named an env var and used internal vocabulary.
+  expect(output.message).toContain("WHAT:");
+  expect(output.message).toContain("HOW:");
+  expect(output.message).toMatch(/requires a Linear/i);   // a PRODUCT prerequisite
+  expect(output.message).toMatch(/account/i);             // not merely a key
+  expect(output.message).toMatch(/ticket/i);              // and a ticket to claim
+  expect(output.message).toContain("Settings → API");     // where to get the key
+  // the jargon a first-time buyer cannot parse is gone
+  expect(output.message).not.toMatch(/cross-machine claim coordination/i);
+  expect(stderr).not.toMatch(/cross-machine claim coordination/i);
 });
 
 test("CLI exits 1 when processInput returns a validation BLOCK", async () => {
@@ -381,4 +392,30 @@ test("CLI exits 1 when processInput returns a validation BLOCK", async () => {
   expect(output.message).toContain("WHAT: required field action is missing.");
   expect(output.message).toContain("HOW:");
   expect(stderr).toContain("required field action is missing");
+});
+
+// XOS-414 criterion 2c: decision A requires the prerequisite stated "loudly and up
+// front". Section ORDER is checked by the spec; this pins LOUDNESS — the section's own
+// opening must state the consequence, not merely list requirements. Lives here because
+// this rule IS the Linear requirement's enforcement point.
+test("XOS-414: README states the consequence loudly, and before Ownership", () => {
+  const readme = readFileSync(join(import.meta.dir, "../../README.md"), "utf8");
+  const lines = readme.split("\n");
+  const pre = lines.findIndex(l => l.startsWith("## Prerequisites"));
+  const own = lines.findIndex(l => l.startsWith("## Ownership"));
+  expect(pre).toBeGreaterThan(-1);
+  expect(own).toBeGreaterThan(-1);
+  expect(pre).toBeLessThan(own);                                  // up front
+  const section = lines.slice(pre, own).join("\n");
+  expect(section).toMatch(/will not run without these/i);         // loudly
+  expect(section).toMatch(/LINEAR_API_KEY/);                      // names the key
+  // the section must name all three prerequisites the failure message names, so the
+  // two surfaces cannot drift (Gate-A.7 cycle 2)
+  expect(section).toMatch(/account/i);
+  expect(section).toMatch(/ticket/i);
+  // decision A's third clause: "instead of CLAIMING PORTABILITY". The original defect
+  // was README asserting installs were "portable across machines", which reads as
+  // "works anywhere". That unqualified claim must not come back.
+  expect(readme).not.toMatch(/so installs are portable across machines/i);
+  expect(readme).toMatch(/Portable paths are not the same as portable dependencies/i);
 });

@@ -26,8 +26,17 @@ const LINEAR_GRAPHQL_URL = "https://api.linear.app/graphql";
 const IN_PROGRESS_STATE = "In Progress";
 const DONE_STATE = "Done";
 const LOG_PATH = join(homedir(), ".cyborg-enforcement-log.jsonl");
+// XOS-414, decision A (2026-11-25): Linear stays a REQUIRED prerequisite. That makes
+// this string the product's onboarding — it is the first thing a buyer without Linear
+// ever sees, before any documentation they chose to read. It must name the PREREQUISITE
+// (account + ticket + key), not just the missing variable, and must not use vocabulary
+// that only makes sense to someone who already read the SDLC invariant.
 const LINEAR_KEY_REMEDIATION =
-  "export LINEAR_API_KEY=<key> (Linear → Settings → API → Personal API keys); cross-machine claim coordination cannot work without it.";
+  "this pipeline claims each ticket on Linear before building, so two machines cannot " +
+  "build the same ticket — only a shared tracker can know that. You need three things: " +
+  "a Linear account, a ticket to claim, and a personal API key exported as " +
+  "LINEAR_API_KEY (Linear → Settings → API → Personal API keys). This is a product " +
+  "prerequisite, not a defect.";
 
 type Action = "check" | "claim" | "heartbeat" | "release" | "complete";
 type Verdict = "PASS" | "BLOCK";
@@ -250,7 +259,7 @@ function normalizeInput(raw: ClaimInput): { ok: true; input: NormalizedInput } |
 function requireLinearApiKey(env: Record<string, string | undefined>): string {
   const apiKey = env["LINEAR_API_KEY"]?.trim();
   if (!apiKey) {
-    throw new Error("WHAT: LINEAR_API_KEY is unset. HOW: " + LINEAR_KEY_REMEDIATION);
+    throw new Error("WHAT: /ship-feature requires a Linear account, and no Linear credential was found. HOW: " + LINEAR_KEY_REMEDIATION);
   }
   return apiKey;
 }

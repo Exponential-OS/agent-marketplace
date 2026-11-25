@@ -1,3 +1,25 @@
+## [1.12.0] - 2026-11-25 - Linear stays required, and the requirement is now unmissable (XOS-414)
+
+Anand decided option A: Linear remains a hard prerequisite, no local claim backend. That
+made the docs and the failure message the onboarding.
+
+- **Prerequisites moved above Ownership.** The v1.10.4 Ownership section had been inserted
+  above it, so a first-time installer read who-owns-it before the thing that decides whether
+  the pipeline runs at all.
+- **The missing-key failure message is rewritten for a buyer.** It previously named an env
+  var and used internal vocabulary ("cross-machine claim coordination") inside a rule called
+  sdlc-work-claim, reading as a tool bug. It now names the product prerequisite - a Linear
+  account, a ticket to claim, and an API key - says where to get the key, and states plainly
+  that this is a prerequisite rather than a defect.
+- No fallback added; no verdict or control flow changed. The handler still throws.
+
+Four Gate-A.7 findings across two cycles, all the same class: a check that did not cover
+what the artifact claimed. All asserted and mutation-verified to bite, including decision A's
+third clause ("instead of claiming portability"), which was unguarded so the original
+misleading line could silently return.
+
+9 pass sdlc-work-claim, 57 design-review, CI floor 291 -> 292.
+
 ## [1.11.0] - 2026-11-23 - the data picks the boundary; no liveness threshold left to pick (XOS-444)
 
 I moved this number twice in one day and then declared I would stop tuning it. A peer session
